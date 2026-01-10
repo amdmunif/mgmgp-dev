@@ -1,0 +1,80 @@
+import { useParams, Link } from 'react-router-dom';
+import { MOCK_NEWS } from '../../lib/mock';
+import { formatDate } from '../../lib/utils';
+import { Button } from '../../components/ui/button';
+import { Calendar, User, ArrowLeft, Share2 } from 'lucide-react';
+
+export function NewsDetail() {
+    const { id } = useParams<{ id: string }>();
+    const news = MOCK_NEWS.find(n => n.id === id);
+
+    if (!news) {
+        return (
+            <div className="container mx-auto px-4 py-20 text-center">
+                <h2 className="text-2xl font-bold mb-4">Berita tidak ditemukan</h2>
+                <Link to="/news">
+                    <Button>Kembali ke Berita</Button>
+                </Link>
+            </div>
+        );
+    }
+
+    return (
+        <article className="max-w-4xl mx-auto px-4 py-12">
+            <Link to="/news" className="inline-flex items-center text-gray-500 hover:text-primary-600 mb-6 transition-colors">
+                <ArrowLeft className="w-4 h-4 mr-2" /> Kembali ke Daftar Berita
+            </Link>
+
+            <div className="mb-8">
+                <span className="inline-block px-3 py-1 rounded-full bg-primary-100 text-primary-700 text-sm font-semibold mb-4">
+                    {news.category}
+                </span>
+                <h1 className="text-3xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">{news.title}</h1>
+
+                <div className="flex flex-wrap items-center gap-6 text-gray-500 border-b border-gray-100 pb-8">
+                    <div className="flex items-center gap-2">
+                        <Calendar className="w-5 h-5" />
+                        <span>{formatDate(news.created_at)}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <User className="w-5 h-5" />
+                        <span>{news.author.name}</span>
+                    </div>
+                    <Button variant="ghost" size="sm" className="ml-auto text-gray-500">
+                        <Share2 className="w-4 h-4 mr-2" /> Bagikan
+                    </Button>
+                </div>
+            </div>
+
+            <div className="relative aspect-video rounded-2xl overflow-hidden mb-10 shadow-lg">
+                <img
+                    src={news.image_url}
+                    alt={news.title}
+                    className="w-full h-full object-cover"
+                />
+            </div>
+
+            <div className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-a:text-primary-600">
+                {/* Render paragraphs cleanly */}
+                {news.content.split('\n').map((paragraph, index) => (
+                    <p key={index} className="mb-4 text-gray-700 leading-relaxed text-lg">
+                        {paragraph}
+                    </p>
+                ))}
+            </div>
+
+            {/* Related/More News (Simplified) */}
+            <div className="mt-16 pt-10 border-t border-gray-100">
+                <h3 className="text-2xl font-bold mb-6">Berita Lainnya</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {MOCK_NEWS.filter(n => n.id !== id).slice(0, 2).map(item => (
+                        <Link key={item.id} to={`/news/${item.id}`} className="group block bg-gray-50 rounded-xl p-4 hover:bg-gray-100 transition-colors">
+                            <h4 className="font-bold text-gray-900 group-hover:text-primary-600 mb-2">{item.title}</h4>
+                            <p className="text-sm text-gray-500">{formatDate(item.created_at)}</p>
+                        </Link>
+                    ))}
+                </div>
+            </div>
+        </article>
+    );
+}

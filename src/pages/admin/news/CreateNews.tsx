@@ -1,0 +1,68 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { Button } from '../../../components/ui/button';
+import { ArrowLeft, Loader2 } from 'lucide-react';
+import { contentManagementService } from '../../../services/contentManagementService';
+
+interface NewsForm {
+    title: string;
+    content: string;
+    category: string;
+    image_url: string;
+}
+
+export function CreateNews() {
+    const navigate = useNavigate();
+    const { register, handleSubmit } = useForm<NewsForm>();
+    const [submitting, setSubmitting] = useState(false);
+
+    const onSubmit = async (data: NewsForm) => {
+        setSubmitting(true);
+        try {
+            await contentManagementService.createNews(data);
+            navigate('/admin/news');
+        } catch (error) {
+            console.error(error);
+            alert('Gagal menyimpan berita');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    return (
+        <div className="max-w-2xl mx-auto">
+            <button onClick={() => navigate(-1)} className="flex items-center text-gray-500 hover:text-gray-900 mb-6"><ArrowLeft className="w-4 h-4 mr-2" /> Kembali</button>
+            <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
+                <h1 className="text-2xl font-bold mb-6">Tulis Berita Baru</h1>
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Judul Berita</label>
+                        <input {...register('title', { required: true })} className="w-full border rounded-md p-2" />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Kategori</label>
+                        <select {...register('category')} className="w-full border rounded-md p-2">
+                            <option value="Kegiatan">Kegiatan</option>
+                            <option value="Pengumuman">Pengumuman</option>
+                            <option value="Artikel">Artikel</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Konten</label>
+                        <textarea {...register('content', { required: true })} className="w-full border rounded-md p-2 h-40" />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium mb-1">URL Gambar Cover</label>
+                        <input {...register('image_url')} className="w-full border rounded-md p-2" placeholder="https://..." />
+                    </div>
+                    <div className="flex justify-end gap-3 pt-4">
+                        <Button type="submit" disabled={submitting}>
+                            {submitting ? <Loader2 className="animate-spin w-4 h-4" /> : 'Terbitkan'}
+                        </Button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}

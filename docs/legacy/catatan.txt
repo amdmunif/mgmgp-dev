@@ -1,0 +1,141 @@
+
+# Spesifikasi Website MGMP Informatika Wonosobo
+
+Dokumen ini berisi rincian spesifikasi teknis dan fungsional untuk portal web MGMP Informatika Wonosobo, diperbarui berdasarkan implementasi kode sumber terkini.
+
+## 1. Tinjauan Umum Proyek
+
+Aplikasi ini adalah portal web komprehensif untuk Musyawarah Guru Mata Pelajaran (MGMP) Informatika Kabupaten Wonosobo. Portal ini memfasilitasi manajemen organisasi, kegiatan, administrasi persuratan, referensi kurikulum, dan pengembangan profesional anggota.
+
+Sistem terdiri dari dua bagian:
+1.  **Situs Publik:** Informasi umum, profil, berita, acara, galeri, referensi pembelajaran, serta portal anggota (login/registrasi).
+2.  **Panel Admin & Anggota:** Area terproteksi untuk manajemen konten, administrasi surat menyurat, presensi acara, dan pelacakan riwayat pelatihan anggota.
+
+## 2. Tumpukan Teknologi (Technology Stack)
+
+-   **Frontend:**
+    -   **Framework:** React 19
+    -   **Build Tool:** Vite
+    -   **Bahasa:** TypeScript
+    -   **Styling:** Tailwind CSS (dengan plugin typography)
+    -   **Routing:** React Router v7 (HashRouter)
+    -   **State Management:** React Context API (AuthContext, SiteContentContext)
+    -   **Form Handling:** React Hook Form
+    -   **Rich Text Editor:** TinyMCE for React
+    -   **Ikon:** Lucide React
+    -   **Visualisasi Data:** Recharts
+-   **Backend:**
+    -   **Bahasa:** PHP 7.4+ (Native)
+    -   **Database:** MySQL / MariaDB
+    -   **Driver:** MySQLi (Object-oriented style)
+    -   **Arsitektur:** RESTful-like API endpoint.
+    -   **Keamanan:** Session-based Authentication, Password Hashing (bcrypt), CORS handling, Prepared Statements.
+
+## 3. Struktur Data (Data Models)
+
+-   **`User`**:
+    -   Data Diri: `id` (UUID), `nama`, `email`, `asalSekolah`, `pendidikanTerakhir`, `jurusan`, `statusKepegawaian`.
+    -   Kontak & Atribut: `noHp` (WhatsApp), `ukuranBaju`, `fotoProfile` (Path gambar).
+    -   Profesional: `mengampuMapel` (array), `kelasDiajar` (array).
+    -   Sistem: `role` (Admin, Pengurus, Anggota), `isActive` (boolean), `password_hash`.
+-   **`Event`**:
+    -   Info: `id`, `title`, `description`, `date` (datetime), `location`, `imageUrl`.
+    -   Status: `isRegistrationOpen` (boolean).
+    -   Pelatihan: 
+        - `materialsUrl` (Link Materi)
+        - `tasksUrl` (Link Soal/Tugas)
+        - `certificateUrl` (Link Sertifikat Statis - Opsional)
+        - `certificateTemplateUrl` (Path gambar desain sertifikat kosongan - JPG/PNG).
+    -   Relasi: `participants` (array).
+-   **`EventParticipant`**:
+    -   Atribut: `userId`, `eventId`, `isHadir` (boolean), `tugasSubmitted` (boolean), `taskUrl` (link pengumpulan tugas).
+-   **`Letter` (Surat)**:
+    -   Atribut: `id`, `templateId`, `letterNumber` (No. Surat Lengkap), `letterDate`, `subject`.
+    -   Isi: `recipient`, `content` (HTML generated), `formData` (JSON: urutan surat, pejabat dinas, narasumber, dll).
+    -   Relasi: `eventId`, `authorId`.
+-   **`GalleryImage`**:
+    -   Atribut: `id`, `imageUrl`, `caption`, `eventId` (Link ke acara tertentu).
+-   **`SiteContent`** (Pengaturan Global):
+    -   Konten: Hero section, Visi Misi, Kontak, Peta.
+    -   Aset: Logo App, Favicon, Kop Surat.
+    -   Pejabat (untuk TTD Surat): Nama & NIP Ketua, Sekretaris, Ketua MKKS, serta URL scan tanda tangan mereka.
+-   **`CapaianPembelajaran` (CP)**:
+    -   Atribut: `id`, `mapel` (Informatika/KKA), `content` (HTML), `materi` (Ringkasan elemen), `updatedAt`, `updatedBy`.
+-   **`TujuanPembelajaran` (TP)**:
+    -   Atribut: `id`, `mapel`, `kelas` (7/8/9), `semester` (Ganjil/Genap), `materi`, `tujuan` (Deskripsi), `createdBy`.
+
+## 4. Fungsionalitas Aplikasi
+
+### 4.1. Fitur Publik
+-   **Beranda:** Hero section dinamis, sorotan 3 acara mendatang, 3 berita terbaru.
+-   **Profil & Kontak:** Informasi statis yang dikelola via admin (Visi Misi, Struktur, Peta).
+-   **Berita & Acara:** Daftar dengan pencarian dan paginasi. Detail acara mencakup status pendaftaran.
+-   **Galeri:** Grid foto kegiatan dengan modal preview.
+-   **Referensi Pembelajaran:** Halaman khusus untuk melihat Capaian Pembelajaran (CP) dan daftar Tujuan Pembelajaran (TP) yang dapat difilter berdasarkan Kelas dan Semester.
+-   **Registrasi:** Form pendaftaran anggota baru dengan upload foto profil, pemilihan mapel, dan jenjang kelas.
+-   **Login & Recovery:** Otentikasi email/password, fitur Lupa Password (via Email Token).
+
+### 4.2. Fitur Admin & Pengurus
+-   **Dashboard:** Statistik ringkasan, Grafik batang, Log aktivitas (Audit Trail).
+-   **Manajemen Anggota:** CRUD anggota, aktivasi akun baru, filter status/role, reset password user.
+-   **Manajemen Berita:** Editor WYSIWYG (TinyMCE), upload gambar utama.
+-   **Manajemen Acara:**
+    -   CRUD Acara lengkap dengan link pendukung.
+    -   Upload template sertifikat otomatis.
+    -   Toggle pendaftaran.
+    -   **Manajemen Peserta:** Absensi massal, validasi tugas.
+-   **Manajemen Pembelajaran:**
+    -   Update teks CP (Informatika & KKA).
+    -   CRUD Tujuan Pembelajaran (TP) dengan filter Mapel, Kelas, dan Semester.
+-   **Manajemen Galeri:** Upload foto per acara (Maks 9 foto/acara).
+-   **Generator Surat:**
+    -   Template otomatis (Undangan, Permohonan, Peminjaman).
+    -   Penomoran otomatis (Romawi bulan).
+    -   Pratinjau cetak (PDF ready) dengan Kop & TTD digital.
+-   **Pengaturan Sistem:** Teks situs, upload Logo/Kop, data pejabat penanda tangan.
+
+### 4.3. Fitur Anggota (User Logged In)
+-   **Dashboard Member:** Daftar acara *open registration*.
+-   **Riwayat Pelatihan:**
+    -   Input link tugas.
+    -   Unduh sertifikat otomatis (Generated PDF) jika hadir & tugas selesai.
+-   **Profil Saya:** Edit data diri, ganti foto profil, update nomor HP/ukuran baju.
+
+## 5. Spesifikasi API (Backend PHP)
+
+File backend terletak di folder `/api/`.
+
+### Autentikasi (`auth.php`)
+-   `POST ?action=login`: Login session.
+-   `POST ?action=register`: Daftar user (Multipart data).
+-   `GET ?action=me`: Cek session.
+-   `POST ?action=forgot-password`: Kirim email token reset.
+-   `POST ?action=reset-password`: Verifikasi token & update password.
+
+### Acara & Peserta (`events.php` & `participants.php`)
+-   `GET /events.php`: List acara.
+-   `POST /events.php`: Tambah acara.
+-   `GET /participants.php`: List peserta per acara.
+-   `POST /participants.php`: Update kehadiran.
+
+### Pembelajaran (`learning.php`)
+-   `GET ?type=cp`: Ambil data CP.
+-   `PUT ?type=cp`: Update data CP.
+-   `GET ?type=tp`: Ambil list TP.
+-   `POST ?type=tp`: Tambah TP.
+-   `PUT ?type=tp`: Update TP.
+-   `DELETE ?type=tp`: Hapus TP.
+
+### Generator Sertifikat (`generate-certificate.php`)
+-   `GET ?eventId={id}`: Generate PDF sertifikat on-the-fly menggunakan FPDF/GD, menimpa nama peserta di atas template gambar.
+
+### Lain-lain
+-   Endpoint standar untuk User (`users.php`), News (`news.php`), Gallery (`gallery.php`), Letters (`letters.php`), Site Content (`site-content.php`).
+
+## 6. Alur Kerja Pelatihan & Sertifikat
+1.  **Admin**: Buat Event -> Upload "Template Sertifikat" (Gambar kosong).
+2.  **Member**: Daftar Event -> Ikuti Acara.
+3.  **Admin**: Set Presensi Member = "Hadir".
+4.  **Member**: Buka menu "Pelatihan", submit Link Tugas.
+5.  **Sistem**: Simpan link tugas.
+6.  **Member**: Tombol "Unduh Sertifikat" aktif -> Backend generate PDF.
