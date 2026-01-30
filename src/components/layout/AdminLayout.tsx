@@ -147,15 +147,15 @@ export function AdminLayout() {
             {/* Mobile Sidebar Overlay */}
             {isSidebarOpen && (
                 <div
-                    className="fixed inset-0 bg-black/50 z-40 md:hidden backdrop-blur-sm transition-opacity"
+                    className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm transition-opacity"
                     onClick={() => setIsSidebarOpen(false)}
                 />
             )}
 
             {/* Sidebar */}
             <aside className={cn(
-                "fixed md:static inset-y-0 left-0 z-50 w-72 bg-slate-900 text-white transition-transform duration-300 ease-in-out transform flex flex-col shadow-2xl h-screen",
-                isSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+                "fixed lg:static inset-y-0 left-0 z-50 w-72 bg-slate-900 text-white transition-transform duration-300 ease-in-out transform flex flex-col shadow-2xl h-screen",
+                isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
             )}>
                 {/* Sidebar Header */}
                 <div className="h-20 flex items-center px-6 border-b border-slate-800 bg-slate-900 shrink-0">
@@ -168,7 +168,7 @@ export function AdminLayout() {
                             <p className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Panel Kontrol</p>
                         </div>
                     </div>
-                    <button onClick={() => setIsSidebarOpen(false)} className="md:hidden ml-auto text-slate-400 hover:text-white transition-colors">
+                    <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden ml-auto text-slate-400 hover:text-white transition-colors">
                         <X className="w-6 h-6" />
                     </button>
                 </div>
@@ -242,13 +242,13 @@ export function AdminLayout() {
                 {/* Top Desktop Header */}
                 <header className="h-20 bg-white border-b border-gray-100 flex items-center justify-between px-8 shadow-sm z-10">
                     <div className="flex items-center gap-4">
-                        <button onClick={() => setIsSidebarOpen(true)} className="md:hidden p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-lg">
+                        <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-lg">
                             <Menu className="w-6 h-6" />
                         </button>
 
                         <div className="flex items-center">
                             {/* Mobile Branding (Logo + Text) */}
-                            <div className="md:hidden flex items-center gap-2 ml-2">
+                            <div className="lg:hidden flex items-center gap-2 ml-2">
                                 {logoUrl ? (
                                     <img src={logoUrl} alt="Logo" className="w-8 h-8 object-contain" />
                                 ) : (
@@ -259,7 +259,7 @@ export function AdminLayout() {
                                 <span className="font-bold text-lg text-gray-900">MGMP Admin</span>
                             </div>
 
-                            <div className="hidden md:block">
+                            <div className="hidden lg:block">
                                 <h1 className="text-xl font-bold text-gray-800 tracking-tight">
                                     {(() => {
                                         let activeLabel = 'Dashboard';
@@ -275,29 +275,41 @@ export function AdminLayout() {
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-4">
-                        <div className="hidden md:flex items-center justify-center w-10 h-10 rounded-full bg-gray-50 border border-gray-100 text-gray-500">
+                    <div className="flex items-center gap-3">
+                        <Link
+                            to="/member"
+                            className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                            title="Member Area"
+                        >
+                            <User className="w-5 h-5" />
+                        </Link>
+                        <button
+                            onClick={handleLogout}
+                            className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                            title="Logout"
+                        >
+                            <LogOut className="w-5 h-5" />
+                        </button>
+
+                        <div className="w-px h-8 bg-gray-200 mx-2 hidden lg:block" />
+
+                        <div className="hidden lg:flex items-center justify-center w-10 h-10 rounded-full bg-gray-50 border border-gray-100 text-gray-500">
                             <Calendar className="w-5 h-5" />
                         </div>
-                        <div className="w-px h-8 bg-gray-200 hidden md:block" />
-                        <span className="text-sm font-semibold text-gray-600 hidden md:block">
+
+                        <span className="text-sm font-semibold text-gray-600 hidden lg:block ml-2">
                             {new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                         </span>
 
-                        {/* Desktop Right: User Dropdown */}
-                        <div className="hidden md:block relative ml-4" ref={profileRef}>
-                            {/* Desktop Right: User Dropdown (Non-clickable, Custom Style) */}
-                            <div className="hidden md:flex items-center gap-3 ml-4 bg-white rounded-lg p-1 pr-3">
-                                <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-lg">
+                        {/* Desktop Right: User Profile (Non-clickable, Custom Style) */}
+                        <div className="hidden lg:block relative ml-2" ref={profileRef}>
+                            <div className="flex items-center gap-3 bg-white rounded-lg p-1 pr-3">
+                                <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-lg shadow-sm">
                                     {user?.nama?.charAt(0).toUpperCase() || 'A'}
                                 </div>
                                 <div className="flex flex-col">
-                                    <span className="text-sm font-bold text-gray-900 leading-tight">{user?.nama || 'Administrator MGMP'}</span>
+                                    <span className="text-sm font-bold text-gray-900 leading-tight">{user?.nama || 'Administrator'}</span>
                                     <span className="text-xs text-gray-500">Super Admin</span>
-                                </div>
-                                <div className="ml-2">
-                                    <Users className="w-4 h-4 text-gray-400" />
-                                    {/* Icon placeholder as per request for visual, though not clickable */}
                                 </div>
                             </div>
                         </div>
