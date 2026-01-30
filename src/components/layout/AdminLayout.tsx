@@ -7,7 +7,6 @@ import {
     FileText,
     Calendar,
     Users,
-    User, // Added missing import
     LogOut,
     Settings,
     Crown,
