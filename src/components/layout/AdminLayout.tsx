@@ -26,7 +26,6 @@ export function AdminLayout() {
     const navigate = useNavigate();
     const location = useLocation();
     const [user, setUser] = useState<any>(null);
-    const [isProfileOpen, setIsProfileOpen] = useState(false);
     const profileRef = useRef<HTMLDivElement>(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [logoUrl, setLogoUrl] = useState<string>('');
@@ -63,18 +62,10 @@ export function AdminLayout() {
             setUser(user);
         });
 
-        // Close dropdowns on outside click
-        const handleClickOutside = (event: MouseEvent) => {
-            if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
-                setIsProfileOpen(false);
-            }
-        };
 
-        document.addEventListener('mousedown', handleClickOutside);
 
         return () => {
             subscription.unsubscribe();
-            document.removeEventListener('mousedown', handleClickOutside);
         };
     }, [navigate]);
 
@@ -106,14 +97,22 @@ export function AdminLayout() {
 
     const menuGroups = [
         {
+            title: "Utama",
+            items: [
+                { icon: LayoutDashboard, label: 'Dashboard', path: '/admin' },
+            ]
+        },
+        {
             title: "Menu Anggota",
             items: [
-                { icon: Book, label: 'Referensi CP/TP', path: '/admin/references' },
+                { icon: Users, label: 'Kelola Anggota', path: '/admin/members' },
+                { icon: Crown, label: 'Kelola Langganan', path: '/admin/premium' },
             ]
         },
         {
             title: "Fitur Premium",
             items: [
+                { icon: BookOpen, label: 'Kelola Pembelajaran', path: '/admin/learning' },
                 { icon: FileText, label: 'Bank Soal', path: '/admin/questions' },
                 { icon: Gamepad2, label: 'Bank Games', path: '/admin/games' },
                 { icon: Terminal, label: 'Prompt Library', path: '/admin/prompts' },
@@ -122,6 +121,7 @@ export function AdminLayout() {
         {
             title: "Manajemen Konten",
             items: [
+                { icon: Book, label: 'Referensi CP/TP', path: '/admin/references' },
                 { icon: Calendar, label: 'Acara & Kegiatan', path: '/admin/events' },
                 { icon: FileText, label: 'Berita', path: '/admin/news' },
             ]
@@ -130,15 +130,11 @@ export function AdminLayout() {
             title: "Administrasi",
             items: [
                 { icon: FileText, label: 'Generator Surat', path: '/admin/letters' },
-                { icon: BookOpen, label: 'Kelola Pembelajaran', path: '/admin/learning' },
             ]
         },
         {
             title: "Sistem",
             items: [
-                { icon: LayoutDashboard, label: 'Dashboard', path: '/admin' },
-                { icon: Users, label: 'Kelola Anggota', path: '/admin/members' },
-                { icon: Crown, label: 'Kelola Langganan', path: '/admin/premium' },
                 { icon: Globe, label: 'Pengaturan Web', path: '/admin/web-settings' },
                 { icon: Settings, label: 'Akun Admin', path: '/admin/settings' },
             ]
@@ -291,46 +287,20 @@ export function AdminLayout() {
 
                         {/* Desktop Right: User Dropdown */}
                         <div className="hidden md:block relative ml-4" ref={profileRef}>
-                            <button
-                                onClick={() => setIsProfileOpen(!isProfileOpen)}
-                                className="flex items-center gap-2 p-1 pl-3 pr-2 rounded-full hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200"
-                            >
-                                <UserProfileSection mobile={false} />
-                            </button>
-
-                            {/* Dropdown Menu */}
-                            {isProfileOpen && (
-                                <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-100 py-2 animate-in fade-in slide-in-from-top-2">
-                                    <div className="px-4 py-3 border-b border-gray-50 mb-1 bg-gray-50/50">
-                                        <p className="text-sm font-bold text-gray-900 truncate">{user?.nama || 'Administrator'}</p>
-                                        <p className="text-xs text-gray-400 mt-1 truncate">{user?.email}</p>
-                                    </div>
-
-                                    <Link
-                                        to="/member"
-                                        className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary-600"
-                                        onClick={() => setIsProfileOpen(false)}
-                                    >
-                                        <User className="w-4 h-4" /> Member Area
-                                    </Link>
-                                    <Link
-                                        to="/admin/settings"
-                                        className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary-600"
-                                        onClick={() => setIsProfileOpen(false)}
-                                    >
-                                        <Settings className="w-4 h-4" /> Pengaturan Akun
-                                    </Link>
-
-                                    <div className="h-px bg-gray-100 my-1" />
-
-                                    <button
-                                        onClick={handleLogout}
-                                        className="flex w-full items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                                    >
-                                        <LogOut className="w-4 h-4" /> Logout
-                                    </button>
+                            {/* Desktop Right: User Dropdown (Non-clickable, Custom Style) */}
+                            <div className="hidden md:flex items-center gap-3 ml-4 bg-white rounded-lg p-1 pr-3">
+                                <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-lg">
+                                    {user?.nama?.charAt(0).toUpperCase() || 'A'}
                                 </div>
-                            )}
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-bold text-gray-900 leading-tight">{user?.nama || 'Administrator MGMP'}</span>
+                                    <span className="text-xs text-gray-500">Super Admin</span>
+                                </div>
+                                <div className="ml-2">
+                                    <Users className="w-4 h-4 text-gray-400" />
+                                    {/* Icon placeholder as per request for visual, though not clickable */}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </header>

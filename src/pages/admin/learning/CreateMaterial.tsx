@@ -23,7 +23,7 @@ export function CreateMaterial() {
             type: 'cp',
             mapel: 'Informatika',
             semester: 1,
-            is_premium: false
+            is_premium: true
         }
     });
 
@@ -142,15 +142,7 @@ export function CreateMaterial() {
                         </div>
                     )}
 
-                    <div className="flex items-center gap-2">
-                        <input
-                            type="checkbox"
-                            id="is_premium"
-                            {...register('is_premium')}
-                            className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                        />
-                        <label htmlFor="is_premium" className="text-sm text-gray-700">Set sebagai Konten Premium (Hanya untuk Member)</label>
-                    </div>
+// Premium checkbox removed, assumed premium by default
 
                     <div className="pt-4 border-t border-gray-100 flex justify-end gap-3">
                         <Button type="button" variant="outline" onClick={() => navigate(-1)}>Batal</Button>
