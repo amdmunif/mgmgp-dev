@@ -379,74 +379,78 @@ export function Register() {
                 </div>
             </div>
 
+        </div>
+    );
+}
+
 const inputClasses = (error: any, hasRightIcon: boolean = false) => `
             block w-full rounded-xl border bg-white shadow-sm transition-all duration-200
             py-3 px-4 text-sm font-medium text-gray-900 placeholder-gray-400
             focus:border-primary-500 focus:ring-2 focus:ring-primary-100 focus:outline-none
             ${hasRightIcon ? 'pr-11' : ''}
             ${error
-                ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
-                : 'border-gray-200 hover:border-gray-300'
-            }
+        ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
+        : 'border-gray-200 hover:border-gray-300'
+    }
             `;
 
-            const labelClasses = "block text-sm font-semibold text-gray-700 mb-1.5 ml-0.5";
-            const errorClasses = "mt-1.5 text-xs text-red-500 font-medium ml-1 flex items-center animate-in slide-in-from-top-1";
+const labelClasses = "block text-sm font-semibold text-gray-700 mb-1.5 ml-0.5";
+const errorClasses = "mt-1.5 text-xs text-red-500 font-medium ml-1 flex items-center animate-in slide-in-from-top-1";
 
-            function FormInput({label, register, name, error, className = "", required = false, rightIcon, ...props }: any) {
+function FormInput({ label, register, name, error, className = "", required = false, rightIcon, ...props }: any) {
     return (
-            <div className={`space-y-0.5 ${className}`}>
-                <label className={labelClasses}>
-                    {label} {required && <span className="text-red-500">*</span>}
-                </label>
-                <div className="relative group">
-                    <input
-                        {...register(name)}
-                        {...props}
-                        className={inputClasses(error, !!rightIcon)}
-                    />
-                    {rightIcon && (
-                        <div className="absolute inset-y-0 right-0 pr-3 flex items-center justify-center pointer-events-none group-focus-within:text-primary-500 text-gray-400 transition-colors">
-                            {rightIcon}
-                        </div>
-                    )}
-                </div>
-                {error && (
-                    <p className={errorClasses}>
-                        <AlertCircle className="w-3 h-3 mr-1" />
-                        {error.message}
-                    </p>
+        <div className={`space-y-0.5 ${className}`}>
+            <label className={labelClasses}>
+                {label} {required && <span className="text-red-500">*</span>}
+            </label>
+            <div className="relative group">
+                <input
+                    {...register(name)}
+                    {...props}
+                    className={inputClasses(error, !!rightIcon)}
+                />
+                {rightIcon && (
+                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center justify-center pointer-events-none group-focus-within:text-primary-500 text-gray-400 transition-colors">
+                        {rightIcon}
+                    </div>
                 )}
             </div>
-            );
+            {error && (
+                <p className={errorClasses}>
+                    <AlertCircle className="w-3 h-3 mr-1" />
+                    {error.message}
+                </p>
+            )}
+        </div>
+    );
 }
 
-            function FormSelect({label, register, name, error, options, placeholder = "Pilih...", required = false}: any) {
+function FormSelect({ label, register, name, error, options, placeholder = "Pilih...", required = false }: any) {
     return (
-            <div className="space-y-0.5">
-                <label className={labelClasses}>
-                    {label} {required && <span className="text-red-500">*</span>}
-                </label>
-                <div className="relative">
-                    <select
-                        {...register(name)}
-                        className={`${inputClasses(error, true)} appearance-none cursor-pointer`}
-                    >
-                        <option value="">{placeholder}</option>
-                        {options.map((opt: string) => (
-                            <option key={opt} value={opt}>{opt}</option>
-                        ))}
-                    </select>
-                    <div className="absolute inset-y-0 right-0 px-3 flex items-center pointer-events-none text-gray-400">
-                        <ChevronDown className="w-4 h-4" />
-                    </div>
+        <div className="space-y-0.5">
+            <label className={labelClasses}>
+                {label} {required && <span className="text-red-500">*</span>}
+            </label>
+            <div className="relative">
+                <select
+                    {...register(name)}
+                    className={`${inputClasses(error, true)} appearance-none cursor-pointer`}
+                >
+                    <option value="">{placeholder}</option>
+                    {options.map((opt: string) => (
+                        <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                </select>
+                <div className="absolute inset-y-0 right-0 px-3 flex items-center pointer-events-none text-gray-400">
+                    <ChevronDown className="w-4 h-4" />
                 </div>
-                {error && (
-                    <p className={errorClasses}>
-                        <AlertCircle className="w-3 h-3 mr-1" />
-                        {error.message}
-                    </p>
-                )}
             </div>
-            );
+            {error && (
+                <p className={errorClasses}>
+                    <AlertCircle className="w-3 h-3 mr-1" />
+                    {error.message}
+                </p>
+            )}
+        </div>
+    );
 }
