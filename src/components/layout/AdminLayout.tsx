@@ -83,43 +83,48 @@ export function AdminLayout() {
         navigate('/login');
     };
 
-    const menuItems = [
-        { icon: LayoutDashboard, label: 'Dashboard', path: '/admin' },
-        { icon: BookOpen, label: 'Perangkat Ajar', path: '/admin/learning' },
-        { icon: FileText, label: 'Bank Soal', path: '/admin/questions' },
-        { icon: Gamepad2, label: 'Bank Games', path: '/admin/games' },
-        { icon: Terminal, label: 'Prompt Library', path: '/admin/prompts' },
-        { icon: Book, label: 'Referensi', path: '/admin/references' },
-        { icon: Users, label: 'Data Anggota', path: '/admin/members' },
-        { icon: Calendar, label: 'Agenda Event', path: '/admin/events' },
-        { icon: Crown, label: 'Premium', path: '/admin/premium' },
-        { icon: FileText, label: 'Surat', path: '/admin/letters' },
-        { icon: Globe, label: 'Website', path: '/admin/web-settings' },
-        { icon: Settings, label: 'Akun Admin', path: '/admin/settings' },
+    const menuGroups = [
+        {
+            title: "Menu Anggota",
+            items: [
+                { icon: Book, label: 'Referensi CP/TP', path: '/admin/references' },
+            ]
+        },
+        {
+            title: "Fitur Premium",
+            items: [
+                { icon: FileText, label: 'Bank Soal', path: '/admin/questions' },
+                { icon: Gamepad2, label: 'Bank Games', path: '/admin/games' },
+                { icon: Terminal, label: 'Prompt Library', path: '/admin/prompts' },
+            ]
+        },
+        {
+            title: "Manajemen Konten",
+            items: [
+                { icon: Calendar, label: 'Acara & Kegiatan', path: '/admin/events' },
+                { icon: FileText, label: 'Berita', path: '/admin/news' },
+            ]
+        },
+        {
+            title: "Administrasi",
+            items: [
+                { icon: FileText, label: 'Generator Surat', path: '/admin/letters' },
+                { icon: BookOpen, label: 'Kelola Pembelajaran', path: '/admin/learning' },
+            ]
+        },
+        {
+            title: "Sistem",
+            items: [
+                { icon: LayoutDashboard, label: 'Dashboard', path: '/admin' },
+                { icon: Users, label: 'Kelola Anggota', path: '/admin/members' },
+                { icon: Crown, label: 'Kelola Langganan', path: '/admin/premium' },
+                { icon: Globe, label: 'Pengaturan Web', path: '/admin/web-settings' },
+                { icon: Settings, label: 'Akun Admin', path: '/admin/settings' },
+            ]
+        }
     ];
 
     if (!user) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
-
-    const UserProfileSection = ({ mobile = false }) => (
-        <div className={cn("flex items-center gap-3", mobile ? "w-full p-4 bg-gray-800 rounded-lg mb-4" : "")}>
-            <div className="relative">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold border-2 border-white/10 shadow-sm overflow-hidden shrink-0">
-                    <span>{user?.email?.charAt(0).toUpperCase()}</span>
-                </div>
-            </div>
-
-            <div className={cn("flex-1 min-w-0", mobile ? "block" : "hidden md:block")}>
-                <p className={cn("text-sm font-bold truncate", mobile ? "text-white" : "text-gray-900")}>{user?.nama || 'Administrator'}</p>
-                {!mobile && <p className="text-xs text-gray-500">Super Admin</p>}
-                {mobile && <p className="text-xs text-gray-400">Manage System</p>}
-            </div>
-
-            {/* Dropdown Trigger for Desktop */}
-            {!mobile && (
-                <Users className="w-4 h-4 text-gray-500" />
-            )}
-        </div>
-    );
 
     return (
         <div className="min-h-screen bg-gray-50/50 flex flex-col md:flex-row">
@@ -133,11 +138,11 @@ export function AdminLayout() {
 
             {/* Sidebar */}
             <aside className={cn(
-                "fixed md:static inset-y-0 left-0 z-50 w-72 bg-slate-900 text-white transition-transform duration-300 ease-in-out transform flex flex-col shadow-2xl",
+                "fixed md:static inset-y-0 left-0 z-50 w-72 bg-slate-900 text-white transition-transform duration-300 ease-in-out transform flex flex-col shadow-2xl h-screen",
                 isSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
             )}>
                 {/* Sidebar Header */}
-                <div className="h-20 flex items-center px-6 border-b border-slate-800 bg-slate-900">
+                <div className="h-20 flex items-center px-6 border-b border-slate-800 bg-slate-900 shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
                             <Crown className="w-5 h-5" />
@@ -153,44 +158,53 @@ export function AdminLayout() {
                 </div>
 
                 {/* Navigation */}
-                <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto scrollbar-hide">
+                <nav className="flex-1 px-4 py-6 space-y-6 overflow-y-auto scrollbar-hide">
                     {/* Mobile Only Profile */}
                     <div className="md:hidden">
                         <UserProfileSection mobile={true} />
                     </div>
 
-                    <p className="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Menu Utama</p>
-                    {menuItems.map((item) => {
-                        const isActive = location.pathname === item.path;
-                        return (
-                            <Link
-                                key={item.path}
-                                to={item.path}
-                                className={cn(
-                                    "flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-200 group relative overflow-hidden",
-                                    isActive
-                                        ? "bg-blue-600 text-white shadow-lg shadow-blue-900/20"
-                                        : "text-slate-400 hover:bg-slate-800 hover:text-white"
-                                )}
-                                onClick={() => setIsSidebarOpen(false)}
-                            >
-                                <item.icon className={cn(
-                                    "w-5 h-5 transition-transform duration-300",
-                                    isActive ? "scale-110" : "group-hover:scale-110"
-                                )} />
-                                <span className="font-medium text-sm tracking-wide flex-1">{item.label}</span>
-                                {item.path === '/admin/members' && badges.members > 0 && (
-                                    <span className="bg-blue-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">{badges.members}</span>
-                                )}
-                                {item.path === '/admin/premium' && badges.premium > 0 && (
-                                    <span className="bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">{badges.premium}</span>
-                                )}
-                                {isActive && (
-                                    <div className="absolute inset-y-0 right-0 w-1 bg-white/20 rounded-l-full" />
-                                )}
-                            </Link>
-                        );
-                    })}
+                    {menuGroups.map((group, groupIndex) => (
+                        <div key={groupIndex}>
+                            <p className="px-4 text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{group.title}</p>
+                            <div className="space-y-1">
+                                {group.items.map((item) => {
+                                    const isActive = location.pathname === item.path;
+                                    return (
+                                        <Link
+                                            key={item.path}
+                                            to={item.path}
+                                            className={cn(
+                                                "flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200 group relative overflow-hidden",
+                                                isActive
+                                                    ? "bg-blue-600/10 text-blue-400 font-semibold"
+                                                    : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                                            )}
+                                            onClick={() => setIsSidebarOpen(false)}
+                                        >
+                                            <item.icon className={cn(
+                                                "w-5 h-5 transition-transform duration-300",
+                                                isActive ? "text-blue-500 scale-110" : "group-hover:text-white group-hover:scale-110"
+                                            )} />
+                                            <span className="text-sm tracking-wide flex-1">{item.label}</span>
+
+                                            {item.path === '/admin/members' && badges.members > 0 && (
+                                                <span className="bg-blue-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">{badges.members}</span>
+                                            )}
+                                            {item.path === '/admin/premium' && badges.premium > 0 && (
+                                                <span className="bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">{badges.premium}</span>
+                                            )}
+
+                                            {isActive && (
+                                                <div className="absolute inset-y-0 left-0 w-1 bg-blue-500 rounded-r-full" />
+                                            )}
+                                        </Link>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    ))}
+
                     <button
                         onClick={handleLogout}
                         className="md:hidden flex items-center gap-3 px-4 py-3.5 w-full text-red-400 hover:bg-slate-800 rounded-xl mt-4"
@@ -198,6 +212,12 @@ export function AdminLayout() {
                         <LogOut className="w-5 h-5" />
                         <span className="font-medium text-sm">Logout</span>
                     </button>
+
+                    <div className="pt-6 pb-2 text-center md:text-left px-4">
+                        <p className="text-[10px] text-slate-600">
+                            &copy; {new Date().getFullYear()} MGMP Informatika
+                        </p>
+                    </div>
                 </nav>
             </aside>
 
@@ -225,7 +245,14 @@ export function AdminLayout() {
 
                             <div className="hidden md:block">
                                 <h1 className="text-xl font-bold text-gray-800 tracking-tight">
-                                    {menuItems.find(i => i.path === location.pathname)?.label || 'Dashboard'}
+                                    {(() => {
+                                        let activeLabel = 'Dashboard';
+                                        menuGroups.forEach(group => {
+                                            const item = group.items.find(i => i.path === location.pathname);
+                                            if (item) activeLabel = item.label;
+                                        });
+                                        return activeLabel;
+                                    })()}
                                 </h1>
                                 <p className="text-sm text-gray-400 font-medium">Selamat Datang di Panel Admin MGMP</p>
                             </div>
