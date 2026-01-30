@@ -56,14 +56,28 @@ export function PromptLibrary() {
                                 <h3 className="text-lg font-bold text-gray-900 mb-2">{item.title}</h3>
                                 <p className="text-gray-600 text-sm mb-4">{item.description}</p>
 
-                                <div className="bg-gray-900 rounded-lg p-4 relative group">
-                                    <pre className="text-gray-300 font-mono text-sm whitespace-pre-wrap">{item.prompt_content}</pre>
-                                    <button
-                                        onClick={() => handleCopy(item.prompt_content, item.id)}
-                                        className="absolute top-2 right-2 p-2 bg-gray-800 text-gray-400 rounded-md hover:bg-gray-700 hover:text-white opacity-0 group-hover:opacity-100 transition-all"
-                                    >
-                                        {copiedId === item.id ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
-                                    </button>
+                                <div className="space-y-4">
+                                    <div>
+                                        <p className="text-xs font-semibold text-gray-500 uppercase mb-1">Prompt:</p>
+                                        <div className="bg-gray-900 rounded-lg p-4 relative group">
+                                            <pre className="text-gray-300 font-mono text-sm whitespace-pre-wrap">{item.prompt_content}</pre>
+                                            <button
+                                                onClick={() => handleCopy(item.prompt_content, item.id)}
+                                                className="absolute top-2 right-2 p-2 bg-gray-800 text-gray-400 rounded-md hover:bg-gray-700 hover:text-white opacity-0 group-hover:opacity-100 transition-all"
+                                            >
+                                                {copiedId === item.id ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {item.example_result && (
+                                        <div>
+                                            <p className="text-xs font-semibold text-gray-500 uppercase mb-1">Contoh Hasil:</p>
+                                            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 text-sm text-gray-700 whitespace-pre-wrap">
+                                                {item.example_result}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>

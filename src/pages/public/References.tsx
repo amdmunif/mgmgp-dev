@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Book, Globe, Gamepad2, ExternalLink } from 'lucide-react';
+import { Book, Globe, Gamepad2, ExternalLink, Search } from 'lucide-react';
 import { referenceService } from '../../services/resourcesService';
 import type { Reference } from '../../types';
 
 export function References() {
     const [refs, setRefs] = useState<Reference[]>([]);
     const [loading, setLoading] = useState(true);
+    const [search, setSearch] = useState('');
 
     useEffect(() => {
         loadData();
@@ -31,17 +32,33 @@ export function References() {
         }
     };
 
+    const filteredRefs = refs.filter(r =>
+        r.title.toLowerCase().includes(search.toLowerCase()) ||
+        r.type.toLowerCase().includes(search.toLowerCase())
+    );
+
     return (
-        <div className="max-w-screen-xl mx-auto px-4 py-8">
-            <div className="text-center mb-12">
+        <div className="max-w-screen-xl mx-auto px-4 py-8 animate-in fade-in duration-500">
+            <div className="text-center mb-8">
                 <h1 className="text-3xl font-bold text-gray-900">Bank Referensi</h1>
                 <p className="text-gray-500 mt-2">Buku digital, simulator interaktif, dan game edukasi terkurasi.</p>
+            </div>
+
+            <div className="max-w-md mx-auto mb-10 relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input
+                    type="text"
+                    placeholder="Cari referensi (Buku, Simulator)..."
+                    className="pl-12 w-full rounded-full border border-gray-200 py-3 shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {loading ? (
                     <div className="col-span-full text-center py-20 text-gray-500">Memuat referensi...</div>
-                ) : refs.length === 0 ? (
+                ) : filteredRefs.length === 0 ? (
                     <div className="col-span-full text-center py-20 bg-gray-50 rounded-xl">
                         <Book className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                         <p className="text-gray-500">Belum ada referensi tersedia.</p>

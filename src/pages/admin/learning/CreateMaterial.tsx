@@ -85,7 +85,7 @@ export function CreateMaterial() {
                             >
                                 <option value="cp">Capaian Pembelajaran (CP)</option>
                                 <option value="tp">Tujuan Pembelajaran (TP)</option>
-                                <option value="rpp">Modul Ajar / RPP</option>
+                                <option value="rpp">Modul Ajar</option>
                                 <option value="slide">Slide Presentasi</option>
                                 <option value="modul">Bahan Bacaan / E-Book</option>
                             </select>
@@ -98,7 +98,6 @@ export function CreateMaterial() {
                                 className="w-full rounded-md border border-gray-300 py-2 px-3 focus:ring-2 focus:ring-primary-500"
                             >
                                 <option value="Informatika">Informatika</option>
-                                <option value="Prakarya">Prakarya</option>
                                 <option value="KKA">KKA</option>
                             </select>
                         </div>
@@ -113,9 +112,6 @@ export function CreateMaterial() {
                                 <option value="7">Kelas 7</option>
                                 <option value="8">Kelas 8</option>
                                 <option value="9">Kelas 9</option>
-                                <option value="10">Kelas 10</option>
-                                <option value="11">Kelas 11</option>
-                                <option value="12">Kelas 12</option>
                             </select>
                         </div>
                     </div>

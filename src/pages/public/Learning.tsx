@@ -71,7 +71,7 @@ export function Learning() {
                     )}
                 >
                     <Presentation className="w-4 h-4" />
-                    Perangkat Ajar (RPP/Modul)
+                    Modul Ajar
                     {activeTab === 'rpp' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary-600"></div>}
                 </button>
             </div>

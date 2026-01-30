@@ -4,6 +4,7 @@ export interface Profile {
     role: 'Admin' | 'Pengurus' | 'Anggota';
     email: string;
     avatar_url?: string;
+    premium_until?: string | null;
 }
 
 export interface NewsArticle {
@@ -65,6 +66,19 @@ export interface Prompt {
     prompt_content: string;
     category: string;
     tags: string[];
+    example_result?: string;
+    example_type?: 'text' | 'image' | 'link';
+    is_premium: boolean;
+    created_at: string;
+}
+
+export interface Game {
+    id: string;
+    title: string;
+    description: string;
+    link_url: string;
+    image_url?: string;
+    plays_count: number;
     is_premium: boolean;
     created_at: string;
 }
