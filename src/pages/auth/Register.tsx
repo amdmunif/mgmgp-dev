@@ -5,7 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
     Loader2, Upload, AlertCircle, CheckCircle2,
     User, Lock, Briefcase,
-    BookOpen, ChevronRight, ChevronLeft, Check
+    BookOpen, ChevronRight, ChevronLeft, Check, Eye, EyeOff, ChevronDown
 } from 'lucide-react';
 import { authService } from '../../services/authService';
 import { Button } from '../../components/ui/button';
@@ -24,6 +24,10 @@ export function Register() {
     const [serverError, setServerError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
     const [currentStep, setCurrentStep] = useState(1);
+
+    // Password visibility states
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const {
         register,
@@ -49,7 +53,6 @@ export function Register() {
         switch (step) {
             case 1:
                 fieldsToValidate = ['nama', 'no_hp', 'ukuran_baju'];
-                // gelar is optional, so we don't strictly need to block if it's empty, but trigger will handle it based on schema
                 break;
             case 2:
                 fieldsToValidate = ['asal_sekolah', 'status_kepegawaian', 'pendidikan_terakhir', 'jurusan'];
@@ -59,7 +62,6 @@ export function Register() {
                 break;
             case 4:
                 fieldsToValidate = ['email', 'password', 'confirmPassword'];
-                // foto_profil is optional in schema for now
                 break;
         }
 
@@ -137,8 +139,8 @@ export function Register() {
     }
 
     return (
-        <div className="flex-grow flex items-center justify-center bg-gray-50 p-4">
-            <div className="w-full max-w-3xl">
+        <div className="flex-grow flex items-center justify-center bg-gray-50 p-4 min-h-[calc(100vh-64px)]">
+            <div className="w-full max-w-3xl my-8">
 
                 {/* Header Text */}
                 <div className="text-center mb-8">
@@ -180,12 +182,12 @@ export function Register() {
                 </div>
 
                 {/* Main Card */}
-                <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 relative">
+                <div className="bg-white rounded-2xl shadow-xl overflow-visible border border-gray-100 relative">
                     {/* Decorative Top Line */}
-                    <div className="h-1.5 w-full bg-gradient-to-r from-primary-500 via-primary-600 to-primary-700"></div>
+                    <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-primary-500 via-primary-600 to-primary-700 rounded-t-2xl"></div>
 
                     {serverError && (
-                        <div className="mx-8 mt-8 p-4 bg-red-50 border border-red-100 rounded-xl flex items-start text-red-700">
+                        <div className="mx-6 sm:mx-10 mt-8 p-4 bg-red-50 border border-red-100 rounded-xl flex items-start text-red-700 animate-in slide-in-from-top-2">
                             <AlertCircle className="w-5 h-5 mr-3 mt-0.5 flex-shrink-0" />
                             <p className="text-sm">{serverError}</p>
                         </div>
@@ -194,7 +196,7 @@ export function Register() {
                     <form onSubmit={handleSubmit(onSubmit, (errors) => console.log("Validation Errors:", errors))} className="p-6 md:p-10">
                         {/* Step 1: Identitas */}
                         <div className={currentStep === 1 ? 'block animate-in fade-in slide-in-from-right-4 duration-300' : 'hidden'}>
-                            <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                            <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center border-b pb-4">
                                 <User className="mr-2 text-primary-600" /> Identitas Diri
                             </h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -205,10 +207,13 @@ export function Register() {
                                 <FormInput label="No. WhatsApp" placeholder="08xxxx" register={register} name="no_hp" error={errors.no_hp} required />
                                 <div>
                                     <label className="form-label">Ukuran Baju <span className="text-red-500">*</span></label>
-                                    <select {...register('ukuran_baju')} className={`form-select ${errors.ukuran_baju ? 'border-red-500' : ''}`}>
-                                        <option value="">Pilih Ukuran</option>
-                                        {['S', 'M', 'L', 'XL', 'XXL', 'XXXL'].map(s => <option key={s} value={s}>{s}</option>)}
-                                    </select>
+                                    <div className="relative">
+                                        <select {...register('ukuran_baju')} className={`form-select ${errors.ukuran_baju ? 'border-red-500' : ''}`}>
+                                            <option value="">Pilih Ukuran</option>
+                                            {['S', 'M', 'L', 'XL', 'XXL', 'XXXL'].map(s => <option key={s} value={s}>{s}</option>)}
+                                        </select>
+                                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none w-4 h-4" />
+                                    </div>
                                     {errors.ukuran_baju && <p className="form-error">{errors.ukuran_baju.message}</p>}
                                 </div>
                             </div>
@@ -216,7 +221,7 @@ export function Register() {
 
                         {/* Step 2: Profesi */}
                         <div className={currentStep === 2 ? 'block animate-in fade-in slide-in-from-right-4 duration-300' : 'hidden'}>
-                            <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                            <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center border-b pb-4">
                                 <Briefcase className="mr-2 text-primary-600" /> Data Profesi
                             </h2>
                             <div className="grid grid-cols-1 gap-6">
@@ -224,18 +229,24 @@ export function Register() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
                                         <label className="form-label">Status Kepegawaian <span className="text-red-500">*</span></label>
-                                        <select {...register('status_kepegawaian')} className={`form-select ${errors.status_kepegawaian ? 'border-red-500' : ''}`}>
-                                            <option value="">Pilih Status</option>
-                                            {['PNS', 'PPPK', 'GTY', 'GTT', 'Honorer', 'Lainnya'].map(s => <option key={s} value={s}>{s}</option>)}
-                                        </select>
+                                        <div className="relative">
+                                            <select {...register('status_kepegawaian')} className={`form-select ${errors.status_kepegawaian ? 'border-red-500' : ''}`}>
+                                                <option value="">Pilih Status</option>
+                                                {['PNS', 'PPPK', 'GTY', 'GTT', 'Honorer', 'Lainnya'].map(s => <option key={s} value={s}>{s}</option>)}
+                                            </select>
+                                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none w-4 h-4" />
+                                        </div>
                                         {errors.status_kepegawaian && <p className="form-error">{errors.status_kepegawaian.message}</p>}
                                     </div>
                                     <div>
                                         <label className="form-label">Pendidikan Terakhir <span className="text-red-500">*</span></label>
-                                        <select {...register('pendidikan_terakhir')} className={`form-select ${errors.pendidikan_terakhir ? 'border-red-500' : ''}`}>
-                                            <option value="">Pilih Jenjang</option>
-                                            {['D3', 'S1', 'S2', 'S3'].map(p => <option key={p} value={p}>{p}</option>)}
-                                        </select>
+                                        <div className="relative">
+                                            <select {...register('pendidikan_terakhir')} className={`form-select ${errors.pendidikan_terakhir ? 'border-red-500' : ''}`}>
+                                                <option value="">Pilih Jenjang</option>
+                                                {['D3', 'S1', 'S2', 'S3'].map(p => <option key={p} value={p}>{p}</option>)}
+                                            </select>
+                                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none w-4 h-4" />
+                                        </div>
                                         {errors.pendidikan_terakhir && <p className="form-error">{errors.pendidikan_terakhir.message}</p>}
                                     </div>
                                 </div>
@@ -245,7 +256,7 @@ export function Register() {
 
                         {/* Step 3: Mengajar */}
                         <div className={currentStep === 3 ? 'block animate-in fade-in slide-in-from-right-4 duration-300' : 'hidden'}>
-                            <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                            <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center border-b pb-4">
                                 <BookOpen className="mr-2 text-primary-600" /> Informasi Mengajar
                             </h2>
                             <div className="space-y-6">
@@ -282,14 +293,41 @@ export function Register() {
 
                         {/* Step 4: Akun */}
                         <div className={currentStep === 4 ? 'block animate-in fade-in slide-in-from-right-4 duration-300' : 'hidden'}>
-                            <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                            <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center border-b pb-4">
                                 <Lock className="mr-2 text-primary-600" /> Akun & Keamanan
                             </h2>
                             <div className="space-y-5">
                                 <FormInput label="Email" type="email" placeholder="email@sekolah.sch.id" register={register} name="email" error={errors.email} required autoFocus />
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                    <FormInput label="Password" type="password" placeholder="Min 8 karakter" register={register} name="password" error={errors.password} required />
-                                    <FormInput label="Ulangi Password" type="password" placeholder="Ketik ulang" register={register} name="confirmPassword" error={errors.confirmPassword} required />
+                                    <FormInput
+                                        label="Password"
+                                        type={showPassword ? "text" : "password"}
+                                        placeholder="Min 8 karakter"
+                                        register={register}
+                                        name="password"
+                                        error={errors.password}
+                                        required
+
+                                        rightIcon={
+                                            <button type="button" onClick={() => setShowPassword(!showPassword)} className="text-gray-400 hover:text-gray-600 focus:outline-none">
+                                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                            </button>
+                                        }
+                                    />
+                                    <FormInput
+                                        label="Ulangi Password"
+                                        type={showConfirmPassword ? "text" : "password"}
+                                        placeholder="Ketik ulang"
+                                        register={register}
+                                        name="confirmPassword"
+                                        error={errors.confirmPassword}
+                                        required
+                                        rightIcon={
+                                            <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="text-gray-400 hover:text-gray-600 focus:outline-none">
+                                                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                            </button>
+                                        }
+                                    />
                                 </div>
 
                                 <div className="mt-4 pt-4 border-t border-gray-100">
@@ -346,26 +384,35 @@ export function Register() {
                     @apply block text-sm font-semibold text-primary-900 mb-1.5;
                 }
                 .form-select {
-                    @apply block w-full rounded-lg border-gray-300 bg-white text-gray-900 shadow-sm focus:border-primary-500 focus:ring-primary-500 py-2.5 sm:text-sm appearance-none;
-                    /* Custom arrow could be added here if needed, but standard appearance-none + bg-image is better done via utility or plugin */
+                    @apply block w-full rounded-lg border-gray-300 bg-white text-gray-900 shadow-sm focus:border-primary-500 focus:ring-primary-500 py-2.5 sm:text-sm appearance-none pr-10 cursor-pointer;
                 }
                 .form-error {
-                    @apply mt-1 text-xs text-red-500 font-medium ml-1;
+                    @apply mt-1 text-xs text-red-500 font-medium ml-1 flex items-center;
                 }
             `}</style>
         </div>
     );
 }
 
-function FormInput({ label, register, name, error, className = "", required = false, ...props }: any) {
+function FormInput({ label, register, name, error, className = "", required = false, rightIcon, ...props }: any) {
     return (
         <div className={className}>
             <label className="form-label">{label} {required && <span className="text-red-500">*</span>}</label>
-            <input
-                {...register(name)}
-                {...props}
-                className={`block w-full rounded-lg border-gray-300 bg-white shadow-sm focus:border-primary-500 focus:ring-primary-500 py-2.5 px-3 sm:text-sm transition-all text-gray-900 placeholder-gray-400 ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : 'hover:border-gray-400'}`}
-            />
+            <div className="relative">
+                <input
+                    {...register(name)}
+                    {...props}
+                    className={`block w-full rounded-lg border-gray-300 bg-white shadow-sm focus:border-primary-500 focus:ring-primary-500 py-2.5 px-3 sm:text-sm transition-all text-gray-900 placeholder-gray-400 
+                    ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : 'hover:border-gray-400'}
+                    ${rightIcon ? 'pr-10' : ''}
+                    `}
+                />
+                {rightIcon && (
+                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                        {rightIcon}
+                    </div>
+                )}
+            </div>
             {error && <p className="form-error">{error.message}</p>}
         </div>
     );
