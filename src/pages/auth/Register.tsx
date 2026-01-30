@@ -206,15 +206,15 @@ export function Register() {
                                 <FormInput label="Gelar" placeholder="Contoh: S.Kom" register={register} name="gelar" error={errors.gelar} />
                                 <FormInput label="No. WhatsApp" placeholder="08xxxx" register={register} name="no_hp" error={errors.no_hp} required />
                                 <div>
-                                    <label className="form-label">Ukuran Baju <span className="text-red-500">*</span></label>
-                                    <div className="relative">
-                                        <select {...register('ukuran_baju')} className={`form-select ${errors.ukuran_baju ? 'border-red-500' : ''}`}>
-                                            <option value="">Pilih Ukuran</option>
-                                            {['S', 'M', 'L', 'XL', 'XXL', 'XXXL'].map(s => <option key={s} value={s}>{s}</option>)}
-                                        </select>
-                                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none w-4 h-4" />
-                                    </div>
-                                    {errors.ukuran_baju && <p className="form-error">{errors.ukuran_baju.message}</p>}
+                                    <FormSelect
+                                        label="Ukuran Baju"
+                                        name="ukuran_baju"
+                                        register={register}
+                                        error={errors.ukuran_baju}
+                                        required
+                                        options={['S', 'M', 'L', 'XL', 'XXL', 'XXXL']}
+                                        placeholder="Pilih Ukuran"
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -228,26 +228,26 @@ export function Register() {
                                 <FormInput label="Asal Sekolah" placeholder="Nama Sekolah" register={register} name="asal_sekolah" error={errors.asal_sekolah} required autoFocus />
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
-                                        <label className="form-label">Status Kepegawaian <span className="text-red-500">*</span></label>
-                                        <div className="relative">
-                                            <select {...register('status_kepegawaian')} className={`form-select ${errors.status_kepegawaian ? 'border-red-500' : ''}`}>
-                                                <option value="">Pilih Status</option>
-                                                {['PNS', 'PPPK', 'GTY', 'GTT', 'Honorer', 'Lainnya'].map(s => <option key={s} value={s}>{s}</option>)}
-                                            </select>
-                                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none w-4 h-4" />
-                                        </div>
-                                        {errors.status_kepegawaian && <p className="form-error">{errors.status_kepegawaian.message}</p>}
+                                        <FormSelect
+                                            label="Status Kepegawaian"
+                                            name="status_kepegawaian"
+                                            register={register}
+                                            error={errors.status_kepegawaian}
+                                            required
+                                            options={['PNS', 'PPPK', 'GTY', 'GTT', 'Honorer', 'Lainnya']}
+                                            placeholder="Pilih Status"
+                                        />
                                     </div>
                                     <div>
-                                        <label className="form-label">Pendidikan Terakhir <span className="text-red-500">*</span></label>
-                                        <div className="relative">
-                                            <select {...register('pendidikan_terakhir')} className={`form-select ${errors.pendidikan_terakhir ? 'border-red-500' : ''}`}>
-                                                <option value="">Pilih Jenjang</option>
-                                                {['D3', 'S1', 'S2', 'S3'].map(p => <option key={p} value={p}>{p}</option>)}
-                                            </select>
-                                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none w-4 h-4" />
-                                        </div>
-                                        {errors.pendidikan_terakhir && <p className="form-error">{errors.pendidikan_terakhir.message}</p>}
+                                        <FormSelect
+                                            label="Pendidikan Terakhir"
+                                            name="pendidikan_terakhir"
+                                            register={register}
+                                            error={errors.pendidikan_terakhir}
+                                            required
+                                            options={['D3', 'S1', 'S2', 'S3']}
+                                            placeholder="Pilih Jenjang"
+                                        />
                                     </div>
                                 </div>
                                 <FormInput label="Jurusan Pendidikan" placeholder="Contoh: Pend. TIK" register={register} name="jurusan" error={errors.jurusan} required />
@@ -379,41 +379,74 @@ export function Register() {
                 </div>
             </div>
 
-            <style>{`
-                .form-label {
-                    @apply block text-sm font-semibold text-primary-900 mb-1.5;
-                }
-                .form-select {
-                    @apply block w-full rounded-lg border-gray-300 bg-white text-gray-900 shadow-sm focus:border-primary-500 focus:ring-primary-500 py-2.5 sm:text-sm appearance-none pr-10 cursor-pointer;
-                }
-                .form-error {
-                    @apply mt-1 text-xs text-red-500 font-medium ml-1 flex items-center;
-                }
-            `}</style>
-        </div>
-    );
-}
+const inputClasses = (error: any, hasRightIcon: boolean = false) => `
+            block w-full rounded-xl border bg-white shadow-sm transition-all duration-200
+            py-3 px-4 text-sm font-medium text-gray-900 placeholder-gray-400
+            focus:border-primary-500 focus:ring-2 focus:ring-primary-100 focus:outline-none
+            ${hasRightIcon ? 'pr-11' : ''}
+            ${error
+                ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
+                : 'border-gray-200 hover:border-gray-300'
+            }
+            `;
 
-function FormInput({ label, register, name, error, className = "", required = false, rightIcon, ...props }: any) {
+            const labelClasses = "block text-sm font-semibold text-gray-700 mb-1.5 ml-0.5";
+            const errorClasses = "mt-1.5 text-xs text-red-500 font-medium ml-1 flex items-center animate-in slide-in-from-top-1";
+
+            function FormInput({label, register, name, error, className = "", required = false, rightIcon, ...props }: any) {
     return (
-        <div className={className}>
-            <label className="form-label">{label} {required && <span className="text-red-500">*</span>}</label>
-            <div className="relative">
-                <input
-                    {...register(name)}
-                    {...props}
-                    className={`block w-full rounded-lg border-gray-300 bg-white shadow-sm focus:border-primary-500 focus:ring-primary-500 py-2.5 px-3 sm:text-sm transition-all text-gray-900 placeholder-gray-400 
-                    ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : 'hover:border-gray-400'}
-                    ${rightIcon ? 'pr-10' : ''}
-                    `}
-                />
-                {rightIcon && (
-                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                        {rightIcon}
-                    </div>
+            <div className={`space-y-0.5 ${className}`}>
+                <label className={labelClasses}>
+                    {label} {required && <span className="text-red-500">*</span>}
+                </label>
+                <div className="relative group">
+                    <input
+                        {...register(name)}
+                        {...props}
+                        className={inputClasses(error, !!rightIcon)}
+                    />
+                    {rightIcon && (
+                        <div className="absolute inset-y-0 right-0 pr-3 flex items-center justify-center pointer-events-none group-focus-within:text-primary-500 text-gray-400 transition-colors">
+                            {rightIcon}
+                        </div>
+                    )}
+                </div>
+                {error && (
+                    <p className={errorClasses}>
+                        <AlertCircle className="w-3 h-3 mr-1" />
+                        {error.message}
+                    </p>
                 )}
             </div>
-            {error && <p className="form-error">{error.message}</p>}
-        </div>
-    );
+            );
+}
+
+            function FormSelect({label, register, name, error, options, placeholder = "Pilih...", required = false}: any) {
+    return (
+            <div className="space-y-0.5">
+                <label className={labelClasses}>
+                    {label} {required && <span className="text-red-500">*</span>}
+                </label>
+                <div className="relative">
+                    <select
+                        {...register(name)}
+                        className={`${inputClasses(error, true)} appearance-none cursor-pointer`}
+                    >
+                        <option value="">{placeholder}</option>
+                        {options.map((opt: string) => (
+                            <option key={opt} value={opt}>{opt}</option>
+                        ))}
+                    </select>
+                    <div className="absolute inset-y-0 right-0 px-3 flex items-center pointer-events-none text-gray-400">
+                        <ChevronDown className="w-4 h-4" />
+                    </div>
+                </div>
+                {error && (
+                    <p className={errorClasses}>
+                        <AlertCircle className="w-3 h-3 mr-1" />
+                        {error.message}
+                    </p>
+                )}
+            </div>
+            );
 }
