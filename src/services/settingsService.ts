@@ -2,6 +2,7 @@ import { api } from '../lib/api';
 
 export interface AppSettings {
     id: number;
+    // App Settings
     site_title: string;
     site_description?: string;
     logo_url?: string;
@@ -12,6 +13,30 @@ export interface AppSettings {
     bank_number?: string;
     bank_holder?: string;
     premium_price?: number;
+
+    // Site Content
+    home_hero_title?: string;
+    home_hero_subtitle?: string;
+    home_hero_image?: string;
+    profile_visi?: string;
+    profile_misi?: string;
+    profile_sejarah?: string;
+    profile_struktur?: string;
+    contact_address?: string; // Duplicate of address, but specific to contact page if needed
+    contact_phone?: string;
+    contact_email?: string;
+    contact_map_url?: string;
+    app_logo?: string; // Distinct from logo_url? often same.
+    kop_surat?: string;
+    ketua_nama?: string;
+    ketua_nip?: string;
+    ketua_signature_url?: string;
+    sekretaris_nama?: string;
+    sekretaris_nip?: string;
+    sekretaris_signature_url?: string;
+    mkks_nama?: string;
+    mkks_nip?: string;
+    mkks_signature_url?: string;
 }
 
 export const settingsService = {

@@ -83,6 +83,27 @@ export function AdminLayout() {
         navigate('/login');
     };
 
+    const UserProfileSection = ({ mobile = false }: { mobile?: boolean }) => (
+        <div className={cn("flex items-center gap-3", mobile ? "w-full p-4 bg-gray-800 rounded-lg mb-4" : "")}>
+            <div className="relative">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold border-2 border-white/10 shadow-sm overflow-hidden shrink-0">
+                    <span>{user?.email?.charAt(0).toUpperCase()}</span>
+                </div>
+            </div>
+
+            <div className={cn("flex-1 min-w-0", mobile ? "block" : "hidden md:block")}>
+                <p className={cn("text-sm font-bold truncate", mobile ? "text-white" : "text-gray-900")}>{user?.nama || 'Administrator'}</p>
+                {!mobile && <p className="text-xs text-gray-500">Super Admin</p>}
+                {mobile && <p className="text-xs text-gray-400">Manage System</p>}
+            </div>
+
+            {/* Dropdown Trigger for Desktop */}
+            {!mobile && (
+                <Users className="w-4 h-4 text-gray-500" />
+            )}
+        </div>
+    );
+
     const menuGroups = [
         {
             title: "Menu Anggota",

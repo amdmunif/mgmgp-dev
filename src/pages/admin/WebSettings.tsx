@@ -1,14 +1,19 @@
 import { useState, useEffect } from 'react';
 import { Button } from '../../components/ui/button';
-import { Loader2, Save, Globe, Building2, CreditCard } from 'lucide-react';
+import { Loader2, Save, Globe, Building2, UserPen, Upload, Trash2, Image as ImageIcon } from 'lucide-react';
 import { settingsService, type AppSettings } from '../../services/settingsService';
+import { FormInput } from '../../components/ui/VerifiedFormElements'; // Assuming we can use this or standard inputs
+import { useForm } from 'react-hook-form'; // Or just state for simplicity as there are many fields? 
+// Using simple state might be easier for this large form without complex validation logic yet.
 
 export function AdminWebSettings() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [settings, setSettings] = useState<AppSettings | null>(null);
-    const [logoFile, setLogoFile] = useState<File | null>(null);
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+    // File states
+    const [files, setFiles] = useState<{ [key: string]: File | null }>({});
+    const [previews, setPreviews] = useState<{ [key: string]: string | null }>({});
 
     useEffect(() => {
         loadSettings();
@@ -18,40 +23,10 @@ export function AdminWebSettings() {
         try {
             const data = await settingsService.getSettings();
             setSettings(data);
-            setPreviewUrl(data.logo_url || null);
         } catch (error) {
             console.error('Failed to load settings', error);
         } finally {
             setLoading(false);
-        }
-    }
-
-    async function handleSubmit(e: React.FormEvent) {
-        e.preventDefault();
-        if (!settings) return;
-
-        setSaving(true);
-        try {
-            let logo_url = settings.logo_url;
-
-            if (logoFile) {
-                logo_url = await settingsService.uploadLogo(logoFile);
-            }
-
-            await settingsService.updateSettings({
-                ...settings,
-                logo_url
-            });
-
-            // Force reload to update favicon immediately if changed
-            if (logoFile) {
-                window.location.reload();
-            }
-        } catch (error) {
-            console.error('Failed to save settings', error);
-            alert('Gagal menyimpan pengaturan');
-        } finally {
-            setSaving(false);
         }
     }
 
@@ -60,184 +35,381 @@ export function AdminWebSettings() {
         setSettings({ ...settings, [e.target.name]: e.target.value });
     };
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
-            setLogoFile(file);
-            setPreviewUrl(URL.createObjectURL(file));
+            setFiles(prev => ({ ...prev, [fieldName]: file }));
+            setPreviews(prev => ({ ...prev, [fieldName]: URL.createObjectURL(file) }));
         }
     };
 
-    if (loading) return <div className="p-8">Loading...</div>;
-    if (!settings) return <div className="p-8">Error loading settings</div>;
+    const removeFile = (fieldName: string) => {
+        setFiles(prev => ({ ...prev, [fieldName]: null }));
+        setPreviews(prev => ({ ...prev, [fieldName]: null }));
+        // Also clear from settings so it effectively removes it? 
+        // Or we need a way to signal "delete this" to backend? 
+        // For now, simple replacement logic. 
+        if (settings) {
+            setSettings({ ...settings, [fieldName]: '' });
+        }
+    };
+
+    async function handleSubmit(e: React.FormEvent) {
+        e.preventDefault();
+        if (!settings) return;
+
+        setSaving(true);
+        try {
+            // Upload changed files first
+            const updatedSettings = { ...settings };
+
+            // Map file keys to setting keys
+            const fileKeys = Object.keys(files);
+            for (const key of fileKeys) {
+                const file = files[key];
+                if (file) {
+                    const url = await settingsService.uploadLogo(file); // Reusing uploadLogo for generic file upload
+                    // Update the corresponding setting field
+                    (updatedSettings as any)[key] = url;
+                }
+            }
+
+            await settingsService.updateSettings(updatedSettings);
+
+            // Reload to reflect changes globally if needed
+            // window.location.reload(); 
+            // Better UX: Just show success
+            alert('Pengaturan berhasil disimpan!');
+            setFiles({});
+            setPreviews({});
+            loadSettings();
+
+        } catch (error) {
+            console.error('Failed to save settings', error);
+            alert('Gagal menyimpan pengaturan');
+        } finally {
+            setSaving(false);
+        }
+    }
+
+    if (loading) return <div className="p-8 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary-600" /></div>;
+    if (!settings) return <div className="p-8 text-red-500">Error loading settings</div>;
+
+    const ImageUploader = ({ label, fieldName, currentUrl }: { label: string, fieldName: string, currentUrl?: string }) => (
+        <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">{label}</label>
+            <div className="flex items-start gap-4">
+                <div className="w-24 h-24 rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0 relative group">
+                    {(previews[fieldName] || currentUrl) ? (
+                        <img
+                            src={previews[fieldName] || currentUrl}
+                            alt={label}
+                            className="w-full h-full object-contain p-1"
+                        />
+                    ) : (
+                        <ImageIcon className="w-8 h-8 text-gray-300" />
+                    )}
+                </div>
+                <div className="flex-1 space-y-2">
+                    <div className="flex items-center gap-2">
+                        <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                            <Upload className="w-3.5 h-3.5" />
+                            Upload
+                            <input
+                                type="file"
+                                className="hidden"
+                                accept="image/*"
+                                onChange={(e) => handleFileChange(e, fieldName)}
+                            />
+                        </label>
+                        {(previews[fieldName] || currentUrl) && (
+                            <button
+                                type="button"
+                                onClick={() => removeFile(fieldName)}
+                                className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 border border-red-100 rounded-lg hover:bg-red-100 transition-colors"
+                            >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                Hapus
+                            </button>
+                        )}
+                    </div>
+                    <p className="text-[10px] text-gray-500">Format: PNG, JPG. Max 2MB.</p>
+                </div>
+            </div>
+        </div>
+    );
 
     return (
-        <div className="max-w-4xl mx-auto p-6 space-y-8">
-            <div className="flex items-center gap-3">
-                <Globe className="w-8 h-8 text-primary-600" />
-                <h1 className="text-2xl font-bold text-gray-900">Pengaturan Website</h1>
+        <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-8">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Pengaturan Sistem</h1>
+                    <p className="text-sm text-gray-500 mt-1">Atur konten, branding, dan fungsionalitas website.</p>
+                </div>
+                <Button onClick={handleSubmit} disabled={saving} size="lg" className="bg-blue-600 hover:bg-blue-700">
+                    {saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Menyimpan...</> : <><Save className="w-4 h-4 mr-2" /> Simpan Perubahan</>}
+                </Button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Left Column: Content (2/3) */}
+                <div className="lg:col-span-2 space-y-8">
 
-                {/* Identity Section */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div className="p-6 border-b border-gray-100 bg-gray-50/50">
-                        <h2 className="font-semibold text-gray-900 flex items-center gap-2">
-                            <Globe className="w-4 h-4" /> Identitas Website
-                        </h2>
-                    </div>
-                    <div className="p-6 space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Nama Website</label>
-                                <input
-                                    type="text"
-                                    name="site_title"
-                                    value={settings.site_title || ''}
-                                    onChange={handleChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Deskripsi Singkat</label>
-                                <input
-                                    type="text"
-                                    name="site_description"
-                                    value={settings.site_description || ''}
-                                    onChange={handleChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500"
-                                />
-                            </div>
+                    {/* Halaman Utama */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center gap-2">
+                            <Globe className="w-4 h-4 text-blue-600" />
+                            <h2 className="font-semibold text-gray-900">Konten Situs Web - Halaman Utama</h2>
                         </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Logo Website (Favicon)</label>
-                            <div className="flex items-center gap-6">
-                                <div className="w-20 h-20 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50 overflow-hidden">
-                                    {previewUrl ? (
-                                        <img src={previewUrl} alt="Logo" className="w-full h-full object-contain" />
-                                    ) : (
-                                        <span className="text-xs text-gray-400">No Logo</span>
-                                    )}
-                                </div>
-                                <div>
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={handleFileChange}
-                                        className="mb-2 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
-                                    />
-                                    <p className="text-xs text-gray-500">Format: PNG, JPG, ICO. Max 2MB.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Contact Section */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div className="p-6 border-b border-gray-100 bg-gray-50/50">
-                        <h2 className="font-semibold text-gray-900 flex items-center gap-2">
-                            <Building2 className="w-4 h-4" /> Kontak & Alamat
-                        </h2>
-                    </div>
-                    <div className="p-6 space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="p-6 space-y-6">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                                <input
-                                    type="email"
-                                    name="email"
-                                    value={settings.email || ''}
-                                    onChange={handleChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">No. HP / WhatsApp</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Judul Hero</label>
                                 <input
                                     type="text"
-                                    name="phone"
-                                    value={settings.phone || ''}
+                                    name="home_hero_title"
+                                    value={settings.home_hero_title || ''}
                                     onChange={handleChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500"
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                                    placeholder="Selamat Datang..."
                                 />
                             </div>
-                            <div className="md:col-span-2">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Alamat Lengkap</label>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Subjudul Hero</label>
                                 <textarea
-                                    name="address"
-                                    value={settings.address || ''}
+                                    name="home_hero_subtitle"
+                                    value={settings.home_hero_subtitle || ''}
                                     onChange={handleChange}
-                                    rows={3}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500"
+                                    rows={2}
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                                    placeholder="Deskripsi singkat..."
                                 />
                             </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Payment Section (Preparation for Premium) */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div className="p-6 border-b border-gray-100 bg-gray-50/50">
-                        <h2 className="font-semibold text-gray-900 flex items-center gap-2">
-                            <CreditCard className="w-4 h-4" /> Info Pembayaran (Premium)
-                        </h2>
-                    </div>
-                    <div className="p-6 space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Nama Bank</label>
-                                <input
-                                    type="text"
-                                    name="bank_name"
-                                    value={settings.bank_name || ''}
-                                    onChange={handleChange}
-                                    placeholder="ex: Bank Jatim"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">No. Rekening</label>
-                                <input
-                                    type="text"
-                                    name="bank_number"
-                                    value={settings.bank_number || ''}
-                                    onChange={handleChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Atas Nama</label>
-                                <input
-                                    type="text"
-                                    name="bank_holder"
-                                    value={settings.bank_holder || ''}
-                                    onChange={handleChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500"
-                                />
-                            </div>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Harga Premium (per Tahun)</label>
-                            <input
-                                type="number"
-                                name="premium_price"
-                                value={settings.premium_price || 0}
-                                onChange={handleChange}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500"
+                            <ImageUploader
+                                label="Gambar Latar Hero"
+                                fieldName="home_hero_image"
+                                currentUrl={settings.home_hero_image}
                             />
                         </div>
                     </div>
+
+                    {/* Halaman Profil */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center gap-2">
+                            <UserPen className="w-4 h-4 text-purple-600" />
+                            <h2 className="font-semibold text-gray-900">Halaman Profil</h2>
+                        </div>
+                        <div className="p-6 space-y-6">
+                            <p className="text-xs text-gray-500 flex items-center gap-1 bg-blue-50 p-2 rounded text-blue-700">
+                                <span>💡</span> Anda dapat menggunakan tag HTML sederhana seperti <code>&lt;p&gt;</code>, <code>&lt;ul&gt;</code>, <code>&lt;strong&gt;</code> untuk format.
+                            </p>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Visi</label>
+                                <textarea
+                                    name="profile_visi"
+                                    value={settings.profile_visi || ''}
+                                    onChange={handleChange}
+                                    rows={3}
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-mono text-sm"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Misi</label>
+                                <textarea
+                                    name="profile_misi"
+                                    value={settings.profile_misi || ''}
+                                    onChange={handleChange}
+                                    rows={4}
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-mono text-sm"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Sejarah Singkat</label>
+                                <textarea
+                                    name="profile_sejarah"
+                                    value={settings.profile_sejarah || ''}
+                                    onChange={handleChange}
+                                    rows={4}
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-mono text-sm"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Struktur Organisasi (HTML/Table)</label>
+                                <textarea
+                                    name="profile_struktur"
+                                    value={settings.profile_struktur || ''}
+                                    onChange={handleChange}
+                                    rows={5}
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-mono text-sm"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Halaman Kontak */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center gap-2">
+                            <Building2 className="w-4 h-4 text-orange-600" />
+                            <h2 className="font-semibold text-gray-900">Halaman Kontak</h2>
+                        </div>
+                        <div className="p-6 space-y-6">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Alamat Lengkap</label>
+                                <textarea
+                                    name="contact_address"
+                                    value={settings.contact_address || ''}
+                                    onChange={handleChange}
+                                    rows={2}
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                                />
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Telepon</label>
+                                    <input
+                                        type="text"
+                                        name="contact_phone"
+                                        value={settings.contact_phone || ''}
+                                        onChange={handleChange}
+                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                    <input
+                                        type="email"
+                                        name="contact_email"
+                                        value={settings.contact_email || ''}
+                                        onChange={handleChange}
+                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">URL Google Maps Embed</label>
+                                <input
+                                    type="text"
+                                    name="contact_map_url"
+                                    value={settings.contact_map_url || ''}
+                                    onChange={handleChange}
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-mono text-xs"
+                                    placeholder="https://www.google.com/maps/embed?..."
+                                />
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <div className="flex justify-end">
-                    <Button type="submit" disabled={saving} size="lg">
-                        {saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Menyimpan...</> : <><Save className="w-4 h-4 mr-2" /> Simpan Pengaturan</>}
-                    </Button>
+                {/* Right Column: Branding & Signatures (1/3) */}
+                <div className="space-y-8">
+                    {/* Branding */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                            <h2 className="font-semibold text-gray-900 text-sm uppercase tracking-wide">Branding & Aset</h2>
+                        </div>
+                        <div className="p-6 space-y-6">
+                            <ImageUploader
+                                label="Logo Aplikasi"
+                                fieldName="app_logo" // Or logo_url
+                                currentUrl={settings.logo_url || settings.app_logo}
+                            />
+                            <ImageUploader
+                                label="Kop Surat"
+                                fieldName="kop_surat"
+                                currentUrl={settings.kop_surat}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Pejabat */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                            <h2 className="font-semibold text-gray-900 text-sm uppercase tracking-wide">Pejabat & Tanda Tangan</h2>
+                        </div>
+                        <div className="p-6 space-y-8">
+
+                            {/* Ketua */}
+                            <div className="space-y-3">
+                                <h3 className="font-medium text-gray-900 border-b border-gray-100 pb-2">Ketua MGMP</h3>
+                                <input
+                                    type="text"
+                                    name="ketua_nama"
+                                    value={settings.ketua_nama || ''}
+                                    onChange={handleChange}
+                                    placeholder="Nama Lengkap & Gelar"
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                                />
+                                <input
+                                    type="text"
+                                    name="ketua_nip"
+                                    value={settings.ketua_nip || ''}
+                                    onChange={handleChange}
+                                    placeholder="NIP"
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                                />
+                                <ImageUploader
+                                    label="Tanda Tangan Ketua"
+                                    fieldName="ketua_signature_url"
+                                    currentUrl={settings.ketua_signature_url}
+                                />
+                            </div>
+
+                            {/* Sekretaris */}
+                            <div className="space-y-3">
+                                <h3 className="font-medium text-gray-900 border-b border-gray-100 pb-2">Sekretaris</h3>
+                                <input
+                                    type="text"
+                                    name="sekretaris_nama"
+                                    value={settings.sekretaris_nama || ''}
+                                    onChange={handleChange}
+                                    placeholder="Nama Lengkap & Gelar"
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                                />
+                                <input
+                                    type="text"
+                                    name="sekretaris_nip"
+                                    value={settings.sekretaris_nip || ''}
+                                    onChange={handleChange}
+                                    placeholder="NIP"
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                                />
+                                <ImageUploader
+                                    label="Tanda Tangan Sekretaris"
+                                    fieldName="sekretaris_signature_url"
+                                    currentUrl={settings.sekretaris_signature_url}
+                                />
+                            </div>
+
+                            {/* MKKS */}
+                            <div className="space-y-3">
+                                <h3 className="font-medium text-gray-900 border-b border-gray-100 pb-2">Ketua MKKS</h3>
+                                <input
+                                    type="text"
+                                    name="mkks_nama"
+                                    value={settings.mkks_nama || ''}
+                                    onChange={handleChange}
+                                    placeholder="Nama Lengkap & Gelar"
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                                />
+                                <input
+                                    type="text"
+                                    name="mkks_nip"
+                                    value={settings.mkks_nip || ''}
+                                    onChange={handleChange}
+                                    placeholder="NIP"
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                                />
+                                <ImageUploader
+                                    label="Tanda Tangan Ketua MKKS"
+                                    fieldName="mkks_signature_url"
+                                    currentUrl={settings.mkks_signature_url}
+                                />
+                            </div>
+
+                        </div>
+                    </div>
                 </div>
-            </form>
+            </div>
         </div>
     );
 }
