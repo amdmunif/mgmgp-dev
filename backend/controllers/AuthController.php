@@ -128,5 +128,62 @@ class AuthController
         http_response_code(401);
         return json_encode(["message" => "Invalid email or password."]);
     }
+
+    public function getProfile($id)
+    {
+        $query = "SELECT p.*, u.email FROM profiles p JOIN users u ON p.id = u.id WHERE p.id = :id LIMIT 1";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':id', $id);
+        $stmt->execute();
+
+        if ($stmt->rowCount() > 0) {
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            // Decode JSON fields if they exist as strings (though PDO usually fetches as string)
+            // MySQL JSON columns might come out as strings
+            if (isset($row['mapel']))
+                $row['mapel'] = json_decode($row['mapel']);
+            if (isset($row['kelas']))
+                $row['kelas'] = json_decode($row['kelas']);
+
+            return json_encode($row);
+        }
+
+        http_response_code(404);
+        return json_encode(["message" => "Profile not found."]);
+    }
+
+    public function updateProfile($id, $data)
+    {
+        // Construct query dynamically or use fixed fields
+        // For simplicity and safety, we used fixed fields based on Schema
+
+        $query = "UPDATE profiles SET 
+            nama = :nama,
+            asal_sekolah = :asal_sekolah,
+            pendidikan_terakhir = :pendidikan_terakhir,
+            jurusan = :jurusan,
+            status_kepegawaian = :status_kepegawaian,
+            ukuran_baju = :ukuran_baju,
+            no_hp = :no_hp,
+            updated_at = NOW()
+            WHERE id = :id";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':id', $id);
+        $stmt->bindParam(':nama', $data['nama']);
+        $stmt->bindParam(':asal_sekolah', $data['asal_sekolah']);
+        $stmt->bindParam(':pendidikan_terakhir', $data['pendidikan_terakhir']);
+        $stmt->bindParam(':jurusan', $data['jurusan']);
+        $stmt->bindParam(':status_kepegawaian', $data['status_kepegawaian']);
+        $stmt->bindParam(':ukuran_baju', $data['ukuran_baju']);
+        $stmt->bindParam(':no_hp', $data['no_hp']);
+
+        if ($stmt->execute()) {
+            return $this->getProfile($id);
+        }
+
+        http_response_code(500);
+        return json_encode(["message" => "Failed to update profile."]);
+    }
 }
 ?>

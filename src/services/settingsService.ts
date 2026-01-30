@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 
 export interface AppSettings {
     id: number;
@@ -16,43 +16,42 @@ export interface AppSettings {
 
 export const settingsService = {
     async getSettings() {
-        const { data, error } = await supabase
-            .from('app_settings')
-            .select('*')
-            .eq('id', 1)
-            .single();
-
-        if (error) throw error;
-        return data as AppSettings;
+        const response = await api.get<AppSettings>('/settings');
+        return response;
     },
 
     async updateSettings(updates: Partial<AppSettings>) {
-        const { data, error } = await supabase
-            .from('app_settings')
-            .update(updates)
-            .eq('id', 1)
-            .select()
-            .single();
-
-        if (error) throw error;
-        return data as AppSettings;
+        const response = await api.post<AppSettings>('/settings', updates);
+        return response;
     },
 
     async uploadLogo(file: File) {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `logo-${Date.now()}.${fileExt}`;
-        const filePath = `${fileName}`;
+        const formData = new FormData();
+        formData.append('file', file);
 
-        const { error: uploadError } = await supabase.storage
-            .from('site-assets')
-            .upload(filePath, file);
+        // Custom upload call since api wrapper handles JSON by default
+        // We need to bypass content-type header for FormData
+        // Can extend api wrapper or use raw fetch for upload
 
-        if (uploadError) throw uploadError;
+        // Using existing api helper, if it supports FormData:
+        // Checking src/lib/api.ts... It uses JSON.stringify.
+        // Let's use raw fetch but use the baseUrl from somewhere or duplicate logic?
+        // Let's assume api client needs enhancement for FormData. 
+        // For now, I'll use standard fetch with the same base URL logic.
 
-        const { data: { publicUrl } } = supabase.storage
-            .from('site-assets')
-            .getPublicUrl(filePath);
+        const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+        const token = localStorage.getItem('access_token');
 
-        return publicUrl;
+        const response = await fetch(`${API_BASE_URL}/settings/logo`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            body: formData
+        });
+
+        if (!response.ok) throw new Error('Upload failed');
+        const data = await response.json();
+        return data.url;
     }
 };

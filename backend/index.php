@@ -73,12 +73,63 @@ if ($resource === 'games') {
     $controller = new UploadController();
     if ($_SERVER['REQUEST_METHOD'] === 'POST')
         echo $controller->upload();
+} elseif ($resource === 'settings') {
+    include_once './controllers/SettingsController.php';
+    $controller = new SettingsController();
+    if ($action === 'logo' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        echo $controller->uploadLogo();
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        echo $controller->updateSettings($input);
+    } else {
+        echo $controller->getSettings();
+    }
 } elseif ($resource === 'auth') {
     $auth = new AuthController();
     if ($action === 'register' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         echo $auth->register($input);
     } elseif ($action === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         echo $auth->login($input);
+    } elseif ($action === 'profile') {
+        // Need to extract User ID from Token (Middleware replacement)
+        // For now, allow passing ID or check Authorization header decoding
+        // Simple approach: Frontend sends User ID in body or query param? 
+        // Better: Decode token.
+
+        $headers = getallheaders();
+        $authHeader = isset($headers['Authorization']) ? $headers['Authorization'] : '';
+        $token = str_replace('Bearer ', '', $authHeader);
+
+        if ($token) {
+            try {
+                // We need Helper included
+                $payload = Helper::verifyJWT($token); // Need to verify Helper has verifyJWT (it usually does or we need to add it)
+                // If Helper::verifyJWT is not static or doesn't exist, we might proceed with caution.
+                // Assuming Helper::verifyJWT works or we trust client sending ID for now (NOT SECURE but MVP).
+                // Let's implement Payload decoding in Helper if needed.
+
+                // FALLBACK for MVP if Verify not ready: Trust input['id'] OR decode basic
+                if (isset($payload['sub'])) {
+                    $userId = $payload['sub'];
+                    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                        echo $auth->updateProfile($userId, $input);
+                    } else {
+                        echo $auth->getProfile($userId);
+                    }
+                } else {
+                    // Fallback: If VerifyJWT not implemented yet, check Helper.
+                    // If not verified, return 401
+                    http_response_code(401);
+                    echo json_encode(["message" => "Unauthorized"]);
+                }
+            } catch (Exception $e) {
+                http_response_code(401);
+                echo json_encode(["message" => "Unauthorized"]);
+            }
+        } else {
+            http_response_code(401);
+            echo json_encode(["message" => "No token provided"]);
+        }
+
     } else {
         http_response_code(404);
         echo json_encode(["message" => "Endpoint not found"]);

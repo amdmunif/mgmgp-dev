@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
+import { api } from '../../lib/api';
 import { Button } from '../../components/ui/button';
 import { Loader2, Save, User as UserIcon } from 'lucide-react';
 
@@ -24,30 +24,17 @@ export function AdminSettings() {
 
     const getProfile = async () => {
         try {
-            const { data: { user } } = await supabase.auth.getUser();
-
-            if (user) {
-                const { data, error } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', user.id)
-                    .single();
-
-                if (error && error.code !== 'PGRST116') {
-                    throw error;
-                }
-
-                if (data) {
-                    setFormData({
-                        nama: data.nama || '',
-                        asal_sekolah: data.asal_sekolah || '',
-                        no_hp: data.no_hp || '',
-                        pendidikan_terakhir: data.pendidikan_terakhir || '',
-                        jurusan: data.jurusan || '',
-                        status_kepegawaian: data.status_kepegawaian || '',
-                        ukuran_baju: data.ukuran_baju || '',
-                    });
-                }
+            const data = await api.get<any>('/auth/profile');
+            if (data) {
+                setFormData({
+                    nama: data.nama || '',
+                    asal_sekolah: data.asal_sekolah || '',
+                    no_hp: data.no_hp || '',
+                    pendidikan_terakhir: data.pendidikan_terakhir || '',
+                    jurusan: data.jurusan || '',
+                    status_kepegawaian: data.status_kepegawaian || '',
+                    ukuran_baju: data.ukuran_baju || '',
+                });
             }
         } catch (error: any) {
             console.error('Error loading profile:', error.message);
@@ -66,19 +53,11 @@ export function AdminSettings() {
         setMessage(null);
 
         try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) throw new Error('No user logged in');
-
-            const { error } = await supabase
-                .from('profiles')
-                .update({
-                    ...formData,
-                    updated_at: new Date().toISOString(),
-                })
-                .eq('id', user.id);
-
-            if (error) throw error;
+            await api.post('/auth/profile', formData);
             setMessage({ type: 'success', text: 'Profil berhasil diperbarui!' });
+
+            // Reload window to update header name if needed or use context
+            // window.location.reload(); 
         } catch (error: any) {
             setMessage({ type: 'error', text: error.message || 'Gagal menyimpan profil' });
         } finally {
