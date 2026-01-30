@@ -1,25 +1,26 @@
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { authService } from '../../services/authService';
 import { Button } from '../../components/ui/button';
+import { FormInput } from '../../components/ui/VerifiedFormElements';
 import { useNavigate, Link } from 'react-router-dom';
 import { Loader2, ArrowRight } from 'lucide-react';
 
 export function Login() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
 
-    const handleLogin = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const { register, handleSubmit } = useForm();
+
+    const handleLogin = async (data: any) => {
         setLoading(true);
         setError(null);
 
         try {
-            const data = await authService.login(email, password);
+            const response = await authService.login(data.email, data.password);
 
-            if (data.user) {
+            if (response.user) {
                 navigate('/member');
             }
         } catch (err: any) {
@@ -45,36 +46,38 @@ export function Login() {
                         </div>
                     )}
 
-                    <form onSubmit={handleLogin} className="space-y-5">
+                    <form onSubmit={handleSubmit(handleLogin)} className="space-y-5">
+                        <FormInput
+                            label="Email"
+                            type="email"
+                            placeholder="email@sekolah.sch.id"
+                            register={register}
+                            name="email"
+                            required
+                        />
+
                         <div className="space-y-1.5">
-                            <label className="block text-sm font-semibold text-gray-700">Email</label>
-                            <input
-                                type="email"
-                                required
-                                placeholder="email@sekolah.sch.id"
-                                className="block w-full rounded-lg border-gray-300 bg-white shadow-sm focus:border-primary-500 focus:ring-primary-500 py-2.5 px-3 text-sm transition-all hover:border-gray-400 placeholder-gray-400"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <div className="flex justify-between items-center">
-                                <label className="block text-sm font-semibold text-gray-700">Password</label>
+                            <div className="flex justify-between items-center mb-1">
+                                <span className="text-sm font-semibold text-gray-700">Password</span>
                                 <Link to="/forgot-password" className="text-xs text-primary-600 hover:text-primary-700 font-medium">
                                     Lupa Password?
                                 </Link>
                             </div>
-                            <input
+                            {/* We use FormInput here but pass label="" to key the strict layout, or just use it normally. 
+                                The user's layout has the link INSIDE the label row. 
+                                I will adapt usage. */}
+                            <FormInput
+                                label="" // Label handled above for custom layout
                                 type="password"
-                                required
                                 placeholder="••••••••"
-                                className="block w-full rounded-lg border-gray-300 bg-white shadow-sm focus:border-primary-500 focus:ring-primary-500 py-2.5 px-3 text-sm transition-all hover:border-gray-400 placeholder-gray-400"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
+                                register={register}
+                                name="password"
+                                required
+                                className="!mt-0"
                             />
                         </div>
 
-                        <Button type="submit" className="w-full h-11 text-base mt-2 shadow-primary-500/20 hover:shadow-primary-500/30 transition-all" disabled={loading}>
+                        <Button type="submit" className="w-full h-11 text-base mt-2 shadow-primary-500/20 hover:shadow-primary-500/30 transition-all font-semibold rounded-xl" disabled={loading}>
                             {loading ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Sedang memproses...</> : 'Masuk ke Akun'}
                         </Button>
                     </form>

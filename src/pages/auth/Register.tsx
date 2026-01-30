@@ -5,10 +5,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
     Loader2, Upload, AlertCircle, CheckCircle2,
     User, Lock, Briefcase,
-    BookOpen, ChevronRight, ChevronLeft, Check, Eye, EyeOff, ChevronDown
+    BookOpen, ChevronRight, ChevronLeft, Check
 } from 'lucide-react';
 import { authService } from '../../services/authService';
 import { Button } from '../../components/ui/button';
+import { FormInput, FormSelect } from '../../components/ui/VerifiedFormElements';
 import { registerSchema, type RegisterFormValues } from '../../lib/schemas/registerSchema';
 
 const STEPS = [
@@ -25,9 +26,7 @@ export function Register() {
     const [success, setSuccess] = useState(false);
     const [currentStep, setCurrentStep] = useState(1);
 
-    // Password visibility states
-    const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    // NOTE: Password visibility state moved to FormInput component
 
     const {
         register,
@@ -42,6 +41,7 @@ export function Register() {
             kelas_mengajar: []
         }
     });
+
 
     const fotoFiles = watch("foto_profil");
     const mapelDiampu = watch("mapel_diampu");
@@ -301,32 +301,21 @@ export function Register() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                     <FormInput
                                         label="Password"
-                                        type={showPassword ? "text" : "password"}
+                                        type="password"
                                         placeholder="Min 8 karakter"
                                         register={register}
                                         name="password"
                                         error={errors.password}
                                         required
-
-                                        rightIcon={
-                                            <button type="button" onClick={() => setShowPassword(!showPassword)} className="text-gray-400 hover:text-gray-600 focus:outline-none">
-                                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                            </button>
-                                        }
                                     />
                                     <FormInput
                                         label="Ulangi Password"
-                                        type={showConfirmPassword ? "text" : "password"}
+                                        type="password"
                                         placeholder="Ketik ulang"
                                         register={register}
                                         name="confirmPassword"
                                         error={errors.confirmPassword}
                                         required
-                                        rightIcon={
-                                            <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="text-gray-400 hover:text-gray-600 focus:outline-none">
-                                                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                            </button>
-                                        }
                                     />
                                 </div>
 
