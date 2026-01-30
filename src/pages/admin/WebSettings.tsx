@@ -2,8 +2,6 @@ import { useState, useEffect } from 'react';
 import { Button } from '../../components/ui/button';
 import { Loader2, Save, Globe, Building2, UserPen, Upload, Trash2, Image as ImageIcon } from 'lucide-react';
 import { settingsService, type AppSettings } from '../../services/settingsService';
-import { FormInput } from '../../components/ui/VerifiedFormElements'; // Assuming we can use this or standard inputs
-import { useForm } from 'react-hook-form'; // Or just state for simplicity as there are many fields? 
 // Using simple state might be easier for this large form without complex validation logic yet.
 
 export function AdminWebSettings() {
