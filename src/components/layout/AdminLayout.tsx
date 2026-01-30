@@ -28,6 +28,9 @@ export function AdminLayout() {
     const [user, setUser] = useState<any>(null);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const profileRef = useRef<HTMLDivElement>(null);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [logoUrl, setLogoUrl] = useState<string>('');
+    const [badges, setBadges] = useState({ members: 0, premium: 0 });
 
     useEffect(() => {
         // Initial check
