@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Gamepad2, Play, ExternalLink } from 'lucide-react';
+import { Gamepad2, Play } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { gameService } from '../../services/gameService';
 import type { Game } from '../../types';
