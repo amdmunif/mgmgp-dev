@@ -7,15 +7,16 @@ import {
     FileText,
     Calendar,
     Users,
+    User, // Re-added
     LogOut,
     Settings,
     Crown,
     Menu,
-    Gamepad2, // Added
+    Gamepad2,
     X,
     BookOpen,
-    Terminal, // Added
-    Book, // Added
+    Terminal,
+    Book,
     Globe
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
