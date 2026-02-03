@@ -21,7 +21,12 @@ export function Login() {
             const response = await authService.login(data.email, data.password);
 
             if (response.user) {
-                navigate('/member');
+                // Redirect based on role
+                if (response.user.role === 'Admin') {
+                    navigate('/admin');
+                } else {
+                    navigate('/member');
+                }
             }
         } catch (err: any) {
             setError(err.message || 'Gagal login. Periksa email dan password Anda.');

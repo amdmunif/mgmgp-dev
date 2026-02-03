@@ -17,7 +17,9 @@ import {
     BookOpen,
     Terminal,
     Book,
-    Globe
+    Globe,
+    ChevronDown,
+    UserPen
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 // import { Button } from '../../components/ui/button';
@@ -28,6 +30,7 @@ export function AdminLayout() {
     const [user, setUser] = useState<any>(null);
     const profileRef = useRef<HTMLDivElement>(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [isProfileOpen, setIsProfileOpen] = useState(false);
     const [logoUrl, setLogoUrl] = useState<string>('');
     const [badges, setBadges] = useState({ members: 0, premium: 0 });
 
@@ -303,16 +306,60 @@ export function AdminLayout() {
                         </span>
 
                         {/* Desktop Right: User Profile (Non-clickable, Custom Style) */}
+                        {/* Desktop Right: User Profile Dropdown */}
                         <div className="hidden lg:block relative ml-2" ref={profileRef}>
-                            <div className="flex items-center gap-3 bg-white rounded-lg p-1 pr-3">
-                                <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                            <button
+                                onClick={() => setIsProfileOpen(!isProfileOpen)}
+                                className="flex items-center gap-3 bg-white hover:bg-gray-50 rounded-full border border-gray-200 p-1 pr-3 transition-all focus:outline-none focus:ring-2 focus:ring-blue-100"
+                            >
+                                <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 font-bold text-sm">
                                     {user?.nama?.charAt(0).toUpperCase() || 'A'}
                                 </div>
-                                <div className="flex flex-col">
-                                    <span className="text-sm font-bold text-gray-900 leading-tight">{user?.nama || 'Administrator'}</span>
-                                    <span className="text-xs text-gray-500">Super Admin</span>
+                                <span className="text-sm font-semibold text-gray-700 max-w-[150px] truncate">{user?.nama || 'Administrator'}</span>
+                                <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            {/* Dropdown Menu */}
+                            {isProfileOpen && (
+                                <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-100 py-2 animate-in fade-in slide-in-from-top-2 z-50">
+                                    <div className="px-4 py-3 border-b border-gray-100">
+                                        <p className="font-bold text-gray-900 truncate">{user?.nama}</p>
+                                        <span className="inline-block mt-1 px-2 py-0.5 bg-gray-100 text-gray-600 text-[10px] font-bold rounded-full uppercase tracking-wide">
+                                            {user?.role === 'Admin' ? 'Administrator' : 'Reguler Member'}
+                                        </span>
+                                        <p className="text-xs text-gray-500 mt-1 truncate">{user?.email}</p>
+                                    </div>
+
+                                    <div className="py-2">
+                                        <Link
+                                            to="/member/profile"
+                                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                            onClick={() => setIsProfileOpen(false)}
+                                        >
+                                            <UserPen className="w-4 h-4 text-gray-500" />
+                                            Edit Profil
+                                        </Link>
+                                        <Link
+                                            to="/admin"
+                                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                            onClick={() => setIsProfileOpen(false)}
+                                        >
+                                            <LayoutDashboard className="w-4 h-4 text-gray-500" />
+                                            Admin Dashboard
+                                        </Link>
+                                    </div>
+
+                                    <div className="pt-2 border-t border-gray-100">
+                                        <button
+                                            onClick={handleLogout}
+                                            className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                                        >
+                                            <LogOut className="w-4 h-4" />
+                                            Logout
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
                     </div>
                 </header>
