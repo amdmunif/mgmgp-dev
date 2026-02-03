@@ -164,5 +164,49 @@ class ContentController
         http_response_code(500);
         return json_encode(["message" => "Failed to submit task"]);
     }
+
+    public function getUpcomingEvents($userId)
+    {
+        $query = "SELECT e.*, ep.status as participation_status 
+                  FROM events e 
+                  LEFT JOIN event_participants ep ON e.id = ep.event_id AND ep.user_id = :uid 
+                  WHERE e.date >= NOW() 
+                  ORDER BY e.date ASC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':uid', $userId);
+        $stmt->execute();
+        return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+    }
+
+    public function getMyHistory($userId)
+    {
+        $query = "SELECT ep.*, e.title, e.date, e.location 
+                  FROM event_participants ep 
+                  JOIN events e ON ep.event_id = e.id 
+                  WHERE ep.user_id = :uid 
+                  ORDER BY ep.registered_at DESC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':uid', $userId);
+        $stmt->execute();
+
+        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $formatted = [];
+        foreach ($data as $row) {
+            $formatted[] = [
+                'id' => $row['event_id'] . '-' . $row['user_id'],
+                'event_id' => $row['event_id'],
+                'user_id' => $row['user_id'],
+                'status' => $row['status'] ?? 'registered',
+                'registered_at' => $row['registered_at'],
+                'events' => [
+                    'title' => $row['title'],
+                    'date' => $row['date'],
+                    'location' => $row['location']
+                ]
+            ];
+        }
+        return json_encode($formatted);
+    }
 }
 ?>

@@ -26,10 +26,37 @@ export interface EventParticipant {
 }
 
 export const eventService = {
-            .update({ status: 'cancelled' })
-        .eq('event_id', eventId)
-        .eq('user_id', user.id);
+    // Get all events
+    async getEvents() {
+        return await api.get<Event[]>('/events');
+    },
 
-    if(error) throw error;
-}
+    // Get upcoming events with my participation status
+    async getUpcomingEvents() {
+        return await api.get<any[]>('/events/upcoming');
+    },
+
+    // Get my event history
+    async getMyHistory() {
+        return await api.get<EventParticipant[]>('/events/history');
+    },
+
+    // Join an event
+    async joinEvent(eventId: string) {
+        return await api.post(`/events/${eventId}/join`, {});
+    },
+
+    // Cancel event participation
+    async cancelParticipation(eventId: string) {
+        const user = await settingsService.getUser();
+        if (!user) throw new Error('User not logged in');
+
+        const { error } = await api.from('event_participants')
+            .update({ status: 'cancelled' })
+            .eq('event_id', eventId)
+            .eq('user_id', user.id);
+
+        if (error) throw error;
+    }
 };
+```

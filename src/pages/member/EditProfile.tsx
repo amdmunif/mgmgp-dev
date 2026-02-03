@@ -125,12 +125,7 @@ export function EditProfile() {
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-6">
-                    {message && (
-                        <div className={`p - 4 rounded - lg text - sm flex items - center gap - 2 ${ message.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200' } `}>
-                            {message.text}
-                        </div>
-                    )}
-
+                    
                     {/* Profile Photo Section */}
                     <div className="flex flex-col items-center justify-center mb-6">
                         <div className="relative group">

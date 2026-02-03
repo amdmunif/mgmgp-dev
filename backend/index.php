@@ -91,7 +91,16 @@ if ($resource === 'news') {
     $subAction = isset($uri_parts[2]) ? $uri_parts[2] : null;
 
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-        if ($action && $subAction === 'participation') {
+        if ($action === 'upcoming') {
+            echo $controller->getUpcomingEvents($userId);
+        } elseif ($action === 'history') {
+            if ($userId)
+                echo $controller->getMyHistory($userId);
+            else {
+                http_response_code(401);
+                echo json_encode(["message" => "Unauthorized"]);
+            }
+        } elseif ($action && $subAction === 'participation') {
             if ($userId)
                 echo $controller->getParticipation($action, $userId);
             else {
