@@ -176,5 +176,74 @@ class PremiumController
 
         return json_encode($request ?: null);
     }
+
+    public function getActiveSubscribers()
+    {
+        $query = "SELECT p.id, p.nama, p.premium_until, u.email 
+                  FROM profiles p 
+                  JOIN users u ON p.id = u.id 
+                  WHERE p.premium_until > NOW() 
+                  ORDER BY p.premium_until ASC";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        $subscribers = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return json_encode($subscribers);
+    }
+
+    public function extend($userId)
+    {
+        // Add 1 year to current expiry
+        $query = "SELECT premium_until FROM profiles WHERE id = :id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':id', $userId);
+        $stmt->execute();
+        $current = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$current) {
+            http_response_code(404);
+            return json_encode(["message" => "User not found"]);
+        }
+
+        $expiry = $current['premium_until'] ? new DateTime($current['premium_until']) : new DateTime();
+
+        // If expired, start from now + 1 year
+        $now = new DateTime();
+        if ($expiry < $now) {
+            $expiry = new DateTime();
+        }
+
+        $expiry->modify('+1 year');
+        $newExpiry = $expiry->format('Y-m-d H:i:s');
+
+        $update = "UPDATE profiles SET premium_until = :expiry WHERE id = :id";
+        $stmtUp = $this->conn->prepare($update);
+        $stmtUp->bindParam(':expiry', $newExpiry);
+        $stmtUp->bindParam(':id', $userId);
+
+        if ($stmtUp->execute()) {
+            return json_encode(["message" => "Extended successfully", "new_expiry" => $newExpiry]);
+        }
+
+        http_response_code(500);
+        return json_encode(["message" => "Failed to extend"]);
+    }
+
+    public function revoke($userId)
+    {
+        // Set premium_until to NULL or NOW()
+        // Let's set to NULL to completely remove status
+        $update = "UPDATE profiles SET premium_until = NULL WHERE id = :id";
+        $stmt = $this->conn->prepare($update);
+        $stmt->bindParam(':id', $userId);
+
+        if ($stmt->execute()) {
+            return json_encode(["message" => "Subscription revoked"]);
+        }
+
+        http_response_code(500);
+        return json_encode(["message" => "Failed to revoke"]);
+    }
 }
 ?>

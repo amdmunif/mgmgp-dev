@@ -60,5 +60,20 @@ export const premiumService = {
             id: requestId,
             reason: reason
         });
+    },
+
+    // Admin: Get active subscribers
+    async getActiveSubscribers() {
+        return await api.get<{ id: string; nama: string; email: string; premium_until: string; }[]>('/premium/active');
+    },
+
+    // Admin: Extend subscription
+    async extendSubscription(userId: string) {
+        return await api.post('/premium/extend', { user_id: userId });
+    },
+
+    // Admin: Revoke subscription
+    async revokeSubscription(userId: string) {
+        return await api.post('/premium/revoke', { user_id: userId });
     }
 };

@@ -270,6 +270,27 @@ if ($resource === 'news') {
             http_response_code(400);
             echo json_encode(["message" => "ID required"]);
         }
+
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'active') {
+        echo $controller->getActiveSubscribers();
+
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'extend') {
+        $id = $input['user_id'] ?? null;
+        if ($id)
+            echo $controller->extend($id);
+        else {
+            http_response_code(400);
+            echo json_encode(["message" => "User ID required"]);
+        }
+
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'revoke') {
+        $id = $input['user_id'] ?? null;
+        if ($id)
+            echo $controller->revoke($id);
+        else {
+            http_response_code(400);
+            echo json_encode(["message" => "User ID required"]);
+        }
     }
 
 } elseif ($resource === 'auth') {
