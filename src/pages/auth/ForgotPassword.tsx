@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { supabase } from '../../lib/supabase';
 import { Button } from '../../components/ui/button';
 import { Link } from 'react-router-dom';
 import { Loader2, ArrowLeft, KeyRound } from 'lucide-react';
+// import { api } from '../../lib/api'; // use if ready
 
 export function ForgotPassword() {
     const [email, setEmail] = useState('');
@@ -15,16 +15,18 @@ export function ForgotPassword() {
         setMessage(null);
 
         try {
-            const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                redirectTo: window.location.origin + '/reset-password',
-            });
-
-            if (error) throw error;
+            // Server Migration Note: Reset Password API not yet implemented in PHP backend.
+            await new Promise(resolve => setTimeout(resolve, 1000));
 
             setMessage({
-                type: 'success',
-                text: 'Link reset password telah dikirim ke email Anda. Silakan cek inbox/spam.'
+                type: 'error',
+                text: 'Fitur Reset Password belum tersedia pada server baru. Silakan hubungi Admin.'
             });
+
+            // If implemented:
+            // await api.post('/auth/forgot-password', { email });
+            // setMessage({ type: 'success', text: '...' });
+
         } catch (err: any) {
             setMessage({
                 type: 'error',

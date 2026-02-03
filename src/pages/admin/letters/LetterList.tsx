@@ -26,7 +26,7 @@ export function AdminLetters() {
             const userData = await authService.getCurrentUser();
             if (!userData?.user) return;
 
-            const data = await letterService.getLetters(userData.user.id);
+            const data = await letterService.getAll();
             setLetters(data || []);
         } catch (error) {
             console.error('Error fetching letters:', error);
@@ -39,7 +39,7 @@ export function AdminLetters() {
         if (!confirm('Apakah Anda yakin ingin menghapus surat ini?')) return;
 
         try {
-            await letterService.deleteLetter(id);
+            await letterService.delete(id);
             setLetters(letters.filter(l => l.id !== id));
         } catch (error) {
             console.error(error);

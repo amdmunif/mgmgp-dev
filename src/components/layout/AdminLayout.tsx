@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link, Outlet, useLocation } from 'react-router-dom';
-import { supabase } from '../../lib/supabase';
+import { api } from '../../lib/api';
 import { authService } from '../../services/authService';
 import {
     LayoutDashboard,
@@ -53,9 +53,15 @@ export function AdminLayout() {
 
         // Fetch Badges
         const fetchBadges = async () => {
-            const { count: members } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('is_active', false);
-            const { count: premium } = await supabase.from('premium_requests').select('*', { count: 'exact', head: true }).eq('status', 'pending');
-            setBadges({ members: members || 0, premium: premium || 0 });
+            try {
+                const stats = await api.get<any>('/stats');
+                setBadges({
+                    members: stats.pendingMembers || 0,
+                    premium: stats.pendingPremium || 0
+                });
+            } catch (e) {
+                console.error("Failed to fetch badges", e);
+            }
         };
         fetchBadges();
 

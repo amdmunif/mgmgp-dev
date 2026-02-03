@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabase';
+import { api } from '../../lib/api';
 import {
     Users,
     FileText,
@@ -27,22 +27,18 @@ export function DashboardOverview() {
 
     const fetchStats = async () => {
         try {
-            const { count: members } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
-            const { count: materials } = await supabase.from('learning_materials').select('*', { count: 'exact', head: true });
-            const { count: events } = await supabase.from('events').select('*', { count: 'exact', head: true });
-            const { count: premium } = await supabase.from('premium_requests').select('*', { count: 'exact', head: true }).eq('status', 'approved');
+            const data = await api.get<any>('/stats');
 
-            const { count: pendingMembers } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('is_active', false);
-            const { count: pendingPremium } = await supabase.from('premium_requests').select('*', { count: 'exact', head: true }).eq('status', 'pending');
-
-            setStats({
-                members: members || 0,
-                materials: materials || 0,
-                events: events || 0,
-                premium: premium || 0,
-                pendingMembers: pendingMembers || 0,
-                pendingPremium: pendingPremium || 0
-            });
+            if (data) {
+                setStats({
+                    members: data.members || 0,
+                    materials: data.materials || 0,
+                    events: data.events || 0,
+                    premium: data.premium || 0,
+                    pendingMembers: data.pendingMembers || 0,
+                    pendingPremium: data.pendingPremium || 0
+                });
+            }
         } catch (error) {
             console.error('Error fetching stats:', error);
         } finally {

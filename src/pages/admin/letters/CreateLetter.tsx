@@ -34,7 +34,7 @@ export function CreateLetter() {
 
             const content = JSON.stringify(formData);
 
-            await letterService.createLetter({
+            await letterService.create({
                 template_id: selectedTemplate.id,
                 letter_number: formData.no_surat || 'DRAFT',
                 letter_date: formData.tanggal_surat || new Date().toISOString(),
