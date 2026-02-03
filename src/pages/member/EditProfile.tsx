@@ -1,4 +1,3 @@
-```typescript
 import { useState, useEffect, useRef } from 'react';
 import { Camera, Save, User, Building2, GraduationCap, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -125,7 +124,7 @@ export function EditProfile() {
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-6">
-                    
+
                     {/* Profile Photo Section */}
                     <div className="flex flex-col items-center justify-center mb-6">
                         <div className="relative group">

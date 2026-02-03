@@ -45,4 +45,3 @@ export const eventService = {
         return await api.post(`/events/${eventId}/join`, {});
     },
 };
-```
