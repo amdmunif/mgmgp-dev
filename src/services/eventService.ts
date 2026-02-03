@@ -1,5 +1,4 @@
 import { api } from '../lib/api';
-import { settingsService } from './settingsService';
 
 export interface Event {
     id: string;
@@ -45,18 +44,5 @@ export const eventService = {
     async joinEvent(eventId: string) {
         return await api.post(`/events/${eventId}/join`, {});
     },
-
-    // Cancel event participation
-    async cancelParticipation(eventId: string) {
-        const user = await settingsService.getUser();
-        if (!user) throw new Error('User not logged in');
-
-        const { error } = await api.from('event_participants')
-            .update({ status: 'cancelled' })
-            .eq('event_id', eventId)
-            .eq('user_id', user.id);
-
-        if (error) throw error;
-    }
 };
 ```
