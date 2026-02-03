@@ -83,6 +83,52 @@ if ($resource === 'games') {
     } else {
         echo $controller->getSettings();
     }
+} elseif ($resource === 'members') {
+    include_once './controllers/MemberController.php';
+    $controller = new MemberController();
+
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        echo $controller->getAll();
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'PUT' && $action) {
+        // Update Role: /members/{id}
+        // Ideally should separate /role but simplified REST: PUT /members/{id} with body {role: ...}
+        echo $controller->updateRole($action, $input);
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action) {
+        echo $controller->delete($action);
+    }
+
+} elseif ($resource === 'premium') {
+    include_once './controllers/PremiumController.php';
+    $controller = new PremiumController();
+
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        echo $controller->getAllRequests();
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'approve') {
+        // POST /premium/approve with body { id: ... } or POST /premium/{id}/approve
+        // Let's assume POST /premium/approve with body { id: ... } OR 
+        // using the $uri parts more flexibly.
+        // Current Router: resource/action. 
+        // So /premium/approve -> logic below. But we need ID.
+        // Let's accept ID in body for approve/reject actions to keep router simple.
+
+        $id = $input['id'] ?? null;
+        if ($id)
+            echo $controller->approve($id);
+        else {
+            http_response_code(400);
+            echo json_encode(["message" => "ID required"]);
+        }
+
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'reject') {
+        $id = $input['id'] ?? null;
+        if ($id)
+            echo $controller->reject($id, $input);
+        else {
+            http_response_code(400);
+            echo json_encode(["message" => "ID required"]);
+        }
+    }
+
 } elseif ($resource === 'auth') {
     $auth = new AuthController();
     if ($action === 'register' && $_SERVER['REQUEST_METHOD'] === 'POST') {

@@ -31,7 +31,7 @@ export function AdminPremium() {
 
         setProcessingId(request.id);
         try {
-            await premiumService.approveRequest(request.id, request.user_id);
+            await premiumService.approveRequest(request.id);
             await loadRequests();
         } catch (error) {
             console.error('Error approving', error);

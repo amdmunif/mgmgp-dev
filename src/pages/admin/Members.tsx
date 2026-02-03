@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
+import { memberService, type Profile } from '../../services/memberService';
 import {
     Search,
     Filter,
@@ -14,16 +14,6 @@ import { Button } from '../../components/ui/button';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 
-interface Profile {
-    id: string;
-    nama: string;
-    email: string;
-    role: string;
-    subscription_status: string;
-    premium_until: string | null;
-    created_at: string;
-}
-
 export function AdminMembers() {
     const [members, setMembers] = useState<Profile[]>([]);
     const [loading, setLoading] = useState(true);
@@ -37,18 +27,7 @@ export function AdminMembers() {
     const fetchMembers = async () => {
         setLoading(true);
         try {
-            // Join profiles with auth users is tricky in client-side if emails are in auth.
-            // Assuming 'profiles' table has most info, but email might be missing if relying on auth.users which is restricted.
-            // HOWEVER, previous implementation suggested 'profiles' might have inserted email copy or we use a View.
-            // Let's check what 'profiles' has. 
-            // In many Supabase setups, public profiles table is key.
-
-            const { data, error } = await supabase
-                .from('profiles')
-                .select('*')
-                .order('created_at', { ascending: false });
-
-            if (error) throw error;
+            const data = await memberService.getAll();
             setMembers(data || []);
         } catch (error) {
             console.error('Error fetching members:', error);
@@ -62,16 +41,23 @@ export function AdminMembers() {
 
         const newRole = currentRole === 'Admin' ? 'Member' : 'Admin';
         try {
-            const { error } = await supabase
-                .from('profiles')
-                .update({ role: newRole })
-                .eq('id', id);
-
-            if (error) throw error;
+            await memberService.updateRole(id, newRole);
             fetchMembers(); // Refresh
         } catch (error) {
             console.error('Error updating role:', error);
             alert('Gagal mengubah role');
+        }
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!confirm('Apakah Anda yakin ingin menghapus member ini? Tindakan ini tidak dapat dibatalkan.')) return;
+
+        try {
+            await memberService.delete(id);
+            fetchMembers();
+        } catch (error) {
+            console.error('Error deleting member:', error);
+            alert('Gagal menghapus member');
         }
     };
 
@@ -198,7 +184,11 @@ export function AdminMembers() {
                                                 >
                                                     {member.role === 'Admin' ? <ShieldAlert className="w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}
                                                 </button>
-                                                <button className="p-2 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-600 transition-colors" title="Hapus User">
+                                                <button
+                                                    onClick={() => handleDelete(member.id)}
+                                                    className="p-2 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-600 transition-colors"
+                                                    title="Hapus User"
+                                                >
                                                     <XCircle className="w-4 h-4" />
                                                 </button>
                                             </div>
