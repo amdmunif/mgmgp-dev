@@ -87,7 +87,7 @@ class AuthController
         $email = $data['email'];
         $password = $data['password'];
 
-        $query = "SELECT u.id, u.email, u.password_hash, p.role, p.nama, p.is_active FROM users u JOIN profiles p ON u.id = p.id WHERE u.email = :email LIMIT 1";
+        $query = "SELECT u.id, u.email, u.password_hash, p.role, p.nama, p.is_active, p.premium_until FROM users u JOIN profiles p ON u.id = p.id WHERE u.email = :email LIMIT 1";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':email', $email);
         $stmt->execute();
@@ -123,7 +123,8 @@ class AuthController
                         "id" => $row['id'],
                         "email" => $row['email'],
                         "role" => $row['role'],
-                        "nama" => $row['nama']
+                        "nama" => $row['nama'],
+                        "premium_until" => $row['premium_until']
                     ],
                     "session" => [
                         "access_token" => $token
