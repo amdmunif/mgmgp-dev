@@ -1,5 +1,4 @@
 import { api } from '../lib/api';
-import { supabase } from '../lib/supabase';
 
 export interface PremiumRequest {
     id: string;
@@ -61,8 +60,5 @@ export const premiumService = {
             id: requestId,
             reason: reason
         });
-    },
-
-    // Expose supabase for debugging
-    supabase
+    }
 };

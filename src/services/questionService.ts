@@ -1,34 +1,16 @@
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 import type { QuestionBank } from '../types';
 
 export const questionService = {
     async getAll() {
-        const { data, error } = await supabase
-            .from('question_banks')
-            .select('*')
-            .order('created_at', { ascending: false });
-
-        if (error) throw error;
-        return data as QuestionBank[];
+        return await api.get<QuestionBank[]>('/questions');
     },
 
     async create(question: Omit<QuestionBank, 'id' | 'created_at'>) {
-        const { data, error } = await supabase
-            .from('question_banks')
-            .insert(question)
-            .select()
-            .single();
-
-        if (error) throw error;
-        return data as QuestionBank;
+        return await api.post<QuestionBank>('/questions', question);
     },
 
     async delete(id: string) {
-        const { error } = await supabase
-            .from('question_banks')
-            .delete()
-            .eq('id', id);
-
-        if (error) throw error;
+        return await api.delete(`/questions/${id}`);
     }
 };
