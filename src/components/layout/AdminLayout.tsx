@@ -289,23 +289,6 @@ export function AdminLayout() {
                     </div>
 
                     <div className="flex items-center gap-3">
-                        <Link
-                            to="/member"
-                            className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
-                            title="Member Area"
-                        >
-                            <User className="w-5 h-5" />
-                        </Link>
-                        <button
-                            onClick={handleLogout}
-                            className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                            title="Logout"
-                        >
-                            <LogOut className="w-5 h-5" />
-                        </button>
-
-                        <div className="w-px h-8 bg-gray-200 mx-2 hidden lg:block" />
-
                         <div className="hidden lg:flex items-center justify-center w-10 h-10 rounded-full bg-gray-50 border border-gray-100 text-gray-500">
                             <Calendar className="w-5 h-5" />
                         </div>
@@ -314,7 +297,6 @@ export function AdminLayout() {
                             {new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                         </span>
 
-                        {/* Desktop Right: User Profile (Non-clickable, Custom Style) */}
                         {/* Desktop Right: User Profile Dropdown */}
                         <div className="hidden lg:block relative ml-2" ref={profileRef}>
                             <button
@@ -346,11 +328,11 @@ export function AdminLayout() {
                                     </Link>
 
                                     <Link
-                                        to="/admin"
+                                        to="/member"
                                         className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600"
                                         onClick={() => setIsProfileOpen(false)}
                                     >
-                                        <LayoutDashboard className="w-4 h-4" /> Admin Dashboard
+                                        <User className="w-4 h-4" /> Member Area
                                     </Link>
 
                                     <div className="h-px bg-gray-100 my-1" />

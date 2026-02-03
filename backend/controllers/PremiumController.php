@@ -104,8 +104,9 @@ class PremiumController
             $newExpiry->modify('+1 year');
             $newExpiryStr = $newExpiry->format('Y-m-d H:i:s');
 
-            $qProfUp = "UPDATE profiles SET premium_until = :expiry, subscription_status = 'premium' WHERE id = :uid";
-            $sProfUp = $this->conn->prepare($qProfUp);
+            $qProfUp = "UPDATE profiles SET premium_until = :expiry WHERE id = :uid";
+            $stmtProfUp = $this->conn->prepare($qProfUp); // Fixed var name to avoid confusion or reuse
+            $sProfUp = $stmtProfUp; // keeping original var name
             $sProfUp->bindParam(':expiry', $newExpiryStr);
             $sProfUp->bindParam(':uid', $userId);
             $sProfUp->execute();

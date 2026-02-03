@@ -5,10 +5,10 @@ export interface Profile {
     nama: string;
     email: string;
     role: string;
-    subscription_status: string;
-    premium_until: string | null;
-    created_at: string;
-    is_active: number;
+    subscription_status?: string;
+    premium_until?: string;
+    created_at?: string;
+    is_active?: number | boolean; // 1 or 0 usually from PHP
 }
 
 export const memberService = {

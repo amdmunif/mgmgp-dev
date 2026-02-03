@@ -23,7 +23,7 @@ export function AdminMembers() {
 
     // Edit State
     const [editingMember, setEditingMember] = useState<Profile | null>(null);
-    const [editForm, setEditForm] = useState({ nama: '', email: '', role: 'Member' });
+    const [editForm, setEditForm] = useState({ nama: '', email: '', role: 'Member', is_active: 0 });
     const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
@@ -47,7 +47,8 @@ export function AdminMembers() {
         setEditForm({
             nama: member.nama || '',
             email: member.email || '',
-            role: member.role || 'Member'
+            role: member.role || 'Member',
+            is_active: member.is_active ? 1 : 0
         });
     };
 
@@ -60,7 +61,8 @@ export function AdminMembers() {
             await memberService.update(editingMember.id, {
                 nama: editForm.nama,
                 email: editForm.email,
-                role: editForm.role as 'Admin' | 'Member' | 'Pengurus'
+                role: editForm.role as 'Admin' | 'Member' | 'Pengurus',
+                is_active: editForm.is_active
             });
             await fetchMembers();
             setEditingMember(null);
@@ -139,7 +141,8 @@ export function AdminMembers() {
                             <tr className="bg-gray-50/50 border-b border-gray-200">
                                 <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Anggota</th>
                                 <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Role</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status Akun</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Langganan</th>
                                 <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Bergabung</th>
                                 <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Aksi</th>
                             </tr>
@@ -177,6 +180,14 @@ export function AdminMembers() {
                                                 }`}>
                                                 {member.role === 'Admin' ? <ShieldCheck className="w-3 h-3" /> : <User className="w-3 h-3" />}
                                                 {member.role || 'Member'}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${Number(member.is_active) === 1
+                                                ? 'bg-green-50 text-green-700 border-green-200'
+                                                : 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                                                }`}>
+                                                {Number(member.is_active) === 1 ? 'Aktif' : 'Pending'}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
@@ -265,6 +276,20 @@ export function AdminMembers() {
                                     className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                                     required
                                 />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Status Akun</label>
+                                <div className="flex items-center gap-2 mt-2">
+                                    <input
+                                        type="checkbox"
+                                        id="isActive"
+                                        checked={Number(editForm.is_active) === 1}
+                                        onChange={(e) => setEditForm(prev => ({ ...prev, is_active: e.target.checked ? 1 : 0 }))}
+                                        className="h-5 w-5 text-blue-600 rounded focus:ring-blue-500 border-gray-300"
+                                    />
+                                    <label htmlFor="isActive" className="text-sm text-gray-700">Aktifkan Anggota</label>
+                                </div>
                             </div>
 
                             <div>

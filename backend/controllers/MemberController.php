@@ -36,6 +36,8 @@ class MemberController
             $profileUpdates[] = "nama = :nama";
         if (isset($data['role']))
             $profileUpdates[] = "role = :role";
+        if (isset($data['is_active']))
+            $profileUpdates[] = "is_active = :is_active";
 
         // Users table fields
         if (isset($data['email']))
@@ -56,6 +58,8 @@ class MemberController
                     $stmt->bindValue(':nama', $data['nama']);
                 if (isset($data['role']))
                     $stmt->bindValue(':role', $data['role']);
+                if (isset($data['is_active']))
+                    $stmt->bindValue(':is_active', $data['is_active']);
                 $stmt->bindValue(':id', $id);
                 $stmt->execute();
             }

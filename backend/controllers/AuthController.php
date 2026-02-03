@@ -87,7 +87,7 @@ class AuthController
         $email = $data['email'];
         $password = $data['password'];
 
-        $query = "SELECT u.id, u.email, u.password_hash, p.role, p.nama FROM users u JOIN profiles p ON u.id = p.id WHERE u.email = :email LIMIT 1";
+        $query = "SELECT u.id, u.email, u.password_hash, p.role, p.nama, p.is_active FROM users u JOIN profiles p ON u.id = p.id WHERE u.email = :email LIMIT 1";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':email', $email);
         $stmt->execute();
@@ -95,6 +95,13 @@ class AuthController
         if ($stmt->rowCount() > 0) {
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
             if (password_verify($password, $row['password_hash'])) {
+
+                // Check Active Status
+                if (isset($row['is_active']) && $row['is_active'] == 0) {
+                    http_response_code(403);
+                    return json_encode(["message" => "Akun Anda sedang menunggu verifikasi Admin."]);
+                }
+
                 // Generate Token
                 $tokenPayload = [
                     'sub' => $row['id'],
