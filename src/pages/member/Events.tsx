@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '../../components/ui/button';
 import { Loader2, Calendar, MapPin, CheckCircle, Clock } from 'lucide-react';
 import { eventService } from '../../services/eventService';
-import type { EventParticipation } from '../../services/eventService';
+import type { EventParticipant } from '../../services/eventService';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { cn } from '../../lib/utils';
@@ -20,7 +20,7 @@ export function MemberEvents() {
     const [activeTab, setActiveTab] = useState<'upcoming' | 'history'>('upcoming');
     const [loading, setLoading] = useState(true);
     const [upcomingEvents, setUpcomingEvents] = useState<EventWithStatus[]>([]);
-    const [history, setHistory] = useState<EventParticipation[]>([]);
+    const [history, setHistory] = useState<EventParticipant[]>([]);
     const [processingId, setProcessingId] = useState<string | null>(null);
 
     useEffect(() => {
@@ -48,7 +48,7 @@ export function MemberEvents() {
         if (!confirm('Apakah Anda yakin ingin mendaftar ke acara ini?')) return;
         setProcessingId(eventId);
         try {
-            await eventService.register(eventId);
+            await eventService.joinEvent(eventId);
             await loadData(); // Reload to update status
             alert('Berhasil mendaftar!');
         } catch (error: any) {
