@@ -154,9 +154,6 @@ class AuthController
 
     public function updateProfile($id, $data)
     {
-        // Construct query dynamically or use fixed fields
-        // For simplicity and safety, we used fixed fields based on Schema
-
         $query = "UPDATE profiles SET 
             nama = :nama,
             asal_sekolah = :asal_sekolah,
@@ -165,6 +162,7 @@ class AuthController
             status_kepegawaian = :status_kepegawaian,
             ukuran_baju = :ukuran_baju,
             no_hp = :no_hp,
+            foto_profile = :foto_profile,
             updated_at = NOW()
             WHERE id = :id";
 
@@ -177,6 +175,9 @@ class AuthController
         $stmt->bindParam(':status_kepegawaian', $data['status_kepegawaian']);
         $stmt->bindParam(':ukuran_baju', $data['ukuran_baju']);
         $stmt->bindParam(':no_hp', $data['no_hp']);
+
+        $foto_profile = isset($data['foto_profile']) ? $data['foto_profile'] : null;
+        $stmt->bindParam(':foto_profile', $foto_profile);
 
         if ($stmt->execute()) {
             return $this->getProfile($id);

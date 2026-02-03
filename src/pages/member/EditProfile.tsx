@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Camera, Save, User, Building2, GraduationCap, Loader2 } from 'lucide-react';
+import { Camera, Save, User as UserIcon, Building2, GraduationCap, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { api } from '../../lib/api';
@@ -7,11 +7,13 @@ import { settingsService } from '../../services/settingsService';
 import { Button } from '../../components/ui/button';
 
 export function EditProfile() {
-    const navigate = useNavigate();
+    // const navigate = useNavigate(); // Unused
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [uploading, setUploading] = useState(false);
-    // Removed message state, using react-hot-toast instead
+
+    // Removed message state
+
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -23,7 +25,7 @@ export function EditProfile() {
         jurusan: '',
         status_kepegawaian: '',
         ukuran_baju: '',
-        email: '', // Added email for display
+        email: '',
     });
 
     useEffect(() => {
@@ -48,7 +50,7 @@ export function EditProfile() {
                 setAvatarUrl(user.foto_profile);
             }
         } catch (error: any) {
-            console.error('Error loading profile:', error.message);
+            console.error('Error loading profile:', error);
             toast.error('Gagal memuat profil');
         } finally {
             setLoading(false);
@@ -67,12 +69,12 @@ export function EditProfile() {
         setUploading(true);
 
         try {
-            const url = await settingsService.uploadLogo(file); // Reusing uploadLogo for profile photo
+            const url = await settingsService.uploadLogo(file); // Reusing uploadLogo
             setAvatarUrl(url);
             toast.success('Foto berhasil diupload! Jangan lupa simpan perubahan.');
         } catch (error: any) {
             console.error('Error uploading avatar:', error);
-            toast.error('Gagal upload foto: ' + error.message);
+            toast.error('Gagal upload foto: ' + (error.message || error));
         } finally {
             setUploading(false);
         }
@@ -81,28 +83,28 @@ export function EditProfile() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSaving(true);
-        setMessage(null);
 
         try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) throw new Error('No user logged in');
+            // Using POST to /auth/profile which routes to AuthController.updateProfile if set up
+            // Or typically PUT. Assuming POST for now based on other patterns or default PHP routing.
+            // Looking at `index.php` conventions in this project: typically `POST /resource` is create, `POST /resource/action` is action.
+            // If I use `POST /auth/profile`, it might conflict if that's GET.
+            // Let's assume `POST /auth/profile` updates it.
 
-            const { error } = await supabase
-                .from('profiles')
-                .update({
-                    ...formData,
-                    updated_at: new Date().toISOString(),
-                })
-                .eq('id', user.id);
+            await api.post('/auth/profile', {
+                ...formData,
+                foto_profile: avatarUrl
+            });
 
-            if (error) throw error;
-            setMessage({ type: 'success', text: 'Profil berhasil diperbarui!' });
+            toast.success('Profil berhasil diperbarui!');
+
             // Reload page to refresh sidebar avatar if changed
-            if (formData.foto_profile) {
+            if (avatarUrl) {
                 setTimeout(() => window.location.reload(), 1000);
             }
         } catch (error: any) {
-            setMessage({ type: 'error', text: error.message || 'Gagal menyimpan profil' });
+            console.error('Error saving profile:', error);
+            toast.error(error.message || 'Gagal menyimpan profil');
         } finally {
             setSaving(false);
         }
@@ -129,8 +131,8 @@ export function EditProfile() {
                     <div className="flex flex-col items-center justify-center mb-6">
                         <div className="relative group">
                             <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-gray-100 bg-gray-100 flex items-center justify-center">
-                                {formData.foto_profile ? (
-                                    <img src={formData.foto_profile} alt="Profil" className="w-full h-full object-cover" />
+                                {avatarUrl ? (
+                                    <img src={avatarUrl} alt="Profil" className="w-full h-full object-cover" />
                                 ) : (
                                     <UserIcon className="w-12 h-12 text-gray-400" />
                                 )}
@@ -148,7 +150,7 @@ export function EditProfile() {
                                 ref={fileInputRef}
                                 className="hidden"
                                 accept="image/*"
-                                onChange={handleFileChange}
+                                onChange={uploadAvatar} // Fixed: use uploadAvatar directly
                             />
                         </div>
                         <p className="text-xs text-gray-500 mt-2">Klik ikon kamera untuk mengganti foto.</p>
