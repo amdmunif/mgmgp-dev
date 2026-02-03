@@ -25,6 +25,24 @@ if (isset($uri_parts[0]) && $uri_parts[0] === 'api') {
     array_shift($uri_parts); // Remove 'api' prefix if present
 }
 
+// Serve Static Files from 'uploads'
+if (isset($uri_parts[0]) && $uri_parts[0] === 'uploads') {
+    $filename = $uri_parts[1] ?? '';
+    $filename = basename($filename); // Sanitize
+    $filePath = __DIR__ . '/../uploads/' . $filename;
+
+    if (file_exists($filePath)) {
+        $mime = mime_content_type($filePath);
+        header("Content-Type: $mime");
+        readfile($filePath);
+        exit();
+    } else {
+        http_response_code(404);
+        echo "File not found";
+        exit();
+    }
+}
+
 include_once './controllers/AuthController.php';
 include_once './controllers/ResourceController.php';
 include_once './controllers/LearningController.php';
@@ -90,9 +108,8 @@ if ($resource === 'games') {
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         echo $controller->getAll();
     } elseif ($_SERVER['REQUEST_METHOD'] === 'PUT' && $action) {
-        // Update Role: /members/{id}
-        // Ideally should separate /role but simplified REST: PUT /members/{id} with body {role: ...}
-        echo $controller->updateRole($action, $input);
+        // Update Member (Role, Name, Email)
+        echo $controller->update($action, $input);
     } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action) {
         echo $controller->delete($action);
     }

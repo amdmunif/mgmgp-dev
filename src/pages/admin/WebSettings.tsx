@@ -241,6 +241,18 @@ export function AdminWebSettings() {
                                     className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-mono text-sm"
                                 />
                             </div>
+
+                            <div className="pt-4 border-t border-gray-100 mt-4">
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Ketentuan Upgrade Premium</label>
+                                <textarea
+                                    name="premium_rules"
+                                    value={settings.premium_rules || ''}
+                                    onChange={handleChange}
+                                    rows={6}
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-mono text-sm"
+                                    placeholder="Masukkan ketentuan upgrade premium (gunakan tag HTML seperti <ul>, <li>)..."
+                                />
+                            </div>
                         </div>
                     </div>
 

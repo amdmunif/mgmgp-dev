@@ -37,6 +37,7 @@ export interface AppSettings {
     mkks_nama?: string;
     mkks_nip?: string;
     mkks_signature_url?: string;
+    premium_rules?: string;
 }
 
 export const settingsService = {

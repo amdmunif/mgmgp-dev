@@ -4,11 +4,12 @@ import {
     Search,
     Filter,
     ShieldCheck,
-    ShieldAlert,
     Crown,
     User,
     Mail,
-    XCircle
+    XCircle,
+    Pencil,
+    X
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { format } from 'date-fns';
@@ -19,6 +20,11 @@ export function AdminMembers() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterRole, setFilterRole] = useState<'all' | 'Admin' | 'Member'>('all');
+
+    // Edit State
+    const [editingMember, setEditingMember] = useState<Profile | null>(null);
+    const [editForm, setEditForm] = useState({ nama: '', email: '', role: 'Member' });
+    const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
         fetchMembers();
@@ -36,16 +42,33 @@ export function AdminMembers() {
         }
     };
 
-    const handlePromote = async (id: string, currentRole: string) => {
-        if (!confirm('Apakah Anda yakin ingin mengubah role member ini?')) return;
+    const handleEdit = (member: Profile) => {
+        setEditingMember(member);
+        setEditForm({
+            nama: member.nama || '',
+            email: member.email || '',
+            role: member.role || 'Member'
+        });
+    };
 
-        const newRole = currentRole === 'Admin' ? 'Member' : 'Admin';
+    const handleSaveEdit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingMember) return;
+
+        setIsSaving(true);
         try {
-            await memberService.updateRole(id, newRole);
-            fetchMembers(); // Refresh
+            await memberService.update(editingMember.id, {
+                nama: editForm.nama,
+                email: editForm.email,
+                role: editForm.role as 'Admin' | 'Member' | 'Pengurus'
+            });
+            await fetchMembers();
+            setEditingMember(null);
         } catch (error) {
-            console.error('Error updating role:', error);
-            alert('Gagal mengubah role');
+            console.error('Error updating member:', error);
+            alert('Gagal mengupdate anggota');
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -178,11 +201,11 @@ export function AdminMembers() {
                                         <td className="px-6 py-4 text-right relative">
                                             <div className="flex items-center justify-end gap-2">
                                                 <button
-                                                    onClick={() => handlePromote(member.id, member.role)}
-                                                    className="p-2 hover:bg-gray-100 rounded-lg text-gray-500 hover:text-purple-600 transition-colors"
-                                                    title={member.role === 'Admin' ? "Turunkan jadi Member" : "Jadikan Admin"}
+                                                    onClick={() => handleEdit(member)}
+                                                    className="p-2 hover:bg-blue-50 rounded-lg text-gray-400 hover:text-blue-600 transition-colors"
+                                                    title="Edit Anggota"
                                                 >
-                                                    {member.role === 'Admin' ? <ShieldAlert className="w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}
+                                                    <Pencil className="w-4 h-4" />
                                                 </button>
                                                 <button
                                                     onClick={() => handleDelete(member.id)}
@@ -209,6 +232,64 @@ export function AdminMembers() {
                     </div>
                 </div>
             </div>
+
+            {/* Edit Modal */}
+            {editingMember && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="flex items-center justify-between p-6 border-b border-gray-100">
+                            <h2 className="text-xl font-bold text-gray-900">Edit Anggota</h2>
+                            <button onClick={() => setEditingMember(null)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSaveEdit} className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
+                                <input
+                                    type="text"
+                                    value={editForm.nama}
+                                    onChange={(e) => setEditForm(prev => ({ ...prev, nama: e.target.value }))}
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                    required
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                <input
+                                    type="email"
+                                    value={editForm.email}
+                                    onChange={(e) => setEditForm(prev => ({ ...prev, email: e.target.value }))}
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                    required
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Role / Hak Akses</label>
+                                <select
+                                    value={editForm.role}
+                                    onChange={(e) => setEditForm(prev => ({ ...prev, role: e.target.value }))}
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white"
+                                >
+                                    <option value="Member">Reguler Member</option>
+                                    <option value="Admin">Administrator</option>
+                                    <option value="Pengurus">Pengurus</option>
+                                </select>
+                            </div>
+
+                            <div className="flex gap-3 pt-4">
+                                <Button type="button" variant="outline" className="flex-1" onClick={() => setEditingMember(null)}>Batal</Button>
+                                <Button type="submit" className="flex-1" disabled={isSaving}>
+                                    {isSaving ? 'Menyimpan...' : 'Simpan Perubahan'}
+                                </Button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

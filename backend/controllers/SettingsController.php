@@ -23,10 +23,10 @@ class SettingsController
         $appSettings = $stmtApp->fetch(PDO::FETCH_ASSOC);
 
         if (!$appSettings) {
-             // Create default settings if not exists
-             $default = "INSERT INTO app_settings (id, site_title) VALUES (1, 'MGMP Informatika')";
-             $this->conn->exec($default);
-             $appSettings = ["id" => 1, "site_title" => "MGMP Informatika"];
+            // Create default settings if not exists
+            $default = "INSERT INTO app_settings (id, site_title) VALUES (1, 'MGMP Informatika')";
+            $this->conn->exec($default);
+            $appSettings = ["id" => 1, "site_title" => "MGMP Informatika"];
         }
 
         // Fetch Site Content
@@ -45,7 +45,7 @@ class SettingsController
         // Merge results
         // Note: Fields in site_content will overwrite app_settings if keys collide, but our schema has distinct keys mostly.
         $merged = array_merge($appSettings, $siteContent);
-        
+
         return json_encode($merged);
     }
 
@@ -77,13 +77,10 @@ class SettingsController
         $stmtApp->bindValue(':bank_number', $data['bank_number'] ?? '');
         $stmtApp->bindValue(':bank_holder', $data['bank_holder'] ?? '');
         $stmtApp->bindValue(':premium_price', $data['premium_price'] ?? 0);
-        
+
         $stmtApp->execute();
 
         // 2. Update Site Content
-        // Only update fields that exist in the input data or keep existing? 
-        // For simplicity, we update all known columns.
-
         $queryContent = "UPDATE site_content SET 
             home_hero_title = :home_hero_title,
             home_hero_subtitle = :home_hero_subtitle,
@@ -106,11 +103,12 @@ class SettingsController
             sekretaris_signature_url = :sekretaris_signature_url,
             mkks_nama = :mkks_nama,
             mkks_nip = :mkks_nip,
-            mkks_signature_url = :mkks_signature_url
+            mkks_signature_url = :mkks_signature_url,
+            premium_rules = :premium_rules
             WHERE id = 1";
 
         $stmtContent = $this->conn->prepare($queryContent);
-        
+
         $stmtContent->bindValue(':home_hero_title', $data['home_hero_title'] ?? '');
         $stmtContent->bindValue(':home_hero_subtitle', $data['home_hero_subtitle'] ?? '');
         $stmtContent->bindValue(':home_hero_image', $data['home_hero_image'] ?? '');
@@ -133,6 +131,7 @@ class SettingsController
         $stmtContent->bindValue(':mkks_nama', $data['mkks_nama'] ?? '');
         $stmtContent->bindValue(':mkks_nip', $data['mkks_nip'] ?? '');
         $stmtContent->bindValue(':mkks_signature_url', $data['mkks_signature_url'] ?? '');
+        $stmtContent->bindValue(':premium_rules', $data['premium_rules'] ?? '');
 
         if ($stmtContent->execute()) {
             return $this->getSettings();
@@ -149,7 +148,8 @@ class SettingsController
             return json_encode(["message" => "No file uploaded."]);
         }
 
-        $targetDir = __DIR__ . "/../uploads/";
+        // Project root uploads folder
+        $targetDir = __DIR__ . "/../../uploads/";
         if (!file_exists($targetDir)) {
             mkdir($targetDir, 0777, true);
         }
@@ -162,23 +162,11 @@ class SettingsController
         $allowTypes = array('jpg', 'png', 'jpeg', 'gif', 'ico', 'svg', 'webp');
         if (in_array(strtolower($fileType), $allowTypes)) {
             if (move_uploaded_file($_FILES["file"]["tmp_name"], $targetFilePath)) {
-                // Return the public URL
-                // Assuming the API is at /api and backend is served correctly
-                // We need a way to serve static files or use absolute URL
-                // For now, let's return a relative path that the frontend can resolve or proxy
-                // Or better, a full URL if we knew the host.
-                // Let's return just the filename and let frontend handle base URL or serve via a specific endpoint
-
-                // Ideally: return "https://domain.com/api/uploads/filename"
-                // Since we don't strictly know domain in PHP without $_SERVER, let's use relative
+                // Return URL
                 $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
                 $host = $_SERVER['HTTP_HOST'];
-                // Adjust path based on your deployment structure. 
-                // If index.php is in backend/, and uploads is in backend/uploads.
-                // The URL should be relative from the web root or absolute.
-                // Assuming typical setup where API is processed by index.php
-                
-                $url = "$protocol://$host/api/uploads/$fileName";
+                // Served via /uploads endpoint in index.php
+                $url = "$protocol://$host/uploads/$fileName";
 
                 return json_encode(["url" => $url]);
             }

@@ -17,12 +17,14 @@ export const memberService = {
         return await api.get<Profile[]>('/members');
     },
 
-    // Update member role
+    // Update member role (Wrapper for backward compatibility)
     async updateRole(id: string, role: string) {
-        return await api.request(`/members/${id}`, {
-            method: 'PUT',
-            body: JSON.stringify({ role })
-        });
+        return this.update(id, { role });
+    },
+
+    // Update entire profile
+    async update(id: string, data: Partial<Profile> & { email?: string }) {
+        return await api.put<{ message: string }>(`/members/${id}`, data);
     },
 
     // Delete member

@@ -25,21 +25,57 @@ class MemberController
         return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
     }
 
-    public function updateRole($id, $data)
+    public function update($id, $data)
     {
-        $role = $data['role']; // Admin or Member
+        // Split updates for profiles and users tables
+        $profileUpdates = [];
+        $userUpdates = [];
 
-        $query = "UPDATE profiles SET role = :role WHERE id = :id";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':role', $role);
-        $stmt->bindParam(':id', $id);
+        // Profiles table fields
+        if (isset($data['nama']))
+            $profileUpdates[] = "nama = :nama";
+        if (isset($data['role']))
+            $profileUpdates[] = "role = :role";
 
-        if ($stmt->execute()) {
-            return json_encode(["message" => "Role updated successfully"]);
+        // Users table fields
+        if (isset($data['email']))
+            $userUpdates[] = "email = :email";
+
+        if (empty($profileUpdates) && empty($userUpdates)) {
+            http_response_code(400);
+            return json_encode(["message" => "No fields to update"]);
         }
 
-        http_response_code(500);
-        return json_encode(["message" => "Failed to update role"]);
+        try {
+            $this->conn->beginTransaction();
+
+            if (!empty($profileUpdates)) {
+                $query = "UPDATE profiles SET " . implode(", ", $profileUpdates) . " WHERE id = :id";
+                $stmt = $this->conn->prepare($query);
+                if (isset($data['nama']))
+                    $stmt->bindValue(':nama', $data['nama']);
+                if (isset($data['role']))
+                    $stmt->bindValue(':role', $data['role']);
+                $stmt->bindValue(':id', $id);
+                $stmt->execute();
+            }
+
+            if (!empty($userUpdates)) {
+                $query = "UPDATE users SET " . implode(", ", $userUpdates) . " WHERE id = :id";
+                $stmt = $this->conn->prepare($query);
+                if (isset($data['email']))
+                    $stmt->bindValue(':email', $data['email']);
+                $stmt->bindValue(':id', $id);
+                $stmt->execute();
+            }
+
+            $this->conn->commit();
+            return json_encode(["message" => "Member updated successfully"]);
+        } catch (Exception $e) {
+            $this->conn->rollBack();
+            http_response_code(500);
+            return json_encode(["message" => "Failed to update member: " . $e->getMessage()]);
+        }
     }
 
     public function delete($id)

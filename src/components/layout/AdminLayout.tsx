@@ -19,7 +19,7 @@ import {
     Book,
     Globe,
     ChevronDown,
-    UserPen
+    UserCircle
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 // import { Button } from '../../components/ui/button';
@@ -80,8 +80,11 @@ export function AdminLayout() {
     const UserProfileSection = ({ mobile = false }: { mobile?: boolean }) => (
         <div className={cn("flex items-center gap-3", mobile ? "w-full p-4 bg-gray-800 rounded-lg mb-4" : "")}>
             <div className="relative">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold border-2 border-white/10 shadow-sm overflow-hidden shrink-0">
+                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold border-2 border-white shadow-sm overflow-hidden shrink-0">
                     <span>{user?.email?.charAt(0).toUpperCase()}</span>
+                </div>
+                <div className="absolute -bottom-1 -right-1 bg-blue-600 text-white rounded-full p-0.5 border-2 border-white" title="Admin">
+                    <Crown className="w-3 h-3" />
                 </div>
             </div>
 
@@ -93,7 +96,7 @@ export function AdminLayout() {
 
             {/* Dropdown Trigger for Desktop */}
             {!mobile && (
-                <Users className="w-4 h-4 text-gray-500" />
+                <ChevronDown className={cn("w-4 h-4 text-gray-500 transition-transform duration-200", isProfileOpen ? "transform rotate-180" : "")} />
             )}
         </div>
     );
@@ -310,54 +313,48 @@ export function AdminLayout() {
                         <div className="hidden lg:block relative ml-2" ref={profileRef}>
                             <button
                                 onClick={() => setIsProfileOpen(!isProfileOpen)}
-                                className="flex items-center gap-3 bg-white hover:bg-gray-50 rounded-full border border-gray-200 p-1 pr-3 transition-all focus:outline-none focus:ring-2 focus:ring-blue-100"
+                                className="flex items-center gap-2 p-1 pl-3 pr-2 rounded-full hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200 focus:outline-none"
                             >
-                                <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 font-bold text-sm">
-                                    {user?.nama?.charAt(0).toUpperCase() || 'A'}
-                                </div>
-                                <span className="text-sm font-semibold text-gray-700 max-w-[150px] truncate">{user?.nama || 'Administrator'}</span>
-                                <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
+                                <UserProfileSection mobile={false} />
                             </button>
 
                             {/* Dropdown Menu */}
                             {isProfileOpen && (
-                                <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-100 py-2 animate-in fade-in slide-in-from-top-2 z-50">
-                                    <div className="px-4 py-3 border-b border-gray-100">
-                                        <p className="font-bold text-gray-900 truncate">{user?.nama}</p>
-                                        <span className="inline-block mt-1 px-2 py-0.5 bg-gray-100 text-gray-600 text-[10px] font-bold rounded-full uppercase tracking-wide">
-                                            {user?.role === 'Admin' ? 'Administrator' : 'Reguler Member'}
-                                        </span>
-                                        <p className="text-xs text-gray-500 mt-1 truncate">{user?.email}</p>
+                                <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-100 py-2 animate-in fade-in slide-in-from-top-2 z-50">
+                                    <div className="px-4 py-3 border-b border-gray-50 mb-1 bg-gray-50/50">
+                                        <p className="text-sm font-bold text-gray-900 truncate">{user?.nama}</p>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold flex items-center gap-1 w-fit">
+                                                <Crown className="w-3 h-3" /> ADMINISTRATOR
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-gray-400 mt-1 truncate">{user?.email}</p>
                                     </div>
 
-                                    <div className="py-2">
-                                        <Link
-                                            to="/member/profile"
-                                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                                            onClick={() => setIsProfileOpen(false)}
-                                        >
-                                            <UserPen className="w-4 h-4 text-gray-500" />
-                                            Edit Profil
-                                        </Link>
-                                        <Link
-                                            to="/admin"
-                                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                                            onClick={() => setIsProfileOpen(false)}
-                                        >
-                                            <LayoutDashboard className="w-4 h-4 text-gray-500" />
-                                            Admin Dashboard
-                                        </Link>
-                                    </div>
+                                    <Link
+                                        to="/member/profile"
+                                        className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600"
+                                        onClick={() => setIsProfileOpen(false)}
+                                    >
+                                        <UserCircle className="w-4 h-4" /> Edit Profil
+                                    </Link>
 
-                                    <div className="pt-2 border-t border-gray-100">
-                                        <button
-                                            onClick={handleLogout}
-                                            className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                                        >
-                                            <LogOut className="w-4 h-4" />
-                                            Logout
-                                        </button>
-                                    </div>
+                                    <Link
+                                        to="/admin"
+                                        className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600"
+                                        onClick={() => setIsProfileOpen(false)}
+                                    >
+                                        <LayoutDashboard className="w-4 h-4" /> Admin Dashboard
+                                    </Link>
+
+                                    <div className="h-px bg-gray-100 my-1" />
+
+                                    <button
+                                        onClick={handleLogout}
+                                        className="flex w-full items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                                    >
+                                        <LogOut className="w-4 h-4" /> Logout
+                                    </button>
                                 </div>
                             )}
                         </div>
