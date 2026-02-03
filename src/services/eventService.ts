@@ -16,12 +16,20 @@ export interface Event {
 }
 
 export interface EventParticipant {
+    id: string;
     event_id: string;
     user_id: string;
-    is_hadir: boolean;
-    tugas_submitted: boolean;
+    status: 'registered' | 'attended' | 'cancelled'; // Mapped from backend column
+    // is_hadir & tugas_submitted might be legacy or part of status now
+    is_hadir?: boolean;
+    tugas_submitted?: boolean;
     task_url?: string;
     registered_at: string;
+    events?: {
+        title: string;
+        date: string;
+        location: string;
+    };
 }
 
 export const eventService = {
