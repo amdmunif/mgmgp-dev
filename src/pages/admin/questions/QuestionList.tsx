@@ -12,12 +12,18 @@ export function AdminQuestions() {
     const [submitting, setSubmitting] = useState(false);
 
     // Form State
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<{
+        title: string;
+        mapel: string;
+        category: QuestionBank['category'];
+        is_premium: boolean;
+        file: File | null;
+    }>({
         title: '',
         mapel: '',
         category: 'Latihan',
         is_premium: true,
-        file: null as File | null
+        file: null
     });
 
     useEffect(() => {
@@ -64,7 +70,7 @@ export function AdminQuestions() {
                 mapel: formData.mapel,
                 category: formData.category,
                 file_url: fileUrl,
-                is_premium: formData.is_premium ? 1 : 0,
+                is_premium: formData.is_premium,
                 game_data: null // Optional for now
             });
 
@@ -191,7 +197,7 @@ export function AdminQuestions() {
                                 <select
                                     className="w-full px-3 py-2 border rounded-md"
                                     value={formData.category}
-                                    onChange={e => setFormData({ ...formData, category: e.target.value })}
+                                    onChange={e => setFormData({ ...formData, category: e.target.value as QuestionBank['category'] })}
                                 >
                                     <option value="Latihan">Latihan</option>
                                     <option value="Ujian">Ujian</option>

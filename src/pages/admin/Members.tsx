@@ -192,7 +192,7 @@ export function AdminMembers() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex flex-col gap-1">
-                                                {member.subscription_status === 'premium' ? (
+                                                {(member.premium_until && new Date(member.premium_until) > new Date()) ? (
                                                     <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-600">
                                                         <Crown className="w-3 h-3 fill-amber-600" /> Premium
                                                     </span>
