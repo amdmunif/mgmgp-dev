@@ -253,7 +253,7 @@ export function AdminLayout() {
             {/* Main Content Area */}
             <main className="flex-1 flex flex-col h-screen overflow-hidden bg-gray-50 relative">
                 {/* Top Desktop Header */}
-                <header className="h-20 bg-white border-b border-gray-100 flex items-center justify-between px-8 shadow-sm z-10">
+                <header className="h-20 bg-white border-b border-gray-100 flex items-center justify-between px-8 shadow-sm z-40">
                     <div className="flex items-center gap-4">
                         <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-lg">
                             <Menu className="w-6 h-6" />
