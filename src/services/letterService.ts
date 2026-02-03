@@ -1,42 +1,28 @@
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 
-export interface LetterData {
+export interface Letter {
+    id: string;
     template_id: string;
     letter_number: string;
     letter_date: string;
     subject: string;
     recipient: string;
     author_id: string;
-    content: string; // JSON string or HTML
-    form_data: any;
+    content: string; // HTML content
+    form_data: any; // Original form data
+    created_at: string;
 }
 
 export const letterService = {
-    async getLetters(userId: string) {
-        const { data, error } = await supabase
-            .from('letters')
-            .select('*')
-            .eq('author_id', userId)
-            .order('created_at', { ascending: false });
-
-        if (error) throw error;
-        return data;
+    async getAll() {
+        return await api.get<Letter[]>('/letters');
     },
 
-    async createLetter(letterData: LetterData) {
-        const { error } = await supabase
-            .from('letters')
-            .insert(letterData);
-
-        if (error) throw error;
+    async create(letter: Omit<Letter, 'id' | 'created_at'>) {
+        return await api.post('/letters', letter);
     },
 
-    async deleteLetter(id: string) {
-        const { error } = await supabase
-            .from('letters')
-            .delete()
-            .eq('id', id);
-
-        if (error) throw error;
+    async delete(id: string) {
+        return await api.delete(`/letters/${id}`);
     }
 };

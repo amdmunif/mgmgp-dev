@@ -53,8 +53,104 @@ $action = isset($uri_parts[1]) ? $uri_parts[1] : null;
 // Get JSON input
 $input = json_decode(file_get_contents("php://input"), true);
 
+include_once './controllers/ContentController.php';
+include_once './controllers/QuestionController.php';
+include_once './controllers/LetterController.php';
+include_once './controllers/StatsController.php';
+
+// ... includes
+
 // Resource Routing
-if ($resource === 'games') {
+if ($resource === 'news') {
+    $controller = new ContentController();
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        if ($action)
+            echo $controller->getNewsDetail($action);
+        else
+            echo $controller->getNews();
+    }
+    if ($_SERVER['REQUEST_METHOD'] === 'POST')
+        echo $controller->createNews($input);
+    if ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action)
+        echo $controller->deleteNews($action);
+
+} elseif ($resource === 'events') {
+    $controller = new ContentController();
+
+    // Auth Check
+    $headers = getallheaders();
+    $authHeader = isset($headers['Authorization']) ? $headers['Authorization'] : '';
+    $token = str_replace('Bearer ', '', $authHeader);
+    $userId = null;
+    if ($token) {
+        $payload = Helper::verifyJWT($token);
+        if ($payload && isset($payload['sub']))
+            $userId = $payload['sub'];
+    }
+
+    $subAction = isset($uri_parts[2]) ? $uri_parts[2] : null;
+
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        if ($action && $subAction === 'participation') {
+            if ($userId)
+                echo $controller->getParticipation($action, $userId);
+            else {
+                http_response_code(401);
+                echo json_encode(["message" => "Unauthorized"]);
+            }
+        } elseif ($action) {
+            echo $controller->getEventDetail($action);
+        } else {
+            echo $controller->getEvents();
+        }
+    }
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if ($action && $subAction === 'join') {
+            if ($userId)
+                echo $controller->joinEvent($action, $userId);
+            else {
+                http_response_code(401);
+                echo json_encode(["message" => "Unauthorized"]);
+            }
+        } elseif ($action && $subAction === 'submit-task') {
+            $taskUrl = $input['task_url'] ?? '';
+            if ($userId)
+                echo $controller->submitTask($action, $userId, $taskUrl);
+            else {
+                http_response_code(401);
+                echo json_encode(["message" => "Unauthorized"]);
+            }
+        } else {
+            echo $controller->createEvent($input);
+        }
+    }
+    if ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action)
+        echo $controller->deleteEvent($action);
+
+} elseif ($resource === 'questions') {
+    $controller = new QuestionController();
+    if ($_SERVER['REQUEST_METHOD'] === 'GET')
+        echo $controller->getAll();
+    if ($_SERVER['REQUEST_METHOD'] === 'POST')
+        echo $controller->create($input);
+    if ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action)
+        echo $controller->delete($action);
+
+} elseif ($resource === 'letters') {
+    $controller = new LetterController();
+    if ($_SERVER['REQUEST_METHOD'] === 'GET')
+        echo $controller->getAll();
+    if ($_SERVER['REQUEST_METHOD'] === 'POST')
+        echo $controller->create($input);
+    if ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action)
+        echo $controller->delete($action);
+
+} elseif ($resource === 'stats') {
+    $controller = new StatsController();
+    if ($_SERVER['REQUEST_METHOD'] === 'GET')
+        echo $controller->getOverview();
+
+} elseif ($resource === 'games') {
     $controller = new ResourceController();
     if ($_SERVER['REQUEST_METHOD'] === 'GET')
         echo $controller->getGames();

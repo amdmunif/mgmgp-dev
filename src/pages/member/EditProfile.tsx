@@ -1,15 +1,21 @@
+```typescript
 import { useState, useEffect, useRef } from 'react';
-import { supabase } from '../../lib/supabase';
+import { Camera, Save, User, Building2, GraduationCap, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
+import { api } from '../../lib/api';
+import { settingsService } from '../../services/settingsService';
 import { Button } from '../../components/ui/button';
-import { Loader2, Save, User as UserIcon, Building2, GraduationCap, Camera } from 'lucide-react';
 
 export function EditProfile() {
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [uploading, setUploading] = useState(false);
-    const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+    // Removed message state, using react-hot-toast instead
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
     const [formData, setFormData] = useState({
         nama: '',
         asal_sekolah: '',
@@ -18,7 +24,7 @@ export function EditProfile() {
         jurusan: '',
         status_kepegawaian: '',
         ukuran_baju: '',
-        foto_profile: '',
+        email: '', // Added email for display
     });
 
     useEffect(() => {
@@ -27,34 +33,24 @@ export function EditProfile() {
 
     const getProfile = async () => {
         try {
-            const { data: { user } } = await supabase.auth.getUser();
+            const user = await api.get<any>('/auth/profile');
 
             if (user) {
-                const { data, error } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', user.id)
-                    .single();
-
-                if (error && error.code !== 'PGRST116') {
-                    throw error;
-                }
-
-                if (data) {
-                    setFormData({
-                        nama: data.nama || '',
-                        asal_sekolah: data.asal_sekolah || '',
-                        no_hp: data.no_hp || '',
-                        pendidikan_terakhir: data.pendidikan_terakhir || '',
-                        jurusan: data.jurusan || '',
-                        status_kepegawaian: data.status_kepegawaian || '',
-                        ukuran_baju: data.ukuran_baju || '',
-                        foto_profile: data.foto_profile || '',
-                    });
-                }
+                setFormData({
+                    nama: user.nama || '',
+                    asal_sekolah: user.asal_sekolah || '',
+                    no_hp: user.no_hp || '',
+                    pendidikan_terakhir: user.pendidikan_terakhir || '',
+                    jurusan: user.jurusan || '',
+                    status_kepegawaian: user.status_kepegawaian || '',
+                    ukuran_baju: user.ukuran_baju || '',
+                    email: user.email || '',
+                });
+                setAvatarUrl(user.foto_profile);
             }
         } catch (error: any) {
             console.error('Error loading profile:', error.message);
+            toast.error('Gagal memuat profil');
         } finally {
             setLoading(false);
         }
@@ -64,35 +60,20 @@ export function EditProfile() {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const uploadAvatar = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || e.target.files.length === 0) {
             return;
         }
         const file = e.target.files[0];
         setUploading(true);
-        setMessage(null);
 
         try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) throw new Error('No user');
-
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-
-            const { error: uploadError } = await supabase.storage
-                .from('profile-photos')
-                .upload(fileName, file);
-
-            if (uploadError) throw uploadError;
-
-            const { data: { publicUrl } } = supabase.storage
-                .from('profile-photos')
-                .getPublicUrl(fileName);
-
-            setFormData(prev => ({ ...prev, foto_profile: publicUrl }));
-            setMessage({ type: 'success', text: 'Foto berhasil diupload! Jangan lupa simpan perubahan.' });
+            const url = await settingsService.uploadLogo(file); // Reusing uploadLogo for profile photo
+            setAvatarUrl(url);
+            toast.success('Foto berhasil diupload! Jangan lupa simpan perubahan.');
         } catch (error: any) {
-            setMessage({ type: 'error', text: 'Gagal upload foto: ' + error.message });
+            console.error('Error uploading avatar:', error);
+            toast.error('Gagal upload foto: ' + error.message);
         } finally {
             setUploading(false);
         }
@@ -145,7 +126,7 @@ export function EditProfile() {
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-6">
                     {message && (
-                        <div className={`p-4 rounded-lg text-sm flex items-center gap-2 ${message.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+                        <div className={`p - 4 rounded - lg text - sm flex items - center gap - 2 ${ message.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200' } `}>
                             {message.text}
                         </div>
                     )}
