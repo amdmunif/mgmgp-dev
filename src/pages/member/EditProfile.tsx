@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import { Camera, Save, User as UserIcon, Building2, GraduationCap, Loader2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { api } from '../../lib/api';
 import { settingsService } from '../../services/settingsService';
