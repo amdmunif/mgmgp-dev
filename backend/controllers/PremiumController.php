@@ -136,5 +136,44 @@ class PremiumController
         http_response_code(500);
         return json_encode(["message" => "Failed to reject"]);
     }
+    public function create($userId, $data)
+    {
+        $id = Helper::uuid();
+        $proofUrl = $data['proof_url'] ?? '';
+        $bankName = $data['bank_name'] ?? '';
+        $accountNumber = $data['account_number'] ?? '';
+        $accountHolder = $data['account_holder'] ?? '';
+
+        // Insert into premium_requests
+        $query = "INSERT INTO premium_requests (id, user_id, proof_url, bank_name, account_number, account_holder, status, created_at) 
+                  VALUES (:id, :user_id, :proof_url, :bank_name, :account_number, :account_holder, 'pending', NOW())";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':id', $id);
+        $stmt->bindParam(':user_id', $userId);
+        $stmt->bindParam(':proof_url', $proofUrl);
+        $stmt->bindParam(':bank_name', $bankName);
+        $stmt->bindParam(':account_number', $accountNumber);
+        $stmt->bindParam(':account_holder', $accountHolder);
+
+        if ($stmt->execute()) {
+            return json_encode(["message" => "Request submitted successfully"]);
+        }
+
+        http_response_code(500);
+        return json_encode(["message" => "Failed to submit request"]);
+    }
+
+    public function getMyLatest($userId)
+    {
+        $query = "SELECT * FROM premium_requests WHERE user_id = :user_id ORDER BY created_at DESC LIMIT 1";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':user_id', $userId);
+        $stmt->execute();
+
+        $request = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return json_encode($request ?: null);
+    }
 }
 ?>

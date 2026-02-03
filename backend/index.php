@@ -118,16 +118,37 @@ if ($resource === 'games') {
     include_once './controllers/PremiumController.php';
     $controller = new PremiumController();
 
-    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    // AUTH CHECK
+    $headers = getallheaders();
+    $authHeader = isset($headers['Authorization']) ? $headers['Authorization'] : '';
+    $token = str_replace('Bearer ', '', $authHeader);
+    $userId = null;
+    if ($token) {
+        $payload = Helper::verifyJWT($token);
+        if ($payload && isset($payload['sub'])) {
+            $userId = $payload['sub'];
+        }
+    }
+
+    if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'my-latest') {
+        if ($userId)
+            echo $controller->getMyLatest($userId);
+        else {
+            http_response_code(401);
+            echo json_encode(["message" => "Unauthorized"]);
+        }
+
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'create') {
+        if ($userId)
+            echo $controller->create($userId, $input);
+        else {
+            http_response_code(401);
+            echo json_encode(["message" => "Unauthorized"]);
+        }
+
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'GET') {
         echo $controller->getAllRequests();
     } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'approve') {
-        // POST /premium/approve with body { id: ... } or POST /premium/{id}/approve
-        // Let's assume POST /premium/approve with body { id: ... } OR 
-        // using the $uri parts more flexibly.
-        // Current Router: resource/action. 
-        // So /premium/approve -> logic below. But we need ID.
-        // Let's accept ID in body for approve/reject actions to keep router simple.
-
         $id = $input['id'] ?? null;
         if ($id)
             echo $controller->approve($id);
