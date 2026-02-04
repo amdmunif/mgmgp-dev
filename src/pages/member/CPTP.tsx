@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BookOpen, Target, Tag } from 'lucide-react';
+import { learningService } from '../../services/learningService';
+import type { LearningMaterial } from '../../types';
 
 export function CPTP() {
     const [activeTab, setActiveTab] = useState<'CP' | 'TP'>('CP');
@@ -9,70 +11,33 @@ export function CPTP() {
     const [selectedKelas, setSelectedKelas] = useState<'7' | '8' | '9'>('7');
     const [selectedSemester, setSelectedSemester] = useState<'Ganjil' | 'Genap'>('Ganjil');
 
-    // Mock Data for TP
-    const tpData = [
-        {
-            id: 1,
-            mapel: 'Informatika',
-            kelas: '7',
-            semester: 'Ganjil',
-            tujuan: 'Membedakan fakta dan opini.',
-            tag: 'Mengenal Fakta dan Opini'
-        },
-        {
-            id: 2,
-            mapel: 'Informatika',
-            kelas: '7',
-            semester: 'Ganjil',
-            tujuan: 'Mendeskripsikan komponen, fungsi, dan cara kerja komputer.',
-            tag: 'Sistem Komputer'
-        },
-        {
-            id: 3,
-            mapel: 'Informatika',
-            kelas: '7',
-            semester: 'Ganjil',
-            tujuan: 'Mengenal ekosistem media pers digital.',
-            tag: 'Literasi Digital'
-        },
-        {
-            id: 4,
-            mapel: 'Informatika',
-            kelas: '7',
-            semester: 'Ganjil',
-            tujuan: 'Memahami cara kerja dan penggunaan mesin pencari di internet.',
-            tag: 'Pengenalan Mesin Pencari'
-        },
-        {
-            id: 5,
-            mapel: 'Informatika',
-            kelas: '7',
-            semester: 'Ganjil',
-            tujuan: 'Mengetahui kredibilitas sumber informasi digital.',
-            tag: 'Informasi Digital'
-        },
-        {
-            id: 6,
-            mapel: 'Informatika',
-            kelas: '8',
-            semester: 'Ganjil',
-            tujuan: 'Memahami konsep himpunan data terstruktur dalam kehidupan sehari-hari.',
-            tag: 'Berpikir Komputasional'
-        },
-        {
-            id: 7,
-            mapel: 'KKA',
-            kelas: '9',
-            semester: 'Genap',
-            tujuan: 'Menggunakan aplikasi perkantoran untuk pengolahan data dan presentasi.',
-            tag: 'Aplikasi Perkantoran'
-        }
-    ];
+    // State
+    const [tpData, setTpData] = useState<LearningMaterial[]>([]);
+    const [cpData, setCpData] = useState<LearningMaterial[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [cps, tps] = await Promise.all([
+                    learningService.getAll('cp'),
+                    learningService.getAll('tp')
+                ]);
+                setCpData(cps);
+                setTpData(tps);
+            } catch (error) {
+                console.error("Failed to fetch data", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
 
     const filteredData = tpData.filter(item =>
         item.mapel === selectedMapel &&
         item.kelas === selectedKelas &&
-        item.semester === selectedSemester
+        String(item.semester) === selectedSemester
     );
 
     return (
@@ -117,18 +82,18 @@ export function CPTP() {
                                 <h2 className="text-lg font-bold text-blue-800">Informatika</h2>
                             </div>
                             <div className="p-6 space-y-6">
-                                <div>
-                                    <h3 className="font-bold text-gray-900 mb-2">Berpikir Komputasional</h3>
-                                    <p className="text-sm text-gray-600 leading-relaxed text-justify">
-                                        Pada akhir fase D, peserta didik mampu memahami konsep himpunan data terstruktur dalam kehidupan sehari-hari, memahami konsep lembar kerja pengolah data dan menerapkan berpikir komputasional dalam menyelesaikan persoalan yang mengandung himpunan data berstruktur sederhana dengan volume kecil, dan mendisposisikan berpikir komputasional yang diperlukan pada berbagai bidang; mampu menuliskan sekumpulan instruksi dengan menggunakan sekumpulan kosakata terbatas atau simbol dalam format pseudocode.
-                                    </p>
-                                </div>
-                                <div>
-                                    <h3 className="font-bold text-gray-900 mb-2">Literasi Digital</h3>
-                                    <p className="text-sm text-gray-600 leading-relaxed text-justify">
-                                        Pada akhir fase D, peserta didik mampu memahami cara kerja dan penggunaan mesin pencari di internet, mengetahui kredibilitas sumber informasi digital dan mengenal ekosistem media pers digital, membedakan fakta dan opini, memahami pemanfaatan perkakas teknologi digital untuk membuat laporan, presentasi, serta analisis dan interpretasi data, mampu mendeskripsikan komponen, fungsi, dan cara kerja komputer; memahami konsep dan penerapan konektivitas jaringan lokal dan internet baik kabel maupun nirkabel, mengetahui jenis ruang publik virtual, memahami pemanfaatan media digital untuk produksi dan diseminasi konten; mampu memahami pentingnya menjaga rekam jejak digital, mengamalkan toleransi dan empati di dunia digital, memahami dampak perundungan digital, membuat kata sandi yang kuat, serta memahami etika dalam berkomunikasi di ruang digital.
-                                    </p>
-                                </div>
+                                {loading && <p className="text-gray-500 text-sm">Loading...</p>}
+                                {!loading && cpData.filter(i => i.mapel === 'Informatika').length === 0 && (
+                                    <p className="text-gray-500 text-sm italic">Belum ada data CP Informatika.</p>
+                                )}
+                                {cpData.filter(i => i.mapel === 'Informatika').map(item => (
+                                    <div key={item.id}>
+                                        <h3 className="font-bold text-gray-900 mb-2">{item.title}</h3>
+                                        <p className="text-sm text-gray-600 leading-relaxed text-justify">
+                                            {item.content}
+                                        </p>
+                                    </div>
+                                ))}
                             </div>
                         </div>
 
@@ -138,24 +103,18 @@ export function CPTP() {
                                 <h2 className="text-lg font-bold text-green-800">Keterampilan Komputer & Akomodasi (KKA)</h2>
                             </div>
                             <div className="p-6 space-y-6">
-                                <div>
-                                    <h3 className="font-bold text-gray-900 mb-2">Mekanisme & Prosedur</h3>
-                                    <p className="text-sm text-gray-600 leading-relaxed text-justify">
-                                        Menerapkan berpikir komputasional untuk masalah sehari-hari maupun komputasi. Memahami konsep himpunan data terstruktur dan lembar kerja pengolah data. Menyelesaikan persoalan dengan data berstruktur sederhana. Menuliskan instruksi menggunakan kosakata terbatas atau simbol (pseudocode).
-                                    </p>
-                                </div>
-                                <div>
-                                    <h3 className="font-bold text-gray-900 mb-2">Penggunaan Perangkat Lunak</h3>
-                                    <p className="text-sm text-gray-600 leading-relaxed text-justify">
-                                        Menggunakan mesin pencari dan mengevaluasi kualitas informasi digital. Mengenal ekosistem media pers digital, membedakan fakta, opini, dan hoaks. Memanfaatkan aplikasi pengolah dokumen, lembar kerja, presentasi. Memahami komponen, fungsi, cara kerja komputer, serta konektivitas jaringan.
-                                    </p>
-                                </div>
-                                <div>
-                                    <h3 className="font-bold text-gray-900 mb-2">Algoritma & Pemrograman Dasar</h3>
-                                    <p className="text-sm text-gray-600 leading-relaxed text-justify">
-                                        Menulis teks algoritmik terstruktur (logis, sistematis, bertahap). Membuat instruksi yang dapat dijalankan manusia maupun komputer. Menerapkan paradigma pemrograman prosedural dengan kompleksitas bertahap.
-                                    </p>
-                                </div>
+                                {loading && <p className="text-gray-500 text-sm">Loading...</p>}
+                                {!loading && cpData.filter(i => i.mapel === 'KKA').length === 0 && (
+                                    <p className="text-gray-500 text-sm italic">Belum ada data CP KKA.</p>
+                                )}
+                                {cpData.filter(i => i.mapel === 'KKA').map(item => (
+                                    <div key={item.id}>
+                                        <h3 className="font-bold text-gray-900 mb-2">{item.title}</h3>
+                                        <p className="text-sm text-gray-600 leading-relaxed text-justify">
+                                            {item.content}
+                                        </p>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     </div>
@@ -216,17 +175,19 @@ export function CPTP() {
 
                         {/* Results List */}
                         <div className="space-y-4">
-                            {filteredData.length > 0 ? (
+                            {loading ? (
+                                <div className="text-center py-12 text-gray-500">Loading...</div>
+                            ) : filteredData.length > 0 ? (
                                 filteredData.map((item, index) => (
                                     <div key={item.id} className="flex gap-4 group">
                                         <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold group-hover:bg-blue-600 group-hover:text-white transition-colors">
                                             {index + 1}
                                         </div>
                                         <div className="flex-1 bg-white border border-gray-200 rounded-xl p-4 hover:border-blue-300 hover:shadow-sm transition-all">
-                                            <p className="text-gray-800 font-medium text-lg mb-2">{item.tujuan}</p>
+                                            <p className="text-gray-800 font-medium text-lg mb-2">{item.title}</p>
                                             <div className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">
                                                 <Tag className="w-3 h-3" />
-                                                {item.tag}
+                                                {item.content || 'Topik'}
                                             </div>
                                         </div>
                                     </div>
