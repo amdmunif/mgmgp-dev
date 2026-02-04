@@ -25,6 +25,7 @@ import { CreateLetter } from './pages/admin/letters/CreateLetter';
 import { AdminMaterials } from './pages/admin/learning/MaterialList';
 import { CreateMaterial } from './pages/admin/learning/CreateMaterial';
 import { AdminQuestions } from './pages/admin/questions/QuestionList';
+import { QuestionBuilder } from './pages/admin/questions/QuestionBuilder';
 import { QuestionBankPage } from './pages/public/QuestionBank';
 import { PromptLibrary } from './pages/public/Prompts';
 import { References } from './pages/public/References';
@@ -132,6 +133,7 @@ function App() {
           <Route path="learning" element={<AdminMaterials />} />
           <Route path="learning/create" element={<CreateMaterial />} />
           <Route path="questions" element={<AdminQuestions />} />
+          <Route path="questions/create" element={<QuestionBuilder />} />
 
           <Route path="news" element={<AdminNews />} />
           <Route path="news/create" element={<CreateNews />} />

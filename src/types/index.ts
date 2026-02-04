@@ -48,13 +48,29 @@ export interface LearningMaterial {
     author_id?: string;
 }
 
+export interface QuestionOption {
+    id: string;
+    text: string;
+    is_correct: boolean;
+}
+
+export interface Question {
+    id: string;
+    type: 'single_choice' | 'multiple_choice' | 'true_false' | 'essay';
+    text: string;
+    options?: QuestionOption[];
+    points: number;
+}
+
 export interface QuestionBank {
     id: string;
     title: string;
     mapel: string;
     category: 'Ulangan' | 'Latihan' | 'TTS' | 'Wordsearch';
     file_url?: string;
-    game_data?: any;
+    game_data?: {
+        questions: Question[];
+    } | null;
     is_premium: boolean;
     created_at: string;
 }

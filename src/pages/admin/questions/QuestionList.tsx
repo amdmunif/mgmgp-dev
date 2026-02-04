@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '../../../components/ui/button';
 import { Plus, Trash2, Search, Gamepad2, FileText } from 'lucide-react';
 import { questionService } from '../../../services/questionService';
 import type { QuestionBank } from '../../../types';
 
 export function AdminQuestions() {
+    const navigate = useNavigate();
     const [questions, setQuestions] = useState<QuestionBank[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
@@ -99,9 +101,14 @@ export function AdminQuestions() {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold text-gray-900">Bank Soal</h1>
-                <Button onClick={() => setIsModalOpen(true)}>
-                    <Plus className="w-4 h-4 mr-2" /> Tambah Soal
-                </Button>
+                <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => navigate('/admin/questions/create')}>
+                        <Gamepad2 className="w-4 h-4 mr-2" /> Buat Interaktif
+                    </Button>
+                    <Button onClick={() => setIsModalOpen(true)}>
+                        <Plus className="w-4 h-4 mr-2" /> Upload File
+                    </Button>
+                </div>
             </div>
 
             {/* Existing Search & Table */}

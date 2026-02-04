@@ -33,7 +33,8 @@ class QuestionController
         $stmt->bindParam(':title', $data['title']);
         $stmt->bindParam(':mapel', $data['mapel']);
         $stmt->bindParam(':category', $data['category']);
-        $stmt->bindParam(':file_url', $data['file_url']);
+        $fileUrl = $data['file_url'] ?? null;
+        $stmt->bindParam(':file_url', $fileUrl);
         // Store JSON for game_data
         $gameData = isset($data['game_data']) ? json_encode($data['game_data']) : null;
         $stmt->bindParam(':game_data', $gameData);
