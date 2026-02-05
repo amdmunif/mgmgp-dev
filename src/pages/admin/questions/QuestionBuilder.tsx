@@ -13,6 +13,8 @@ interface QuestionBuilderProps {
     basePath?: string;
 }
 
+const generateId = () => Math.random().toString(36).substring(2, 9);
+
 export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuilderProps) {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
@@ -25,8 +27,8 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
         mapel: '',
         kelas: '',
         options: [
-            { id: crypto.randomUUID(), text: '', is_correct: false },
-            { id: crypto.randomUUID(), text: '', is_correct: false }
+            { id: generateId(), text: '', is_correct: false },
+            { id: generateId(), text: '', is_correct: false }
         ],
         answer_key: '',
         explanation: ''
@@ -176,7 +178,7 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
                                     variant="outline"
                                     onClick={() => setQ({
                                         ...q,
-                                        options: [...(q.options || []), { id: crypto.randomUUID(), text: '', is_correct: false }]
+                                        options: [...(q.options || []), { id: generateId(), text: '', is_correct: false }]
                                     })}
                                 >
                                     <Plus className="w-4 h-4 mr-2" /> Tambah Opsi
