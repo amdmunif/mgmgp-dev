@@ -214,18 +214,22 @@ export function AdminPremium() {
                             </thead>
                             <tbody className="divide-y divide-gray-200">
                                 {Array.isArray(activeSubs) && activeSubs.map((sub) => {
-                                    const date = new Date(sub.premium_until);
-                                    const isValidDate = !isNaN(date.getTime());
+                                    const date = sub.premium_until ? new Date(sub.premium_until) : new Date();
+                                    const isValidDate = sub.premium_until && !isNaN(date.getTime());
                                     const daysLeft = isValidDate
                                         ? Math.ceil((date.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
                                         : 0;
 
                                     return (
                                         <tr key={sub.id} className="hover:bg-gray-50 transition-colors">
-                                            <td className="px-6 py-4 font-medium text-gray-900">{sub.nama}</td>
-                                            <td className="px-6 py-4 text-gray-500">{sub.email}</td>
+                                            <td className="px-6 py-4 font-medium text-gray-900">
+                                                {sub.nama || <span className="text-gray-400 italic">Tanpa Nama</span>}
+                                            </td>
+                                            <td className="px-6 py-4 text-gray-500">
+                                                {sub.email || <span className="text-gray-400 italic">No Email</span>}
+                                            </td>
                                             <td className="px-6 py-4">
-                                                {isValidDate ? format(date, 'd MMM yyyy', { locale: id }) : 'Invalid Date'}
+                                                {isValidDate ? format(date, 'd MMM yyyy', { locale: id }) : <span className="text-red-500 text-xs">Tanggal Invalid</span>}
                                             </td>
                                             <td className="px-6 py-4">
                                                 <span className={`px-2 py-1 rounded-full text-xs font-bold ${daysLeft < 30 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
@@ -243,7 +247,7 @@ export function AdminPremium() {
                                         </tr>
                                     );
                                 })}
-                                {activeSubs.length === 0 && (
+                                {(!Array.isArray(activeSubs) || activeSubs.length === 0) && (
                                     <tr>
                                         <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
                                             Tidak ada langganan aktif.

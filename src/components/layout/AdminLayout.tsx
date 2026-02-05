@@ -135,7 +135,7 @@ export function AdminLayout() {
         {
             title: "Manajemen Konten",
             items: [
-                { icon: Book, label: 'Referensi CP/TP', path: '/admin/references' },
+                { icon: Book, label: 'Bank Referensi', path: '/admin/references' },
                 { icon: Calendar, label: 'Acara & Kegiatan', path: '/admin/events' },
                 { icon: FileText, label: 'Berita', path: '/admin/news' },
             ]

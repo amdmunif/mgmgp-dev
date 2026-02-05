@@ -5,12 +5,15 @@ import { ArrowLeft, Plus, Save, GripVertical, CheckCircle2 } from 'lucide-react'
 import { questionService } from '../../../services/questionService';
 import type { Question } from '../../../services/questionService';
 import { cn } from '../../../lib/utils';
-import { nanoid } from 'nanoid';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { toast } from 'react-hot-toast';
 
-export function QuestionBuilder() {
+interface QuestionBuilderProps {
+    basePath?: string;
+}
+
+export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuilderProps) {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
 
@@ -22,8 +25,8 @@ export function QuestionBuilder() {
         mapel: '',
         kelas: '',
         options: [
-            { id: nanoid(), text: '', is_correct: false },
-            { id: nanoid(), text: '', is_correct: false }
+            { id: crypto.randomUUID(), text: '', is_correct: false },
+            { id: crypto.randomUUID(), text: '', is_correct: false }
         ],
         answer_key: '',
         explanation: ''
@@ -51,7 +54,7 @@ export function QuestionBuilder() {
         try {
             await questionService.create(q);
             toast.success('Pertanyaan berhasil dibuat!');
-            navigate('/admin/questions');
+            navigate(basePath);
         } catch (error) {
             console.error(error);
             toast.error('Gagal menyimpan');
@@ -80,7 +83,7 @@ export function QuestionBuilder() {
             {/* Header */}
             <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-4">
-                    <Button variant="ghost" onClick={() => navigate('/admin/questions')}>
+                    <Button variant="ghost" onClick={() => navigate(basePath)}>
                         <ArrowLeft className="w-4 h-4 mr-2" /> Kembali
                     </Button>
                     <h1 className="text-2xl font-bold">Buat Pertanyaan Baru</h1>
@@ -173,7 +176,7 @@ export function QuestionBuilder() {
                                     variant="outline"
                                     onClick={() => setQ({
                                         ...q,
-                                        options: [...(q.options || []), { id: nanoid(), text: '', is_correct: false }]
+                                        options: [...(q.options || []), { id: crypto.randomUUID(), text: '', is_correct: false }]
                                     })}
                                 >
                                     <Plus className="w-4 h-4 mr-2" /> Tambah Opsi
