@@ -6,19 +6,27 @@ export const authService = {
         const token = localStorage.getItem('access_token');
         if (!token) return null;
 
-        // Improve: Call API to validate token or get fresh profile
-        // For now, return what we have in storage or basic object
         try {
-            // Decoded JWT payload logic could go here or a specific /auth/me endpoint
-            // For now, let's assume valid session if token exists, and profile will be loaded by components
-            // To be robust, let's add a simple User check:
-            const userStr = localStorage.getItem('user_data');
-            if (userStr) return { user: JSON.parse(userStr), profile: JSON.parse(userStr) };
+            // Try fetching fresh profile from API
+            const response = await api.get<any>('/auth/profile');
+            if (response) {
+                const userStr = localStorage.getItem('user_data');
+                let localUser = userStr ? JSON.parse(userStr) : {};
+                // Merge fresh profile into local data
+                const updatedUser = { ...localUser, ...response };
+                localStorage.setItem('user_data', JSON.stringify(updatedUser));
 
-            return { user: { email: 'user@example.com' }, profile: null };
+                return { user: updatedUser, profile: response };
+            }
         } catch (e) {
-            return null;
+            // Silently fail to fallback
         }
+
+        // Fallback to local storage
+        const userStr = localStorage.getItem('user_data');
+        if (userStr) return { user: JSON.parse(userStr), profile: JSON.parse(userStr) };
+
+        return { user: { email: 'user@example.com' }, profile: null };
     },
 
     async login(email: string, password: string) {

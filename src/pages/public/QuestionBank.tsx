@@ -1,25 +1,40 @@
 import { useState, useEffect } from 'react';
-import { cn } from '../../lib/utils';
-import { FileText, Download, Gamepad2, Search, Lock } from 'lucide-react';
-import { questionService } from '../../services/questionService';
-import { authService } from '../../services/authService';
-import type { QuestionBank } from '../../types';
+import { cn } from '../../lib/utils'; // Keep existing cn
+import {
+    FileText, Download, Search, Filter, CheckSquare, Square, FileSpreadsheet, File as FileIcon
+} from 'lucide-react';
+import { questionService, Question } from '../../services/questionService';
+import { Button } from '../../components/ui/button';
+import { saveAs } from 'file-saver';
+import { Document, Packer, Paragraph, TextRun } from 'docx';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import * as XLSX from 'xlsx';
+import { toast } from 'react-hot-toast';
 
 export function QuestionBankPage() {
-    const [questions, setQuestions] = useState<QuestionBank[]>([]);
+    const [questions, setQuestions] = useState<Question[]>([]);
     const [loading, setLoading] = useState(true);
-    const [isPremiumUser, setIsPremiumUser] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [categoryFilter, setCategoryFilter] = useState<'All' | 'Ulangan' | 'Latihan' | 'TTS' | 'Wordsearch'>('All');
+
+    // Filters
+    const [filters, setFilters] = useState({
+        mapel: '',
+        kelas: '',
+        level: '',
+        search: ''
+    });
+
+    // Selection
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
     useEffect(() => {
         loadData();
-        checkPremium();
-    }, []);
+    }, [filters]); // Reload on filter change
 
     const loadData = async () => {
+        setLoading(true);
         try {
-            const data = await questionService.getAll();
+            const data = await questionService.getAll(filters);
             setQuestions(data);
         } catch (error) {
             console.error(error);
@@ -28,104 +43,282 @@ export function QuestionBankPage() {
         }
     };
 
-    const checkPremium = async () => {
-        const { user } = await authService.getCurrentUser() || {};
-        if (user) {
-            // Mock check or real check
-            setIsPremiumUser(true);
+    const toggleSelect = (id: string) => {
+        const newSet = new Set(selectedIds);
+        if (newSet.has(id)) newSet.delete(id);
+        else newSet.add(id);
+        setSelectedIds(newSet);
+    };
+
+    const toggleSelectAll = () => {
+        if (selectedIds.size === questions.length) {
+            setSelectedIds(new Set());
+        } else {
+            setSelectedIds(new Set(questions.map(q => q.id)));
         }
     };
 
-    const filteredQuestions = questions.filter(q => {
-        const matchesSearch = q.title.toLowerCase().includes(searchTerm.toLowerCase()) || q.mapel.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesCategory = categoryFilter === 'All' || q.category === categoryFilter;
-        return matchesSearch && matchesCategory;
-    });
+    // --- DOWNLOAD HANDLERS ---
 
-    const getIcon = (category: string) => {
-        if (category === 'TTS' || category === 'Wordsearch') return <Gamepad2 className="w-8 h-8 text-purple-500" />;
-        return <FileText className="w-8 h-8 text-blue-500" />;
+    const handleDownloadWord = async () => {
+        if (selectedIds.size === 0) return toast.error("Pilih soal dulu");
+
+        const selectedQuestions = questions.filter(q => selectedIds.has(q.id));
+
+        const doc = new Document({
+            sections: [{
+                properties: {},
+                children: [
+                    new Paragraph({
+                        children: [
+                            new TextRun({
+                                text: "Bank Soal MGMP",
+                                bold: true,
+                                size: 32,
+                            }),
+                        ],
+                        spacing: { after: 400 },
+                    }),
+                    ...selectedQuestions.flatMap((q, idx) => [
+                        new Paragraph({
+                            children: [
+                                new TextRun({
+                                    text: `${idx + 1}. `,
+                                    bold: true,
+                                }),
+                                // Since content is HTML, we strip tags roughly for now
+                                // Ideally needs HTML-to-Docx parser or simple strip
+                                new TextRun({
+                                    text: q.content.replace(/<[^>]+>/g, ''),
+                                }),
+                            ],
+                            spacing: { after: 200 },
+                        }),
+                        ...(q.options || []).map((opt: any, optIdx: number) =>
+                            new Paragraph({
+                                text: `${String.fromCharCode(65 + optIdx)}. ${opt.text}`,
+                                indent: { left: 720 }, // Indent options
+                            })
+                        ),
+                        new Paragraph({ text: "" }) // Spacer
+                    ])
+                ],
+            }],
+        });
+
+        const blob = await Packer.toBlob(doc);
+        saveAs(blob, "soal_mgmp.docx");
+        toast.success("Download Word Berhasil");
     };
+
+    const handleDownloadExcel = () => {
+        if (selectedIds.size === 0) return toast.error("Pilih soal dulu");
+        const selectedQuestions = questions.filter(q => selectedIds.has(q.id));
+
+        const wsData = selectedQuestions.map((q, idx) => ({
+            No: idx + 1,
+            Mapel: q.mapel,
+            Kelas: q.kelas,
+            Level: q.level,
+            Soal: q.content.replace(/<[^>]+>/g, ''),
+            Tipe: q.type,
+            Opsi_A: q.options?.[0]?.text || '',
+            Opsi_B: q.options?.[1]?.text || '',
+            Opsi_C: q.options?.[2]?.text || '',
+            Opsi_D: q.options?.[3]?.text || '',
+            Opsi_E: q.options?.[4]?.text || '',
+            Kunci: q.options?.find((o: any) => o.is_correct)?.text || ''
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(wsData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Soal");
+        XLSX.writeFile(wb, "soal_mgmp.xlsx");
+        toast.success("Download Excel Berhasil");
+    };
+
+    const handleDownloadPDF = () => {
+        if (selectedIds.size === 0) return toast.error("Pilih soal dulu");
+        const selectedQuestions = questions.filter(q => selectedIds.has(q.id));
+
+        const doc = new jsPDF();
+
+        // Title
+        doc.setFontSize(16);
+        doc.text("Bank Soal MGMP", 14, 20);
+        doc.setFontSize(11);
+
+        let y = 30;
+
+        selectedQuestions.forEach((q, idx) => {
+            if (y > 270) { doc.addPage(); y = 20; }
+
+            // Question Text
+            const cleanText = `${idx + 1}. ${q.content.replace(/<[^>]+>/g, '')}`;
+            const splitText = doc.splitTextToSize(cleanText, 180);
+            doc.text(splitText, 14, y);
+            y += (splitText.length * 5) + 2;
+
+            // Options
+            if (q.options) {
+                q.options.forEach((opt: any, optIdx: number) => {
+                    if (y > 280) { doc.addPage(); y = 20; }
+                    doc.text(`${String.fromCharCode(65 + optIdx)}. ${opt.text}`, 20, y);
+                    y += 5;
+                });
+            }
+            y += 5;
+        });
+
+        doc.save("soal_mgmp.pdf");
+        toast.success("Download PDF Berhasil");
+    };
+
 
     return (
         <div className="max-w-screen-xl mx-auto px-4 py-8">
-            <div className="text-center mb-12">
-                <h1 className="text-3xl font-bold text-gray-900">Bank Soal & Games</h1>
-                <p className="text-gray-500 mt-2">Kumpulan soal latihan, ulangan, dan games edukatif (TTS/Wordsearch).</p>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                <div>
+                    <h1 className="text-3xl font-bold text-gray-900">Repository Soal</h1>
+                    <p className="text-gray-500 mt-2">Cari, filter, dan download soal sesuai kebutuhan Anda.</p>
+                </div>
+
+                {/* Download Actions */}
+                {selectedIds.size > 0 && (
+                    <div className="flex gap-2 animate-in fade-in slide-in-from-right-4">
+                        <Button variant="outline" size="sm" onClick={handleDownloadWord} className="bg-blue-50 text-blue-700 border-blue-200">
+                            <FileIcon className="w-4 h-4 mr-2" /> Word
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={handleDownloadExcel} className="bg-green-50 text-green-700 border-green-200">
+                            <FileSpreadsheet className="w-4 h-4 mr-2" /> Excel
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={handleDownloadPDF} className="bg-red-50 text-red-700 border-red-200">
+                            <FileText className="w-4 h-4 mr-2" /> PDF
+                        </Button>
+                    </div>
+                )}
             </div>
 
             {/* Filters */}
-            <div className="flex flex-col md:flex-row gap-4 mb-8 justify-center items-center">
-                <div className="relative w-full md:w-96">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6 flex flex-wrap gap-4 items-center">
+                <div className="flex items-center gap-2 text-gray-500">
+                    <Filter className="w-4 h-4" />
+                    <span className="text-sm font-semibold">Filter:</span>
+                </div>
+
+                <select
+                    className="border rounded-lg px-3 py-1.5 text-sm bg-gray-50"
+                    value={filters.mapel}
+                    onChange={e => setFilters({ ...filters, mapel: e.target.value })}
+                >
+                    <option value="">Semua Mapel</option>
+                    <option value="Informatika">Informatika</option>
+                    <option value="KKA">KKA</option>
+                </select>
+
+                <select
+                    className="border rounded-lg px-3 py-1.5 text-sm bg-gray-50"
+                    value={filters.kelas}
+                    onChange={e => setFilters({ ...filters, kelas: e.target.value })}
+                >
+                    <option value="">Semua Kelas</option>
+                    <option value="7">Kelas 7</option>
+                    <option value="8">Kelas 8</option>
+                    <option value="9">Kelas 9</option>
+                </select>
+
+                <select
+                    className="border rounded-lg px-3 py-1.5 text-sm bg-gray-50"
+                    value={filters.level}
+                    onChange={e => setFilters({ ...filters, level: e.target.value })}
+                >
+                    <option value="">Semua Level</option>
+                    <option value="Mudah">Mudah</option>
+                    <option value="Sedang">Sedang</option>
+                    <option value="Sukar">Sukar</option>
+                </select>
+
+                <div className="flex-1 min-w-[200px] relative">
+                    <Search className="w-4 h-4 absolute left-3 top-2 text-gray-400" />
                     <input
                         type="text"
-                        placeholder="Cari materi soal..."
-                        className="pl-10 w-full rounded-full border border-gray-200 py-3 px-4 shadow-sm focus:ring-2 focus:ring-primary-500 focus:outline-none"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
+                        placeholder="Cari konten soal..."
+                        className="w-full pl-9 pr-4 py-1.5 border rounded-lg text-sm"
+                        value={filters.search}
+                        onChange={e => setFilters({ ...filters, search: e.target.value })}
                     />
                 </div>
-                <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0">
-                    {['All', 'Ulangan', 'Latihan', 'TTS', 'Wordsearch'].map((cat) => (
-                        <button
-                            key={cat}
-                            onClick={() => setCategoryFilter(cat as any)}
-                            className={cn(
-                                "px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap",
-                                categoryFilter === cat
-                                    ? "bg-primary-600 text-white shadow-md"
-                                    : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
-                            )}
-                        >
-                            {cat}
-                        </button>
-                    ))}
-                </div>
             </div>
 
-            {/* Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {loading ? (
-                    <div className="col-span-full text-center py-20 text-gray-500">Memuat bank soal...</div>
-                ) : filteredQuestions.length === 0 ? (
-                    <div className="col-span-full text-center py-20 bg-gray-50 rounded-xl">
-                        <p className="text-gray-500">Tidak ada soal ditemukan.</p>
-                    </div>
-                ) : (
-                    filteredQuestions.map((item) => (
-                        <div key={item.id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-lg transition-all group relative overflow-hidden">
-                            {item.is_premium && (
-                                <div className="absolute top-0 right-0 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2 py-1 rounded-bl-lg">
-                                    PREMIUM
-                                </div>
-                            )}
-
-                            <div className="flex items-start justify-between mb-4">
-                                <div className="p-3 bg-gray-50 rounded-lg group-hover:bg-primary-50 transition-colors">
-                                    {getIcon(item.category)}
-                                </div>
-                                <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-2 py-1 rounded">{item.mapel}</span>
-                            </div>
-
-                            <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-primary-600 transition-colors line-clamp-2">{item.title}</h3>
-                            <p className="text-sm text-gray-500 mb-4">{item.category}</p>
-
-                            <button className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 hover:text-primary-600 transition-colors">
-                                {item.is_premium && !isPremiumUser ? (
-                                    <>
-                                        <Lock className="w-4 h-4" /> Akses Premium
-                                    </>
-                                ) : (
-                                    <>
-                                        <Download className="w-4 h-4" /> Download / Main
-                                    </>
-                                )}
-                            </button>
-                        </div>
-                    ))
-                )}
+            {/* Table */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <table className="w-full text-left">
+                    <thead className="bg-gray-50 border-b border-gray-100">
+                        <tr>
+                            <th className="px-6 py-4 w-12">
+                                <button onClick={toggleSelectAll}>
+                                    {selectedIds.size === questions.length && questions.length > 0 ? (
+                                        <CheckSquare className="w-5 h-5 text-primary-600" />
+                                    ) : (
+                                        <Square className="w-5 h-5 text-gray-400" />
+                                    )}
+                                </button>
+                            </th>
+                            <th className="px-6 py-4 font-semibold text-gray-700">Soal</th>
+                            <th className="px-6 py-4 font-semibold text-gray-700 w-32">Mapel</th>
+                            <th className="px-6 py-4 font-semibold text-gray-700 w-24">Kelas</th>
+                            <th className="px-6 py-4 font-semibold text-gray-700 w-24">Level</th>
+                            <th className="px-6 py-4 font-semibold text-gray-700 w-24">Tipe</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                        {loading ? (
+                            <tr><td colSpan={6} className="p-8 text-center text-gray-500">Loading...</td></tr>
+                        ) : questions.length === 0 ? (
+                            <tr><td colSpan={6} className="p-8 text-center text-gray-500">Tidak ada soal ditemukan.</td></tr>
+                        ) : (
+                            questions.map(q => (
+                                <tr key={q.id} className={cn("hover:bg-gray-50/50 transition-colors", selectedIds.has(q.id) && "bg-blue-50/30")}>
+                                    <td className="px-6 py-4">
+                                        <button onClick={() => toggleSelect(q.id)}>
+                                            {selectedIds.has(q.id) ? (
+                                                <CheckSquare className="w-5 h-5 text-primary-600" />
+                                            ) : (
+                                                <Square className="w-5 h-5 text-gray-300 hover:text-gray-400" />
+                                            )}
+                                        </button>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="line-clamp-2 text-sm text-gray-800" dangerouslySetInnerHTML={{ __html: q.content }} />
+                                    </td>
+                                    <td className="px-6 py-4 text-sm text-gray-600">{q.mapel}</td>
+                                    <td className="px-6 py-4 text-center">
+                                        <span className="inline-flex items-center px-2 py-1 rounded bg-gray-100 text-xs font-medium text-gray-800">
+                                            {q.kelas}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <span className={cn(
+                                            "inline-flex items-center px-2 py-1 rounded text-xs font-medium",
+                                            q.level === 'Mudah' ? "bg-green-100 text-green-800" :
+                                                q.level === 'Sedang' ? "bg-yellow-100 text-yellow-800" :
+                                                    "bg-red-100 text-red-800"
+                                        )}>
+                                            {q.level}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-sm text-gray-500 capitalize">
+                                        {q.type.replace('_', ' ')}
+                                    </td>
+                                </tr>
+                            ))
+                        )}
+                    </tbody>
+                </table>
             </div>
+            <p className="mt-4 text-xs text-center text-gray-400">
+                Menampilkan {questions.length} soal. Pilih soal untuk mendownload dalam format Word, Excel, atau PDF.
+            </p>
         </div>
     );
 }

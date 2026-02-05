@@ -19,7 +19,9 @@ import {
     Book,
     Globe,
     ChevronDown,
-    UserCircle
+    ChevronDown,
+    UserCircle,
+    UserCheck
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 // import { Button } from '../../components/ui/button';
@@ -118,6 +120,7 @@ export function AdminLayout() {
             title: "Menu Anggota",
             items: [
                 { icon: Users, label: 'Kelola Anggota', path: '/admin/members' },
+                { icon: UserCheck, label: 'Verifikasi Kontributor', path: '/admin/contributors' },
                 { icon: Crown, label: 'Kelola Langganan', path: '/admin/premium' },
             ]
         },

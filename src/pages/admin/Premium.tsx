@@ -213,14 +213,19 @@ export function AdminPremium() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200">
-                                {activeSubs.map((sub) => {
-                                    const daysLeft = Math.ceil((new Date(sub.premium_until).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                                {Array.isArray(activeSubs) && activeSubs.map((sub) => {
+                                    const date = new Date(sub.premium_until);
+                                    const isValidDate = !isNaN(date.getTime());
+                                    const daysLeft = isValidDate
+                                        ? Math.ceil((date.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+                                        : 0;
+
                                     return (
                                         <tr key={sub.id} className="hover:bg-gray-50 transition-colors">
                                             <td className="px-6 py-4 font-medium text-gray-900">{sub.nama}</td>
                                             <td className="px-6 py-4 text-gray-500">{sub.email}</td>
                                             <td className="px-6 py-4">
-                                                {format(new Date(sub.premium_until), 'd MMM yyyy', { locale: id })}
+                                                {isValidDate ? format(date, 'd MMM yyyy', { locale: id }) : 'Invalid Date'}
                                             </td>
                                             <td className="px-6 py-4">
                                                 <span className={`px-2 py-1 rounded-full text-xs font-bold ${daysLeft < 30 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>

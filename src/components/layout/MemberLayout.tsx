@@ -17,7 +17,8 @@ import {
     FileText,
     FileQuestion,
     Book,
-    Clock
+    Clock,
+    PenTool
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { cn } from '../../lib/utils';
@@ -94,6 +95,7 @@ export function MemberLayout() {
         { icon: Book, label: 'Modul Ajar', path: '/member/modules', premium: true },
         { icon: Terminal, label: 'Prompt Library', path: '/member/prompts', premium: true },
         { icon: BookOpen, label: 'Referensi Belajar', path: '/member/references', premium: true },
+        { icon: PenTool, label: 'Program Kontributor', path: '/member/contributor' },
         // Mobile Only Items
         { icon: UserCircle, label: 'Edit Profil', path: '/member/profile', className: 'md:hidden' },
         ...(user?.role === 'Admin' || user?.role === 'Pengurus' ? [{ icon: LayoutDashboard, label: 'Admin Dashboard', path: '/admin', className: 'md:hidden text-primary-600' }] : []),

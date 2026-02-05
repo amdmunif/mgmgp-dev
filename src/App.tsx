@@ -41,7 +41,12 @@ import { CreateGame } from './pages/admin/games/CreateGame';
 import { AdminPrompts } from './pages/admin/prompts/AdminPrompts';
 import { CreatePrompt } from './pages/admin/prompts/CreatePrompt';
 import { AdminReferences } from './pages/admin/references/AdminReferences';
+// Imports
+import { VerificationList } from './pages/admin/contributors/VerificationList';
 import { CreateReference } from './pages/admin/references/CreateReference';
+
+// Routes
+<Route path="contributors" element={<VerificationList />} />
 
 // Member Feature Pages
 import { CPTP } from './pages/member/CPTP';
@@ -49,6 +54,7 @@ import { MemberEvents } from './pages/member/Events';
 import { EditProfile } from './pages/member/EditProfile';
 import { Games } from './pages/member/Games';
 import { Modules } from './pages/member/Modules';
+import { ContributorRegistration } from './pages/member/ContributorRegistration';
 import { PremiumGuard } from './components/auth/PremiumGuard';
 
 import { settingsService } from './services/settingsService';
@@ -98,6 +104,7 @@ function App() {
           <Route path="upgrade" element={<UpgradePremium />} />
           <Route path="cptp" element={<CPTP />} />
           <Route path="events" element={<MemberEvents />} />
+          <Route path="contributor" element={<ContributorRegistration />} />
 
           {/* Protected Premium Routes */}
           <Route path="questions" element={
@@ -154,6 +161,7 @@ function App() {
           <Route path="prompts/create" element={<CreatePrompt />} />
           <Route path="references" element={<AdminReferences />} />
           <Route path="references/create" element={<CreateReference />} />
+          <Route path="contributors" element={<VerificationList />} />
         </Route>
 
         {/* Fallback */}

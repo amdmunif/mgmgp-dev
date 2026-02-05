@@ -145,6 +145,15 @@ if ($resource === 'news') {
     if ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action)
         echo $controller->delete($action);
 
+} elseif ($resource === 'question-banks') {
+    $controller = new QuestionController();
+    if ($_SERVER['REQUEST_METHOD'] === 'GET')
+        echo $controller->getBanks();
+    if ($_SERVER['REQUEST_METHOD'] === 'POST')
+        echo $controller->createBank($input);
+    if ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action)
+        echo $controller->deleteBank($action);
+
 } elseif ($resource === 'letters') {
     $controller = new LetterController();
     if ($_SERVER['REQUEST_METHOD'] === 'GET')
@@ -290,6 +299,53 @@ if ($resource === 'news') {
         else {
             http_response_code(400);
             echo json_encode(["message" => "User ID required"]);
+        }
+    }
+
+} elseif ($resource === 'contributor') {
+    include_once './controllers/ContributorController.php';
+    $controller = new ContributorController();
+
+    // AUTH CHECK
+    $headers = getallheaders();
+    $authHeader = isset($headers['Authorization']) ? $headers['Authorization'] : '';
+    $token = str_replace('Bearer ', '', $authHeader);
+    $userId = null;
+    $userRole = null;
+
+    if ($token) {
+        $payload = Helper::verifyJWT($token);
+        if ($payload && isset($payload['sub'])) {
+            $userId = $payload['sub'];
+            $userRole = $payload['role'] ?? 'Anggota';
+        }
+    }
+
+    if (!$userId) {
+        http_response_code(401);
+        echo json_encode(["message" => "Unauthorized"]);
+        exit;
+    }
+
+    if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'status') {
+        echo $controller->getStatus($userId);
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'apply') {
+        echo $controller->apply($userId);
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'applications') {
+        // Admin Only
+        if ($userRole !== 'Admin') {
+            http_response_code(403);
+            echo json_encode(["message" => "Forbidden"]);
+        } else {
+            echo $controller->getAllApplications();
+        }
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'verify') {
+        // Admin Only
+        if ($userRole !== 'Admin') {
+            http_response_code(403);
+            echo json_encode(["message" => "Forbidden"]);
+        } else {
+            echo $controller->verify($input);
         }
     }
 

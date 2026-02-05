@@ -1,26 +1,72 @@
 import { api } from '../lib/api';
-import type { QuestionBank } from '../types';
+
+// New Individual Question
+export interface Question {
+    id: string;
+    content: string;
+    type: 'single_choice' | 'multiple_choice' | 'true_false' | 'match' | 'essay' | 'short_answer';
+    options: any[]; // JSON
+    answer_key: string;
+    explanation?: string;
+    level: 'Mudah' | 'Sedang' | 'Sukar';
+    mapel: string;
+    kelas: string;
+    creator_name?: string;
+    status: 'draft' | 'pending' | 'verified' | 'rejected';
+    created_at: string;
+}
+
+// Legacy Question Bank (Files/Games)
+export interface QuestionBank {
+    id: string;
+    title: string;
+    mapel: string;
+    category: 'Latihan' | 'Ujian' | 'TTS' | 'Wordsearch';
+    file_url?: string;
+    game_data?: any;
+    is_premium: boolean;
+    created_at: string;
+    creator_name?: string;
+    status?: string;
+}
 
 export const questionService = {
-    async getAll() {
-        return await api.get<QuestionBank[]>('/questions');
+    // --- Repository (New) ---
+    async getAll(filters?: { mapel?: string; kelas?: string; level?: string; search?: string }) {
+        const params = new URLSearchParams();
+        if (filters?.mapel && filters.mapel !== 'All') params.append('mapel', filters.mapel);
+        if (filters?.kelas && filters.kelas !== 'All') params.append('kelas', filters.kelas);
+        if (filters?.level && filters.level !== 'All') params.append('level', filters.level);
+        if (filters?.search) params.append('search', filters.search);
+
+        return api.get<Question[]>('/questions?' + params.toString());
     },
 
-    async create(question: Omit<QuestionBank, 'id' | 'created_at'>) {
-        return await api.post<QuestionBank>('/questions', question);
+    async create(data: Partial<Question>) {
+        return api.post('/questions', data);
     },
 
     async delete(id: string) {
-        return await api.delete(`/questions/${id}`);
+        return api.delete(`/questions/${id}`);
+    },
+
+    // --- Legacy (Files & Games) ---
+    async getBanks() {
+        return api.get<QuestionBank[]>('/question-banks');
+    },
+
+    async createBank(data: Partial<QuestionBank>) {
+        return api.post('/question-banks', data);
+    },
+
+    async deleteBank(id: string) {
+        return api.delete(`/question-banks/${id}`);
     },
 
     async uploadFile(file: File) {
         const formData = new FormData();
         formData.append('file', file);
-        // api wrapper usually handles FormData if body is FormData, or we need to check api.ts
-        // Assuming api.post handles it or we use raw fetch for upload if api is strict JSON.
-        // Let's assume standard axios/fetch wrapper behavior for now or check api.ts first.
-        const response = await api.post<{ url: string }>('/upload', formData);
-        return response.url;
+        const res = await api.post<{ url: string }>('/upload', formData); // Should return { url: ... }
+        return res.url;
     }
 };

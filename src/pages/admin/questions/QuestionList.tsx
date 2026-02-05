@@ -1,245 +1,322 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../../components/ui/button';
-import { Plus, Trash2, Search, Gamepad2, FileText } from 'lucide-react';
-import { questionService } from '../../../services/questionService';
-import type { QuestionBank } from '../../../types';
+import { Plus, Trash2, Search, Filter, PenTool, CheckCircle, XCircle, FileText, Gamepad2, Upload } from 'lucide-react';
+import { questionService, Question, QuestionBank } from '../../../services/questionService';
+import { cn } from '../../../lib/utils';
+import { toast } from 'react-hot-toast';
 
 export function AdminQuestions() {
     const navigate = useNavigate();
-    const [questions, setQuestions] = useState<QuestionBank[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [search, setSearch] = useState('');
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState<'repository' | 'legacy'>('repository');
+
+    // Repository State
+    const [questions, setQuestions] = useState<Question[]>([]);
+    const [repoLoading, setRepoLoading] = useState(true);
+    const [filters, setFilters] = useState({ mapel: '', kelas: '', level: '', search: '' });
+
+    // Legacy State
+    const [banks, setBanks] = useState<QuestionBank[]>([]);
+    const [legacyLoading, setLegacyLoading] = useState(true);
+    const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+    const [uploadData, setUploadData] = useState({
+        title: '', mapel: '', category: 'Latihan', is_premium: true, file: null as File | null
+    });
     const [submitting, setSubmitting] = useState(false);
 
-    // Form State
-    const [formData, setFormData] = useState<{
-        title: string;
-        mapel: string;
-        category: QuestionBank['category'];
-        is_premium: boolean;
-        file: File | null;
-    }>({
-        title: '',
-        mapel: '',
-        category: 'Latihan',
-        is_premium: true,
-        file: null
-    });
-
     useEffect(() => {
-        loadData();
-    }, []);
+        if (activeTab === 'repository') loadRepo();
+        else loadLegacy();
+    }, [activeTab, filters]);
 
-    const loadData = async () => {
-        setLoading(true);
+    const loadRepo = async () => {
+        setRepoLoading(true);
         try {
-            const data = await questionService.getAll();
+            const data = await questionService.getAll(filters);
             setQuestions(data);
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setLoading(false);
-        }
+        } catch (error) { console.error(error); }
+        finally { setRepoLoading(false); }
     };
 
-    const handleDelete = async (id: string) => {
+    const loadLegacy = async () => {
+        setLegacyLoading(true);
+        try {
+            const data = await questionService.getBanks();
+            setBanks(data);
+        } catch (error) { console.error(error); }
+        finally { setLegacyLoading(false); }
+    };
+
+    const handleDeleteRepo = async (id: string) => {
         if (!confirm('Hapus soal ini?')) return;
         try {
             await questionService.delete(id);
-            loadData();
-        } catch (error) {
-            alert('Gagal menghapus');
-        }
+            toast.success('Soal dihapus');
+            loadRepo();
+        } catch (e) { toast.error('Gagal menghapus'); }
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleDeleteLegacy = async (id: string) => {
+        if (!confirm('Hapus item ini?')) return;
+        try {
+            await questionService.deleteBank(id);
+            toast.success('Item dihapus');
+            loadLegacy();
+        } catch (e) { toast.error('Gagal menghapus'); }
+    };
+
+    const handleUpload = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!formData.title || !formData.mapel || !formData.file) {
-            alert('Mohon lengkapi data (Judul, Mapel, File)');
+        if (!uploadData.title || !uploadData.mapel || !uploadData.file) {
+            toast.error('Data tidak lengkap');
             return;
         }
-
         setSubmitting(true);
         try {
-            // 1. Upload File
-            const fileUrl = await questionService.uploadFile(formData.file);
-
-            // 2. Create Question
-            await questionService.create({
-                title: formData.title,
-                mapel: formData.mapel,
-                category: formData.category,
-                file_url: fileUrl,
-                is_premium: formData.is_premium,
-                game_data: null // Optional for now
+            const url = await questionService.uploadFile(uploadData.file);
+            await questionService.createBank({
+                title: uploadData.title,
+                mapel: uploadData.mapel,
+                category: uploadData.category as any,
+                is_premium: uploadData.is_premium,
+                file_url: url
             });
-
-            // 3. Reset & Reload
-            setIsModalOpen(false);
-            setFormData({
-                title: '',
-                mapel: '',
-                category: 'Latihan',
-                is_premium: true,
-                file: null
-            });
-            loadData();
-            alert('Soal berhasil ditambahkan');
-        } catch (error) {
-            console.error(error);
-            alert('Gagal menyimpan soal');
+            toast.success('Berhasil diupload');
+            setIsUploadModalOpen(false);
+            setUploadData({ title: '', mapel: '', category: 'Latihan', is_premium: true, file: null });
+            loadLegacy();
+        } catch (e) {
+            console.error(e);
+            toast.error('Gagal upload');
         } finally {
             setSubmitting(false);
         }
     };
 
-    const filtered = questions.filter(q => q.title.toLowerCase().includes(search.toLowerCase()));
-
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold text-gray-900">Bank Soal</h1>
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900">Bank Soal</h1>
+                    <p className="text-gray-500 text-sm">Kelola repository soal dan arsip file.</p>
+                </div>
                 <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => navigate('/admin/questions/create')}>
-                        <Gamepad2 className="w-4 h-4 mr-2" /> Buat Interaktif
-                    </Button>
-                    <Button onClick={() => setIsModalOpen(true)}>
-                        <Plus className="w-4 h-4 mr-2" /> Upload File
-                    </Button>
+                    {activeTab === 'repository' ? (
+                        <Button onClick={() => navigate('/admin/questions/create')}>
+                            <Plus className="w-4 h-4 mr-2" /> Buat Soal Baru
+                        </Button>
+                    ) : (
+                        <Button onClick={() => setIsUploadModalOpen(true)}>
+                            <Upload className="w-4 h-4 mr-2" /> Upload File
+                        </Button>
+                    )}
                 </div>
             </div>
 
-            {/* Existing Search & Table */}
-            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <input
-                        type="text"
-                        placeholder="Cari soal..."
-                        className="pl-10 w-full rounded-md border border-gray-300 py-2"
-                        value={search}
-                        onChange={e => setSearch(e.target.value)}
-                    />
-                </div>
+            {/* Tabs */}
+            <div className="flex border-b border-gray-200 mb-6">
+                <button
+                    onClick={() => setActiveTab('repository')}
+                    className={cn(
+                        "px-6 py-3 text-sm font-medium border-b-2 transition-colors",
+                        activeTab === 'repository' ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700"
+                    )}
+                >
+                    Repository Soal (Interaktif)
+                </button>
+                <button
+                    onClick={() => setActiveTab('legacy')}
+                    className={cn(
+                        "px-6 py-3 text-sm font-medium border-b-2 transition-colors",
+                        activeTab === 'legacy' ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700"
+                    )}
+                >
+                    Arsip File & Games
+                </button>
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                <table className="w-full text-left text-sm">
-                    <thead className="bg-gray-50 border-b border-gray-200 font-medium text-gray-600">
-                        <tr>
-                            <th className="px-6 py-4">Judul</th>
-                            <th className="px-6 py-4">Kategori</th>
-                            <th className="px-6 py-4">Mapel</th>
-                            <th className="px-6 py-4">Premium</th>
-                            <th className="px-6 py-4 text-right">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                        {loading && (
-                            <tr><td colSpan={5} className="p-8 text-center text-gray-500">Loading...</td></tr>
-                        )}
-                        {!loading && filtered.length === 0 && (
-                            <tr><td colSpan={5} className="p-8 text-center text-gray-500">Belum ada soal.</td></tr>
-                        )}
-                        {!loading && filtered.map(item => (
-                            <tr key={item.id} className="hover:bg-gray-50">
-                                <td className="px-6 py-4 font-medium text-gray-900">{item.title}</td>
-                                <td className="px-6 py-4 flex items-center gap-2">
-                                    {item.category === 'TTS' || item.category === 'Wordsearch' ? <Gamepad2 className="w-4 h-4 text-purple-500" /> : <FileText className="w-4 h-4 text-blue-500" />}
-                                    {item.category}
-                                </td>
-                                <td className="px-6 py-4">{item.mapel}</td>
-                                <td className="px-6 py-4">
-                                    {item.is_premium ? <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">Premium</span> : <span className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded-full">Free</span>}
-                                </td>
-                                <td className="px-6 py-4 text-right">
-                                    <button onClick={() => handleDelete(item.id)} className="text-red-500 hover:text-red-700">
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
-                                </td>
+            {/* REPOSITORY TAB */}
+            {activeTab === 'repository' && (
+                <div className="space-y-6">
+                    {/* Filters */}
+                    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-wrap gap-4 items-center animate-in fade-in slide-in-from-top-2">
+                        <div className="flex items-center gap-2 text-gray-500">
+                            <Filter className="w-4 h-4" />
+                            <span className="text-sm font-semibold">Filter:</span>
+                        </div>
+                        <select
+                            className="border rounded-lg px-3 py-1.5 text-sm bg-gray-50"
+                            value={filters.mapel}
+                            onChange={e => setFilters({ ...filters, mapel: e.target.value })}
+                        >
+                            <option value="">Semua Mapel</option>
+                            <option value="Informatika">Informatika</option>
+                            <option value="KKA">KKA</option>
+                        </select>
+                        <select
+                            className="border rounded-lg px-3 py-1.5 text-sm bg-gray-50"
+                            value={filters.kelas}
+                            onChange={e => setFilters({ ...filters, kelas: e.target.value })}
+                        >
+                            <option value="">Semua Kelas</option>
+                            <option value="7">Kelas 7</option>
+                            <option value="8">Kelas 8</option>
+                            <option value="9">Kelas 9</option>
+                        </select>
+                        <div className="flex-1 min-w-[200px] relative">
+                            <Search className="w-4 h-4 absolute left-3 top-2 text-gray-400" />
+                            <input
+                                type="text"
+                                placeholder="Cari konten soal..."
+                                className="w-full pl-9 pr-4 py-1.5 border rounded-lg text-sm"
+                                value={filters.search}
+                                onChange={e => setFilters({ ...filters, search: e.target.value })}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <table className="w-full text-left">
+                            <thead className="bg-gray-50 border-b border-gray-100">
+                                <tr>
+                                    <th className="px-6 py-4 font-semibold text-gray-700">Soal</th>
+                                    <th className="px-6 py-4 font-semibold text-gray-700 w-32">Mapel</th>
+                                    <th className="px-6 py-4 font-semibold text-gray-700 w-24">Kelas</th>
+                                    <th className="px-6 py-4 font-semibold text-gray-700 w-24">Level</th>
+                                    <th className="px-6 py-4 font-semibold text-gray-700 w-24">Status</th>
+                                    <th className="px-6 py-4 font-semibold text-gray-700 w-24 text-right">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {repoLoading ? (
+                                    <tr><td colSpan={6} className="p-8 text-center text-gray-500">Loading...</td></tr>
+                                ) : questions.length === 0 ? (
+                                    <tr><td colSpan={6} className="p-8 text-center text-gray-500">Tidak ada soal.</td></tr>
+                                ) : (
+                                    questions.map(q => (
+                                        <tr key={q.id} className="hover:bg-gray-50 transition-colors">
+                                            <td className="px-6 py-4">
+                                                <div className="line-clamp-2 text-sm text-gray-800" dangerouslySetInnerHTML={{ __html: q.content }} />
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-gray-600">{q.mapel}</td>
+                                            <td className="px-6 py-4 text-center">
+                                                <span className="inline-flex items-center px-2 py-1 rounded bg-gray-100 text-xs font-medium text-gray-800">{q.kelas}</span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className={cn(
+                                                    "inline-flex items-center px-2 py-1 rounded text-xs font-medium",
+                                                    q.level === 'Mudah' ? "bg-green-100 text-green-800" :
+                                                        q.level === 'Sedang' ? "bg-yellow-100 text-yellow-800" : "bg-red-100 text-red-800"
+                                                )}>{q.level}</span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                {q.status === 'verified' ?
+                                                    <span className="text-green-600 flex items-center gap-1 text-xs font-medium"><CheckCircle className="w-3 h-3" /> Verified</span> :
+                                                    <span className="text-orange-600 flex items-center gap-1 text-xs font-medium"><XCircle className="w-3 h-3" /> Pending</span>
+                                                }
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <button onClick={() => handleDeleteRepo(q.id)} className="p-2 text-gray-400 hover:text-red-600 transition-colors">
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+
+            {/* LEGACY TAB */}
+            {activeTab === 'legacy' && (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                    <table className="w-full text-left">
+                        <thead className="bg-gray-50 border-b border-gray-100">
+                            <tr>
+                                <th className="px-6 py-4 font-semibold text-gray-700">Judul</th>
+                                <th className="px-6 py-4 font-semibold text-gray-700">Kategori</th>
+                                <th className="px-6 py-4 font-semibold text-gray-700">Mapel</th>
+                                <th className="px-6 py-4 font-semibold text-gray-700 w-32">Premium</th>
+                                <th className="px-6 py-4 font-semibold text-gray-700 w-24 text-right">Aksi</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {legacyLoading ? (
+                                <tr><td colSpan={5} className="p-8 text-center text-gray-500">Loading...</td></tr>
+                            ) : banks.length === 0 ? (
+                                <tr><td colSpan={5} className="p-8 text-center text-gray-500">Belum ada file/games.</td></tr>
+                            ) : (
+                                banks.map(item => (
+                                    <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+                                        <td className="px-6 py-4 font-medium text-gray-900">{item.title}</td>
+                                        <td className="px-6 py-4 flex items-center gap-2 text-sm text-gray-600">
+                                            {item.category === 'TTS' || item.category === 'Wordsearch' ?
+                                                <Gamepad2 className="w-4 h-4 text-purple-500" /> :
+                                                <FileText className="w-4 h-4 text-blue-500" />
+                                            }
+                                            {item.category}
+                                        </td>
+                                        <td className="px-6 py-4 text-sm text-gray-600">{item.mapel}</td>
+                                        <td className="px-6 py-4">
+                                            {item.is_premium ?
+                                                <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">Premium</span> :
+                                                <span className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded-full">Free</span>
+                                            }
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <button onClick={() => handleDeleteLegacy(item.id)} className="p-2 text-gray-400 hover:text-red-600 transition-colors">
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            )}
 
-            {/* Modal */}
-            {isModalOpen && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white p-6 rounded-lg w-full max-w-md shadow-xl animate-in fade-in zoom-in-95 duration-200">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-bold">Tambah Soal Baru</h2>
-                            <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+            {/* Upload Modal */}
+            {isUploadModalOpen && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white p-6 rounded-xl w-full max-w-md shadow-xl animate-in fade-in zoom-in-95 duration-200">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-xl font-bold">Upload File baru</h2>
+                            <button onClick={() => setIsUploadModalOpen(false)} className="text-gray-400 hover:text-gray-600">
                                 <span className="text-2xl">&times;</span>
                             </button>
                         </div>
-
-                        <form onSubmit={handleSubmit} className="space-y-4">
+                        <form onSubmit={handleUpload} className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Judul Soal</label>
-                                <input
-                                    type="text"
-                                    required
-                                    className="w-full px-3 py-2 border rounded-md"
-                                    value={formData.title}
-                                    onChange={e => setFormData({ ...formData, title: e.target.value })}
-                                />
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Judul</label>
+                                <input required className="w-full px-3 py-2 border rounded-lg" value={uploadData.title} onChange={e => setUploadData({ ...uploadData, title: e.target.value })} />
                             </div>
-
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Mata Pelajaran</label>
-                                <input
-                                    type="text"
-                                    required
-                                    className="w-full px-3 py-2 border rounded-md"
-                                    value={formData.mapel}
-                                    onChange={e => setFormData({ ...formData, mapel: e.target.value })}
-                                />
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Mapel</label>
+                                <input required className="w-full px-3 py-2 border rounded-lg" value={uploadData.mapel} onChange={e => setUploadData({ ...uploadData, mapel: e.target.value })} />
                             </div>
-
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
-                                <select
-                                    className="w-full px-3 py-2 border rounded-md"
-                                    value={formData.category}
-                                    onChange={e => setFormData({ ...formData, category: e.target.value as QuestionBank['category'] })}
-                                >
+                                <select className="w-full px-3 py-2 border rounded-lg" value={uploadData.category} onChange={e => setUploadData({ ...uploadData, category: e.target.value as any })}>
                                     <option value="Latihan">Latihan</option>
                                     <option value="Ujian">Ujian</option>
                                     <option value="TTS">TTS</option>
                                     <option value="Wordsearch">Wordsearch</option>
                                 </select>
                             </div>
-
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">File Soal (PDF/Doc)</label>
-                                <input
-                                    type="file"
-                                    required
-                                    accept=".pdf,.doc,.docx"
-                                    className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                                    onChange={e => setFormData({ ...formData, file: e.target.files ? e.target.files[0] : null })}
-                                />
+                                <label className="block text-sm font-medium text-gray-700 mb-1">File</label>
+                                <input type="file" required onChange={e => setUploadData({ ...uploadData, file: e.target.files?.[0] || null })} className="w-full" />
                             </div>
-
                             <div className="flex items-center gap-2">
-                                <input
-                                    type="checkbox"
-                                    id="isPremium"
-                                    checked={formData.is_premium}
-                                    onChange={e => setFormData({ ...formData, is_premium: e.target.checked })}
-                                    className="h-4 w-4 text-blue-600 rounded"
-                                />
-                                <label htmlFor="isPremium" className="text-sm text-gray-700">Konten Premium</label>
+                                <input type="checkbox" checked={uploadData.is_premium} onChange={e => setUploadData({ ...uploadData, is_premium: e.target.checked })} className="h-4 w-4 rounded border-gray-300 text-blue-600" />
+                                <label className="text-sm">Premium?</label>
                             </div>
-
                             <div className="flex justify-end gap-3 mt-6">
-                                <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>Batal</Button>
-                                <Button type="submit" disabled={submitting}>
-                                    {submitting ? 'Menyimpan...' : 'Simpan Soal'}
-                                </Button>
+                                <Button type="button" variant="outline" onClick={() => setIsUploadModalOpen(false)}>Batal</Button>
+                                <Button type="submit" disabled={submitting}>{submitting ? 'Mengupload...' : 'Upload'}</Button>
                             </div>
                         </form>
                     </div>
