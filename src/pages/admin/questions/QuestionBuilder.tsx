@@ -163,7 +163,7 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
                         <div className="prose-editor">
                             <div className="prose-editor">
                                 <Editor
-                                    apiKey="v0pr5r6jas8tgvj6z52hcgoxpr0xn8rdhay23qjclny6tc5e"
+                                    apiKey={import.meta.env.VITE_TINYMCE_API_KEY || 'no-api-key'}
                                     value={q.content}
                                     onEditorChange={(content) => setQ({ ...q, content })}
                                     init={{
