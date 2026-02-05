@@ -6,6 +6,7 @@ import { questionService } from '../../../services/questionService';
 import type { Question } from '../../../services/questionService';
 import { cn } from '../../../lib/utils';
 import { toast } from 'react-hot-toast';
+import { Editor } from '@tinymce/tinymce-react';
 
 interface QuestionBuilderProps {
     basePath?: string;
@@ -101,13 +102,15 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
 
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Mata Pelajaran</label>
-                            <input
-                                type="text"
-                                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                placeholder="Informatika"
+                            <select
+                                className="w-full px-3 py-2 border rounded-lg bg-white"
                                 value={q.mapel}
                                 onChange={e => setQ({ ...q, mapel: e.target.value })}
-                            />
+                            >
+                                <option value="">Pilih Mapel</option>
+                                <option value="Informatika">Informatika</option>
+                                <option value="KKA">KKA</option>
+                            </select>
                         </div>
 
                         <div>
@@ -159,14 +162,25 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
                         <label className="block text-sm font-bold text-gray-900 mb-4">Konten Pertanyaan</label>
                         <div className="prose-editor">
                             <div className="prose-editor">
-                                {/* ReactQuill replaced due to React 19 incompatibility causing crash */}
-                                <textarea
-                                    className="w-full h-64 p-4 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none font-sans"
-                                    placeholder="Tulis pertanyaan di sini..."
+                                <Editor
+                                    apiKey="no-api-key" // Explicitly no-api-key to avoid crash (shows warning)
                                     value={q.content}
-                                    onChange={e => setQ({ ...q, content: e.target.value })}
+                                    onEditorChange={(content) => setQ({ ...q, content })}
+                                    init={{
+                                        height: 300,
+                                        menubar: false,
+                                        plugins: [
+                                            'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                                            'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                                            'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
+                                        ],
+                                        toolbar: 'undo redo | blocks | ' +
+                                            'bold italic forecolor | alignleft aligncenter ' +
+                                            'alignright alignjustify | bullist numlist outdent indent | ' +
+                                            'removeformat | help',
+                                        content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }'
+                                    }}
                                 />
-                                <p className="text-xs text-gray-500 mt-2">* Editor teks kaya (Rich Text) dinonaktifkan sementara karena isu kompatibilitas.</p>
                             </div>
                         </div>
                     </div>
