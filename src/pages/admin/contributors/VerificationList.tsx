@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { contributorService, ContributorApplication } from '../../../services/contributorService';
+import { contributorService } from '../../../services/contributorService';
+import type { ContributorApplication } from '../../../services/contributorService';
 import { Button } from '../../../components/ui/button';
 import { Check, X, Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';

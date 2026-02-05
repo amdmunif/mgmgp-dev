@@ -19,7 +19,6 @@ import {
     Book,
     Globe,
     ChevronDown,
-    ChevronDown,
     UserCircle,
     UserCheck
 } from 'lucide-react';

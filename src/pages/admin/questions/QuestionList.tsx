@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../../components/ui/button';
-import { Plus, Trash2, Search, Filter, PenTool, CheckCircle, XCircle, FileText, Gamepad2, Upload } from 'lucide-react';
-import { questionService, Question, QuestionBank } from '../../../services/questionService';
+import { Plus, Trash2, Search, Filter, CheckCircle, XCircle, FileText, Gamepad2, Upload } from 'lucide-react';
+import { questionService } from '../../../services/questionService';
+import type { Question, QuestionBank } from '../../../services/questionService';
 import { cn } from '../../../lib/utils';
 import { toast } from 'react-hot-toast';
 

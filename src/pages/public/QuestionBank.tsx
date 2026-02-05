@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { cn } from '../../lib/utils'; // Keep existing cn
 import {
-    FileText, Download, Search, Filter, CheckSquare, Square, FileSpreadsheet, File as FileIcon
+    FileText, Search, Filter, CheckSquare, Square, FileSpreadsheet, File as FileIcon
 } from 'lucide-react';
-import { questionService, Question } from '../../services/questionService';
+import { questionService } from '../../services/questionService';
+import type { Question } from '../../services/questionService';
 import { Button } from '../../components/ui/button';
 import { saveAs } from 'file-saver';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
