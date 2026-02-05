@@ -16,8 +16,10 @@ import {
     ChevronDown,
     FileText,
     FileQuestion,
-    Book
+    Book,
+    Clock
 } from 'lucide-react';
+import { Button } from '../ui/button';
 import { cn } from '../../lib/utils';
 
 export function MemberLayout() {
@@ -80,6 +82,8 @@ export function MemberLayout() {
 
     // Check premium status
     const isPremium = user?.premium_until && new Date(user.premium_until) > new Date();
+    // Check if expired (was premium, now passed)
+    const isExpired = user?.premium_until && new Date(user.premium_until) <= new Date();
 
     const menuItems = [
         { icon: LayoutDashboard, label: 'Dashboard', path: '/member' },
@@ -96,7 +100,11 @@ export function MemberLayout() {
 
         // Upgrade needs to be at the bottom
         { icon: Crown, label: 'Upgrade Premium', path: '/member/upgrade' },
-    ];
+    ].filter(item => {
+        // Hide Upgrade button if user is already Premium
+        if (item.path === '/member/upgrade' && isPremium) return false;
+        return true;
+    });
 
     if (!user) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
 
@@ -312,6 +320,26 @@ export function MemberLayout() {
                 </header>
 
                 <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50/50 p-4 md:p-8">
+                    {/* Expired Notification */}
+                    {isExpired && (
+                        <div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 animate-in slide-in-from-top-4">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-red-100 rounded-lg text-red-600 shrink-0">
+                                    <Clock className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-red-900">Masa Aktif Premium Berakhir</h3>
+                                    <p className="text-sm text-red-700">Layanan premium Anda telah habis. Perpanjang sekarang untuk akses penuh kembali.</p>
+                                </div>
+                            </div>
+                            <div className="flex w-full md:w-auto">
+                                <Button size="sm" onClick={() => navigate('/member/upgrade')} className="w-full md:w-auto bg-red-600 hover:bg-red-700 text-white border-none shadow-sm whitespace-nowrap">
+                                    Perpanjang Premium
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="animate-in fade-in duration-500">
                         <Outlet />
                     </div>

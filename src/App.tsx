@@ -57,14 +57,15 @@ function App() {
   useEffect(() => {
     // Load dynamic site settings (Favicon & Title)
     settingsService.getSettings().then(settings => {
-      if (settings.logo_url) {
+      const url = settings.logo_url || settings.app_logo;
+      if (url) {
         let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
         if (!link) {
           link = document.createElement('link');
           link.rel = 'icon';
           document.getElementsByTagName('head')[0].appendChild(link);
         }
-        link.href = settings.logo_url;
+        link.href = url;
       }
       if (settings.site_title) {
         document.title = settings.site_title;

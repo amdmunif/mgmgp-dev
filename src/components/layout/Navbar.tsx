@@ -18,10 +18,20 @@ export function Navbar() {
     ];
 
     const [user, setUser] = useState<any>(null);
+    const [logoUrl, setLogoUrl] = useState('');
 
     useEffect(() => {
         authService.getCurrentUser().then(data => {
             if (data?.profile) setUser(data.profile);
+        });
+
+        // Load Settings
+        import('../../services/settingsService').then(m => {
+            m.settingsService.getSettings().then(settings => {
+                if (settings.logo_url || settings.app_logo) {
+                    setLogoUrl(settings.logo_url || settings.app_logo || '');
+                }
+            });
         });
 
         // Listen for auth changes
@@ -43,6 +53,7 @@ export function Navbar() {
         <nav className="fixed w-full z-50 top-0 start-0 border-b border-gray-200 bg-white/80 backdrop-blur-md">
             <div className="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
                 <Link to="/" className="flex items-center space-x-3 rtl:space-x-reverse">
+                    {logoUrl && <img src={logoUrl} alt="Logo" className="h-10 w-10 object-contain" />}
                     <span className="self-center text-2xl font-bold whitespace-nowrap text-primary-900">MGMP<span className="text-primary-500">Informatika</span></span>
                 </Link>
                 <div className="flex md:order-2 space-x-3 md:space-x-3 rtl:space-x-reverse">

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Button } from '../../components/ui/button';
-import { Loader2, Save, Globe, Building2, UserPen, Upload, Trash2, Image as ImageIcon } from 'lucide-react';
+import { Loader2, Save, Globe, Building2, UserPen, Upload, Trash2, Image as ImageIcon, CreditCard } from 'lucide-react';
 import { settingsService, type AppSettings } from '../../services/settingsService';
 // Using simple state might be easier for this large form without complex validation logic yet.
 
@@ -320,7 +320,7 @@ export function AdminWebSettings() {
                         <div className="p-6 space-y-6">
                             <ImageUploader
                                 label="Logo Aplikasi"
-                                fieldName="app_logo" // Or logo_url
+                                fieldName="logo_url"
                                 currentUrl={settings.logo_url || settings.app_logo}
                             />
                             <ImageUploader
@@ -415,7 +415,59 @@ export function AdminWebSettings() {
                                     currentUrl={settings.mkks_signature_url}
                                 />
                             </div>
+                        </div>
+                    </div>
 
+                    {/* Pembayaran & Premium */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center gap-2">
+                            <CreditCard className="w-4 h-4 text-green-600" />
+                            <h2 className="font-semibold text-gray-900 text-sm uppercase tracking-wide">Pembayaran & Premium</h2>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Nama Bank</label>
+                                <input
+                                    type="text"
+                                    name="bank_name"
+                                    value={settings.bank_name || ''}
+                                    onChange={handleChange}
+                                    placeholder="Contoh: Bank BRI"
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Nomor Rekening</label>
+                                <input
+                                    type="text"
+                                    name="bank_number"
+                                    value={settings.bank_number || ''}
+                                    onChange={handleChange}
+                                    placeholder="Contoh: 1234-5678-90"
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Atas Nama</label>
+                                <input
+                                    type="text"
+                                    name="bank_holder"
+                                    value={settings.bank_holder || ''}
+                                    onChange={handleChange}
+                                    placeholder="Nama Pemilik Rekening"
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                                />
+                            </div>
+                            <div className="pt-2 border-t border-gray-100 mt-2">
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Biaya Premium (Rp)</label>
+                                <input
+                                    type="number"
+                                    name="premium_price"
+                                    value={settings.premium_price || 0}
+                                    onChange={handleChange}
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-bold text-green-700"
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>
