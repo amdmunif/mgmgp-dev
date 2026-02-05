@@ -25,6 +25,7 @@ jobs:
         run: npm run build
         env:
           VITE_API_URL: "https://dev.mgmpinformatika-wsb.my.id/api"
+          VITE_TINYMCE_API_KEY: ${{ secrets.VITE_TINYMCE_API_KEY }}
 
       - name: Sync Frontend Files
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
