@@ -5,8 +5,6 @@ import { ArrowLeft, Plus, Save, GripVertical, CheckCircle2 } from 'lucide-react'
 import { questionService } from '../../../services/questionService';
 import type { Question } from '../../../services/questionService';
 import { cn } from '../../../lib/utils';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
 import { toast } from 'react-hot-toast';
 
 interface QuestionBuilderProps {
@@ -160,12 +158,16 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
                     <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                         <label className="block text-sm font-bold text-gray-900 mb-4">Konten Pertanyaan</label>
                         <div className="prose-editor">
-                            <ReactQuill
-                                theme="snow"
-                                value={q.content}
-                                onChange={val => setQ({ ...q, content: val })}
-                                className="h-64 mb-12"
-                            />
+                            <div className="prose-editor">
+                                {/* ReactQuill replaced due to React 19 incompatibility causing crash */}
+                                <textarea
+                                    className="w-full h-64 p-4 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none font-sans"
+                                    placeholder="Tulis pertanyaan di sini..."
+                                    value={q.content}
+                                    onChange={e => setQ({ ...q, content: e.target.value })}
+                                />
+                                <p className="text-xs text-gray-500 mt-2">* Editor teks kaya (Rich Text) dinonaktifkan sementara karena isu kompatibilitas.</p>
+                            </div>
                         </div>
                     </div>
 
