@@ -80,7 +80,8 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
     };
 
     return (
-        <div className="max-w-4xl mx-auto p-6 md:p-8">
+    return (
+        <div className="max-w-7xl mx-auto p-6 md:p-8">
             {/* Header */}
             <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-4">
@@ -94,9 +95,9 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
                 </Button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Meta Sidebar */}
-                <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                {/* Meta Sidebar (1 Col) */}
+                <div className="space-y-6 lg:col-span-1">
                     <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-4">
                         <h3 className="font-bold text-gray-900 border-b pb-2">Metadata</h3>
 
@@ -156,32 +157,30 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
                     </div>
                 </div>
 
-                {/* Editor Content */}
-                <div className="lg:col-span-2 space-y-6">
+                {/* Editor Content (3 Cols) */}
+                <div className="lg:col-span-3 space-y-6">
                     <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                         <label className="block text-sm font-bold text-gray-900 mb-4">Konten Pertanyaan</label>
                         <div className="prose-editor">
-                            <div className="prose-editor">
-                                <Editor
-                                    apiKey={import.meta.env.VITE_TINYMCE_API_KEY || 'no-api-key'}
-                                    value={q.content}
-                                    onEditorChange={(content) => setQ({ ...q, content })}
-                                    init={{
-                                        height: 300,
-                                        menubar: false,
-                                        plugins: [
-                                            'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-                                            'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-                                            'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
-                                        ],
-                                        toolbar: 'undo redo | blocks | ' +
-                                            'bold italic forecolor | alignleft aligncenter ' +
-                                            'alignright alignjustify | bullist numlist outdent indent | ' +
-                                            'removeformat | help',
-                                        content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }'
-                                    }}
-                                />
-                            </div>
+                            <Editor
+                                apiKey={import.meta.env.VITE_TINYMCE_API_KEY || 'no-api-key'}
+                                value={q.content}
+                                onEditorChange={(content) => setQ({ ...q, content })}
+                                init={{
+                                    height: 500,
+                                    menubar: true,
+                                    plugins: [
+                                        'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                                        'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                                        'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
+                                    ],
+                                    toolbar: 'undo redo | blocks | ' +
+                                        'bold italic forecolor | alignleft aligncenter ' +
+                                        'alignright alignjustify | bullist numlist outdent indent | ' +
+                                        'removeformat | help',
+                                    content_style: 'body { font-family:Inter,system-ui,sans-serif; font-size:16px; line-height:1.6 }'
+                                }}
+                            />
                         </div>
                     </div>
 
@@ -211,21 +210,21 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
                                         <button
                                             onClick={() => handleUpdateOption(opt.id, { is_correct: !opt.is_correct })}
                                             className={cn(
-                                                "w-8 h-8 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors",
+                                                "w-10 h-10 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors",
                                                 opt.is_correct
                                                     ? "bg-green-500 border-green-500 text-white"
-                                                    : "border-gray-200 hover:border-green-400 text-transparent"
+                                                    : "border-gray-200 hover:border-green-400 text-transparent hover:text-green-200"
                                             )}
                                             title="Tandai Jawaban Benar"
                                         >
-                                            <CheckCircle2 className="w-5 h-5" />
+                                            <CheckCircle2 className="w-6 h-6" />
                                         </button>
 
                                         <div className="flex-1">
                                             <input
                                                 type="text"
                                                 className={cn(
-                                                    "w-full px-4 py-2 border rounded-lg transition-colors",
+                                                    "w-full px-4 py-3 border rounded-lg transition-colors text-base",
                                                     opt.is_correct ? "border-green-500 bg-green-50" : "border-gray-200"
                                                 )}
                                                 placeholder={`Pilihan ${String.fromCharCode(65 + idx)}`}
@@ -233,6 +232,16 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
                                                 onChange={e => handleUpdateOption(opt.id, { text: e.target.value })}
                                             />
                                         </div>
+                                        <button
+                                            onClick={() => {
+                                                const newOptions = q.options?.filter((o: any) => o.id !== opt.id);
+                                                setQ({ ...q, options: newOptions });
+                                            }}
+                                            className="text-gray-400 hover:text-red-500 p-2"
+                                            title="Hapus Opsi"
+                                        >
+                                            &times;
+                                        </button>
                                     </div>
                                 ))}
                             </div>
