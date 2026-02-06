@@ -88,7 +88,11 @@ export function AdminLayout() {
         <div className={cn("flex items-center gap-3", mobile ? "w-full p-4 bg-gray-800 rounded-lg mb-4" : "")}>
             <div className="relative">
                 <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold border-2 border-white shadow-sm overflow-hidden shrink-0">
-                    <span>{user?.email?.charAt(0).toUpperCase()}</span>
+                    {user?.foto_profile ? (
+                        <img src={user.foto_profile} alt="Profile" className="w-full h-full object-cover" />
+                    ) : (
+                        <span>{user?.email?.charAt(0).toUpperCase()}</span>
+                    )}
                 </div>
                 <div className="absolute -bottom-1 -right-1 bg-blue-600 text-white rounded-full p-0.5 border-2 border-white" title="Admin">
                     <Crown className="w-3 h-3" />

@@ -33,7 +33,8 @@ export function AdminPremium() {
         setLoading(true);
         try {
             const data = await premiumService.getActiveSubscribers();
-            setActiveSubs(data);
+            // Filter valid data only to prevent "Tanpa Nama" ghost rows
+            setActiveSubs(data.filter((d: any) => d.id && d.email));
         } catch (error) {
             console.error('Failed to load active subs', error);
         } finally {
@@ -214,8 +215,15 @@ export function AdminPremium() {
                             </thead>
                             <tbody className="divide-y divide-gray-200">
                                 {Array.isArray(activeSubs) && activeSubs.map((sub) => {
-                                    const date = sub.premium_until ? new Date(sub.premium_until) : new Date();
-                                    const isValidDate = sub.premium_until && !isNaN(date.getTime());
+                                    // Parse date more safely. Handle potential SQL '0000-00-00' or other quirks.
+                                    let dateStr = sub.premium_until;
+                                    // Make sure it doesn't fail on space vs T.
+                                    if (typeof dateStr === 'string' && dateStr.includes(' ')) {
+                                        dateStr = dateStr.replace(' ', 'T');
+                                    }
+                                    const date = dateStr ? new Date(dateStr) : new Date();
+                                    const isValidDate = dateStr && !isNaN(date.getTime()) && date.getFullYear() > 2000;
+
                                     const daysLeft = isValidDate
                                         ? Math.ceil((date.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
                                         : 0;
