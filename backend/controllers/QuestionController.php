@@ -108,6 +108,78 @@ class QuestionController
         return json_encode(["message" => "Failed to create question"]);
     }
 
+    public function getById($id)
+    {
+        $query = "SELECT * FROM questions WHERE id = :id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':id', $id);
+        $stmt->execute();
+        $data = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($data) {
+            $data['options'] = json_decode($data['options'], true);
+            return json_encode($data);
+        }
+        http_response_code(404);
+        return json_encode(["message" => "Question not found"]);
+    }
+
+    public function update($id, $data)
+    {
+        $user = $this->getUser();
+        if (!$user) {
+            http_response_code(401);
+            return json_encode(["message" => "Unauthorized"]);
+        }
+
+        // Verify ownership or Admin role
+        $checkQuery = "SELECT creator_id FROM questions WHERE id = :id";
+        $checkStmt = $this->conn->prepare($checkQuery);
+        $checkStmt->bindParam(':id', $id);
+        $checkStmt->execute();
+        $existing = $checkStmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$existing) {
+            http_response_code(404);
+            return json_encode(["message" => "Question not found"]);
+        }
+
+        // Allow Admin/Pengurus or Owner
+        if ($existing['creator_id'] !== $user['sub'] && $user['role'] !== 'Admin' && $user['role'] !== 'Pengurus') {
+            http_response_code(403);
+            return json_encode(["message" => "Forbidden"]);
+        }
+
+        $query = "UPDATE questions SET 
+                  content = :content, 
+                  type = :type, 
+                  options = :options, 
+                  answer_key = :answer_key, 
+                  explanation = :explanation, 
+                  level = :level, 
+                  mapel = :mapel, 
+                  kelas = :kelas 
+                  WHERE id = :id";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':id', $id);
+        $stmt->bindParam(':content', $data['content']);
+        $stmt->bindParam(':type', $data['type']);
+        $options = isset($data['options']) ? json_encode($data['options']) : null;
+        $stmt->bindParam(':options', $options);
+        $stmt->bindParam(':answer_key', $data['answer_key']);
+        $stmt->bindParam(':explanation', $data['explanation']);
+        $stmt->bindParam(':level', $data['level']);
+        $stmt->bindParam(':mapel', $data['mapel']);
+        $stmt->bindParam(':kelas', $data['kelas']);
+
+        if ($stmt->execute()) {
+            return json_encode(["message" => "Question updated"]);
+        }
+        http_response_code(500);
+        return json_encode(["message" => "Failed to update question"]);
+    }
+
     public function delete($id)
     {
         $query = "DELETE FROM questions WHERE id = :id";

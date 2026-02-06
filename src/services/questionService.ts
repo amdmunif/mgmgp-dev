@@ -42,8 +42,16 @@ export const questionService = {
         return api.get<Question[]>('/questions?' + params.toString());
     },
 
+    async getById(id: string) {
+        return api.get<Question>(`/questions/${id}`);
+    },
+
     async create(data: Partial<Question>) {
         return api.post('/questions', data);
+    },
+
+    async update(id: string, data: Partial<Question>) {
+        return api.put(`/questions/${id}`, data);
     },
 
     async delete(id: string) {

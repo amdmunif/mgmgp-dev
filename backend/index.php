@@ -138,10 +138,16 @@ if ($resource === 'news') {
 
 } elseif ($resource === 'questions') {
     $controller = new QuestionController();
-    if ($_SERVER['REQUEST_METHOD'] === 'GET')
-        echo $controller->getAll();
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        if ($action)
+            echo $controller->getById($action);
+        else
+            echo $controller->getAll();
+    }
     if ($_SERVER['REQUEST_METHOD'] === 'POST')
         echo $controller->create($input);
+    if ($_SERVER['REQUEST_METHOD'] === 'PUT' && $action)
+        echo $controller->update($action, $input);
     if ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action)
         echo $controller->delete($action);
 
