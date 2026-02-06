@@ -93,6 +93,21 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
 
     if (fetching) return <div className="p-8 text-center text-gray-500">Memuat data soal...</div>;
 
+    const handleUpdateOption = (id: string, updates: any) => {
+        let newOptions = q.options?.map((o: any) =>
+            o.id === id ? { ...o, ...updates } : o
+        );
+
+        // Single Choice Logic
+        if (q.type === 'single_choice' && updates.is_correct) {
+            newOptions = newOptions?.map((o: any) =>
+                o.id === id ? o : { ...o, is_correct: false }
+            );
+        }
+
+        setQ({ ...q, options: newOptions });
+    };
+
     return (
         <div className="w-full p-6 md:p-8">
             {/* Header */}
