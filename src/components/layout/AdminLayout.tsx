@@ -351,7 +351,7 @@ export function AdminLayout() {
                     </div>
                 </header>
 
-                <div className="flex-1 overflow-x-hidden overflow-y-auto p-4 md:p-8 relative">
+                <div className="flex-1 overflow-x-hidden overflow-y-auto p-4 md:p-6 relative">
                     {/* Background Pattern */}
                     <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[radial-gradient(#d1d5db_1px,transparent_1px)] [background-size:20px_20px]" />
 
