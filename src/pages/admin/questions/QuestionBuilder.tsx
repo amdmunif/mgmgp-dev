@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '../../../components/ui/button';
 import { ArrowLeft, Plus, Save, GripVertical, CheckCircle2 } from 'lucide-react';
 import { questionService } from '../../../services/questionService';
@@ -16,7 +16,9 @@ const generateId = () => Math.random().toString(36).substring(2, 9);
 
 export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuilderProps) {
     const navigate = useNavigate();
+    const { id } = useParams();
     const [loading, setLoading] = useState(false);
+    const [fetching, setFetching] = useState(false);
 
     // Question State
     const [q, setQ] = useState<Partial<Question>>({
@@ -32,6 +34,26 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
         answer_key: '',
         explanation: ''
     });
+
+    useEffect(() => {
+        if (id) {
+            loadQuestion(id);
+        }
+    }, [id]);
+
+    async function loadQuestion(qId: string) {
+        setFetching(true);
+        try {
+            const data = await questionService.getById(qId);
+            setQ(data);
+        } catch (error) {
+            console.error(error);
+            toast.error('Gagal memuat soal');
+            navigate(basePath);
+        } finally {
+            setFetching(false);
+        }
+    }
 
     const handleSave = async () => {
         if (!q.content || !q.mapel || !q.kelas) {
@@ -53,8 +75,13 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
 
         setLoading(true);
         try {
-            await questionService.create(q);
-            toast.success('Pertanyaan berhasil dibuat!');
+            if (id) {
+                await questionService.update(id, q);
+                toast.success('Pertanyaan berhasil diperbarui!');
+            } else {
+                await questionService.create(q);
+                toast.success('Pertanyaan berhasil dibuat!');
+            }
             navigate(basePath);
         } catch (error) {
             console.error(error);
@@ -64,20 +91,7 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
         }
     };
 
-    const handleUpdateOption = (id: string, updates: any) => {
-        let newOptions = q.options?.map((o: any) =>
-            o.id === id ? { ...o, ...updates } : o
-        );
-
-        // Single Choice Logic
-        if (q.type === 'single_choice' && updates.is_correct) {
-            newOptions = newOptions?.map((o: any) =>
-                o.id === id ? o : { ...o, is_correct: false }
-            );
-        }
-
-        setQ({ ...q, options: newOptions });
-    };
+    if (fetching) return <div className="p-8 text-center text-gray-500">Memuat data soal...</div>;
 
     return (
         <div className="w-full p-6 md:p-8">
@@ -87,7 +101,7 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
                     <Button variant="ghost" onClick={() => navigate(basePath)}>
                         <ArrowLeft className="w-4 h-4 mr-2" /> Kembali
                     </Button>
-                    <h1 className="text-2xl font-bold">Buat Pertanyaan Baru</h1>
+                    <h1 className="text-2xl font-bold">{id ? 'Edit Pertanyaan' : 'Buat Pertanyaan Baru'}</h1>
                 </div>
                 <Button onClick={handleSave} disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white">
                     <Save className="w-4 h-4 mr-2" /> Simpan

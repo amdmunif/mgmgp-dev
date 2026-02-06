@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../../components/ui/button';
-import { Plus, Trash2, Search, Filter, CheckCircle, XCircle, FileText, Gamepad2, Upload } from 'lucide-react';
+import { Plus, Trash2, Search, Filter, CheckCircle, XCircle, FileText, Gamepad2, Upload, Pencil } from 'lucide-react';
 import { questionService } from '../../../services/questionService';
 import type { Question, QuestionBank } from '../../../services/questionService';
 import { cn } from '../../../lib/utils';
@@ -216,7 +216,10 @@ export function AdminQuestions() {
                                                     <span className="text-orange-600 flex items-center gap-1 text-xs font-medium"><XCircle className="w-3 h-3" /> Pending</span>
                                                 }
                                             </td>
-                                            <td className="px-6 py-4 text-right">
+                                            <td className="px-6 py-4 text-right space-x-2">
+                                                <button onClick={() => navigate(`/admin/questions/edit/${q.id}`)} className="p-2 text-gray-400 hover:text-blue-600 transition-colors">
+                                                    <Pencil className="w-4 h-4" />
+                                                </button>
                                                 <button onClick={() => handleDeleteRepo(q.id)} className="p-2 text-gray-400 hover:text-red-600 transition-colors">
                                                     <Trash2 className="w-4 h-4" />
                                                 </button>
