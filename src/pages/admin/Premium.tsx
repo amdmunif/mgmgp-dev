@@ -9,13 +9,11 @@ export function AdminPremium() {
     const [activeTab, setActiveTab] = useState<'requests' | 'active'>('requests');
     const [loading, setLoading] = useState(true);
     const [requests, setRequests] = useState<PremiumRequest[]>([]);
-    const [activeSubs, setActiveSubs] = useState<any[]>([]);
     const [processingId, setProcessingId] = useState<string | null>(null);
 
     useEffect(() => {
-        if (activeTab === 'requests') loadRequests();
-        else loadActive();
-    }, [activeTab]);
+        loadRequests();
+    }, []);
 
     async function loadRequests() {
         setLoading(true);
