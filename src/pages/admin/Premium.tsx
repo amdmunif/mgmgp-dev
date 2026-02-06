@@ -6,7 +6,6 @@ import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 
 export function AdminPremium() {
-    const [activeTab, setActiveTab] = useState<'requests' | 'active'>('requests');
     const [loading, setLoading] = useState(true);
     const [requests, setRequests] = useState<PremiumRequest[]>([]);
     const [processingId, setProcessingId] = useState<string | null>(null);
@@ -22,19 +21,6 @@ export function AdminPremium() {
             setRequests(data);
         } catch (error) {
             console.error('Failed to load requests', error);
-        } finally {
-            setLoading(false);
-        }
-    }
-
-    async function loadActive() {
-        setLoading(true);
-        try {
-            const data = await premiumService.getActiveSubscribers();
-            // Filter valid data only to prevent "Tanpa Nama" ghost rows
-            setActiveSubs(data.filter((d: any) => d.id && d.email));
-        } catch (error) {
-            console.error('Failed to load active subs', error);
         } finally {
             setLoading(false);
         }
@@ -66,34 +52,6 @@ export function AdminPremium() {
         } catch (error) {
             console.error('Error rejecting', error);
             alert('Gagal menolak');
-        } finally {
-            setProcessingId(null);
-        }
-    }
-
-    async function handleExtend(userId: string, name: string) {
-        if (!confirm(`Perpanjang langganan ${name} selama 1 tahun?`)) return;
-        setProcessingId(userId);
-        try {
-            await premiumService.extendSubscription(userId);
-            alert('Berhasil diperpanjang 1 tahun');
-            loadActive();
-        } catch (e) {
-            alert('Gagal memperpanjang');
-        } finally {
-            setProcessingId(null);
-        }
-    }
-
-    async function handleRevoke(userId: string, name: string) {
-        if (!confirm(`Hapus langganan premium ${name}? User akan kembali ke status reguler.`)) return;
-        setProcessingId(userId);
-        try {
-            await premiumService.revokeSubscription(userId);
-            alert('Langganan dihapus');
-            loadActive();
-        } catch (e) {
-            alert('Gagal menghapus langganan');
         } finally {
             setProcessingId(null);
         }
