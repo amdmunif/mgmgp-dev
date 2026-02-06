@@ -6,6 +6,7 @@ import { questionService } from '../../../services/questionService';
 import type { Question, QuestionBank } from '../../../services/questionService';
 import { cn } from '../../../lib/utils';
 import { toast } from 'react-hot-toast';
+import { read, utils } from 'xlsx';
 
 export function AdminQuestions() {
     const navigate = useNavigate();
@@ -15,6 +16,11 @@ export function AdminQuestions() {
     const [questions, setQuestions] = useState<Question[]>([]);
     const [repoLoading, setRepoLoading] = useState(true);
     const [filters, setFilters] = useState({ mapel: '', kelas: '', level: '', search: '' });
+
+    // Import State
+    const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
+    const [excelFile, setExcelFile] = useState<File | null>(null);
+    const [importing, setImporting] = useState(false);
 
     // Legacy State
     const [banks, setBanks] = useState<QuestionBank[]>([]);
@@ -94,6 +100,58 @@ export function AdminQuestions() {
         }
     };
 
+    const handleImportExcel = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!excelFile) return;
+
+        setImporting(true);
+        try {
+            const data = await excelFile.arrayBuffer();
+            const workbook = read(data);
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const json: any[] = utils.sheet_to_json(sheet);
+
+            let count = 0;
+            for (const row of json) {
+                if (!row['Soal'] || !row['Jawaban']) continue;
+
+                const options = [
+                    { id: Math.random().toString(36).substring(7), text: row['A'] || '', is_correct: row['Jawaban'] === 'A' },
+                    { id: Math.random().toString(36).substring(7), text: row['B'] || '', is_correct: row['Jawaban'] === 'B' },
+                    { id: Math.random().toString(36).substring(7), text: row['C'] || '', is_correct: row['Jawaban'] === 'C' },
+                    { id: Math.random().toString(36).substring(7), text: row['D'] || '', is_correct: row['Jawaban'] === 'D' },
+                ];
+
+                if (row['E']) {
+                    options.push({ id: Math.random().toString(36).substring(7), text: row['E'], is_correct: row['Jawaban'] === 'E' });
+                }
+
+                const payload: Partial<Question> = {
+                    content: row['Soal'],
+                    type: 'single_choice',
+                    options,
+                    answer_key: row['Jawaban'],
+                    mapel: row['Mapel'] || 'Informatika',
+                    kelas: row['Kelas'] ? String(row['Kelas']) : '7',
+                    level: row['Level'] || 'Sedang',
+                };
+
+                await questionService.create(payload);
+                count++;
+            }
+
+            toast.success(`Berhasil mengimport ${count} soal!`);
+            setIsExcelModalOpen(false);
+            setExcelFile(null);
+            loadRepo();
+        } catch (error) {
+            console.error(error);
+            toast.error('Gagal memproses file Excel');
+        } finally {
+            setImporting(false);
+        }
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -103,9 +161,14 @@ export function AdminQuestions() {
                 </div>
                 <div className="flex gap-2">
                     {activeTab === 'repository' ? (
-                        <Button onClick={() => navigate('/admin/questions/create')}>
-                            <Plus className="w-4 h-4 mr-2" /> Buat Soal Baru
-                        </Button>
+                        <>
+                            <Button onClick={() => setIsExcelModalOpen(true)} variant="outline" className="bg-green-50 text-green-600 border-green-200 hover:bg-green-100">
+                                <FileText className="w-4 h-4 mr-2" /> Import Excel
+                            </Button>
+                            <Button onClick={() => navigate('/admin/questions/create')}>
+                                <Plus className="w-4 h-4 mr-2" /> Buat Soal Baru
+                            </Button>
+                        </>
                     ) : (
                         <Button onClick={() => setIsUploadModalOpen(true)}>
                             <Upload className="w-4 h-4 mr-2" /> Upload File
@@ -321,6 +384,44 @@ export function AdminQuestions() {
                             <div className="flex justify-end gap-3 mt-6">
                                 <Button type="button" variant="outline" onClick={() => setIsUploadModalOpen(false)}>Batal</Button>
                                 <Button type="submit" disabled={submitting}>{submitting ? 'Mengupload...' : 'Upload'}</Button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Excel Import Modal */}
+            {isExcelModalOpen && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white p-6 rounded-xl w-full max-w-md shadow-xl animate-in fade-in zoom-in-95 duration-200">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-xl font-bold text-green-700">Import Soal dari Excel</h2>
+                            <button onClick={() => setIsExcelModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                                <span className="text-2xl">&times;</span>
+                            </button>
+                        </div>
+
+                        <div className="bg-yellow-50 p-4 rounded-lg mb-4 text-sm text-yellow-800 border border-yellow-200">
+                            Pastikan format kolom: <b>Soal, A, B, C, D, E, Jawaban, Mapel, Kelas, Level</b>.
+                            <br />Jawaban diisi huruf kapital (A/B/C/D/E).
+                        </div>
+
+                        <form onSubmit={handleImportExcel} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">File Excel (.xlsx)</label>
+                                <input
+                                    type="file"
+                                    accept=".xlsx, .xls"
+                                    required
+                                    onChange={e => setExcelFile(e.target.files?.[0] || null)}
+                                    className="w-full"
+                                />
+                            </div>
+                            <div className="flex justify-end gap-3 mt-6">
+                                <Button type="button" variant="outline" onClick={() => setIsExcelModalOpen(false)}>Batal</Button>
+                                <Button type="submit" disabled={importing} className="bg-green-600 hover:bg-green-700 text-white">
+                                    {importing ? 'Mengimport...' : 'Mulai Import'}
+                                </Button>
                             </div>
                         </form>
                     </div>
