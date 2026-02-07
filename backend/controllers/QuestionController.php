@@ -66,7 +66,16 @@ class QuestionController
             $stmt->bindValue($key, $val);
         }
         $stmt->execute();
-        return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+        $questions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Decode options JSON
+        foreach ($questions as &$q) {
+            if (isset($q['options'])) {
+                $q['options'] = json_decode($q['options'], true);
+            }
+        }
+
+        return json_encode($questions);
     }
 
     public function create($data)
