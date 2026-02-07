@@ -62,7 +62,7 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
         }
 
         // Validate Options
-        if (q.type !== 'essay' && (!q.options || q.options.length < 2)) {
+        if (q.type !== 'essay' && q.type !== 'short_answer' && (!q.options || q.options.length < 2)) {
             toast.error('Minimal 2 opsi jawaban diperlukan');
             return;
         }
@@ -174,11 +174,23 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
                             <select
                                 className="w-full px-3 py-2 border rounded-lg bg-white"
                                 value={q.type}
-                                onChange={e => setQ({ ...q, type: e.target.value as any })}
+                                onChange={e => {
+                                    const type = e.target.value as any;
+                                    let updates: any = { type };
+
+                                    if (type === 'true_false') {
+                                        updates.options = [
+                                            { id: generateId(), text: 'Benar', is_correct: false },
+                                            { id: generateId(), text: 'Salah', is_correct: false }
+                                        ];
+                                    }
+                                    setQ({ ...q, ...updates });
+                                }}
                             >
                                 <option value="single_choice">Pilihan Ganda (1 Jawaban)</option>
                                 <option value="multiple_choice">Pilihan Ganda Kompleks</option>
                                 <option value="true_false">Benar / Salah</option>
+                                <option value="short_answer">Isian Singkat</option>
                                 <option value="essay">Uraian / Essay</option>
                             </select>
                         </div>
@@ -212,20 +224,37 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
                         </div>
                     </div>
 
-                    {q.type !== 'essay' && (
+                    {/* Answer Key for Essay/Short Answer */}
+                    {(q.type === 'essay' || q.type === 'short_answer') && (
+                        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                            <label className="block text-sm font-bold text-gray-900 mb-2">Kunci Jawaban</label>
+                            <textarea
+                                className="w-full px-4 py-3 border rounded-lg"
+                                rows={4}
+                                placeholder="Masukkan kunci jawaban atau poin-poin penting..."
+                                value={q.answer_key || ''}
+                                onChange={e => setQ({ ...q, answer_key: e.target.value })}
+                            />
+                        </div>
+                    )}
+
+                    {/* Options for Choices */}
+                    {(q.type === 'single_choice' || q.type === 'multiple_choice' || q.type === 'true_false') && (
                         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                             <div className="flex justify-between items-center mb-4">
                                 <label className="block text-sm font-bold text-gray-900">Pilihan Jawaban</label>
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => setQ({
-                                        ...q,
-                                        options: [...(q.options || []), { id: generateId(), text: '', is_correct: false }]
-                                    })}
-                                >
-                                    <Plus className="w-4 h-4 mr-2" /> Tambah Opsi
-                                </Button>
+                                {q.type !== 'true_false' && (
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => setQ({
+                                            ...q,
+                                            options: [...(q.options || []), { id: generateId(), text: '', is_correct: false }]
+                                        })}
+                                    >
+                                        <Plus className="w-4 h-4 mr-2" /> Tambah Opsi
+                                    </Button>
+                                )}
                             </div>
 
                             <div className="space-y-3">
@@ -253,23 +282,28 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
                                                 type="text"
                                                 className={cn(
                                                     "w-full px-4 py-3 border rounded-lg transition-colors text-base",
-                                                    opt.is_correct ? "border-green-500 bg-green-50" : "border-gray-200"
+                                                    opt.is_correct ? "border-green-500 bg-green-50" : "border-gray-200",
+                                                    q.type === 'true_false' && "bg-gray-50 text-gray-500 cursor-not-allowed"
                                                 )}
                                                 placeholder={`Pilihan ${String.fromCharCode(65 + idx)}`}
                                                 value={opt.text}
+                                                readOnly={q.type === 'true_false'}
                                                 onChange={e => handleUpdateOption(opt.id, { text: e.target.value })}
                                             />
                                         </div>
-                                        <button
-                                            onClick={() => {
-                                                const newOptions = q.options?.filter((o: any) => o.id !== opt.id);
-                                                setQ({ ...q, options: newOptions });
-                                            }}
-                                            className="text-gray-400 hover:text-red-500 p-2"
-                                            title="Hapus Opsi"
-                                        >
-                                            &times;
-                                        </button>
+
+                                        {q.type !== 'true_false' && (
+                                            <button
+                                                onClick={() => {
+                                                    const newOptions = q.options?.filter((o: any) => o.id !== opt.id);
+                                                    setQ({ ...q, options: newOptions });
+                                                }}
+                                                className="text-gray-400 hover:text-red-500 p-2"
+                                                title="Hapus Opsi"
+                                            >
+                                                &times;
+                                            </button>
+                                        )}
                                     </div>
                                 ))}
                             </div>

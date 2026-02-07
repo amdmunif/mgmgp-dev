@@ -61,6 +61,8 @@ export function QuestionBankPage() {
 
     // --- DOWNLOAD HANDLERS ---
 
+    // --- DOWNLOAD HANDLERS ---
+
     const handleDownloadWord = async () => {
         if (selectedIds.size === 0) return toast.error("Pilih soal dulu");
 
@@ -72,37 +74,50 @@ export function QuestionBankPage() {
                 children: [
                     new Paragraph({
                         children: [
-                            new TextRun({
-                                text: "Bank Soal MGMP",
-                                bold: true,
-                                size: 32,
-                            }),
+                            new TextRun({ text: "Bank Soal MGMP", bold: true, size: 32 }),
                         ],
                         spacing: { after: 400 },
                     }),
                     ...selectedQuestions.flatMap((q, idx) => [
                         new Paragraph({
                             children: [
-                                new TextRun({
-                                    text: `${idx + 1}. `,
-                                    bold: true,
-                                }),
-                                // Since content is HTML, we strip tags roughly for now
-                                // Ideally needs HTML-to-Docx parser or simple strip
-                                new TextRun({
-                                    text: q.content.replace(/<[^>]+>/g, ''),
-                                }),
+                                new TextRun({ text: `${idx + 1}. `, bold: true }),
+                                new TextRun({ text: q.content.replace(/<[^>]+>/g, '').trim() }),
                             ],
                             spacing: { after: 200 },
                         }),
-                        ...(q.options || []).map((opt: any, optIdx: number) =>
+                        ...((q.type !== 'essay' && q.type !== 'short_answer' && q.options) ? q.options.map((opt: any, optIdx: number) =>
                             new Paragraph({
                                 text: `${String.fromCharCode(65 + optIdx)}. ${opt.text}`,
-                                indent: { left: 720 }, // Indent options
+                                indent: { left: 720 },
                             })
-                        ),
-                        new Paragraph({ text: "" }) // Spacer
-                    ])
+                        ) : []),
+                        new Paragraph({ text: "" })
+                    ]),
+                    // Answer Key Section
+                    new Paragraph({
+                        children: [new TextRun({ text: "Kunci Jawaban", bold: true, size: 28 })],
+                        pageBreakBefore: true,
+                        spacing: { after: 300 }
+                    }),
+                    ...selectedQuestions.map((q, idx) => {
+                        let answer = "Lihat Kebijakan Guru";
+                        if (q.type === 'essay' || q.type === 'short_answer') {
+                            answer = q.answer_key || '-';
+                        } else {
+                            const correctIdx = q.options?.findIndex((o: any) => o.is_correct);
+                            if (correctIdx !== -1 && correctIdx !== undefined) {
+                                answer = String.fromCharCode(65 + correctIdx);
+                            } else {
+                                answer = '-';
+                            }
+                        }
+                        return new Paragraph({
+                            children: [
+                                new TextRun({ text: `${idx + 1}. ${answer}`, bold: true })
+                            ]
+                        });
+                    })
                 ],
             }],
         });
@@ -116,20 +131,29 @@ export function QuestionBankPage() {
         if (selectedIds.size === 0) return toast.error("Pilih soal dulu");
         const selectedQuestions = questions.filter(q => selectedIds.has(q.id));
 
-        const wsData = selectedQuestions.map((q, idx) => ({
-            No: idx + 1,
-            Mapel: q.mapel,
-            Kelas: q.kelas,
-            Level: q.level,
-            Soal: q.content.replace(/<[^>]+>/g, ''),
-            Tipe: q.type,
-            Opsi_A: q.options?.[0]?.text || '',
-            Opsi_B: q.options?.[1]?.text || '',
-            Opsi_C: q.options?.[2]?.text || '',
-            Opsi_D: q.options?.[3]?.text || '',
-            Opsi_E: q.options?.[4]?.text || '',
-            Kunci: q.options?.find((o: any) => o.is_correct)?.text || ''
-        }));
+        const wsData = selectedQuestions.map((q, idx) => {
+            let key = '';
+            if (q.type === 'essay' || q.type === 'short_answer') {
+                key = q.answer_key || '';
+            } else {
+                key = q.options?.find((o: any) => o.is_correct)?.text || '';
+            }
+
+            return {
+                No: idx + 1,
+                Mapel: q.mapel,
+                Kelas: q.kelas,
+                Level: q.level,
+                Soal: q.content.replace(/<[^>]+>/g, ''),
+                Tipe: q.type,
+                Opsi_A: q.options?.[0]?.text || '',
+                Opsi_B: q.options?.[1]?.text || '',
+                Opsi_C: q.options?.[2]?.text || '',
+                Opsi_D: q.options?.[3]?.text || '',
+                Opsi_E: q.options?.[4]?.text || '',
+                Kunci: key
+            };
+        });
 
         const ws = XLSX.utils.json_to_sheet(wsData);
         const wb = XLSX.utils.book_new();
@@ -155,20 +179,44 @@ export function QuestionBankPage() {
             if (y > 270) { doc.addPage(); y = 20; }
 
             // Question Text
-            const cleanText = `${idx + 1}. ${q.content.replace(/<[^>]+>/g, '')}`;
-            const splitText = doc.splitTextToSize(cleanText, 180);
-            doc.text(splitText, 14, y);
-            y += (splitText.length * 5) + 2;
+            doc.setFont("helvetica", "bold");
+            doc.text(`${idx + 1}.`, 14, y);
+            doc.setFont("helvetica", "normal");
+
+            const cleanText = q.content.replace(/<[^>]+>/g, '').trim();
+            const splitText = doc.splitTextToSize(cleanText, 170);
+            doc.text(splitText, 22, y);
+            y += (splitText.length * 5) + 4;
 
             // Options
-            if (q.options) {
+            if (q.type !== 'essay' && q.type !== 'short_answer' && q.options) {
                 q.options.forEach((opt: any, optIdx: number) => {
                     if (y > 280) { doc.addPage(); y = 20; }
-                    doc.text(`${String.fromCharCode(65 + optIdx)}. ${opt.text}`, 20, y);
+                    doc.text(`${String.fromCharCode(65 + optIdx)}. ${opt.text}`, 25, y);
                     y += 5;
                 });
             }
             y += 5;
+        });
+
+        // Answer Key Page
+        doc.addPage();
+        doc.setFontSize(16);
+        doc.text("Kunci Jawaban", 14, 20);
+        doc.setFontSize(11);
+        y = 30;
+
+        selectedQuestions.forEach((q, idx) => {
+            if (y > 280) { doc.addPage(); y = 20; }
+            let answer = "";
+            if (q.type === 'essay' || q.type === 'short_answer') {
+                answer = q.answer_key || '-';
+            } else {
+                const correctIdx = q.options?.findIndex((o: any) => o.is_correct);
+                answer = correctIdx !== -1 && correctIdx !== undefined ? String.fromCharCode(65 + correctIdx) : '-';
+            }
+            doc.text(`${idx + 1}. ${answer}`, 14, y);
+            y += 6;
         });
 
         doc.save("soal_mgmp.pdf");
