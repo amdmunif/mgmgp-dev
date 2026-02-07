@@ -1,15 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../../components/ui/button';
-import { Plus, Trash2, Search, Filter, CheckCircle, XCircle, FileText, Gamepad2, Upload, Pencil } from 'lucide-react';
-import { questionService } from '../../../services/questionService';
-import type { Question, QuestionBank } from '../../../services/questionService';
-import { cn } from '../../../lib/utils';
-import { toast } from 'react-hot-toast';
-import { read, utils } from 'xlsx';
-
+import { Plus, Trash2, Search, Filter, CheckCircle, XCircle, FileText, Gamepad2, Upload, Pencil, Eye } from 'lucide-react';
+// ...
 export function AdminQuestions() {
     const navigate = useNavigate();
+    const [viewingQuestion, setViewingQuestion] = useState<Question | null>(null);
     const [activeTab, setActiveTab] = useState<'repository' | 'legacy'>('repository');
 
     // Repository State
@@ -243,7 +239,7 @@ export function AdminQuestions() {
                         <table className="w-full text-left">
                             <thead className="bg-gray-50 border-b border-gray-100">
                                 <tr>
-                                    <th className="px-6 py-4 font-semibold text-gray-700">Soal</th>
+                                    <th className="px-6 py-4 font-semibold text-gray-700 w-[400px]">Soal</th>
                                     <th className="px-6 py-4 font-semibold text-gray-700 w-32">Mapel</th>
                                     <th className="px-6 py-4 font-semibold text-gray-700 w-24">Kelas</th>
                                     <th className="px-6 py-4 font-semibold text-gray-700 w-24">Level</th>
@@ -259,7 +255,7 @@ export function AdminQuestions() {
                                 ) : (
                                     questions.map(q => (
                                         <tr key={q.id} className="hover:bg-gray-50 transition-colors">
-                                            <td className="px-6 py-4">
+                                            <td className="px-6 py-4 max-w-[400px]">
                                                 <div className="line-clamp-2 text-sm text-gray-800" dangerouslySetInnerHTML={{ __html: q.content }} />
                                             </td>
                                             <td className="px-6 py-4 text-sm text-gray-600">{q.mapel}</td>
@@ -280,6 +276,9 @@ export function AdminQuestions() {
                                                 }
                                             </td>
                                             <td className="px-6 py-4 text-right space-x-2">
+                                                <button onClick={() => setViewingQuestion(q)} className="p-2 text-gray-400 hover:text-blue-600 transition-colors" title="Lihat Detail">
+                                                    <Eye className="w-4 h-4" />
+                                                </button>
                                                 <button onClick={() => navigate(`/admin/questions/edit/${q.id}`)} className="p-2 text-gray-400 hover:text-blue-600 transition-colors">
                                                     <Pencil className="w-4 h-4" />
                                                 </button>
@@ -292,6 +291,53 @@ export function AdminQuestions() {
                                 )}
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            )}
+
+            {/* Preview Modal */}
+            {viewingQuestion && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white p-6 rounded-xl w-full max-w-2xl shadow-xl max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95">
+                        <div className="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-900">Detail Soal</h3>
+                                <div className="flex gap-2 mt-1">
+                                    <span className="px-2 py-0.5 bg-gray-100 rounded text-xs text-gray-600">{viewingQuestion.mapel}</span>
+                                    <span className="px-2 py-0.5 bg-gray-100 rounded text-xs text-gray-600">{viewingQuestion.kelas}</span>
+                                    <span className="px-2 py-0.5 bg-gray-100 rounded text-xs text-gray-600">{viewingQuestion.level}</span>
+                                </div>
+                            </div>
+                            <button onClick={() => setViewingQuestion(null)} className="text-gray-400 hover:text-gray-600">
+                                <span className="text-2xl">&times;</span>
+                            </button>
+                        </div>
+
+                        <div className="prose prose-sm max-w-none mb-6 p-4 bg-gray-50 rounded-lg border border-gray-100" dangerouslySetInnerHTML={{ __html: viewingQuestion.content }} />
+
+                        <div className="space-y-2">
+                            <h4 className="font-semibold text-sm text-gray-700">Pilihan Jawaban:</h4>
+                            {viewingQuestion.options?.map((opt: any, idx: number) => (
+                                <div key={idx} className={cn("p-3 rounded-lg border flex items-center gap-3", opt.is_correct ? "bg-green-50 border-green-200" : "bg-white border-gray-200")}>
+                                    <span className={cn("w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold shrink-0", opt.is_correct ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500")}>
+                                        {String.fromCharCode(65 + idx)}
+                                    </span>
+                                    <span className={cn("text-sm", opt.is_correct && "font-medium text-green-800")}>{opt.text}</span>
+                                    {opt.is_correct && <CheckCircle className="w-4 h-4 text-green-600 ml-auto" />}
+                                </div>
+                            ))}
+                        </div>
+
+                        {(viewingQuestion.type === 'essay' || viewingQuestion.type === 'short_answer') && (
+                            <div className="mt-4 p-4 bg-blue-50 text-blue-800 rounded-lg text-sm">
+                                <strong>Kunci Jawaban:</strong> <br />
+                                {viewingQuestion.answer_key}
+                            </div>
+                        )}
+
+                        <div className="mt-6 flex justify-end">
+                            <Button onClick={() => setViewingQuestion(null)}>Tutup</Button>
+                        </div>
                     </div>
                 </div>
             )}
