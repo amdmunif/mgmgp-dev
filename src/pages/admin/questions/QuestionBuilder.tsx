@@ -79,8 +79,10 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
                 await questionService.update(id, q);
                 toast.success('Pertanyaan berhasil diperbarui!');
             } else {
-                await questionService.create(q);
-                toast.success('Pertanyaan berhasil dibuat!');
+                const res = await questionService.create(q);
+                // @ts-ignore
+                const msg = res.debug_role ? `Pertanyaan dibuat! (${res.debug_role} -> ${res.debug_status})` : 'Pertanyaan berhasil dibuat!';
+                toast.success(msg);
             }
             navigate(basePath);
         } catch (error) {
