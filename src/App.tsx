@@ -105,8 +105,9 @@ function App() {
           <Route path="cptp" element={<CPTP />} />
           <Route path="events" element={<MemberEvents />} />
           <Route path="contributor" element={<ContributorRegistration />} />
-          {/* Contributor: Add Question */}
+          {/* Contributor: Create & Edit Question */}
           <Route path="questions/create" element={<QuestionBuilder basePath="/member/contributor" />} />
+          <Route path="questions/edit/:id" element={<QuestionBuilder basePath="/member/contributor" />} />
 
           {/* Protected Premium Routes */}
           <Route path="questions" element={
