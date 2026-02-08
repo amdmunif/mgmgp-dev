@@ -1,16 +1,7 @@
 import { useState, useMemo } from 'react';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from './table';
-import { Input } from './input';
 import { Button } from './button';
 import { ChevronLeft, ChevronRight, Search, ArrowUpDown } from 'lucide-react';
-import { cn } from '../../lib/utils'; // Assuming you have a cn utility
+import { cn } from '../../lib/utils';
 
 interface DataTableProps<T> {
     data: T[];
@@ -20,7 +11,7 @@ interface DataTableProps<T> {
         cell?: (item: T) => React.ReactNode;
         className?: string;
     }[];
-    searchKeys?: (keyof T)[]; // Keys to search in
+    searchKeys?: (keyof T)[];
     pageSize?: number;
 }
 
@@ -77,63 +68,69 @@ export function DataTable<T extends Record<string, any>>({
                 <div className="flex items-center gap-2">
                     <div className="relative flex-1 max-w-sm">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                        <Input
+                        <input
+                            type="text"
                             placeholder="Cari..."
                             value={searchTerm}
                             onChange={(e) => {
                                 setSearchTerm(e.target.value);
-                                setCurrentPage(1); // Reset to page 1 on search
+                                setCurrentPage(1);
                             }}
-                            className="pl-9"
+                            className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
                         />
                     </div>
                 </div>
             )}
 
             {/* Table */}
-            <div className="rounded-md border bg-white">
-                <Table>
-                    <TableHeader className="bg-gray-50">
-                        <TableRow>
-                            {columns.map((col, idx) => (
-                                <TableHead
-                                    key={idx}
-                                    className={cn("cursor-pointer hover:bg-gray-100", col.className)}
-                                    onClick={() => col.accessorKey && handleSort(col.accessorKey)}
-                                >
-                                    <div className="flex items-center gap-1">
-                                        {col.header}
-                                        {col.accessorKey && <ArrowUpDown className="h-3 w-3" />}
-                                    </div>
-                                </TableHead>
-                            ))}
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {paginatedData.length > 0 ? (
-                            paginatedData.map((item, rowIdx) => (
-                                <TableRow key={rowIdx} className="hover:bg-gray-50">
-                                    {columns.map((col, colIdx) => (
-                                        <TableCell key={colIdx} className={col.className}>
-                                            {col.cell ? col.cell(item) : (item[col.accessorKey!] as React.ReactNode)}
-                                        </TableCell>
-                                    ))}
-                                </TableRow>
-                            ))
-                        ) : (
-                            <TableRow>
-                                <TableCell colSpan={columns.length} className="h-24 text-center text-gray-500">
-                                    Tidak ada data.
-                                </TableCell>
-                            </TableRow>
-                        )}
-                    </TableBody>
-                </Table>
+            <div className="rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead className="bg-gray-50 border-b border-gray-100">
+                            <tr>
+                                {columns.map((col, idx) => (
+                                    <th
+                                        key={idx}
+                                        className={cn(
+                                            "px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none",
+                                            col.className
+                                        )}
+                                        onClick={() => col.accessorKey && handleSort(col.accessorKey)}
+                                    >
+                                        <div className="flex items-center gap-1">
+                                            {col.header}
+                                            {col.accessorKey && <ArrowUpDown className="h-3 w-3 text-gray-400" />}
+                                        </div>
+                                    </th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {paginatedData.length > 0 ? (
+                                paginatedData.map((item, rowIdx) => (
+                                    <tr key={rowIdx} className="hover:bg-gray-50/80 transition-colors">
+                                        {columns.map((col, colIdx) => (
+                                            <td key={colIdx} className={cn("px-6 py-4 text-sm text-gray-600", col.className)}>
+                                                {col.cell ? col.cell(item) : (item[col.accessorKey!] as React.ReactNode)}
+                                            </td>
+                                        ))}
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan={columns.length} className="px-6 py-8 text-center text-gray-500">
+                                        Tidak ada data yang ditemukan.
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             {/* Pagination */}
             {totalPages > 1 && (
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between px-2">
                     <p className="text-sm text-gray-500">
                         Halaman {currentPage} dari {totalPages}
                     </p>

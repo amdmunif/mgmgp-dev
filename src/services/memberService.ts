@@ -9,6 +9,7 @@ export interface Profile {
     premium_until?: string;
     created_at?: string;
     is_active?: number | boolean; // 1 or 0 usually from PHP
+    foto_profile?: string;
 }
 
 export const memberService = {
