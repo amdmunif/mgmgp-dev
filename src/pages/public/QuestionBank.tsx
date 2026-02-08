@@ -14,6 +14,9 @@ import jsPDF from 'jspdf';
 export function QuestionBankPage() {
     const [viewingQuestion, setViewingQuestion] = useState<Question | null>(null);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const [questions, setQuestions] = useState<Question[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [filters, setFilters] = useState({ mapel: '', kelas: '', level: '', search: '' });
 
     useEffect(() => {
         loadData();
