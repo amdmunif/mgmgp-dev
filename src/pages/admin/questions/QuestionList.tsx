@@ -4,6 +4,8 @@ import { Button } from '../../../components/ui/button';
 import { Plus, Trash2, Search, Filter, CheckCircle, XCircle, FileText, Gamepad2, Upload, Pencil, Eye } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { questionService, type Question, type QuestionBank } from '../../../services/questionService';
+import { cn } from '../../../lib/utils';
+import * as XLSX from 'xlsx';
 export function AdminQuestions() {
     const navigate = useNavigate();
     const [viewingQuestion, setViewingQuestion] = useState<Question | null>(null);
@@ -104,9 +106,9 @@ export function AdminQuestions() {
         setImporting(true);
         try {
             const data = await excelFile.arrayBuffer();
-            const workbook = read(data);
+            const workbook = XLSX.read(data);
             const sheet = workbook.Sheets[workbook.SheetNames[0]];
-            const json: any[] = utils.sheet_to_json(sheet);
+            const json: any[] = XLSX.utils.sheet_to_json(sheet);
 
             let count = 0;
             for (const row of json) {
