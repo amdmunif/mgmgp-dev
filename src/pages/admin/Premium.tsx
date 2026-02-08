@@ -1,149 +1,69 @@
 import { useState, useEffect } from 'react';
-import { Button } from '../../components/ui/button';
-import { CheckCircle, XCircle, ExternalLink, RefreshCw } from 'lucide-react';
 import { premiumService, type PremiumRequest } from '../../services/premiumService';
-import { format } from 'date-fns';
-import { id } from 'date-fns/locale';
+import { Button } from '../../components/ui/button';
+import { Check, X, Loader2, Image as ImageIcon } from 'lucide-react'; // Added Image icon
+import { toast } from 'react-hot-toast';
+import { cn } from '../../lib/utils';
+import { DataTable } from '../../components/ui/DataTable';
 
 export function AdminPremium() {
-    const [loading, setLoading] = useState(true);
     const [requests, setRequests] = useState<PremiumRequest[]>([]);
+    const [loading, setLoading] = useState(true);
     const [processingId, setProcessingId] = useState<string | null>(null);
 
     useEffect(() => {
-        loadRequests();
+        loadData();
     }, []);
 
-    async function loadRequests() {
-        setLoading(true);
+    const loadData = async () => {
         try {
             const data = await premiumService.getAllRequests();
             setRequests(data);
         } catch (error) {
-            console.error('Failed to load requests', error);
+            console.error(error);
+            toast.error('Gagal memuat data');
         } finally {
             setLoading(false);
         }
-    }
+    };
 
-    async function handleApprove(request: PremiumRequest) {
-        if (!confirm(`Setujui upgrade premium untuk ${request.profiles?.nama}?`)) return;
-
-        setProcessingId(request.id);
+    const handleApprove = async (id: string, userId: string) => {
+        if (!confirm('Setujui permintaan premium ini?')) return;
+        setProcessingId(id);
         try {
-            await premiumService.approveRequest(request.id);
-            await loadRequests();
+            await premiumService.approveRequest(id, userId);
+            toast.success('Permintaan disetujui');
+            loadData();
         } catch (error) {
-            console.error('Error approving', error);
-            alert('Gagal menyetujui');
+            toast.error('Gagal memproses');
         } finally {
             setProcessingId(null);
         }
-    }
+    };
 
-    async function handleReject(requestId: string) {
-        const reason = prompt('Masukkan alasan penolakan:');
-        if (!reason) return;
-
-        setProcessingId(requestId);
+    const handleReject = async (id: string) => {
+        if (!confirm('Tolak permintaan ini?')) return;
+        setProcessingId(id);
         try {
-            await premiumService.rejectRequest(requestId, reason);
-            await loadRequests();
+            await premiumService.rejectRequest(id);
+            toast.success('Permintaan ditolak');
+            loadData();
         } catch (error) {
-            console.error('Error rejecting', error);
-            alert('Gagal menolak');
+            toast.error('Gagal memproses');
         } finally {
             setProcessingId(null);
         }
-    }
+    };
 
-    return (
-        <div className="space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    const columns = [
+        {
+            header: 'User',
+            accessorKey: 'user_email' as keyof PremiumRequest,
+            cell: (req: PremiumRequest) => (
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Verifikasi Premium</h1>
-                    <p className="text-gray-500">Kelola permintaan upgrade dari member.</p>
                 </div>
-                <Button variant="outline" onClick={loadRequests} disabled={loading} className="bg-white hover:bg-gray-50">
-                    <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} /> Refresh Data
-                </Button>
-            </div>
-
-            <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
-                        <thead className="bg-gray-50 text-gray-700 uppercase font-bold border-b border-gray-200">
-                            <tr>
-                                <th className="px-6 py-3">Tanggal</th>
-                                <th className="px-6 py-3">User</th>
-                                <th className="px-6 py-3">Bank Pengirim</th>
-                                <th className="px-6 py-3">Bukti</th>
-                                <th className="px-6 py-3">Status</th>
-                                <th className="px-6 py-3 text-right">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200">
-                            {requests.map((req) => (
-                                <tr key={req.id} className="hover:bg-gray-50 transition-colors">
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        {format(new Date(req.created_at), 'dd MMM yyyy, HH:mm', { locale: id })}
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="font-medium text-gray-900">{req.profiles?.nama || 'Unknown'}</div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="font-medium">{req.bank_name}</div>
-                                        <div className="text-xs text-gray-500">{req.account_number} (a.n. {req.account_holder})</div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <a
-                                            href={req.proof_url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="inline-flex items-center text-primary-600 hover:text-primary-800 hover:underline"
-                                        >
-                                            <ExternalLink className="w-4 h-4 mr-1" /> Lihat Bukti
-                                        </a>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <StatusBadge status={req.status} />
-                                    </td>
-                                    <td className="px-6 py-4 text-right space-x-2">
-                                        {req.status === 'pending' && (
-                                            <>
-                                                <Button
-                                                    size="sm"
-                                                    className="bg-green-600 hover:bg-green-700 text-white"
-                                                    onClick={() => handleApprove(req)}
-                                                    disabled={!!processingId}
-                                                >
-                                                    <CheckCircle className="w-4 h-4" />
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    variant="destructive"
-                                                    onClick={() => handleReject(req.id)}
-                                                    disabled={!!processingId}
-                                                >
-                                                    <XCircle className="w-4 h-4" />
-                                                </Button>
-                                            </>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))}
-                            {requests.length === 0 && (
-                                <tr>
-                                    <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
-                                        Belum ada request premium.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }
 
