@@ -6,6 +6,8 @@ import { toast } from 'react-hot-toast';
 import { questionService, type Question, type QuestionBank } from '../../../services/questionService';
 import { cn } from '../../../lib/utils';
 import * as XLSX from 'xlsx';
+import { DataTable } from '../../../components/ui/DataTable';
+
 export function AdminQuestions() {
     const navigate = useNavigate();
     const [viewingQuestion, setViewingQuestion] = useState<Question | null>(null);
@@ -166,6 +168,121 @@ export function AdminQuestions() {
         }
     };
 
+    // Columns Definition
+    const repoColumns = [
+        {
+            header: 'Soal',
+            accessorKey: 'content' as keyof Question,
+            className: 'w-[400px]',
+            cell: (q: Question) => (
+                <div className="max-w-[400px]">
+                    <div className="line-clamp-2 text-sm text-gray-800" dangerouslySetInnerHTML={{ __html: q.content }} />
+                    {q.creator_name && <div className="text-xs text-gray-500 mt-1">Oleh: {q.creator_name}</div>}
+                </div>
+            )
+        },
+        { header: 'Mapel', accessorKey: 'mapel' as keyof Question, className: 'w-32' },
+        {
+            header: 'Kelas',
+            accessorKey: 'kelas' as keyof Question,
+            className: 'w-24 text-center',
+            cell: (q: Question) => <span className="inline-flex items-center px-2 py-1 rounded bg-gray-100 text-xs font-medium text-gray-800">{q.kelas}</span>
+        },
+        {
+            header: 'Level',
+            accessorKey: 'level' as keyof Question,
+            className: 'w-24',
+            cell: (q: Question) => (
+                <span className={cn(
+                    "inline-flex items-center px-2 py-1 rounded text-xs font-medium",
+                    q.level === 'Mudah' ? "bg-green-100 text-green-800" :
+                        q.level === 'Sedang' ? "bg-yellow-100 text-yellow-800" : "bg-red-100 text-red-800"
+                )}>{q.level}</span>
+            )
+        },
+        {
+            header: 'Status',
+            accessorKey: 'status' as keyof Question,
+            className: 'w-24',
+            cell: (q: Question) => (
+                q.status === 'verified' ?
+                    <span className="text-green-600 flex items-center gap-1 text-xs font-medium"><CheckCircle className="w-3 h-3" /> Verified</span> :
+                    q.status === 'rejected' ?
+                        <span className="text-red-600 flex items-center gap-1 text-xs font-medium"><XCircle className="w-3 h-3" /> Rejected</span> :
+                        <span className="text-orange-600 flex items-center gap-1 text-xs font-medium"><Clock className="w-3 h-3" /> Pending</span>
+            )
+        },
+        {
+            header: 'Aksi',
+            className: 'text-right w-32',
+            cell: (q: Question) => (
+                <div className="flex justify-end gap-2">
+                    <button onClick={() => setViewingQuestion(q)} className="p-2 text-gray-400 hover:text-blue-600 transition-colors" title="Lihat">
+                        <Eye className="w-4 h-4" />
+                    </button>
+                    {activeTab === 'verification' ? (
+                        <>
+                            <button onClick={() => handleVerify(q.id, true)} className="p-2 text-gray-400 hover:text-green-600 transition-colors" title="Setujui">
+                                <CheckCircle className="w-4 h-4" />
+                            </button>
+                            <button onClick={() => handleVerify(q.id, false)} className="p-2 text-gray-400 hover:text-red-600 transition-colors" title="Tolak">
+                                <XCircle className="w-4 h-4" />
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <button onClick={() => navigate(`/admin/questions/edit/${q.id}`)} className="p-2 text-gray-400 hover:text-blue-600 transition-colors" title="Edit">
+                                <Pencil className="w-4 h-4" />
+                            </button>
+                            <button onClick={() => handleDeleteRepo(q.id)} className="p-2 text-gray-400 hover:text-red-600 transition-colors" title="Hapus">
+                                <Trash2 className="w-4 h-4" />
+                            </button>
+                        </>
+                    )}
+                </div>
+            )
+        }
+    ];
+
+    const legacyColumns = [
+        { header: 'Judul', accessorKey: 'title' as keyof QuestionBank, className: 'font-medium text-gray-900' },
+        {
+            header: 'Kategori',
+            accessorKey: 'category' as keyof QuestionBank,
+            cell: (item: QuestionBank) => (
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                    {item.category === 'TTS' || item.category === 'Wordsearch' ?
+                        <Gamepad2 className="w-4 h-4 text-purple-500" /> :
+                        <FileText className="w-4 h-4 text-blue-500" />
+                    }
+                    {item.category}
+                </div>
+            )
+        },
+        { header: 'Mapel', accessorKey: 'mapel' as keyof QuestionBank, className: 'text-sm text-gray-600' },
+        {
+            header: 'Premium',
+            accessorKey: 'is_premium' as keyof QuestionBank,
+            className: 'w-32',
+            cell: (item: QuestionBank) => (
+                item.is_premium ?
+                    <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">Premium</span> :
+                    <span className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded-full">Free</span>
+            )
+        },
+        {
+            header: 'Aksi',
+            className: 'text-right w-24',
+            cell: (item: QuestionBank) => (
+                <div className="flex justify-end">
+                    <button onClick={() => handleDeleteLegacy(item.id)} className="p-2 text-gray-400 hover:text-red-600 transition-colors">
+                        <Trash2 className="w-4 h-4" />
+                    </button>
+                </div>
+            )
+        }
+    ];
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -250,94 +367,19 @@ export function AdminQuestions() {
                             <option value="8">Kelas 8</option>
                             <option value="9">Kelas 9</option>
                         </select>
-                        <div className="flex-1 min-w-[200px] relative">
-                            <Search className="w-4 h-4 absolute left-3 top-2 text-gray-400" />
-                            <input
-                                type="text"
-                                placeholder="Cari konten soal..."
-                                className="w-full pl-9 pr-4 py-1.5 border rounded-lg text-sm"
-                                value={filters.search}
-                                onChange={e => setFilters({ ...filters, search: e.target.value })}
-                            />
-                        </div>
                     </div>
 
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                        <table className="w-full text-left">
-                            <thead className="bg-gray-50 border-b border-gray-100">
-                                <tr>
-                                    <th className="px-6 py-4 font-semibold text-gray-700 w-[400px]">Soal</th>
-                                    <th className="px-6 py-4 font-semibold text-gray-700 w-32">Mapel</th>
-                                    <th className="px-6 py-4 font-semibold text-gray-700 w-24">Kelas</th>
-                                    <th className="px-6 py-4 font-semibold text-gray-700 w-24">Level</th>
-                                    <th className="px-6 py-4 font-semibold text-gray-700 w-24">Status</th>
-                                    <th className="px-6 py-4 font-semibold text-gray-700 w-32 text-right">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {repoLoading ? (
-                                    <tr><td colSpan={6} className="p-8 text-center text-gray-500">Loading...</td></tr>
-                                ) : questions.length === 0 ? (
-                                    <tr><td colSpan={6} className="p-8 text-center text-gray-500">
-                                        {activeTab === 'verification' ? 'Tidak ada soal menunggu verifikasi.' : 'Tidak ada soal.'}
-                                    </td></tr>
-                                ) : (
-                                    questions.map(q => (
-                                        <tr key={q.id} className="hover:bg-gray-50 transition-colors">
-                                            <td className="px-6 py-4 max-w-[400px]">
-                                                <div className="line-clamp-2 text-sm text-gray-800" dangerouslySetInnerHTML={{ __html: q.content }} />
-                                                {q.creator_name && <div className="text-xs text-gray-500 mt-1">Oleh: {q.creator_name}</div>}
-                                            </td>
-                                            <td className="px-6 py-4 text-sm text-gray-600">{q.mapel}</td>
-                                            <td className="px-6 py-4 text-center">
-                                                <span className="inline-flex items-center px-2 py-1 rounded bg-gray-100 text-xs font-medium text-gray-800">{q.kelas}</span>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <span className={cn(
-                                                    "inline-flex items-center px-2 py-1 rounded text-xs font-medium",
-                                                    q.level === 'Mudah' ? "bg-green-100 text-green-800" :
-                                                        q.level === 'Sedang' ? "bg-yellow-100 text-yellow-800" : "bg-red-100 text-red-800"
-                                                )}>{q.level}</span>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                {q.status === 'verified' ?
-                                                    <span className="text-green-600 flex items-center gap-1 text-xs font-medium"><CheckCircle className="w-3 h-3" /> Verified</span> :
-                                                    q.status === 'rejected' ?
-                                                        <span className="text-red-600 flex items-center gap-1 text-xs font-medium"><XCircle className="w-3 h-3" /> Rejected</span> :
-                                                        <span className="text-orange-600 flex items-center gap-1 text-xs font-medium"><Clock className="w-3 h-3" /> Pending</span>
-                                                }
-                                            </td>
-                                            <td className="px-6 py-4 text-right space-x-2">
-                                                <button onClick={() => setViewingQuestion(q)} className="p-2 text-gray-400 hover:text-blue-600 transition-colors" title="Lihat Detail">
-                                                    <Eye className="w-4 h-4" />
-                                                </button>
-
-                                                {activeTab === 'verification' ? (
-                                                    <>
-                                                        <button onClick={() => handleVerify(q.id, true)} className="p-2 text-gray-400 hover:text-green-600 transition-colors" title="Verifikasi">
-                                                            <CheckCircle className="w-4 h-4" />
-                                                        </button>
-                                                        <button onClick={() => handleVerify(q.id, false)} className="p-2 text-gray-400 hover:text-red-600 transition-colors" title="Tolak">
-                                                            <XCircle className="w-4 h-4" />
-                                                        </button>
-                                                    </>
-                                                ) : (
-                                                    // Repository Actions
-                                                    <>
-                                                        <button onClick={() => navigate(`/admin/questions/edit/${q.id}`)} className="p-2 text-gray-400 hover:text-blue-600 transition-colors">
-                                                            <Pencil className="w-4 h-4" />
-                                                        </button>
-                                                        <button onClick={() => handleDeleteRepo(q.id)} className="p-2 text-gray-400 hover:text-red-600 transition-colors">
-                                                            <Trash2 className="w-4 h-4" />
-                                                        </button>
-                                                    </>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden p-6">
+                        {repoLoading ? (
+                            <div className="text-center p-8 text-gray-500">Loading...</div>
+                        ) : (
+                            <DataTable
+                                data={questions}
+                                columns={repoColumns}
+                                searchKeys={['content', 'mapel', 'creator_name']}
+                                pageSize={10}
+                            />
+                        )}
                     </div>
                 </div>
             )}
@@ -391,54 +433,21 @@ export function AdminQuestions() {
 
             {/* LEGACY TAB */}
             {activeTab === 'legacy' && (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden animate-in fade-in slide-in-from-top-2">
-                    <table className="w-full text-left">
-                        <thead className="bg-gray-50 border-b border-gray-100">
-                            <tr>
-                                <th className="px-6 py-4 font-semibold text-gray-700">Judul</th>
-                                <th className="px-6 py-4 font-semibold text-gray-700">Kategori</th>
-                                <th className="px-6 py-4 font-semibold text-gray-700">Mapel</th>
-                                <th className="px-6 py-4 font-semibold text-gray-700 w-32">Premium</th>
-                                <th className="px-6 py-4 font-semibold text-gray-700 w-24 text-right">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            {legacyLoading ? (
-                                <tr><td colSpan={5} className="p-8 text-center text-gray-500">Loading...</td></tr>
-                            ) : banks.length === 0 ? (
-                                <tr><td colSpan={5} className="p-8 text-center text-gray-500">Belum ada file/games.</td></tr>
-                            ) : (
-                                banks.map(item => (
-                                    <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-                                        <td className="px-6 py-4 font-medium text-gray-900">{item.title}</td>
-                                        <td className="px-6 py-4 flex items-center gap-2 text-sm text-gray-600">
-                                            {item.category === 'TTS' || item.category === 'Wordsearch' ?
-                                                <Gamepad2 className="w-4 h-4 text-purple-500" /> :
-                                                <FileText className="w-4 h-4 text-blue-500" />
-                                            }
-                                            {item.category}
-                                        </td>
-                                        <td className="px-6 py-4 text-sm text-gray-600">{item.mapel}</td>
-                                        <td className="px-6 py-4">
-                                            {item.is_premium ?
-                                                <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">Premium</span> :
-                                                <span className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded-full">Free</span>
-                                            }
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <button onClick={() => handleDeleteLegacy(item.id)} className="p-2 text-gray-400 hover:text-red-600 transition-colors">
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden p-6 animate-in fade-in slide-in-from-top-2">
+                    {legacyLoading ? (
+                        <div className="text-center p-8 text-gray-500">Loading...</div>
+                    ) : (
+                        <DataTable
+                            data={banks}
+                            columns={legacyColumns}
+                            searchKeys={['title', 'mapel', 'category']}
+                            pageSize={10}
+                        />
+                    )}
                 </div>
             )}
 
-            {/* Upload Modal */}
+            {/* Upload Modal - same as before */}
             {isUploadModalOpen && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white p-6 rounded-xl w-full max-w-md shadow-xl animate-in fade-in zoom-in-95 duration-200">
@@ -483,7 +492,7 @@ export function AdminQuestions() {
                 </div>
             )}
 
-            {/* Excel Import Modal */}
+            {/* Excel Import Modal - same as before */}
             {isExcelModalOpen && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white p-6 rounded-xl w-full max-w-md shadow-xl animate-in fade-in zoom-in-95 duration-200">
