@@ -38,9 +38,35 @@ class QuestionController
         $kelas = $_GET['kelas'] ?? null;
         $level = $_GET['level'] ?? null;
         $search = $_GET['search'] ?? null;
+        $creatorId = $_GET['creator_id'] ?? null;
+        $status = $_GET['status'] ?? null;
+
+        $userId = $user['sub'] ?? null;
+        $userRole = $user['role'] ?? 'Guest';
+        $isAdmin = in_array($userRole, ['Admin', 'Pengurus']);
 
         $query = "SELECT q.*, p.nama as creator_name FROM questions q LEFT JOIN profiles p ON q.creator_id = p.id WHERE 1=1";
         $params = [];
+
+        // Visibility Logic
+        if (!$isAdmin) {
+            if ($creatorId && $userId && $creatorId === $userId) {
+                // Viewing own questions -> Show all (unless status filter is added later)
+            } else {
+                // Viewing others/public -> Verified only
+                $query .= " AND q.status = 'verified'";
+            }
+        }
+
+        if ($creatorId) {
+            $query .= " AND q.creator_id = :creator_id";
+            $params[':creator_id'] = $creatorId;
+        }
+
+        if ($status) {
+            $query .= " AND q.status = :status";
+            $params[':status'] = $status;
+        }
 
         if ($mapel) {
             $query .= " AND q.mapel = :mapel";

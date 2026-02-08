@@ -37,7 +37,9 @@ class ContributorController
         // Note: We need to count questions where creator_id = userId
         // Assuming we will migrate existing questions or new ones act as count.
         // For eligibility, maybe we count 'pending' + 'verified'? User said "make 100 questions".
-        $queryCount = "SELECT COUNT(*) FROM question_banks WHERE creator_id = :id";
+        // Get Question Count (Verified or Total created by user)
+        // Count from 'questions' table (new repository)
+        $queryCount = "SELECT COUNT(*) FROM questions WHERE creator_id = :id";
         $stmtCount = $this->conn->prepare($queryCount);
         $stmtCount->bindParam(':id', $userId);
         $stmtCount->execute();
@@ -54,7 +56,7 @@ class ContributorController
     public function apply($userId)
     {
         // 1. Check requirements (100 questions)
-        $queryCount = "SELECT COUNT(*) FROM question_banks WHERE creator_id = :id";
+        $queryCount = "SELECT COUNT(*) FROM questions WHERE creator_id = :id";
         $stmtCount = $this->conn->prepare($queryCount);
         $stmtCount->bindParam(':id', $userId);
         $stmtCount->execute();
@@ -92,7 +94,7 @@ class ContributorController
     public function getAllApplications()
     {
         $query = "SELECT ca.*, p.nama, p.email, 
-                  (SELECT COUNT(*) FROM question_banks qb WHERE qb.creator_id = ca.user_id) as question_count
+                  (SELECT COUNT(*) FROM questions q WHERE q.creator_id = ca.user_id) as question_count
                   FROM contributor_applications ca
                   JOIN profiles p ON ca.user_id = p.id
                   ORDER BY ca.applied_at DESC";

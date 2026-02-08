@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { contributorService, type ContributorStatus } from '../../services/contributorService';
+import { questionService, type Question } from '../../services/questionService';
+import { authService } from '../../services/authService';
 import { Button } from '../../components/ui/button';
-import { CheckCircle2, AlertCircle, Clock, Trophy, ChevronRight, PenTool } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Clock, Trophy, ChevronRight, PenTool, XCircle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 export function ContributorRegistration() {
@@ -10,17 +12,25 @@ export function ContributorRegistration() {
     const [status, setStatus] = useState<ContributorStatus | null>(null);
     const [loading, setLoading] = useState(true);
     const [applying, setApplying] = useState(false);
+    const [myQuestions, setMyQuestions] = useState<Question[]>([]);
 
     useEffect(() => {
-        loadStatus();
+        loadData();
     }, []);
 
-    const loadStatus = async () => {
+    const loadData = async () => {
         try {
-            const data = await contributorService.getStatus();
-            setStatus(data);
+            const statusData = await contributorService.getStatus();
+            setStatus(statusData);
+
+            // Fetch my questions
+            const user = authService.getUser();
+            if (user) {
+                const questions = await questionService.getAll({ creator_id: user.id });
+                setMyQuestions(questions);
+            }
         } catch (error) {
-            console.error('Failed to load status', error);
+            console.error('Failed to load data', error);
         } finally {
             setLoading(false);
         }
@@ -32,7 +42,7 @@ export function ContributorRegistration() {
         try {
             await contributorService.apply();
             toast.success('Pendaftaran berhasil dikirim!');
-            loadStatus();
+            loadData();
         } catch (error: any) {
             toast.error(error.message || 'Gagal mendaftar');
         } finally {
@@ -46,6 +56,8 @@ export function ContributorRegistration() {
 
     const isContributor = status.role === 'Kontributor';
     const isPending = status.status === 'pending';
+    // Use realtime count from fetched questions if available, otherwise assume status count is correct (but backend was creating 0 before)
+    // Actually status.question_count from backend is now fixed to use questions table.
     const count = status.question_count || 0;
     const progress = Math.min((count / 100) * 100, 100);
     const canApply = count >= 100 && !isContributor && !isPending;
@@ -143,6 +155,54 @@ export function ContributorRegistration() {
                                 <ChevronRight className="w-4 h-4 ml-2" />
                             </Button>
                         </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Questions List */}
+            <div className="bg-white p-8 rounded-xl border border-gray-200 shadow-sm mt-8">
+                <h2 className="text-xl font-bold mb-6">Daftar Soal Saya ({myQuestions.length})</h2>
+
+                {myQuestions.length === 0 ? (
+                    <p className="text-gray-500 text-center py-4">Belum ada soal yang dibuat.</p>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                            <thead className="bg-gray-50 text-gray-700 text-sm">
+                                <tr>
+                                    <th className="px-4 py-3 rounded-l-lg">Soal</th>
+                                    <th className="px-4 py-3">Mapel</th>
+                                    <th className="px-4 py-3">Kelas</th>
+                                    <th className="px-4 py-3 text-right rounded-r-lg">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {myQuestions.map((q) => (
+                                    <tr key={q.id}>
+                                        <td className="px-4 py-3">
+                                            <div className="line-clamp-1 text-sm font-medium" dangerouslySetInnerHTML={{ __html: q.content }} />
+                                        </td>
+                                        <td className="px-4 py-3 text-sm text-gray-600">{q.mapel}</td>
+                                        <td className="px-4 py-3 text-sm text-gray-600">{q.kelas}</td>
+                                        <td className="px-4 py-3 text-right">
+                                            {q.status === 'verified' ? (
+                                                <span className="inline-flex items-center text-xs font-medium text-green-700 bg-green-50 px-2 py-1 rounded-full">
+                                                    <CheckCircle2 className="w-3 h-3 mr-1" /> Verified
+                                                </span>
+                                            ) : q.status === 'rejected' ? (
+                                                <span className="inline-flex items-center text-xs font-medium text-red-700 bg-red-50 px-2 py-1 rounded-full">
+                                                    <XCircle className="w-3 h-3 mr-1" /> Rejected
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center text-xs font-medium text-yellow-700 bg-yellow-50 px-2 py-1 rounded-full">
+                                                    <Clock className="w-3 h-3 mr-1" /> Pending
+                                                </span>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
                 )}
             </div>
