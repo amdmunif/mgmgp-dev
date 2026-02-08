@@ -4,12 +4,14 @@ import {
     FileText, Search, Filter, CheckSquare, Square, FileSpreadsheet, File as FileIcon, Eye, CheckCircle
 } from 'lucide-react';
 import { questionService, type Question } from '../../services/questionService';
+import { authService } from '../../services/authService';
 import { Button } from '../../components/ui/button';
 import { toast } from 'react-hot-toast';
 import { Document, Packer, Paragraph, TextRun, ImageRun } from 'docx';
 import { saveAs } from 'file-saver';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
+import { format } from 'date-fns';
 
 export function QuestionBankPage() {
     const [viewingQuestion, setViewingQuestion] = useState<Question | null>(null);
@@ -17,10 +19,13 @@ export function QuestionBankPage() {
     const [questions, setQuestions] = useState<Question[]>([]);
     const [loading, setLoading] = useState(true);
     const [filters, setFilters] = useState({ mapel: '', kelas: '', level: '', search: '' });
+    const [user, setUser] = useState<any>(null);
 
     useEffect(() => {
+        const u = authService.getUser();
+        setUser(u);
         loadData();
-    }, [filters]); // Reload on filter change
+    }, [filters]);
 
     const loadData = async () => {
         setLoading(true);
@@ -32,6 +37,12 @@ export function QuestionBankPage() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const getFilename = (ext: string) => {
+        const name = user?.nama ? user.nama.replace(/\s+/g, '_') : 'Guest';
+        const date = format(new Date(), 'dd-MM-yyyy');
+        return `${name}_${date}_banksoal_mgmp_if.${ext}`;
     };
 
     const toggleSelect = (id: string) => {
@@ -48,8 +59,6 @@ export function QuestionBankPage() {
             setSelectedIds(new Set(questions.map(q => q.id)));
         }
     };
-
-    // --- DOWNLOAD HANDLERS ---
 
     // --- DOWNLOAD HANDLERS ---
 
@@ -152,7 +161,7 @@ export function QuestionBankPage() {
         });
 
         const blob = await Packer.toBlob(doc);
-        saveAs(blob, "soal_mgmp_images.docx");
+        saveAs(blob, getFilename('docx'));
         toast.success("Download Word Berhasil");
     };
 
@@ -187,7 +196,7 @@ export function QuestionBankPage() {
         const ws = XLSX.utils.json_to_sheet(wsData);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Soal");
-        XLSX.writeFile(wb, "soal_mgmp.xlsx");
+        XLSX.writeFile(wb, getFilename('xlsx'));
         toast.success("Download Excel Berhasil");
     };
 
@@ -248,7 +257,7 @@ export function QuestionBankPage() {
             y += 6;
         });
 
-        doc.save("soal_mgmp.pdf");
+        doc.save(getFilename('pdf'));
         toast.success("Download PDF Berhasil");
     };
 
