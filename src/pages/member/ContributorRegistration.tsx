@@ -24,9 +24,9 @@ export function ContributorRegistration() {
             setStatus(statusData);
 
             // Fetch my questions
-            const user = authService.getUser();
-            if (user) {
-                const questions = await questionService.getAll({ creator_id: user.id });
+            const currentUser = await authService.getCurrentUser();
+            if (currentUser?.user) {
+                const questions = await questionService.getAll({ creator_id: currentUser.user.id });
                 setMyQuestions(questions);
             }
         } catch (error) {
