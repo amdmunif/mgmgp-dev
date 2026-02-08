@@ -6,11 +6,11 @@ import {
     TableHead,
     TableHeader,
     TableRow,
-} from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+} from './table';
+import { Input } from './input';
+import { Button } from './button';
 import { ChevronLeft, ChevronRight, Search, ArrowUpDown } from 'lucide-react';
-import { cn } from '@/lib/utils'; // Assuming you have a cn utility
+import { cn } from '../../lib/utils'; // Assuming you have a cn utility
 
 interface DataTableProps<T> {
     data: T[];
@@ -20,12 +20,11 @@ interface DataTableProps<T> {
         cell?: (item: T) => React.ReactNode;
         className?: string;
     }[];
-    search specific ?: boolean; // Enable search
-searchKeys ?: (keyof T)[]; // Keys to search in
-pageSize ?: number;
+    searchKeys?: (keyof T)[]; // Keys to search in
+    pageSize?: number;
 }
 
-export function DataTable<T>({
+export function DataTable<T extends Record<string, any>>({
     data,
     columns,
     searchKeys = [],
