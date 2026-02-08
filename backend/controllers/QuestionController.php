@@ -137,7 +137,12 @@ class QuestionController
         $stmt->bindParam(':status', $status);
 
         if ($stmt->execute()) {
-            return json_encode(["message" => "Question created", "id" => $id]);
+            return json_encode([
+                "message" => "Question created",
+                "id" => $id,
+                "debug_role" => $role,
+                "debug_status" => $status
+            ]);
         }
         http_response_code(500);
         return json_encode(["message" => "Failed to create question"]);
