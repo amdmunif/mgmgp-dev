@@ -58,62 +58,100 @@ export function QuestionBankPage() {
 
         const selectedQuestions = questions.filter(q => selectedIds.has(q.id));
 
+        const fetchImage = async (url: string): Promise<ArrayBuffer | null> => {
+            try {
+                const res = await fetch(url);
+                return await res.arrayBuffer();
+            } catch (e) {
+                return null;
+            }
+        };
+
+        const docChildren: any[] = [
+            new Paragraph({
+                children: [
+                    new TextRun({ text: "Bank Soal MGMP", bold: true, size: 32 }),
+                ],
+                spacing: { after: 400 },
+            })
+        ];
+
+        for (const [idx, q] of selectedQuestions.entries()) {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = q.content;
+
+            const textContent = tempDiv.textContent || "";
+            docChildren.push(new Paragraph({
+                children: [
+                    new TextRun({ text: `${idx + 1}. `, bold: true }),
+                    new TextRun({ text: textContent.trim() })
+                ],
+                spacing: { after: 100 }
+            }));
+
+            const images = tempDiv.getElementsByTagName('img');
+            for (let i = 0; i < images.length; i++) {
+                const src = images[i].src;
+                const buffer = await fetchImage(src);
+                if (buffer) {
+                    docChildren.push(new Paragraph({
+                        children: [
+                            new ImageRun({
+                                data: buffer,
+                                transformation: { width: 300, height: 200 }
+                            })
+                        ],
+                        spacing: { after: 100 }
+                    }));
+                }
+            }
+
+            if (q.type !== 'essay' && q.type !== 'short_answer' && q.options) {
+                q.options.forEach((opt: any, optIdx: number) => {
+                    docChildren.push(new Paragraph({
+                        children: [new TextRun({ text: `${String.fromCharCode(65 + optIdx)}. ${opt.text}` })],
+                        indent: { left: 720 },
+                    }));
+                });
+            }
+
+            docChildren.push(new Paragraph({ text: "" }));
+        }
+
+        docChildren.push(
+            new Paragraph({
+                children: [new TextRun({ text: "Kunci Jawaban", bold: true, size: 28 })],
+                pageBreakBefore: true,
+                spacing: { after: 300 }
+            })
+        );
+
+        selectedQuestions.forEach((q, idx) => {
+            let answer = "Lihat Kebijakan Guru";
+            if (q.type === 'essay' || q.type === 'short_answer') {
+                answer = q.answer_key || '-';
+            } else {
+                const correctIdx = q.options?.findIndex((o: any) => o.is_correct);
+                if (correctIdx !== -1 && correctIdx !== undefined) {
+                    answer = String.fromCharCode(65 + correctIdx);
+                } else {
+                    answer = '-';
+                }
+            }
+            docChildren.push(new Paragraph({
+                children: [new TextRun({ text: `${idx + 1}. ${answer}`, bold: true })]
+            }));
+        });
+
         const doc = new Document({
             sections: [{
                 properties: {},
-                children: [
-                    new Paragraph({
-                        children: [
-                            new TextRun({ text: "Bank Soal MGMP", bold: true, size: 32 }),
-                        ],
-                        spacing: { after: 400 },
-                    }),
-                    ...selectedQuestions.flatMap((q, idx) => [
-                        new Paragraph({
-                            children: [
-                                new TextRun({ text: `${idx + 1}. `, bold: true }),
-                                new TextRun({ text: q.content.replace(/<[^>]+>/g, '').trim() }),
-                            ],
-                            spacing: { after: 200 },
-                        }),
-                        ...((q.type !== 'essay' && q.type !== 'short_answer' && q.options) ? q.options.map((opt: any, optIdx: number) =>
-                            new Paragraph({
-                                text: `${String.fromCharCode(65 + optIdx)}. ${opt.text}`,
-                                indent: { left: 720 },
-                            })
-                        ) : []),
-                        new Paragraph({ text: "" })
-                    ]),
-                    // Answer Key Section
-                    new Paragraph({
-                        children: [new TextRun({ text: "Kunci Jawaban", bold: true, size: 28 })],
-                        pageBreakBefore: true,
-                        spacing: { after: 300 }
-                    }),
-                    ...selectedQuestions.map((q, idx) => {
-                        let answer = "Lihat Kebijakan Guru";
-                        if (q.type === 'essay' || q.type === 'short_answer') {
-                            answer = q.answer_key || '-';
-                        } else {
-                            const correctIdx = q.options?.findIndex((o: any) => o.is_correct);
-                            if (correctIdx !== -1 && correctIdx !== undefined) {
-                                answer = String.fromCharCode(65 + correctIdx);
-                            } else {
-                                answer = '-';
-                            }
-                        }
-                        return new Paragraph({
-                            children: [
-                                new TextRun({ text: `${idx + 1}. ${answer}`, bold: true })
-                            ]
-                        });
-                    })
-                ],
+                children: docChildren,
             }],
         });
 
         const blob = await Packer.toBlob(doc);
-        saveAs(blob, "soal_mgmp.docx");
+        saveAs(blob, "soal_mgmp_images.docx");
         toast.success("Download Word Berhasil");
     };
 
