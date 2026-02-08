@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { memberService, type Profile } from '../../services/memberService';
 import {
-    Search,
-    Filter,
     ShieldCheck,
     Crown,
     User,
@@ -14,12 +12,11 @@ import {
 import { Button } from '../../components/ui/button';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
+import { DataTable } from '../../components/ui/DataTable';
 
 export function AdminMembers() {
     const [members, setMembers] = useState<Profile[]>([]);
     const [loading, setLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [filterRole, setFilterRole] = useState<'all' | 'Admin' | 'Member'>('all');
 
     // Edit State
     const [editingMember, setEditingMember] = useState<Profile | null>(null);
@@ -86,13 +83,113 @@ export function AdminMembers() {
         }
     };
 
-    const filteredMembers = members.filter(member => {
-        const matchesSearch =
-            member.nama?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            member.email?.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesRole = filterRole === 'all' || member.role === filterRole;
-        return matchesSearch && matchesRole;
-    });
+    const columns = [
+        {
+            header: 'Foto',
+            accessorKey: 'foto_profile' as keyof Profile,
+            className: 'w-16',
+            cell: (member: Profile) => (
+                <div className="w-10 h-10 rounded-full bg-gray-100 overflow-hidden border border-gray-200">
+                    {member.foto_profile ? (
+                        <img src={member.foto_profile} alt={member.nama} className="w-full h-full object-cover" />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-blue-100 text-blue-600 font-bold">
+                            {member.nama ? member.nama.charAt(0).toUpperCase() : <User className="w-5 h-5" />}
+                        </div>
+                    )}
+                </div>
+            )
+        },
+        {
+            header: 'Nama',
+            accessorKey: 'nama' as keyof Profile,
+            cell: (member: Profile) => (
+                <div>
+                    <p className="font-semibold text-gray-900">{member.nama || 'Tanpa Nama'}</p>
+                    <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                        <Mail className="w-3 h-3" />
+                        {member.email}
+                    </div>
+                </div>
+            )
+        },
+        {
+            header: 'Role',
+            accessorKey: 'role' as keyof Profile,
+            cell: (member: Profile) => (
+                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${member.role === 'Admin'
+                    ? 'bg-purple-50 text-purple-700 border-purple-200'
+                    : 'bg-gray-100 text-gray-600 border-gray-200'
+                    }`}>
+                    {member.role === 'Admin' ? <ShieldCheck className="w-3 h-3" /> : <User className="w-3 h-3" />}
+                    {member.role || 'Member'}
+                </span>
+            )
+        },
+        {
+            header: 'Status',
+            accessorKey: 'is_active' as keyof Profile,
+            cell: (member: Profile) => (
+                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${Number(member.is_active) === 1
+                    ? 'bg-green-50 text-green-700 border-green-200'
+                    : 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                    }`}>
+                    {Number(member.is_active) === 1 ? 'Aktif' : 'Pending'}
+                </span>
+            )
+        },
+        {
+            header: 'Langganan',
+            accessorKey: 'premium_until' as keyof Profile,
+            cell: (member: Profile) => (
+                <div className="flex flex-col gap-1">
+                    {(member.premium_until && new Date(member.premium_until) > new Date()) ? (
+                        <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-600">
+                            <Crown className="w-3 h-3 fill-amber-600" /> Premium
+                        </span>
+                    ) : (
+                        <span className="text-xs text-gray-500">Reguler</span>
+                    )}
+                    {member.premium_until && (
+                        <span className="text-[10px] text-gray-400">
+                            Exp: {format(new Date(member.premium_until), 'd MMM yyyy')}
+                        </span>
+                    )}
+                </div>
+            )
+        },
+        {
+            header: 'Bergabung',
+            accessorKey: 'created_at' as keyof Profile,
+            cell: (member: Profile) => (
+                <span className="text-sm text-gray-500">
+                    {member.created_at ? format(new Date(member.created_at), 'd MMM yyyy', { locale: id }) : '-'}
+                </span>
+            )
+        },
+        {
+            header: 'Aksi',
+            className: 'text-right',
+            cell: (member: Profile) => (
+                <div className="flex items-center justify-end gap-2">
+                    <button
+                        onClick={() => handleEdit(member)}
+                        className="p-2 hover:bg-blue-50 rounded-lg text-gray-400 hover:text-blue-600 transition-colors"
+                        title="Edit Anggota"
+                    >
+                        <Pencil className="w-4 h-4" />
+                    </button>
+                    <button
+                        onClick={() => handleDelete(member.id)}
+                        className="p-2 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-600 transition-colors"
+                        title="Hapus User"
+                    >
+                        <XCircle className="w-4 h-4" />
+                    </button>
+                </div>
+            )
+        }
+    ];
 
     return (
         <div className="space-y-6">
@@ -107,141 +204,18 @@ export function AdminMembers() {
                 </div>
             </div>
 
-            {/* Filters */}
-            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col md:flex-row gap-4 items-center">
-                <div className="relative flex-1 w-full">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <input
-                        type="text"
-                        placeholder="Cari nama atau email..."
-                        className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                </div>
-                <div className="flex items-center gap-2 w-full md:w-auto">
-                    <Filter className="w-4 h-4 text-gray-500" />
-                    <select
-                        className="bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        value={filterRole}
-                        onChange={(e) => setFilterRole(e.target.value as any)}
-                    >
-                        <option value="all">Semua Role</option>
-                        <option value="Admin">Admin</option>
-                        <option value="Member">Member</option>
-                    </select>
-                </div>
-            </div>
-
             {/* Data Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-gray-50/50 border-b border-gray-200">
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Anggota</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Role</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status Akun</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Langganan</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Bergabung</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            {loading ? (
-                                <tr>
-                                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500">Memuat data...</td>
-                                </tr>
-                            ) : filteredMembers.length === 0 ? (
-                                <tr>
-                                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500">Tidak ada anggota yang ditemukan.</td>
-                                </tr>
-                            ) : (
-                                filteredMembers.map((member) => (
-                                    <tr key={member.id} className="hover:bg-gray-50/80 transition-colors group">
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm">
-                                                    {member.nama ? member.nama.charAt(0).toUpperCase() : <User className="w-5 h-5" />}
-                                                </div>
-                                                <div>
-                                                    <p className="font-semibold text-gray-900">{member.nama || 'Tanpa Nama'}</p>
-                                                    <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                                                        <Mail className="w-3 h-3" />
-                                                        {member.email}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${member.role === 'Admin'
-                                                ? 'bg-purple-50 text-purple-700 border-purple-200'
-                                                : 'bg-gray-100 text-gray-600 border-gray-200'
-                                                }`}>
-                                                {member.role === 'Admin' ? <ShieldCheck className="w-3 h-3" /> : <User className="w-3 h-3" />}
-                                                {member.role || 'Member'}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${Number(member.is_active) === 1
-                                                ? 'bg-green-50 text-green-700 border-green-200'
-                                                : 'bg-yellow-50 text-yellow-700 border-yellow-200'
-                                                }`}>
-                                                {Number(member.is_active) === 1 ? 'Aktif' : 'Pending'}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex flex-col gap-1">
-                                                {(member.premium_until && new Date(member.premium_until) > new Date()) ? (
-                                                    <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-600">
-                                                        <Crown className="w-3 h-3 fill-amber-600" /> Premium
-                                                    </span>
-                                                ) : (
-                                                    <span className="text-xs text-gray-500">Reguler</span>
-                                                )}
-                                                {member.premium_until && (
-                                                    <span className="text-[10px] text-gray-400">
-                                                        Exp: {format(new Date(member.premium_until), 'd MMM yyyy')}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 text-sm text-gray-500">
-                                            {member.created_at ? format(new Date(member.created_at), 'd MMM yyyy', { locale: id }) : '-'}
-                                        </td>
-                                        <td className="px-6 py-4 text-right relative">
-                                            <div className="flex items-center justify-end gap-2">
-                                                <button
-                                                    onClick={() => handleEdit(member)}
-                                                    className="p-2 hover:bg-blue-50 rounded-lg text-gray-400 hover:text-blue-600 transition-colors"
-                                                    title="Edit Anggota"
-                                                >
-                                                    <Pencil className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(member.id)}
-                                                    className="p-2 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-600 transition-colors"
-                                                    title="Hapus User"
-                                                >
-                                                    <XCircle className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-
-                {/* Pagination (Simple for now) */}
-                <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between text-sm text-gray-500">
-                    <p>Menampilkan {filteredMembers.length} anggota</p>
-                    <div className="flex gap-2">
-                        <Button variant="outline" size="sm" disabled>Previous</Button>
-                        <Button variant="outline" size="sm" disabled>Next</Button>
-                    </div>
-                </div>
+            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                {loading ? (
+                    <div className="p-8 text-center text-gray-500">Memuat data...</div>
+                ) : (
+                    <DataTable
+                        data={members}
+                        columns={columns}
+                        searchKeys={['nama', 'email']}
+                        pageSize={10}
+                    />
+                )}
             </div>
 
             {/* Edit Modal */}
