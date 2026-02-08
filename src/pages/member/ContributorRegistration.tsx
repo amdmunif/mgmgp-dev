@@ -4,7 +4,7 @@ import { contributorService, type ContributorStatus } from '../../services/contr
 import { questionService, type Question } from '../../services/questionService';
 import { authService } from '../../services/authService';
 import { Button } from '../../components/ui/button';
-import { CheckCircle2, AlertCircle, Clock, Trophy, ChevronRight, PenTool, XCircle } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Clock, Trophy, ChevronRight, PenTool, XCircle, Eye, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 export function ContributorRegistration() {
@@ -13,6 +13,7 @@ export function ContributorRegistration() {
     const [loading, setLoading] = useState(true);
     const [applying, setApplying] = useState(false);
     const [myQuestions, setMyQuestions] = useState<Question[]>([]);
+    const [viewingQuestion, setViewingQuestion] = useState<Question | null>(null);
 
     useEffect(() => {
         loadData();
@@ -50,14 +51,24 @@ export function ContributorRegistration() {
         }
     };
 
+    const handleDelete = async (id: string) => {
+        if (!confirm('Apakah Anda yakin ingin menghapus soal ini?')) return;
+        try {
+            await questionService.delete(id);
+            toast.success('Soal berhasil dihapus');
+            loadData();
+        } catch (error) {
+            console.error(error);
+            toast.error('Gagal menghapus soal');
+        }
+    };
+
     if (loading) return <div className="p-8 text-center">Loading...</div>;
 
     if (!status) return <div className="p-8 text-center">Gagal memuat status.</div>;
 
     const isContributor = status.role === 'Kontributor';
     const isPending = status.status === 'pending';
-    // Use realtime count from fetched questions if available, otherwise assume status count is correct (but backend was creating 0 before)
-    // Actually status.question_count from backend is now fixed to use questions table.
     const count = status.question_count || 0;
     const progress = Math.min((count / 100) * 100, 100);
     const canApply = count >= 100 && !isContributor && !isPending;
@@ -173,7 +184,8 @@ export function ContributorRegistration() {
                                     <th className="px-4 py-3 rounded-l-lg">Soal</th>
                                     <th className="px-4 py-3">Mapel</th>
                                     <th className="px-4 py-3">Kelas</th>
-                                    <th className="px-4 py-3 text-right rounded-r-lg">Status</th>
+                                    <th className="px-4 py-3 text-center">Status</th>
+                                    <th className="px-4 py-3 text-right rounded-r-lg">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
@@ -184,7 +196,7 @@ export function ContributorRegistration() {
                                         </td>
                                         <td className="px-4 py-3 text-sm text-gray-600">{q.mapel}</td>
                                         <td className="px-4 py-3 text-sm text-gray-600">{q.kelas}</td>
-                                        <td className="px-4 py-3 text-right">
+                                        <td className="px-4 py-3 text-center">
                                             {q.status === 'verified' ? (
                                                 <span className="inline-flex items-center text-xs font-medium text-green-700 bg-green-50 px-2 py-1 rounded-full">
                                                     <CheckCircle2 className="w-3 h-3 mr-1" /> Verified
@@ -199,6 +211,19 @@ export function ContributorRegistration() {
                                                 </span>
                                             )}
                                         </td>
+                                        <td className="px-4 py-3 text-right">
+                                            <div className="flex items-center justify-end gap-1">
+                                                <Button variant="ghost" size="sm" onClick={() => setViewingQuestion(q)} title="Lihat">
+                                                    <Eye className="w-4 h-4 text-gray-500" />
+                                                </Button>
+                                                <Button variant="ghost" size="sm" onClick={() => navigate(`/member/questions/edit/${q.id}`)} title="Edit">
+                                                    <Pencil className="w-4 h-4 text-blue-500" />
+                                                </Button>
+                                                <Button variant="ghost" size="sm" onClick={() => handleDelete(q.id)} title="Hapus">
+                                                    <Trash2 className="w-4 h-4 text-red-500" />
+                                                </Button>
+                                            </div>
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -206,6 +231,51 @@ export function ContributorRegistration() {
                     </div>
                 )}
             </div>
+
+            {/* View Modal */}
+            {viewingQuestion && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white p-6 rounded-xl w-full max-w-2xl shadow-xl max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
+                        <div className="flex justify-between items-start mb-6">
+                            <div>
+                                <h2 className="text-xl font-bold">Detail Pertanyaan</h2>
+                                <span className="text-sm text-gray-500">{viewingQuestion.mapel} - Kelas {viewingQuestion.kelas}</span>
+                            </div>
+                            <button onClick={() => setViewingQuestion(null)} className="text-gray-400 hover:text-gray-600">
+                                <span className="text-2xl">&times;</span>
+                            </button>
+                        </div>
+                        <div className="space-y-6">
+                            <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: viewingQuestion.content }} />
+
+                            {viewingQuestion.options && (
+                                <div className="space-y-2">
+                                    <h4 className="font-semibold text-sm text-gray-700">Pilihan Jawaban:</h4>
+                                    {viewingQuestion.options.map((opt: any, idx: number) => (
+                                        <div key={idx} className={`p-3 rounded-lg border flex items-center gap-3 ${opt.is_correct ? "bg-green-50 border-green-200" : "bg-white border-gray-200"}`}>
+                                            <span className={`w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold shrink-0 ${opt.is_correct ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
+                                                {String.fromCharCode(65 + idx)}
+                                            </span>
+                                            <span className={`text-sm ${opt.is_correct ? "font-medium text-green-800" : ""}`}>{opt.text}</span>
+                                            {opt.is_correct && <CheckCircle2 className="w-4 h-4 text-green-600 ml-auto" />}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {(viewingQuestion.type === 'essay' || viewingQuestion.type === 'short_answer') && (
+                                <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                                    <h4 className="font-semibold text-sm text-blue-900 mb-1">Kunci Jawaban:</h4>
+                                    <p className="text-blue-800">{viewingQuestion.answer_key || '-'}</p>
+                                </div>
+                            )}
+                        </div>
+                        <div className="mt-6 flex justify-end">
+                            <Button onClick={() => setViewingQuestion(null)}>Tutup</Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
