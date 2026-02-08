@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../../components/ui/button';
-import { Plus, Trash2, Search, Filter, CheckCircle, XCircle, FileText, Gamepad2, Upload, Pencil, Eye } from 'lucide-react';
+import { Plus, Trash2, Search, Filter, CheckCircle, XCircle, FileText, Gamepad2, Upload, Pencil, Eye, Clock } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { questionService, type Question, type QuestionBank } from '../../../services/questionService';
 import { cn } from '../../../lib/utils';
@@ -9,7 +9,7 @@ import * as XLSX from 'xlsx';
 export function AdminQuestions() {
     const navigate = useNavigate();
     const [viewingQuestion, setViewingQuestion] = useState<Question | null>(null);
-    const [activeTab, setActiveTab] = useState<'repository' | 'legacy'>('repository');
+    const [activeTab, setActiveTab] = useState<'repository' | 'verification' | 'legacy'>('repository');
 
     // Repository State
     const [questions, setQuestions] = useState<Question[]>([]);
@@ -31,14 +31,16 @@ export function AdminQuestions() {
     const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
-        if (activeTab === 'repository') loadRepo();
-        else loadLegacy();
+        if (activeTab === 'legacy') loadLegacy();
+        else loadRepo();
     }, [activeTab, filters]);
 
     const loadRepo = async () => {
         setRepoLoading(true);
         try {
-            const data = await questionService.getAll(filters);
+            // Repository = Verified only. Verification = Pending only.
+            const statusFilter = activeTab === 'verification' ? 'pending' : 'verified';
+            const data = await questionService.getAll({ ...filters, status: statusFilter });
             setQuestions(data);
         } catch (error) { console.error(error); }
         finally { setRepoLoading(false); }
@@ -60,6 +62,18 @@ export function AdminQuestions() {
             toast.success('Soal dihapus');
             loadRepo();
         } catch (e) { toast.error('Gagal menghapus'); }
+    };
+
+    const handleVerify = async (id: string, approve: boolean) => {
+        if (!confirm(approve ? 'Verifikasi dan terbitkan soal ini?' : 'Tolak soal ini?')) return;
+        try {
+            await questionService.update(id, { status: approve ? 'verified' : 'rejected' });
+            toast.success(approve ? 'Soal berhasil diverifikasi' : 'Soal ditolak');
+            loadRepo();
+        } catch (e) {
+            console.error(e);
+            toast.error('Gagal memproses status');
+        }
     };
 
     const handleDeleteLegacy = async (id: string) => {
@@ -133,6 +147,7 @@ export function AdminQuestions() {
                     mapel: row['Mapel'] || 'Informatika',
                     kelas: row['Kelas'] ? String(row['Kelas']) : '7',
                     level: row['Level'] || 'Sedang',
+                    status: 'verified' // Auto verified if imported by Admin
                 };
 
                 await questionService.create(payload);
@@ -168,29 +183,38 @@ export function AdminQuestions() {
                                 <Plus className="w-4 h-4 mr-2" /> Buat Soal Baru
                             </Button>
                         </>
-                    ) : (
+                    ) : activeTab === 'legacy' ? (
                         <Button onClick={() => setIsUploadModalOpen(true)}>
                             <Upload className="w-4 h-4 mr-2" /> Upload File
                         </Button>
-                    )}
+                    ) : null}
                 </div>
             </div>
 
             {/* Tabs */}
-            <div className="flex border-b border-gray-200 mb-6">
+            <div className="flex border-b border-gray-200 mb-6 overflow-x-auto">
                 <button
                     onClick={() => setActiveTab('repository')}
                     className={cn(
-                        "px-6 py-3 text-sm font-medium border-b-2 transition-colors",
+                        "px-6 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap",
                         activeTab === 'repository' ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700"
                     )}
                 >
-                    Repository Soal (Interaktif)
+                    Bank Soal (Terverifikasi)
+                </button>
+                <button
+                    onClick={() => setActiveTab('verification')}
+                    className={cn(
+                        "px-6 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap",
+                        activeTab === 'verification' ? "border-orange-500 text-orange-600" : "border-transparent text-gray-500 hover:text-gray-700"
+                    )}
+                >
+                    Verifikasi Masuk
                 </button>
                 <button
                     onClick={() => setActiveTab('legacy')}
                     className={cn(
-                        "px-6 py-3 text-sm font-medium border-b-2 transition-colors",
+                        "px-6 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap",
                         activeTab === 'legacy' ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700"
                     )}
                 >
@@ -198,8 +222,8 @@ export function AdminQuestions() {
                 </button>
             </div>
 
-            {/* REPOSITORY TAB */}
-            {activeTab === 'repository' && (
+            {/* REPOSITORY & VERIFICATION TAB */}
+            {(activeTab === 'repository' || activeTab === 'verification') && (
                 <div className="space-y-6">
                     {/* Filters */}
                     <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-wrap gap-4 items-center animate-in fade-in slide-in-from-top-2">
@@ -247,19 +271,22 @@ export function AdminQuestions() {
                                     <th className="px-6 py-4 font-semibold text-gray-700 w-24">Kelas</th>
                                     <th className="px-6 py-4 font-semibold text-gray-700 w-24">Level</th>
                                     <th className="px-6 py-4 font-semibold text-gray-700 w-24">Status</th>
-                                    <th className="px-6 py-4 font-semibold text-gray-700 w-24 text-right">Aksi</th>
+                                    <th className="px-6 py-4 font-semibold text-gray-700 w-32 text-right">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                                 {repoLoading ? (
                                     <tr><td colSpan={6} className="p-8 text-center text-gray-500">Loading...</td></tr>
                                 ) : questions.length === 0 ? (
-                                    <tr><td colSpan={6} className="p-8 text-center text-gray-500">Tidak ada soal.</td></tr>
+                                    <tr><td colSpan={6} className="p-8 text-center text-gray-500">
+                                        {activeTab === 'verification' ? 'Tidak ada soal menunggu verifikasi.' : 'Tidak ada soal.'}
+                                    </td></tr>
                                 ) : (
                                     questions.map(q => (
                                         <tr key={q.id} className="hover:bg-gray-50 transition-colors">
                                             <td className="px-6 py-4 max-w-[400px]">
                                                 <div className="line-clamp-2 text-sm text-gray-800" dangerouslySetInnerHTML={{ __html: q.content }} />
+                                                {q.creator_name && <div className="text-xs text-gray-500 mt-1">Oleh: {q.creator_name}</div>}
                                             </td>
                                             <td className="px-6 py-4 text-sm text-gray-600">{q.mapel}</td>
                                             <td className="px-6 py-4 text-center">
@@ -275,19 +302,36 @@ export function AdminQuestions() {
                                             <td className="px-6 py-4">
                                                 {q.status === 'verified' ?
                                                     <span className="text-green-600 flex items-center gap-1 text-xs font-medium"><CheckCircle className="w-3 h-3" /> Verified</span> :
-                                                    <span className="text-orange-600 flex items-center gap-1 text-xs font-medium"><XCircle className="w-3 h-3" /> Pending</span>
+                                                    q.status === 'rejected' ?
+                                                        <span className="text-red-600 flex items-center gap-1 text-xs font-medium"><XCircle className="w-3 h-3" /> Rejected</span> :
+                                                        <span className="text-orange-600 flex items-center gap-1 text-xs font-medium"><Clock className="w-3 h-3" /> Pending</span>
                                                 }
                                             </td>
                                             <td className="px-6 py-4 text-right space-x-2">
                                                 <button onClick={() => setViewingQuestion(q)} className="p-2 text-gray-400 hover:text-blue-600 transition-colors" title="Lihat Detail">
                                                     <Eye className="w-4 h-4" />
                                                 </button>
-                                                <button onClick={() => navigate(`/admin/questions/edit/${q.id}`)} className="p-2 text-gray-400 hover:text-blue-600 transition-colors">
-                                                    <Pencil className="w-4 h-4" />
-                                                </button>
-                                                <button onClick={() => handleDeleteRepo(q.id)} className="p-2 text-gray-400 hover:text-red-600 transition-colors">
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
+
+                                                {activeTab === 'verification' ? (
+                                                    <>
+                                                        <button onClick={() => handleVerify(q.id, true)} className="p-2 text-gray-400 hover:text-green-600 transition-colors" title="Verifikasi">
+                                                            <CheckCircle className="w-4 h-4" />
+                                                        </button>
+                                                        <button onClick={() => handleVerify(q.id, false)} className="p-2 text-gray-400 hover:text-red-600 transition-colors" title="Tolak">
+                                                            <XCircle className="w-4 h-4" />
+                                                        </button>
+                                                    </>
+                                                ) : (
+                                                    // Repository Actions
+                                                    <>
+                                                        <button onClick={() => navigate(`/admin/questions/edit/${q.id}`)} className="p-2 text-gray-400 hover:text-blue-600 transition-colors">
+                                                            <Pencil className="w-4 h-4" />
+                                                        </button>
+                                                        <button onClick={() => handleDeleteRepo(q.id)} className="p-2 text-gray-400 hover:text-red-600 transition-colors">
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </>
+                                                )}
                                             </td>
                                         </tr>
                                     ))
