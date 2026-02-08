@@ -217,6 +217,30 @@ class QuestionController
 
     public function delete($id)
     {
+        $user = $this->getUser();
+        if (!$user) {
+            http_response_code(401);
+            return json_encode(["message" => "Unauthorized"]);
+        }
+
+        // Verify ownership or Admin role
+        $checkQuery = "SELECT creator_id FROM questions WHERE id = :id";
+        $checkStmt = $this->conn->prepare($checkQuery);
+        $checkStmt->bindParam(':id', $id);
+        $checkStmt->execute();
+        $existing = $checkStmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$existing) {
+            http_response_code(404);
+            return json_encode(["message" => "Question not found"]);
+        }
+
+        // Allow Admin/Pengurus or Owner
+        if ($existing['creator_id'] !== $user['sub'] && $user['role'] !== 'Admin' && $user['role'] !== 'Pengurus') {
+            http_response_code(403);
+            return json_encode(["message" => "Forbidden"]);
+        }
+
         $query = "DELETE FROM questions WHERE id = :id";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id', $id);
