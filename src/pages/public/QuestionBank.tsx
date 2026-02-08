@@ -98,7 +98,8 @@ export function QuestionBankPage() {
                         children: [
                             new ImageRun({
                                 data: buffer,
-                                transformation: { width: 300, height: 200 }
+                                transformation: { width: 300, height: 200 },
+                                type: "png"
                             })
                         ],
                         spacing: { after: 100 }
