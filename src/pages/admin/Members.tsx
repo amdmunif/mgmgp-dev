@@ -75,6 +75,49 @@ export function AdminMembers() {
 
     // ... existing handlers ...
 
+    const handleEdit = (member: Profile) => {
+        setEditingMember(member);
+        setEditForm({
+            nama: member.nama || '',
+            email: member.email || '',
+            role: member.role || 'Member',
+            is_active: member.is_active ? 1 : 0
+        });
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!confirm('Apakah Anda yakin ingin menghapus member ini?')) return;
+        try {
+            await memberService.delete(id);
+            toast.success('Member dihapus');
+            fetchMembers();
+        } catch (error) {
+            toast.error('Gagal menghapus member');
+        }
+    };
+
+    const handleSaveEdit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingMember) return;
+        setIsSaving(true);
+        try {
+            await memberService.update(editingMember.id, {
+                nama: editForm.nama,
+                email: editForm.email,
+                role: editForm.role as 'Admin' | 'Member' | 'Pengurus',
+                is_active: Number(editForm.is_active)
+            });
+            toast.success('Member berhasil diupdate');
+            fetchMembers();
+            setEditingMember(null);
+        } catch (error) {
+            console.error(error);
+            toast.error('Gagal update member');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     // Enhanced columns with Activate shortcut for Inactive tab
     const columns = [
         // ... Photo, Name, Role ...
