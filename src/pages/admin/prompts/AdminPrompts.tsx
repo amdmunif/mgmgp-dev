@@ -45,7 +45,11 @@ export function AdminPrompts() {
     const handleUpdate = async (data: Partial<Prompt>) => {
         if (!editingPrompt) return;
         try {
-            await promptService.update(editingPrompt.id, data);
+            const payload = {
+                ...data,
+                is_premium: data.is_premium ? 1 : 0
+            };
+            await promptService.update(editingPrompt.id, payload as any);
             toast.success('Prompt berhasil diupdate');
             setEditingPrompt(null);
             loadData();
