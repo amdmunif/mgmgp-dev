@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../../../components/ui/button';
-import { Plus, Trash2, Gamepad2, ExternalLink, Pencil, X, Loader2, Copy, Eye } from 'lucide-react';
+import { Plus, Trash2, Gamepad2, Pencil, X, Loader2, Copy, Eye } from 'lucide-react';
 import { gameService } from '../../../services/gameService';
 import type { Game } from '../../../types';
 import { DataTable } from '../../../components/ui/DataTable';
@@ -11,10 +11,36 @@ import { toast } from 'react-hot-toast';
 export function AdminGames() {
     const [games, setGames] = useState<Game[]>([]);
     const [loading, setLoading] = useState(true);
-    const [items, setItems] = useState<Game[]>([]); // Using games state
     const [viewingGame, setViewingGame] = useState<Game | null>(null);
+    const [editingGame, setEditingGame] = useState<Game | null>(null);
 
-    // ... (Use existing state names)
+    useEffect(() => {
+        loadData();
+    }, []);
+
+    const loadData = async () => {
+        setLoading(true);
+        try {
+            const data = await gameService.getAll();
+            setGames(data);
+        } catch (error) {
+            console.error(error);
+            toast.error('Gagal memuat data game');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!confirm('Hapus game ini?')) return;
+        try {
+            await gameService.delete(id);
+            toast.success('Game berhasil dihapus');
+            loadData();
+        } catch (error) {
+            toast.error('Gagal menghapus game');
+        }
+    };
 
     const handleUpdate = async (data: Partial<Game>) => {
         if (!editingGame) return;
@@ -35,7 +61,49 @@ export function AdminGames() {
     };
 
     const columns = [
-        // ... previous columns ...
+        {
+            header: 'Judul Game',
+            accessorKey: 'title' as keyof Game,
+            cell: (item: Game) => (
+                <div className="flex items-center gap-3 font-medium text-gray-900">
+                    <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600 shrink-0">
+                        <Gamepad2 className="w-5 h-5" />
+                    </div>
+                    {item.title}
+                </div>
+            )
+        },
+        {
+            header: 'Link / URL',
+            accessorKey: 'link_url' as keyof Game,
+            cell: (item: Game) => (
+                <button
+                    onClick={() => {
+                        navigator.clipboard.writeText(item.link_url);
+                        toast.success('Link disalin!');
+                    }}
+                    className="flex items-center gap-2 text-sm text-gray-500 hover:text-purple-600 transition-colors bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200 hover:border-purple-200 w-full max-w-[200px]"
+                    title="Klik untuk menyalin"
+                >
+                    <Copy className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">{item.link_url}</span>
+                </button>
+            )
+        },
+        {
+            header: 'Deskripsi',
+            accessorKey: 'description' as keyof Game,
+            cell: (item: Game) => <div className="text-gray-500 line-clamp-2 max-w-xs">{item.description}</div>
+        },
+        {
+            header: 'Status',
+            accessorKey: 'is_premium' as keyof Game,
+            cell: (item: Game) => (
+                item.is_premium ?
+                    <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold">Premium</span> :
+                    <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">Free</span>
+            )
+        },
         {
             header: 'Aksi',
             className: 'text-right',
