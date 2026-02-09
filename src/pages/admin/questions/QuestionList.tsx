@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../../components/ui/button';
-import { Plus, Trash2, Search, Filter, CheckCircle, XCircle, FileText, Gamepad2, Upload, Pencil, Eye, Clock } from 'lucide-react';
+import { Plus, Trash2, Filter, CheckCircle, XCircle, FileText, Gamepad2, Upload, Pencil, Eye, Clock } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { questionService, type Question, type QuestionBank } from '../../../services/questionService';
 import { cn } from '../../../lib/utils';

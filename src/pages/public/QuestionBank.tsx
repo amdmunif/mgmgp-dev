@@ -22,8 +22,9 @@ export function QuestionBankPage() {
     const [user, setUser] = useState<any>(null);
 
     useEffect(() => {
-        const u = authService.getUser();
-        setUser(u);
+        authService.getCurrentUser().then(data => {
+            setUser(data?.user || null);
+        });
         loadData();
     }, [filters]);
 
