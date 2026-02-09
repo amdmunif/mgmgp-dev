@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { contributorService } from '../../../services/contributorService';
 import type { ContributorApplication } from '../../../services/contributorService';
 import { Button } from '../../../components/ui/button';
-import { Check, X, Loader2 } from 'lucide-react';
+import { Check, X, Loader2, Eye } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { DataTable } from '../../../components/ui/DataTable';
 
@@ -10,6 +10,7 @@ export function VerificationList() {
     const [applications, setApplications] = useState<ContributorApplication[]>([]);
     const [loading, setLoading] = useState(true);
     const [processing, setProcessing] = useState<number | null>(null);
+    const [filterStatus, setFilterStatus] = useState('All');
 
     useEffect(() => {
         loadData();
@@ -26,6 +27,11 @@ export function VerificationList() {
             setLoading(false);
         }
     };
+
+    const filteredApps = applications.filter(app => {
+        if (filterStatus === 'All') return true;
+        return app.status === filterStatus;
+    });
 
     const handleVerify = async (id: number, status: 'approved' | 'rejected') => {
         if (!confirm(`Yakin ingin mengubah status menjadi ${status}?`)) return;
@@ -87,31 +93,58 @@ export function VerificationList() {
             header: 'Aksi',
             className: 'text-right',
             cell: (app: ContributorApplication) => (
-                app.status === 'pending' ? (
-                    <div className="flex justify-end gap-2">
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            className="bg-green-50 text-green-600 hover:bg-green-100 border-green-200"
-                            onClick={() => handleVerify(app.id, 'approved')}
-                            disabled={processing === app.id}
-                        >
-                            {processing === app.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                        </Button>
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            className="bg-red-50 text-red-600 hover:bg-red-100 border-red-200"
-                            onClick={() => handleVerify(app.id, 'rejected')}
-                            disabled={processing === app.id}
-                        >
-                            {processing === app.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
-                        </Button>
-                    </div>
-                ) : null
+                <div className="flex justify-end gap-2 items-center">
+                    <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 w-8 text-gray-400 hover:text-blue-600 p-0"
+                        onClick={() => toast('Detail: ' + app.nama)}
+                        title="Lihat Detail"
+                    >
+                        <Eye className="w-4 h-4" />
+                    </Button>
+
+                    {app.status === 'pending' && (
+                        <>
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                className="bg-green-50 text-green-600 hover:bg-green-100 border-green-200 h-8 px-2"
+                                onClick={() => handleVerify(app.id, 'approved')}
+                                disabled={processing === app.id}
+                                title="Setujui"
+                            >
+                                {processing === app.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                            </Button>
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                className="bg-red-50 text-red-600 hover:bg-red-100 border-red-200 h-8 px-2"
+                                onClick={() => handleVerify(app.id, 'rejected')}
+                                disabled={processing === app.id}
+                                title="Tolak"
+                            >
+                                {processing === app.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
+                            </Button>
+                        </>
+                    )}
+                </div>
             )
         }
     ];
+
+    const FilterContent = (
+        <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="px-3 py-2 rounded-lg border border-gray-200 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+            <option value="All">Semua Status</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+        </select>
+    );
 
     if (loading) return <div className="p-8 text-center">Loading...</div>;
 
@@ -121,10 +154,11 @@ export function VerificationList() {
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden p-6">
                 <DataTable
-                    data={applications}
+                    data={filteredApps}
                     columns={columns}
                     searchKeys={['nama', 'email']}
                     pageSize={10}
+                    filterContent={FilterContent}
                 />
             </div>
         </div>
