@@ -11,6 +11,7 @@ import {
     Eye,
     Filter
 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import { Button } from '../../components/ui/button';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
@@ -43,56 +44,40 @@ export function AdminMembers() {
         }
     };
 
+    const [activeTab, setActiveTab] = useState<'active' | 'inactive'>('active');
+
+    // ... existing useEffect ...
+
+    // Derived state for counts
+    const inactiveCount = members.filter(m => Number(m.is_active) === 0).length;
+
     const filteredMembers = members.filter(m => {
+        // First filter by Tab (Active vs Inactive)
+        const isActive = Number(m.is_active) === 1;
+        if (activeTab === 'active' && !isActive) return false;
+        if (activeTab === 'inactive' && isActive) return false;
+
+        // Then filter by Role
         if (filterRole === 'All') return true;
         return m.role === filterRole;
     });
 
-    const handleEdit = (member: Profile) => {
-        setEditingMember(member);
-        setEditForm({
-            nama: member.nama || '',
-            email: member.email || '',
-            role: member.role || 'Member',
-            is_active: member.is_active ? 1 : 0
-        });
-    };
-
-    const handleSaveEdit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!editingMember) return;
-
-        setIsSaving(true);
+    const handleActivate = async (member: Profile) => {
+        if (!confirm(`Aktifkan akun ${member.nama}?`)) return;
         try {
-            await memberService.update(editingMember.id, {
-                nama: editForm.nama,
-                email: editForm.email,
-                role: editForm.role as 'Admin' | 'Member' | 'Pengurus',
-                is_active: editForm.is_active
-            });
-            await fetchMembers();
-            setEditingMember(null);
-        } catch (error) {
-            console.error('Error updating member:', error);
-            alert('Gagal mengupdate anggota');
-        } finally {
-            setIsSaving(false);
-        }
-    };
-
-    const handleDelete = async (id: string) => {
-        if (!confirm('Apakah Anda yakin ingin menghapus member ini? Tindakan ini tidak dapat dibatalkan.')) return;
-
-        try {
-            await memberService.delete(id);
+            await memberService.update(member.id, { is_active: 1 });
+            toast.success('Member berhasil diaktifkan');
             fetchMembers();
         } catch (error) {
-            console.error('Error deleting member:', error);
-            alert('Gagal menghapus member');
+            toast.error('Gagal mengaktifkan member');
         }
     };
 
+    // ... existing handlers ...
+
+    // Enhanced columns with Activate shortcut for Inactive tab
     const columns = [
+        // ... Photo, Name, Role ...
         {
             header: 'Foto',
             accessorKey: 'foto_profile' as keyof Profile,
@@ -159,11 +144,6 @@ export function AdminMembers() {
                     ) : (
                         <span className="text-xs text-gray-500">Reguler</span>
                     )}
-                    {member.premium_until && (
-                        <span className="text-[10px] text-gray-400">
-                            Exp: {format(new Date(member.premium_until), 'd MMM yyyy')}
-                        </span>
-                    )}
                 </div>
             )
         },
@@ -181,6 +161,15 @@ export function AdminMembers() {
             className: 'text-right',
             cell: (member: Profile) => (
                 <div className="flex items-center justify-end gap-2">
+                    {activeTab === 'inactive' && (
+                        <button
+                            onClick={() => handleActivate(member)}
+                            className="p-2 hover:bg-green-50 rounded-lg text-gray-400 hover:text-green-600 transition-colors"
+                            title="Aktifkan Member"
+                        >
+                            <ShieldCheck className="w-4 h-4" />
+                        </button>
+                    )}
                     <button
                         onClick={() => setViewingMember(member)}
                         className="p-2 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600 transition-colors"
@@ -234,6 +223,33 @@ export function AdminMembers() {
                     <Button variant="outline" onClick={fetchMembers}>Refresh</Button>
                     <Button>Export Data</Button>
                 </div>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex border-b border-gray-200 mb-6">
+                <button
+                    onClick={() => setActiveTab('active')}
+                    className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors duration-200 ${activeTab === 'active'
+                        ? 'border-blue-600 text-blue-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700'
+                        }`}
+                >
+                    Member Aktif
+                </button>
+                <button
+                    onClick={() => setActiveTab('inactive')}
+                    className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors duration-200 flex items-center gap-2 ${activeTab === 'inactive'
+                        ? 'border-red-500 text-red-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700'
+                        }`}
+                >
+                    Verifikasi Member
+                    {inactiveCount > 0 && (
+                        <span className="w-5 h-5 rounded-full bg-red-100 text-red-600 text-xs flex items-center justify-center">
+                            {inactiveCount}
+                        </span>
+                    )}
+                </button>
             </div>
 
             {/* Data Table */}

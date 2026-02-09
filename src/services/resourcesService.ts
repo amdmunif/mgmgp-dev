@@ -6,8 +6,16 @@ export const promptService = {
         return api.get<Prompt[]>('/prompts');
     },
 
+    async getById(id: string) {
+        return api.get<Prompt>(`/prompts/${id}`);
+    },
+
     async create(prompt: Omit<Prompt, 'id' | 'created_at'>) {
         return api.post<Prompt>('/prompts', prompt);
+    },
+
+    async update(id: string, updates: Partial<Prompt>) {
+        return api.put<Prompt>(`/prompts/${id}`, updates);
     },
 
     async delete(id: string) {
