@@ -7,7 +7,9 @@ import {
     Mail,
     XCircle,
     Pencil,
-    X
+    X,
+    Eye,
+    Filter
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { format } from 'date-fns';
@@ -17,9 +19,11 @@ import { DataTable } from '../../components/ui/DataTable';
 export function AdminMembers() {
     const [members, setMembers] = useState<Profile[]>([]);
     const [loading, setLoading] = useState(true);
+    const [filterRole, setFilterRole] = useState('All');
 
-    // Edit State
+    // Edit/View State
     const [editingMember, setEditingMember] = useState<Profile | null>(null);
+    const [viewingMember, setViewingMember] = useState<Profile | null>(null);
     const [editForm, setEditForm] = useState({ nama: '', email: '', role: 'Member', is_active: 0 });
     const [isSaving, setIsSaving] = useState(false);
 
@@ -38,6 +42,11 @@ export function AdminMembers() {
             setLoading(false);
         }
     };
+
+    const filteredMembers = members.filter(m => {
+        if (filterRole === 'All') return true;
+        return m.role === filterRole;
+    });
 
     const handleEdit = (member: Profile) => {
         setEditingMember(member);
@@ -173,6 +182,13 @@ export function AdminMembers() {
             cell: (member: Profile) => (
                 <div className="flex items-center justify-end gap-2">
                     <button
+                        onClick={() => setViewingMember(member)}
+                        className="p-2 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600 transition-colors"
+                        title="Lihat Detail"
+                    >
+                        <Eye className="w-4 h-4" />
+                    </button>
+                    <button
                         onClick={() => handleEdit(member)}
                         className="p-2 hover:bg-blue-50 rounded-lg text-gray-400 hover:text-blue-600 transition-colors"
                         title="Edit Anggota"
@@ -190,6 +206,22 @@ export function AdminMembers() {
             )
         }
     ];
+
+    const FilterContent = (
+        <div className="flex items-center gap-2">
+            <Filter className="w-4 h-4 text-gray-500" />
+            <select
+                value={filterRole}
+                onChange={(e) => setFilterRole(e.target.value)}
+                className="px-3 py-2 rounded-lg border border-gray-200 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+                <option value="All">Semua Role</option>
+                <option value="Admin">Admin</option>
+                <option value="Member">Member</option>
+                <option value="Pengurus">Pengurus</option>
+            </select>
+        </div>
+    );
 
     return (
         <div className="space-y-6">
@@ -210,13 +242,62 @@ export function AdminMembers() {
                     <div className="p-8 text-center text-gray-500">Memuat data...</div>
                 ) : (
                     <DataTable
-                        data={members}
+                        data={filteredMembers}
                         columns={columns}
                         searchKeys={['nama', 'email']}
                         pageSize={10}
+                        filterContent={FilterContent}
                     />
                 )}
             </div>
+
+            {/* View Modal */}
+            {viewingMember && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="flex items-center justify-between p-6 border-b border-gray-100">
+                            <h2 className="text-xl font-bold text-gray-900">Detail Anggota</h2>
+                            <button onClick={() => setViewingMember(null)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div className="flex items-center gap-4">
+                                <div className="w-16 h-16 rounded-full bg-gray-100 overflow-hidden border border-gray-200 shrink-0">
+                                    {viewingMember.foto_profile ? (
+                                        <img src={viewingMember.foto_profile} alt={viewingMember.nama} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center bg-blue-100 text-blue-600 font-bold text-xl">
+                                            {viewingMember.nama ? viewingMember.nama.charAt(0).toUpperCase() : <User className="w-8 h-8" />}
+                                        </div>
+                                    )}
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-bold text-gray-900">{viewingMember.nama}</h3>
+                                    <p className="text-sm text-gray-500">{viewingMember.email}</p>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <p className="text-gray-500 mb-1">Role</p>
+                                    <p className="font-medium text-gray-900">{viewingMember.role}</p>
+                                </div>
+                                <div>
+                                    <p className="text-gray-500 mb-1">Status</p>
+                                    <p className="font-medium text-gray-900">{Number(viewingMember.is_active) ? 'Aktif' : 'Non-Aktif'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-gray-500 mb-1">Bergabung</p>
+                                    <p className="font-medium text-gray-900">{viewingMember.created_at ? new Date(viewingMember.created_at).toLocaleDateString() : '-'}</p>
+                                </div>
+                            </div>
+                            <div className="pt-4 flex justify-end">
+                                <Button onClick={() => setViewingMember(null)}>Tutup</Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Edit Modal */}
             {editingMember && (

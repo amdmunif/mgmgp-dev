@@ -9,10 +9,11 @@ interface DataTableProps<T> {
         header: string;
         accessorKey?: keyof T;
         cell?: (item: T) => React.ReactNode;
-        className?: string;
+        className?: string; // Additional classes for TH and TD
     }[];
-    searchKeys?: (keyof T)[];
+    searchKeys?: (keyof T)[]; // keys to search in
     pageSize?: number;
+    filterContent?: React.ReactNode; // Optional slot for filters
 }
 
 export function DataTable<T extends Record<string, any>>({
@@ -20,6 +21,7 @@ export function DataTable<T extends Record<string, any>>({
     columns,
     searchKeys = [],
     pageSize = 10,
+    filterContent
 }: DataTableProps<T>) {
     const [currentPage, setCurrentPage] = useState(1);
     const [searchTerm, setSearchTerm] = useState('');
@@ -27,22 +29,34 @@ export function DataTable<T extends Record<string, any>>({
 
     // Filter
     const filteredData = useMemo(() => {
-        if (!searchTerm) return data;
-        const lowerTerm = searchTerm.toLowerCase();
-        return data.filter((item) =>
-            searchKeys.some((key) => {
-                const val = item[key];
-                return String(val).toLowerCase().includes(lowerTerm);
-            })
-        );
+        let result = data;
+
+        if (searchTerm) {
+            const lowerTerm = searchTerm.toLowerCase();
+            result = result.filter((item) =>
+                searchKeys.some((key) => {
+                    const val = item[key];
+                    return String(val).toLowerCase().includes(lowerTerm);
+                })
+            );
+        }
+
+        // Additional filtering logic is handled by parent passing filtered 'data', 
+        // but if we needed internal filtering we could add it here.
+        // For now, we rely on parent filtering for complex filters (mapel, kelas etc) 
+        // OR the parent passes pre-filtered data. 
+        // Actually, if parent passes pre-filtered data, Global Search might work on THAT subset.
+
+        return result;
     }, [data, searchTerm, searchKeys]);
 
     // Sort
     const sortedData = useMemo(() => {
         if (!sortConfig.key) return filteredData;
+
         return [...filteredData].sort((a, b) => {
-            const aVal = a[sortConfig.key!] as any;
-            const bVal = b[sortConfig.key!] as any;
+            const aVal = a[sortConfig.key!] ?? '';
+            const bVal = b[sortConfig.key!] ?? '';
 
             if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
             if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
@@ -63,27 +77,35 @@ export function DataTable<T extends Record<string, any>>({
 
     return (
         <div className="space-y-4">
-            {/* Search Bar */}
-            {searchKeys.length > 0 && (
-                <div className="flex items-center gap-2">
-                    <div className="relative flex-1 max-w-sm">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                        <input
-                            type="text"
-                            placeholder="Cari..."
-                            value={searchTerm}
-                            onChange={(e) => {
-                                setSearchTerm(e.target.value);
-                                setCurrentPage(1);
-                            }}
-                            className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
-                        />
-                    </div>
+            {/* Search Bar & Filters */}
+            {(searchKeys.length > 0 || filterContent) && (
+                <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                    {searchKeys.length > 0 && (
+                        <div className="relative flex-1 w-full sm:max-w-sm">
+                            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                            <input
+                                type="text"
+                                placeholder="Cari data..."
+                                value={searchTerm}
+                                onChange={(e) => {
+                                    setSearchTerm(e.target.value);
+                                    setCurrentPage(1);
+                                }}
+                                className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm bg-gray-50"
+                            />
+                        </div>
+                    )}
+
+                    {filterContent && (
+                        <div className="flex flex-wrap gap-2 items-center w-full sm:w-auto">
+                            {filterContent}
+                        </div>
+                    )}
                 </div>
             )}
 
             {/* Table */}
-            <div className="rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm">
+            <div className="rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm mt-0">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead className="bg-gray-50 border-b border-gray-100">

@@ -272,10 +272,16 @@ export function AdminQuestions() {
         },
         {
             header: 'Aksi',
-            className: 'text-right w-24',
+            className: 'text-right w-32',
             cell: (item: QuestionBank) => (
-                <div className="flex justify-end">
-                    <button onClick={() => handleDeleteLegacy(item.id)} className="p-2 text-gray-400 hover:text-red-600 transition-colors">
+                <div className="flex justify-end gap-2">
+                    <a href={item.file_url} target="_blank" rel="noreferrer" className="p-2 text-gray-400 hover:text-blue-600 transition-colors" title="Lihat/Download">
+                        <Eye className="w-4 h-4" />
+                    </a>
+                    <button onClick={() => toast('Fitur Edit File Legacy akan segera hadir')} className="p-2 text-gray-400 hover:text-blue-600 transition-colors" title="Edit">
+                        <Pencil className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => handleDeleteLegacy(item.id)} className="p-2 text-gray-400 hover:text-red-600 transition-colors" title="Hapus">
                         <Trash2 className="w-4 h-4" />
                     </button>
                 </div>
@@ -342,33 +348,6 @@ export function AdminQuestions() {
             {/* REPOSITORY & VERIFICATION TAB */}
             {(activeTab === 'repository' || activeTab === 'verification') && (
                 <div className="space-y-6">
-                    {/* Filters */}
-                    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-wrap gap-4 items-center animate-in fade-in slide-in-from-top-2">
-                        <div className="flex items-center gap-2 text-gray-500">
-                            <Filter className="w-4 h-4" />
-                            <span className="text-sm font-semibold">Filter:</span>
-                        </div>
-                        <select
-                            className="border rounded-lg px-3 py-1.5 text-sm bg-gray-50"
-                            value={filters.mapel}
-                            onChange={e => setFilters({ ...filters, mapel: e.target.value })}
-                        >
-                            <option value="">Semua Mapel</option>
-                            <option value="Informatika">Informatika</option>
-                            <option value="KKA">KKA</option>
-                        </select>
-                        <select
-                            className="border rounded-lg px-3 py-1.5 text-sm bg-gray-50"
-                            value={filters.kelas}
-                            onChange={e => setFilters({ ...filters, kelas: e.target.value })}
-                        >
-                            <option value="">Semua Kelas</option>
-                            <option value="7">Kelas 7</option>
-                            <option value="8">Kelas 8</option>
-                            <option value="9">Kelas 9</option>
-                        </select>
-                    </div>
-
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden p-6">
                         {repoLoading ? (
                             <div className="text-center p-8 text-gray-500">Loading...</div>
@@ -378,6 +357,30 @@ export function AdminQuestions() {
                                 columns={repoColumns}
                                 searchKeys={['content', 'mapel', 'creator_name']}
                                 pageSize={10}
+                                filterContent={
+                                    <div className="flex items-center gap-2">
+                                        <Filter className="w-4 h-4 text-gray-500" />
+                                        <select
+                                            className="border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            value={filters.mapel}
+                                            onChange={e => setFilters({ ...filters, mapel: e.target.value })}
+                                        >
+                                            <option value="">Semua Mapel</option>
+                                            <option value="Informatika">Informatika</option>
+                                            <option value="KKA">KKA</option>
+                                        </select>
+                                        <select
+                                            className="border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            value={filters.kelas}
+                                            onChange={e => setFilters({ ...filters, kelas: e.target.value })}
+                                        >
+                                            <option value="">Semua Kelas</option>
+                                            <option value="7">Kelas 7</option>
+                                            <option value="8">Kelas 8</option>
+                                            <option value="9">Kelas 9</option>
+                                        </select>
+                                    </div>
+                                }
                             />
                         )}
                     </div>
