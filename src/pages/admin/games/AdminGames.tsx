@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../../../components/ui/button';
-import { Plus, Trash2, Gamepad2, ExternalLink, Pencil, X, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Gamepad2, ExternalLink, Pencil, X, Loader2, Copy } from 'lucide-react';
 import { gameService } from '../../../services/gameService';
 import type { Game } from '../../../types';
 import { DataTable } from '../../../components/ui/DataTable';
@@ -71,9 +71,17 @@ export function AdminGames() {
             header: 'Link / URL',
             accessorKey: 'link_url' as keyof Game,
             cell: (item: Game) => (
-                <a href={item.link_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-600 hover:underline max-w-[200px] truncate">
-                    Link <ExternalLink className="w-3 h-3" />
-                </a>
+                <button
+                    onClick={() => {
+                        navigator.clipboard.writeText(item.link_url);
+                        toast.success('Link disalin!');
+                    }}
+                    className="flex items-center gap-2 text-sm text-gray-500 hover:text-purple-600 transition-colors bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200 hover:border-purple-200 w-full max-w-[200px]"
+                    title="Klik untuk menyalin"
+                >
+                    <Copy className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">{item.link_url}</span>
+                </button>
             )
         },
         {
