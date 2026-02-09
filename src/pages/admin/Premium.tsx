@@ -27,11 +27,11 @@ export function AdminPremium() {
         }
     };
 
-    const handleApprove = async (id: string, userId: string) => {
-        if (!confirm('Setujui permintaan premium ini?')) return;
+    const handleApprove = async (id: string, name: string) => {
+        if (!confirm(`Setujui upgrade premium untuk ${name}?`)) return;
         setProcessingId(id);
         try {
-            await premiumService.approveRequest(id, userId);
+            await premiumService.approveRequest(id);
             toast.success('Permintaan disetujui');
             loadData();
         } catch (error) {
@@ -42,10 +42,12 @@ export function AdminPremium() {
     };
 
     const handleReject = async (id: string) => {
-        if (!confirm('Tolak permintaan ini?')) return;
+        const reason = prompt('Alasan penolakan:');
+        if (!reason) return;
+
         setProcessingId(id);
         try {
-            await premiumService.rejectRequest(id);
+            await premiumService.rejectRequest(id, reason);
             toast.success('Permintaan ditolak');
             loadData();
         } catch (error) {
@@ -57,25 +59,25 @@ export function AdminPremium() {
 
     const columns = [
         {
-            header: 'User',
-            accessorKey: 'user_email' as keyof PremiumRequest,
+            header: 'User / Bank',
+            accessorKey: 'id' as keyof PremiumRequest, // Use ID as simple key, content is custom
             cell: (req: PremiumRequest) => (
                 <div>
-                    <div className="font-medium text-gray-900">{req.user_email}</div>
+                    <div className="font-medium text-gray-900">{req.profiles?.nama || 'Unknown User'}</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                        {req.bank_name} - {req.account_number}
+                        <br />
+                        (a.n. {req.account_holder})
+                    </div>
                 </div>
             )
         },
         {
-            header: 'Paket',
-            accessorKey: 'plan' as keyof PremiumRequest,
-            cell: (req: PremiumRequest) => <span className="font-medium text-purple-600">{req.plan}</span>
-        },
-        {
             header: 'Bukti',
-            accessorKey: 'payment_proof_url' as keyof PremiumRequest,
+            accessorKey: 'proof_url' as keyof PremiumRequest,
             cell: (req: PremiumRequest) => (
-                req.payment_proof_url ? (
-                    <a href={req.payment_proof_url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline text-sm flex items-center gap-1">
+                req.proof_url ? (
+                    <a href={req.proof_url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline text-sm flex items-center gap-1">
                         <ImageIcon className="w-4 h-4" /> Lihat
                     </a>
                 ) : <span className="text-gray-400 text-xs">No Image</span>
@@ -105,7 +107,7 @@ export function AdminPremium() {
             cell: (req: PremiumRequest) => (
                 req.status === 'pending' ? (
                     <div className="flex justify-end gap-2">
-                        <Button size="sm" variant="outline" className="bg-green-50 text-green-600 hover:bg-green-100 border-green-200" onClick={() => handleApprove(req.id, req.user_id)} disabled={processingId === req.id}>
+                        <Button size="sm" variant="outline" className="bg-green-50 text-green-600 hover:bg-green-100 border-green-200" onClick={() => handleApprove(req.id, req.profiles?.nama || 'User')} disabled={processingId === req.id}>
                             {processingId === req.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                         </Button>
                         <Button size="sm" variant="outline" className="bg-red-50 text-red-600 hover:bg-red-100 border-red-200" onClick={() => handleReject(req.id)} disabled={processingId === req.id}>
@@ -128,7 +130,7 @@ export function AdminPremium() {
                 <DataTable
                     data={requests}
                     columns={columns}
-                    searchKeys={['user_email', 'status', 'plan']}
+                    searchKeys={['status']}
                     pageSize={10}
                 />
             </div>
