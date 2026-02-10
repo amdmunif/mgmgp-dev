@@ -172,7 +172,8 @@ function processFullStatement(statement) {
         let header = cleanStmt.substring(0, cleanStmt.indexOf('VALUES'));
         let cleanHeader = header.replace("INSERT INTO", "INSERT IGNORE INTO")
             .replace(/, `home_cta_title`/, '')
-            .replace(/, `home_cta_subtitle`/, '');
+            .replace(/, `home_cta_subtitle`/, '')
+            .replace(/, `app_favicon`/, '');
         outputSQL += cleanHeader + " VALUES\n";
         processValues(cleanStmt, processSiteContentRow);
     }
@@ -296,11 +297,18 @@ function processLetterRow(cols) {
 }
 
 function processSiteContentRow(cols) {
-    // Attempt remove home_cta_title (idx 1?) and home_cta_subtitle (idx 2?)
-    // Safer approach: Remove index 1 and 2.
-    const newCols = [...cols];
-    // Remove 2 items from index 1.
-    newCols.splice(1, 2);
+    // Columns to remove:
+    // 4: home_cta_title
+    // 5: home_cta_subtitle
+    // 15: app_favicon
+    // 26: updated_at (usually last, often handled by processNewsRow logic but here explicitly)
+    // Actually updated_at is in the header, so we should keep it or match header.
+    // The grep showed updated_at is at the end.
+    // The header replacement in line 174 didn't remove updated_at.
+    // So we keep updated_at.
+
+    const indicesToRemove = [4, 5, 15];
+    const newCols = cols.filter((_, index) => !indicesToRemove.includes(index));
     return `(${newCols.join(", ")})`;
 }
 
