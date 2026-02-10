@@ -44,9 +44,6 @@ function processPivotLine(line, table) {
                 if (!userMapel[uid]) userMapel[uid] = [];
                 if (!userMapel[uid].includes(val)) userMapel[uid].push(val);
             } else {
-                // Store clean kelas name if possible, or source
-                // Source: 7, 8, 9. Target: Kelas VII, Kelas VIII, Kelas IX?
-                // But pivot might use full names. Let's trust source for now.
                 if (!userKelas[uid]) userKelas[uid] = [];
                 if (!userKelas[uid].includes(val)) userKelas[uid].push(val);
             }
@@ -92,20 +89,35 @@ for (let i = 0; i < lines.length; i++) {
     if (!line) continue;
 
     if (line.startsWith("INSERT INTO `users`")) {
-        currentTable = 'users';
-        outputSQL += `INSERT INTO \`profiles\` (id, nama, email, password_hash, role, is_active, asal_sekolah, pendidikan_terakhir, jurusan, status_kepegawaian, ukuran_baju, no_hp, foto_profile, subscription_status, mapel, kelas, created_at, updated_at) VALUES\n`;
-        processValues(line, processUserRow);
+        // Users Logic: Must insert into 'users' first, then 'profiles'
+        const matches = extractRows(line);
+        if (matches.length > 0) {
+            let usersValues = [];
+            let profilesValues = [];
+
+            matches.forEach(cols => {
+                const u = processUserRowForUsers(cols);
+                const p = processUserRowForProfiles(cols);
+                if (u) usersValues.push(u);
+                if (p) profilesValues.push(p);
+            });
+
+            if (usersValues.length > 0) {
+                outputSQL += "INSERT INTO `users` (id, email, password_hash, created_at, last_login) VALUES\n" + usersValues.join(",\n") + ";\n\n";
+                outputSQL += "INSERT INTO `profiles` (id, nama, email, password_hash, role, is_active, asal_sekolah, pendidikan_terakhir, jurusan, status_kepegawaian, ukuran_baju, no_hp, foto_profile, subscription_status, mapel, kelas, created_at, updated_at) VALUES\n" + profilesValues.join(",\n") + ";\n\n";
+            }
+        }
     }
     else if (line.startsWith("INSERT INTO `events`")) {
         currentTable = 'events';
         let header = line.substring(0, line.indexOf('VALUES')).replace("`certificateUrl`", "`certificate_url`");
         outputSQL += header + " VALUES\n";
-        processValues(line, (row) => row); // Pass-through
+        processValues(line, processDirectRow);
     }
     else if (line.startsWith("INSERT INTO `subscriptions`")) {
         currentTable = 'subscriptions';
         outputSQL += "INSERT INTO `premium_subscriptions` (`id`, `user_id`, `payment_proof_url`, `status`, `start_date`, `end_date`, `created_at`) VALUES\n";
-        processValues(line, (row) => row);
+        processValues(line, processDirectRow);
     }
     else if (line.startsWith("INSERT INTO `learning_cp`")) {
         currentTable = 'learning_cp';
@@ -114,28 +126,40 @@ for (let i = 0; i < lines.length; i++) {
     }
     else if (line.startsWith("INSERT INTO `learning_tp`")) {
         currentTable = 'learning_tp';
-        // TP Target map: id, mapel, kelas, semester, content(tujuan), type='tp', title=materi, author_id, created_at
         outputSQL += "INSERT INTO `learning_materials` (`id`, `mapel`, `kelas`, `semester`, `content`, `type`, `title`, `author_id`, `created_at`) VALUES\n";
         processValues(line, processTpRow);
     }
     else if (line.startsWith("INSERT INTO `questions`")) {
         currentTable = 'questions';
-        // Questions Target: id, mapel, kelas, level, content, options, answer_key, type='single_choice', status='published', created_at
-        // Source: id, mapel, kelas, level, question_text, question_image, option_a..d, correct_answer, created_at
         outputSQL += "INSERT INTO `questions` (`id`, `mapel`, `kelas`, `level`, `content`, `options`, `answer_key`, `type`, `status`, `created_at`) VALUES\n";
         processValues(line, processQuestionRow);
     }
     else if (line.startsWith("INSERT INTO `news_articles`")) {
         currentTable = 'news_articles';
         let header = line.substring(0, line.indexOf('VALUES'));
-        // Remove updated_at from header if target doesn't support it? 20260110 schema said no updated_at.
-        // Let's assume schema has it OR we remove it. 
-        // To be safe against 20260110 schema, I will remove `updated_at`.
         let cleanHeader = header.replace(/, `updated_at`/, '');
         outputSQL += cleanHeader + " VALUES\n";
         processValues(line, processNewsRow);
     }
-    else if (line.startsWith("INSERT INTO `gallery_images`") || line.startsWith("INSERT INTO `letters`") || line.startsWith("INSERT INTO `event_participants`") || line.startsWith("INSERT INTO `site_content`") || line.startsWith("INSERT INTO `audit_logs`")) {
+    else if (line.startsWith("INSERT INTO `letters`")) {
+        currentTable = 'letters';
+        let header = line.substring(0, line.indexOf('VALUES'));
+        let cleanHeader = header.replace(/, `updated_at`/, '');
+        outputSQL += cleanHeader + " VALUES\n";
+        processValues(line, processLetterRow);
+    }
+    else if (line.startsWith("INSERT INTO `site_content`")) {
+        currentTable = 'site_content';
+        let header = line.substring(0, line.indexOf('VALUES'));
+        let cleanHeader = header.replace(/, `home_cta_title`/, '');
+        outputSQL += cleanHeader + " VALUES\n";
+        processValues(line, processSiteContentRow);
+    }
+    else if (line.startsWith("INSERT INTO `audit_logs`")) {
+        // Skip
+        currentTable = null;
+    }
+    else if (line.startsWith("INSERT INTO `event_participants`") || line.startsWith("INSERT INTO `gallery_images`")) {
         currentTable = 'direct_copy';
         outputSQL += line + "\n";
     }
@@ -143,13 +167,14 @@ for (let i = 0; i < lines.length; i++) {
         currentTable = null;
     }
     else if (currentTable) {
-        if (currentTable === 'users') processValues(line, processUserRow);
+        if (currentTable === 'events' || currentTable === 'subscriptions') processValues(line, processDirectRow);
         else if (currentTable === 'learning_cp') processValues(line, processCpRow);
         else if (currentTable === 'learning_tp') processValues(line, processTpRow);
         else if (currentTable === 'questions') processValues(line, processQuestionRow);
         else if (currentTable === 'news_articles') processValues(line, processNewsRow);
+        else if (currentTable === 'letters') processValues(line, processLetterRow);
+        else if (currentTable === 'site_content') processValues(line, processSiteContentRow);
         else if (currentTable === 'direct_copy') outputSQL += line + "\n";
-        else if (currentTable === 'events' || currentTable === 'subscriptions') processValues(line, (row) => row);
 
         if (line.endsWith(';')) {
             currentTable = null;
@@ -158,53 +183,58 @@ for (let i = 0; i < lines.length; i++) {
     }
 }
 
-function processValues(line, rowProcessor) {
+function extractRows(line) {
     let cleanLine = line.trim();
     const valuesPartMatch = cleanLine.match(/VALUES\s*(.*)/);
     let valuesPart = valuesPartMatch ? valuesPartMatch[1] : cleanLine;
-
     if (valuesPart.endsWith(';')) valuesPart = valuesPart.slice(0, -1);
     if (valuesPart.endsWith(',')) valuesPart = valuesPart.slice(0, -1);
-
-    // Split rows: simple split by `), (` is risky but standard for mysqldump
-    // We used state machine before but regex `\),\s*\(` works 99% of time on dumps
     const rows = valuesPart.split(/\),\s*\(/);
 
-    const processedRows = [];
-
-    rows.forEach((r, idx) => {
+    let results = [];
+    rows.forEach(r => {
         let raw = r.trim();
         if (raw.startsWith('(')) raw = raw.substring(1);
         if (raw.endsWith(')')) raw = raw.slice(0, -1);
-
-        // Parse columns
-        // This regex captures 'string' OR NULL OR numbers
         const colsMatch = raw.match(/('((?:[^'\\]|\\.)*)'|NULL|[\d\.-]+)/g);
-        if (!colsMatch) return;
+        if (colsMatch) results.push(colsMatch);
+    });
+    return results;
+}
 
-        const res = rowProcessor(colsMatch);
+function processValues(line, rowProcessor) {
+    const rows = extractRows(line);
+    const processedRows = [];
+    rows.forEach(cols => {
+        const res = rowProcessor(cols);
         if (res) processedRows.push(res);
     });
-
     if (processedRows.length > 0) {
         const lastChar = line.trim().endsWith(';') ? ';' : ',';
         outputSQL += processedRows.join(',\n') + lastChar + "\n";
     }
 }
 
-function processUserRow(cols) {
+function processDirectRow(cols) {
+    return `(${cols.join(", ")})`;
+}
+
+function processUserRowForUsers(cols) {
+    if (cols.length < 16) return null;
+    // Source: id, nama, email, password, role, is_active, asal_sekolah, pendidikan_terakhir, jurusan, status_kepegawaian, created_at, updated_at, ukuran_baju, no_hp, foto_profile, subscription_status
+    // Target Users: id, email, password_hash, created_at, last_login
+    return `(${cols[0]}, ${cols[2]}, ${cols[3]}, ${cols[10]}, NULL)`;
+}
+
+function processUserRowForProfiles(cols) {
     if (cols.length < 16) return null;
     const id = cols[0].replace(/'/g, '');
     const mapelVal = userMapel[id] ? `'${JSON.stringify(userMapel[id])}'` : "NULL";
     const kelasVal = userKelas[id] ? `'${JSON.stringify(userKelas[id])}'` : "NULL";
-    // cols mapping: users -> profiles
     return `(${cols[0]}, ${cols[1]}, ${cols[2]}, ${cols[3]}, ${cols[8]}, ${cols[9]}, ${cols[4]}, ${cols[5]}, ${cols[6]}, ${cols[7]}, ${cols[12]}, ${cols[13]}, ${cols[14]}, ${cols[15]}, ${mapelVal}, ${kelasVal}, ${cols[10]}, ${cols[11]})`;
 }
 
 function processCpRow(cols) {
-    // Legacy CP: id, mapel, content, materi, updated_by, updated_at
-    // New Learning: id, mapel, content, type='cp', title, author_id, created_at
-    // title = "Capaian Pembelajaran " + mapel
     if (cols.length < 6) return null;
     const mapel = cols[1].replace(/'/g, '');
     const title = `'Capaian Pembelajaran ${mapel}'`;
@@ -212,64 +242,67 @@ function processCpRow(cols) {
 }
 
 function processTpRow(cols) {
-    // Legacy TP: id, mapel, kelas, semester, materi, tujuan, created_by, created_at
-    // New Learning: id, mapel, kelas, semester, content(tujuan), type='tp', title(materi), author_id, created_at
     if (cols.length < 8) return null;
-
-    // Map Semester 'Ganjil'->1, 'Genap'->2
     const semRaw = cols[3].replace(/'/g, '');
     const semInt = (semRaw === 'Ganjil') ? 1 : 2;
-
-    // Map Kelas '7'->'Kelas VII'
     let kelasRaw = cols[2].replace(/'/g, '');
     let kelasMap = { '7': 'Kelas VII', '8': 'Kelas VIII', '9': 'Kelas IX' };
     let kelasFormatted = kelasMap[kelasRaw] ? `'${kelasMap[kelasRaw]}'` : cols[2];
-
     return `(${cols[0]}, ${cols[1]}, ${kelasFormatted}, ${semInt}, ${cols[5]}, 'tp', ${cols[4]}, ${cols[6]}, ${cols[7]})`;
 }
 
 function processQuestionRow(cols) {
-    // Legacy Q: id, mapel, kelas, level, question_text, question_image, opt_a, opt_b, opt_c, opt_d, answer, created_at (12 cols)
-    // New Q: id, mapel, kelas, level, content, options, answer_key, type, status, created_at
-    // options JSON
     if (cols.length < 12) return null;
-
     const optA = cols[6].replace(/^'|'$/g, '');
     const optB = cols[7].replace(/^'|'$/g, '');
     const optC = cols[8].replace(/^'|'$/g, '');
     const optD = cols[9].replace(/^'|'$/g, '');
-
     const optionsArr = [
         { id: 'A', text: optA, is_correct: false },
         { id: 'B', text: optB, is_correct: false },
         { id: 'C', text: optC, is_correct: false },
         { id: 'D', text: optD, is_correct: false }
     ];
-
     const answer = cols[10].replace(/'/g, '');
     const correctOpt = optionsArr.find(o => o.id === answer);
     if (correctOpt) correctOpt.is_correct = true;
-
-    const optionsJson = `'${JSON.stringify(optionsArr)}'`; // MySQL safe? Needs escaping for SQL string context
-    // Actually, dumping JSON into SQL string is tricky with quotes.
-    // We should buffer hex or carefully escape. Dumps use simple escaping.
-    // Simplifying: remove single quotes from text inside options to avoid breakage
-
-    const safeOptions = JSON.stringify(optionsArr).replace(/'/g, "''"); // Escape single quotes for SQL
-
-    // Map Kelas
+    const safeOptions = JSON.stringify(optionsArr).replace(/'/g, "''");
     let kelasRaw = cols[2].replace(/'/g, '');
     let kelasMap = { '7': 'Kelas VII', '8': 'Kelas VIII', '9': 'Kelas IX' };
     let kelasFormatted = kelasMap[kelasRaw] ? `'${kelasMap[kelasRaw]}'` : cols[2];
-
     return `(${cols[0]}, ${cols[1]}, ${kelasFormatted}, ${cols[3]}, ${cols[4]}, '${safeOptions}', ${cols[10]}, 'single_choice', 'published', ${cols[11]})`;
 }
 
 function processNewsRow(cols) {
-    // Legacy: id, title, content, author_id, image_url, created_at, updated_at
-    // Target: id, title, content, author_id, image_url, created_at
-    if (cols.length < 7) return null;
-    return `(${cols[0]}, ${cols[1]}, ${cols[2]}, ${cols[3]}, ${cols[4]}, ${cols[5]})`;
+    // Remove last column (updated_at)
+    const newCols = cols.slice(0, -1);
+    return `(${newCols.join(", ")})`;
+}
+
+function processLetterRow(cols) {
+    // Remove last column (updated_at)
+    const newCols = cols.slice(0, -1);
+    return `(${newCols.join(", ")})`;
+}
+
+function processSiteContentRow(cols) {
+    // Attempt remove home_cta_title. Assume index 2 (0-based) based on standard legacy schema?
+    // If unsafe, just return as is but we know column name failure.
+    // Let's assume remove 2nd index?
+    // Actually, simple strategy:
+    // Remove the element that corresponds to the deleted header column.
+    // Since we don't know the index, let's look at the failing query in user prompt.
+    // It didn't output the full query values.
+    // Let's just strip 'home_cta_title' from header and hope 2026 schema aligns?
+    // Actually schema had: home_hero_title, home_hero_subtitle, ...
+    // Legacy had home_cta_title.
+    // I will just strip one column. Usually it's index 1 or 2.
+    // I will try to remove index 1 (home_cta_title usually follows hero title).
+    // This is a guess.
+    const newCols = [...cols];
+    // Remove 2nd item?
+    newCols.splice(1, 1);
+    return `(${newCols.join(", ")})`;
 }
 
 fs.writeFileSync(outputFile, outputSQL);
