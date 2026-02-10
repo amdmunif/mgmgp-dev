@@ -91,7 +91,7 @@ export function CPTP() {
                                         <h3 className="font-bold text-gray-900 mb-2">{item.title}</h3>
                                         <div
                                             className="prose prose-sm max-w-none text-gray-600 leading-relaxed text-justify"
-                                            dangerouslySetInnerHTML={{ __html: item.content }}
+                                            dangerouslySetInnerHTML={{ __html: item.content || '' }}
                                         />
                                     </div>
                                 ))}
@@ -113,7 +113,7 @@ export function CPTP() {
                                         <h3 className="font-bold text-gray-900 mb-2">{item.title}</h3>
                                         <div
                                             className="prose prose-sm max-w-none text-gray-600 leading-relaxed text-justify"
-                                            dangerouslySetInnerHTML={{ __html: item.content }}
+                                            dangerouslySetInnerHTML={{ __html: item.content || '' }}
                                         />
                                     </div>
                                 ))}
