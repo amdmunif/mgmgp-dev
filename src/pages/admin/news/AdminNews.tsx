@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Button } from '../../../components/ui/button';
-import { Plus, Trash2, Search, Newspaper, Tag, Calendar } from 'lucide-react';
+import { Plus, Trash2, Search, Newspaper, Tag, Calendar, Eye, Pencil } from 'lucide-react';
 import { contentManagementService } from '../../../services/contentManagementService';
 import type { NewsArticle } from '../../../types';
 import { Link } from 'react-router-dom';
@@ -107,13 +107,30 @@ export function AdminNews() {
                                     </div>
                                 </td>
                                 <td className="px-6 py-4 text-right">
-                                    <button
-                                        onClick={() => handleDelete(item.id)}
-                                        className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
-                                        title="Hapus Berita"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
+                                    <div className="flex items-center justify-end gap-2">
+                                        <Link
+                                            to={`/news/${item.id}`}
+                                            target="_blank"
+                                            className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
+                                            title="Lihat Berita"
+                                        >
+                                            <Eye className="w-4 h-4" />
+                                        </Link>
+                                        <Link
+                                            to={`/admin/news/edit/${item.id}`}
+                                            className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors"
+                                            title="Edit Berita"
+                                        >
+                                            <Pencil className="w-4 h-4" />
+                                        </Link>
+                                        <button
+                                            onClick={() => handleDelete(item.id)}
+                                            className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+                                            title="Hapus Berita"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         ))}

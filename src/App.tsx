@@ -47,6 +47,7 @@ import { VerificationList } from './pages/admin/contributors/VerificationList';
 import { CreateReference } from './pages/admin/references/CreateReference';
 import { AdminGallery } from './pages/admin/AdminGallery';
 import { AdminMessages } from './pages/admin/AdminMessages';
+import { AuditLogs } from './pages/admin/AuditLogs';
 
 // Routes
 <Route path="contributors" element={<VerificationList />} />
@@ -147,18 +148,22 @@ function App() {
           <Route path="members" element={<AdminMembers />} />
           <Route path="learning" element={<AdminMaterials />} />
           <Route path="learning/create" element={<CreateMaterial />} />
+          <Route path="learning/edit/:id" element={<CreateMaterial />} />
           <Route path="questions" element={<AdminQuestions />} />
           <Route path="questions/create" element={<QuestionBuilder />} />
           <Route path="questions/edit/:id" element={<QuestionBuilder />} />
 
           <Route path="news" element={<AdminNews />} />
           <Route path="news/create" element={<CreateNews />} />
+          <Route path="news/edit/:id" element={<CreateNews />} />
 
           <Route path="events" element={<AdminEvents />} />
           <Route path="events/create" element={<CreateEvent />} />
+          <Route path="events/edit/:id" element={<CreateEvent />} />
 
           <Route path="letters" element={<AdminLetters />} />
           <Route path="letters/create" element={<CreateLetter />} />
+          <Route path="letters/edit/:id" element={<CreateLetter />} />
           <Route path="settings" element={<AdminSettings />} />
           <Route path="web-settings" element={<AdminWebSettings />} />
           <Route path="web-settings" element={<AdminWebSettings />} />
@@ -172,6 +177,7 @@ function App() {
           <Route path="gallery" element={<AdminGallery />} />
           <Route path="messages" element={<AdminMessages />} />
           <Route path="contributors" element={<VerificationList />} />
+          <Route path="logs" element={<AuditLogs />} />
         </Route>
 
         {/* Fallback */}

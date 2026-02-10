@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
     BookOpen, Gamepad2, Terminal, Crown,
-    ArrowRight, Lock, LayoutDashboard
+    ArrowRight, Lock, LayoutDashboard, CalendarDays
 } from 'lucide-react';
 import { authService } from '../../services/authService';
+import { statsService } from '../../services/statsService';
 import { Button } from '../../components/ui/button';
 
 export function MemberDashboard() {
@@ -13,6 +14,11 @@ export function MemberDashboard() {
     const [isPremium, setIsPremium] = useState(false);
     const [loading, setLoading] = useState(true);
     const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
+    const [stats, setStats] = useState({
+        materials: 0,
+        events: 0,
+        premium: 0
+    });
 
     useEffect(() => {
         const loadDashboard = async () => {
@@ -37,6 +43,10 @@ export function MemberDashboard() {
                     const events = await m.eventService.getUpcomingEvents();
                     setUpcomingEvents(events?.slice(0, 3) || []); // Take top 3
                 });
+
+                // Load Stats
+                const dashboardStats = await statsService.getOverview();
+                setStats(dashboardStats);
 
             } catch (e) {
                 console.error("Failed to load dashboard", e);
@@ -96,17 +106,17 @@ export function MemberDashboard() {
                         <BookOpen className="w-6 h-6" />
                     </div>
                     <div>
-                        <p className="text-sm text-gray-500">Materi Terpelajari</p>
-                        <p className="text-2xl font-bold text-gray-900">12</p>
+                        <p className="text-sm text-gray-500">Total Perangkat Ajar</p>
+                        <p className="text-2xl font-bold text-gray-900">{stats.materials}</p>
                     </div>
                 </div>
                 <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex items-center gap-4">
                     <div className="p-3 bg-green-50 text-green-600 rounded-lg">
-                        <Gamepad2 className="w-6 h-6" />
+                        <Calendar className="w-6 h-6" />
                     </div>
                     <div>
-                        <p className="text-sm text-gray-500">Latihan Soal</p>
-                        <p className="text-2xl font-bold text-gray-900">85%</p>
+                        <p className="text-sm text-gray-500">Agenda Kegiatan</p>
+                        <p className="text-2xl font-bold text-gray-900">{stats.events}</p>
                     </div>
                 </div>
                 <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex items-center gap-4">

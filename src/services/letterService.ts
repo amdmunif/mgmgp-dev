@@ -18,8 +18,16 @@ export const letterService = {
         return await api.get<Letter[]>('/letters');
     },
 
+    async getById(id: string) {
+        return await api.get<Letter>(`/letters/${id}`);
+    },
+
     async create(letter: Omit<Letter, 'id' | 'created_at'>) {
         return await api.post('/letters', letter);
+    },
+
+    async update(id: string, letter: Partial<Letter>) {
+        return await api.put(`/letters/${id}`, letter);
     },
 
     async delete(id: string) {

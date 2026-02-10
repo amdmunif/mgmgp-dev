@@ -33,7 +33,7 @@ class ContentController
         return json_encode($news ?: null);
     }
 
-    public function createNews($data)
+    public function createNews($data, $userId, $userName)
     {
         $id = Helper::uuid();
         $query = "INSERT INTO news_articles (id, title, content, author_id, image_url, created_at) 
@@ -47,22 +47,56 @@ class ContentController
         $stmt->bindParam(':image_url', $data['image_url']);
 
         if ($stmt->execute()) {
+            Helper::log($this->conn, $userId, $userName, 'CREATE_NEWS', $data['title']);
             return json_encode(["message" => "News created", "id" => $id]);
         }
         http_response_code(500);
         return json_encode(["message" => "Failed to create news"]);
     }
 
-    public function deleteNews($id)
+    public function deleteNews($id, $userId, $userName)
     {
+        // Get title for logging
+        $title = "Unknown News";
+        $stmtTitle = $this->conn->prepare("SELECT title FROM news_articles WHERE id = :id");
+        $stmtTitle->bindParam(':id', $id);
+        $stmtTitle->execute();
+        if ($res = $stmtTitle->fetch(PDO::FETCH_ASSOC))
+            $title = $res['title'];
+
         $query = "DELETE FROM news_articles WHERE id = :id";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id', $id);
         if ($stmt->execute()) {
+            Helper::log($this->conn, $userId, $userName, 'DELETE_NEWS', $title);
             return json_encode(["message" => "News deleted"]);
         }
         http_response_code(500);
         return json_encode(["message" => "Failed to delete news"]);
+    }
+
+    public function updateNews($id, $data, $userId, $userName)
+    {
+        $query = "UPDATE news_articles SET 
+                    title = :title, 
+                    content = :content, 
+                    category = :category, 
+                    image_url = :image_url 
+                  WHERE id = :id";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':id', $id);
+        $stmt->bindParam(':title', $data['title']);
+        $stmt->bindParam(':content', $data['content']);
+        $stmt->bindParam(':category', $data['category']);
+        $stmt->bindParam(':image_url', $data['image_url']);
+
+        if ($stmt->execute()) {
+            Helper::log($this->conn, $userId, $userName, 'UPDATE_NEWS', $data['title']);
+            return json_encode(["message" => "News updated"]);
+        }
+        http_response_code(500);
+        return json_encode(["message" => "Failed to update news"]);
     }
 
     // --- EVENTS ---
@@ -84,7 +118,7 @@ class ContentController
         return json_encode($event ?: null);
     }
 
-    public function createEvent($data)
+    public function createEvent($data, $userId, $userName)
     {
         $id = Helper::uuid();
         $query = "INSERT INTO events (id, title, description, date, location, image_url, is_registration_open, created_at) 
@@ -101,22 +135,61 @@ class ContentController
         $stmt->bindParam(':is_registration_open', $isReg, PDO::PARAM_INT);
 
         if ($stmt->execute()) {
+            Helper::log($this->conn, $userId, $userName, 'CREATE_EVENT', $data['title']);
             return json_encode(["message" => "Event created", "id" => $id]);
         }
         http_response_code(500);
         return json_encode(["message" => "Failed to create event"]);
     }
 
-    public function deleteEvent($id)
+    public function deleteEvent($id, $userId, $userName)
     {
+        // Get title for logging
+        $title = "Unknown Event";
+        $stmtTitle = $this->conn->prepare("SELECT title FROM events WHERE id = :id");
+        $stmtTitle->bindParam(':id', $id);
+        $stmtTitle->execute();
+        if ($res = $stmtTitle->fetch(PDO::FETCH_ASSOC))
+            $title = $res['title'];
+
         $query = "DELETE FROM events WHERE id = :id";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id', $id);
         if ($stmt->execute()) {
+            Helper::log($this->conn, $userId, $userName, 'DELETE_EVENT', $title);
             return json_encode(["message" => "Event deleted"]);
         }
         http_response_code(500);
         return json_encode(["message" => "Failed to delete event"]);
+    }
+
+    public function updateEvent($id, $data, $userId, $userName)
+    {
+        $query = "UPDATE events SET 
+                    title = :title, 
+                    description = :description, 
+                    date = :date, 
+                    location = :location, 
+                    image_url = :image_url, 
+                    is_registration_open = :is_registration_open 
+                  WHERE id = :id";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':id', $id);
+        $stmt->bindParam(':title', $data['title']);
+        $stmt->bindParam(':description', $data['description']);
+        $stmt->bindParam(':date', $data['date']);
+        $stmt->bindParam(':location', $data['location']);
+        $stmt->bindParam(':image_url', $data['image_url']);
+        $isReg = $data['is_registration_open'] ?? 1;
+        $stmt->bindParam(':is_registration_open', $isReg, PDO::PARAM_INT);
+
+        if ($stmt->execute()) {
+            Helper::log($this->conn, $userId, $userName, 'UPDATE_EVENT', $data['title']);
+            return json_encode(["message" => "Event updated"]);
+        }
+        http_response_code(500);
+        return json_encode(["message" => "Failed to update event"]);
     }
 
     // --- EVENT PARTICIPATION ---

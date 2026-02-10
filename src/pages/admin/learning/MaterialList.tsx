@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../../../components/ui/button';
-import { Plus, Search, FileText, BookOpen, Presentation, File, Filter, Book } from 'lucide-react';
+import { Plus, Search, FileText, BookOpen, Presentation, File, Filter, Book, Eye, Pencil, Trash2, X, ExternalLink } from 'lucide-react';
 import { learningService } from '../../../services/learningService';
 import type { LearningMaterial, MaterialType } from '../../../types';
 import { formatDate } from '../../../lib/utils';
@@ -11,6 +11,7 @@ export function AdminMaterials() {
     const [loading, setLoading] = useState(true);
     const [filterType, setFilterType] = useState<MaterialType | 'all'>('all');
     const [search, setSearch] = useState('');
+    const [viewingMaterial, setViewingMaterial] = useState<LearningMaterial | null>(null);
 
     useEffect(() => {
         loadMaterials();
@@ -140,12 +141,29 @@ export function AdminMaterials() {
                                         {formatDate(item.created_at)}
                                     </td>
                                     <td className="px-6 py-4 text-right">
-                                        <button
-                                            onClick={() => handleDelete(item.id)}
-                                            className="text-red-600 hover:text-red-800 font-medium text-xs bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded transition-colors opacity-0 group-hover:opacity-100"
-                                        >
-                                            Hapus
-                                        </button>
+                                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button
+                                                onClick={() => setViewingMaterial(item)}
+                                                className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-blue-600 transition-colors"
+                                                title="Lihat Detail"
+                                            >
+                                                <Eye className="w-4 h-4" />
+                                            </button>
+                                            <Link
+                                                to={`/admin/learning/edit/${item.id}`}
+                                                className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-green-600 transition-colors"
+                                                title="Edit Materi"
+                                            >
+                                                <Pencil className="w-4 h-4" />
+                                            </Link>
+                                            <button
+                                                onClick={() => handleDelete(item.id)}
+                                                className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-red-600 transition-colors"
+                                                title="Hapus Materi"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))
@@ -153,6 +171,78 @@ export function AdminMaterials() {
                     </tbody>
                 </table>
             </div>
+
+            {/* View Modal */}
+            {viewingMaterial && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+                        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+                            <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                                {getIcon(viewingMaterial.type)}
+                                {viewingMaterial.title}
+                            </h3>
+                            <button onClick={() => setViewingMaterial(null)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="p-6 overflow-y-auto max-h-[70vh] space-y-6">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div className="bg-gray-50 p-3 rounded-lg">
+                                    <p className="text-xs text-gray-500 mb-1">Tipe</p>
+                                    <p className="font-bold text-gray-900 uppercase">{viewingMaterial.type}</p>
+                                </div>
+                                <div className="bg-gray-50 p-3 rounded-lg">
+                                    <p className="text-xs text-gray-500 mb-1">Mapel</p>
+                                    <p className="font-bold text-gray-900">{viewingMaterial.mapel}</p>
+                                </div>
+                                <div className="bg-gray-50 p-3 rounded-lg">
+                                    <p className="text-xs text-gray-500 mb-1">Kelas</p>
+                                    <p className="font-bold text-gray-900">{viewingMaterial.kelas || '-'}</p>
+                                </div>
+                                <div className="bg-gray-50 p-3 rounded-lg">
+                                    <p className="text-xs text-gray-500 mb-1">Semester</p>
+                                    <p className="font-bold text-gray-900">{viewingMaterial.semester || '-'}</p>
+                                </div>
+                            </div>
+
+                            {viewingMaterial.content && (
+                                <div className="space-y-2">
+                                    <h4 className="font-bold text-gray-900 text-sm">Konten / Deskripsi:</h4>
+                                    <div
+                                        className="prose prose-sm max-w-none bg-gray-50 p-4 rounded-xl border border-gray-100"
+                                        dangerouslySetInnerHTML={{ __html: viewingMaterial.content }}
+                                    />
+                                </div>
+                            )}
+
+                            {viewingMaterial.file_url && (
+                                <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-white rounded-lg shadow-sm flex items-center justify-center">
+                                            <FileText className="w-6 h-6 text-blue-600" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-bold text-blue-900">Lampiran Materi</p>
+                                            <p className="text-xs text-blue-600">Klik untuk melihat atau mengunduh</p>
+                                        </div>
+                                    </div>
+                                    <a
+                                        href={viewingMaterial.file_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20"
+                                    >
+                                        Buka File <ExternalLink className="w-4 h-4" />
+                                    </a>
+                                </div>
+                            )}
+                        </div>
+                        <div className="px-6 py-4 border-t border-gray-50 flex justify-end">
+                            <Button onClick={() => setViewingMaterial(null)}>Tutup</Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

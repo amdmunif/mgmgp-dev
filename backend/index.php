@@ -25,7 +25,10 @@ if (isset($uri_parts[0]) && $uri_parts[0] === 'api') {
     array_shift($uri_parts); // Remove 'api' prefix if present
 }
 
-// Serve Static Files from 'uploads'
+// Serve    ImageIcon,
+    Mail,
+    ShieldAlert
+} from 'lucide-react';
 if (isset($uri_parts[0]) && $uri_parts[0] === 'uploads') {
     $filename = $uri_parts[1] ?? '';
     $filename = basename($filename); // Sanitize
@@ -53,6 +56,24 @@ $action = isset($uri_parts[1]) ? $uri_parts[1] : null;
 // Get JSON input
 $input = json_decode(file_get_contents("php://input"), true);
 
+// Auth Check (Global)
+$headers = getallheaders();
+$authHeader = isset($headers['Authorization']) ? $headers['Authorization'] : (isset($headers['authorization']) ? $headers['authorization'] : '');
+$token = str_replace('Bearer ', '', $authHeader);
+$userId = null;
+$userName = 'System'; // Fallback
+$userRole = null;
+
+if ($token) {
+    include_once './utils/Helper.php';
+    $payload = Helper::verifyJWT($token);
+    if ($payload && isset($payload['sub'])) {
+        $userId = $payload['sub'];
+        $userName = $payload['nama'] ?? 'User'; // Assuming 'nama' is in JWT payload or we might need to fetch it
+        $userRole = $payload['role'] ?? 'Anggota';
+    }
+}
+
 include_once './controllers/ContentController.php';
 include_once './controllers/QuestionController.php';
 include_once './controllers/LetterController.php';
@@ -70,9 +91,11 @@ if ($resource === 'news') {
             echo $controller->getNews();
     }
     if ($_SERVER['REQUEST_METHOD'] === 'POST')
-        echo $controller->createNews($input);
+        echo $controller->createNews($input, $userId, $userName);
+    if ($_SERVER['REQUEST_METHOD'] === 'PUT' && $action)
+        echo $controller->updateNews($action, $input, $userId, $userName);
     if ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action)
-        echo $controller->deleteNews($action);
+        echo $controller->deleteNews($action, $userId, $userName);
 
 } elseif ($resource === 'events') {
     $controller = new ContentController();
@@ -130,11 +153,14 @@ if ($resource === 'news') {
                 echo json_encode(["message" => "Unauthorized"]);
             }
         } else {
-            echo $controller->createEvent($input);
+            echo $controller->createEvent($input, $userId, $userName);
         }
     }
+    if ($_SERVER['REQUEST_METHOD'] === 'PUT' && $action) {
+        echo $controller->updateEvent($action, $input, $userId, $userName);
+    }
     if ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action)
-        echo $controller->deleteEvent($action);
+        echo $controller->deleteEvent($action, $userId, $userName);
 
 } elseif ($resource === 'questions') {
     $controller = new QuestionController();
@@ -162,10 +188,16 @@ if ($resource === 'news') {
 
 } elseif ($resource === 'letters') {
     $controller = new LetterController();
-    if ($_SERVER['REQUEST_METHOD'] === 'GET')
-        echo $controller->getAll();
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        if ($action)
+            echo $controller->getById($action);
+        else
+            echo $controller->getAll();
+    }
     if ($_SERVER['REQUEST_METHOD'] === 'POST')
         echo $controller->create($input);
+    if ($_SERVER['REQUEST_METHOD'] === 'PUT' && $action)
+        echo $controller->update($action, $input);
     if ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action)
         echo $controller->delete($action);
 
@@ -190,6 +222,11 @@ if ($resource === 'news') {
         echo $controller->createPrompt($input);
     if ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action)
         echo $controller->deletePrompt($action);
+} elseif ($resource === 'logs') {
+    include_once './controllers/AuditController.php';
+    $controller = new AuditController();
+    if ($_SERVER['REQUEST_METHOD'] === 'GET')
+        echo $controller->getAll();
 } elseif ($resource === 'references') {
     $controller = new ResourceController();
     if ($_SERVER['REQUEST_METHOD'] === 'GET')
@@ -203,9 +240,11 @@ if ($resource === 'news') {
     if ($_SERVER['REQUEST_METHOD'] === 'GET')
         echo $controller->getAll();
     if ($_SERVER['REQUEST_METHOD'] === 'POST')
-        echo $controller->create();
+        echo $controller->create($userId, $userName);
+    if ($_SERVER['REQUEST_METHOD'] === 'PUT' && $action)
+        echo $controller->update($action, $input, $userId, $userName);
     if ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action)
-        echo $controller->delete($action);
+        echo $controller->delete($action, $userId, $userName);
 } elseif ($resource === 'upload') {
     include_once './controllers/UploadController.php';
     $controller = new UploadController();
@@ -217,7 +256,7 @@ if ($resource === 'news') {
     if ($action === 'logo' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         echo $controller->uploadLogo();
     } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        echo $controller->updateSettings($input);
+        echo $controller->updateSettings($input, $userId, $userName);
     } else {
         echo $controller->getSettings();
     }

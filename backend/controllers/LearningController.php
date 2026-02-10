@@ -22,13 +22,35 @@ class LearningController
         return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
     }
 
-    public function create()
+    public function getById($id)
+    {
+        $query = "SELECT * FROM learning_materials WHERE id = :id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':id', $id);
+        $stmt->execute();
+        $material = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($material) {
+            return json_encode($material);
+        }
+        http_response_code(404);
+        return json_encode(["message" => "Material not found"]);
+    }
+
+    public function create($userId, $userName)
     {
         // Handle Multipart Form Data
         $data = $_POST;
-        $files = $_FILES;
-
+        // ... (remaining logic same but add log)
+        // [Existing logic for file uploads and database insertion...]
         $id = Helper::uuid();
+        $is_premium = isset($data['is_premium']) ? $data['is_premium'] : 0;
+        $type = $data['type'] ?? 'modul';
+
+        // [SIMPLIFIED for replace but I must keep the whole method logic or target precisely]
+        // I will target the success block.
+
+        // Re-writing with log integration
+        // (Assuming I should keep the logic within create as is, just add log)
 
         $rpp_url = null;
         $slide_url = null;
@@ -97,23 +119,66 @@ class LearningController
         $stmt->bindParam(':author_id', $data['author_id']);
 
         if ($stmt->execute()) {
+            Helper::log($this->conn, $userId, $userName, 'CREATE_LEARNING', $data['title']);
             return json_encode(["message" => "Material created", "id" => $id]);
         }
         http_response_code(500);
         return json_encode(["message" => "Failed to create material"]);
     }
 
-    public function delete($id)
+    public function delete($id, $userId, $userName)
     {
+        // Get title for logging
+        $title = "Unknown Material";
+        $stmtTitle = $this->conn->prepare("SELECT title FROM learning_materials WHERE id = :id");
+        $stmtTitle->bindParam(':id', $id);
+        $stmtTitle->execute();
+        if ($res = $stmtTitle->fetch(PDO::FETCH_ASSOC))
+            $title = $res['title'];
+
         // Optional: Delete file from disk too
         $query = "DELETE FROM learning_materials WHERE id = :id";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id', $id);
         if ($stmt->execute()) {
+            Helper::log($this->conn, $userId, $userName, 'DELETE_LEARNING', $title);
             return json_encode(["message" => "Deleted successfully"]);
         }
         http_response_code(500);
         return json_encode(["message" => "Failed to delete"]);
+    }
+
+    public function update($id, $data, $userId, $userName)
+    {
+        $query = "UPDATE learning_materials SET 
+                    title = :title, 
+                    mapel = :mapel, 
+                    kelas = :kelas, 
+                    semester = :semester, 
+                    type = :type, 
+                    content = :content, 
+                    is_premium = :is_premium 
+                  WHERE id = :id";
+
+        $stmt = $this->conn->prepare($query);
+
+        $is_premium = isset($data['is_premium']) ? $data['is_premium'] : 0;
+
+        $stmt->bindParam(':id', $id);
+        $stmt->bindParam(':title', $data['title']);
+        $stmt->bindParam(':mapel', $data['mapel']);
+        $stmt->bindParam(':kelas', $data['kelas']);
+        $stmt->bindParam(':semester', $data['semester']);
+        $stmt->bindParam(':type', $data['type']);
+        $stmt->bindParam(':content', $data['content']);
+        $stmt->bindParam(':is_premium', $is_premium);
+
+        if ($stmt->execute()) {
+            Helper::log($this->conn, $userId, $userName, 'UPDATE_LEARNING', $data['title']);
+            return json_encode(["message" => "Material updated"]);
+        }
+        http_response_code(500);
+        return json_encode(["message" => "Failed to update material"]);
     }
 }
 ?>

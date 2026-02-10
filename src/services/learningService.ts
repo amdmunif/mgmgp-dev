@@ -10,18 +10,16 @@ export const learningService = {
         return data;
     },
 
-    async getById(_id: string) {
-        // Not implemented in backend yet
-        throw new Error("GetById not implemented in PHP yet");
+    async getById(id: string) {
+        return api.get<LearningMaterial>(`/learning/${id}`);
     },
 
     async create(material: Omit<LearningMaterial, 'id' | 'created_at'>) {
         return api.post<LearningMaterial>('/learning', material);
     },
 
-    async update(_id: string, _updates: Partial<LearningMaterial>) {
-        // Not implemented
-        throw new Error("Update not implemented in PHP yet");
+    async update(id: string, updates: Partial<LearningMaterial>) {
+        return api.put<LearningMaterial>(`/learning/${id}`, updates);
     },
 
     async delete(id: string) {

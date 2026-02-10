@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api } from '../../lib/api';
+import { statsService } from '../../services/statsService';
 import {
     Users,
     FileText,
@@ -27,7 +27,7 @@ export function DashboardOverview() {
 
     const fetchStats = async () => {
         try {
-            const data = await api.get<any>('/stats');
+            const data = await statsService.getOverview();
 
             if (data) {
                 setStats({

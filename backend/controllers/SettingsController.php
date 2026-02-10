@@ -49,7 +49,7 @@ class SettingsController
         return json_encode($merged);
     }
 
-    public function updateSettings($data)
+    public function updateSettings($data, $userId, $userName)
     {
         // 1. Update App Settings
         $queryApp = "UPDATE app_settings SET 
@@ -66,7 +66,6 @@ class SettingsController
             WHERE id = 1";
 
         $stmtApp = $this->conn->prepare($queryApp);
-        // Use default values if keys missing to avoid errors
         $stmtApp->bindValue(':site_title', $data['site_title'] ?? 'MGMP Informatika');
         $stmtApp->bindValue(':site_description', $data['site_description'] ?? '');
         $stmtApp->bindValue(':logo_url', $data['logo_url'] ?? '');
@@ -77,7 +76,6 @@ class SettingsController
         $stmtApp->bindValue(':bank_number', $data['bank_number'] ?? '');
         $stmtApp->bindValue(':bank_holder', $data['bank_holder'] ?? '');
         $stmtApp->bindValue(':premium_price', $data['premium_price'] ?? 0);
-
         $stmtApp->execute();
 
         // 2. Update Site Content
@@ -108,7 +106,6 @@ class SettingsController
             WHERE id = 1";
 
         $stmtContent = $this->conn->prepare($queryContent);
-
         $stmtContent->bindValue(':home_hero_title', $data['home_hero_title'] ?? '');
         $stmtContent->bindValue(':home_hero_subtitle', $data['home_hero_subtitle'] ?? '');
         $stmtContent->bindValue(':home_hero_image', $data['home_hero_image'] ?? '');
@@ -134,6 +131,7 @@ class SettingsController
         $stmtContent->bindValue(':premium_rules', $data['premium_rules'] ?? '');
 
         if ($stmtContent->execute()) {
+            Helper::log($this->conn, $userId, $userName, 'UPDATE_SETTINGS', 'Site Configuration');
             return $this->getSettings();
         }
 

@@ -160,6 +160,7 @@ export function AdminLayout() {
             items: [
                 { icon: Globe, label: 'Pengaturan Web', path: '/admin/web-settings' },
                 { icon: Settings, label: 'Akun Admin', path: '/admin/settings' },
+                { icon: ShieldAlert, label: 'Log Aktivitas', path: '/admin/logs' },
             ]
         }
     ];

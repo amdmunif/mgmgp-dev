@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { authService } from '../../../services/authService';
 import { letterService } from '../../../services/letterService';
 import { Button } from '../../../components/ui/button';
-import { Plus, Download, Trash2, Search, FileText, Loader2, Mail } from 'lucide-react';
+import { Plus, Trash2, Search, FileText, Loader2, Mail, Pencil } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { formatDate } from '../../../lib/utils';
 import { LETTER_TEMPLATES } from '../../../lib/templates';
@@ -123,9 +123,11 @@ export function AdminLetters() {
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex items-center justify-end gap-2">
-                                            <Button variant="outline" size="sm" onClick={() => generatePDF(letter)} title="Download PDF" className="h-8 px-2 text-gray-600">
-                                                <Download className="w-4 h-4" />
-                                            </Button>
+                                            <Link to={`/admin/letters/edit/${letter.id}`}>
+                                                <Button variant="outline" size="sm" title="Edit" className="h-8 px-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-100">
+                                                    <Pencil className="w-4 h-4" />
+                                                </Button>
+                                            </Link>
                                             <Button variant="outline" size="sm" onClick={() => handleDelete(letter.id)} title="Hapus" className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-100">
                                                 <Trash2 className="w-4 h-4" />
                                             </Button>

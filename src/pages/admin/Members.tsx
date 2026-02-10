@@ -17,11 +17,14 @@ import { Button } from '../../components/ui/button';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { DataTable } from '../../components/ui/DataTable';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 
 export function AdminMembers() {
     const [members, setMembers] = useState<Profile[]>([]);
     const [loading, setLoading] = useState(true);
     const [filterRole, setFilterRole] = useState('All');
+    const [filterPremium, setFilterPremium] = useState('All');
 
     // Edit/View State
     const [editingMember, setEditingMember] = useState<Profile | null>(null);
@@ -52,16 +55,24 @@ export function AdminMembers() {
     // Derived state for counts
     const inactiveCount = members.filter(m => Number(m.is_active) === 0).length;
 
-    const filteredMembers = members.filter(m => {
-        // First filter by Tab (Active vs Inactive)
-        const isActive = Number(m.is_active) === 1;
-        if (activeTab === 'active' && !isActive) return false;
-        if (activeTab === 'inactive' && isActive) return false;
+    const filteredMembers = members
+        .filter(m => {
+            // First filter by Tab (Active vs Inactive)
+            const isActive = Number(m.is_active) === 1;
+            if (activeTab === 'active' && !isActive) return false;
+            if (activeTab === 'inactive' && isActive) return false;
 
-        // Then filter by Role
-        if (filterRole === 'All') return true;
-        return m.role === filterRole;
-    });
+            // Then filter by Role
+            if (filterRole !== 'All' && m.role !== filterRole) return false;
+
+            // Then filter by Premium
+            const isPremium = m.premium_until && new Date(m.premium_until) > new Date();
+            if (filterPremium === 'Premium' && !isPremium) return false;
+            if (filterPremium === 'Reguler' && isPremium) return false;
+
+            return true;
+        })
+        .sort((a, b) => (a.nama || '').localeCompare(b.nama || ''));
 
     const handleActivate = async (member: Profile) => {
         if (!confirm(`Aktifkan akun ${member.nama}?`)) return;
@@ -117,6 +128,30 @@ export function AdminMembers() {
         } finally {
             setIsSaving(false);
         }
+    };
+
+    const handleExport = () => {
+        if (filteredMembers.length === 0) {
+            return toast.error('Tidak ada data untuk diekspor');
+        }
+
+        const dataToExport = filteredMembers.map(m => ({
+            'Nama': m.nama,
+            'Email': m.email,
+            'Role': m.role,
+            'Status': Number(m.is_active) === 1 ? 'Aktif' : 'Pending',
+            'Tipe Akun': (m.premium_until && new Date(m.premium_until) > new Date()) ? 'Premium' : 'Reguler',
+            'Tanggal Bergabung': m.created_at ? format(new Date(m.created_at), 'yyyy-MM-dd') : '-'
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Anggota");
+
+        const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+        const data = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8' });
+        saveAs(data, `Data_Anggota_MGMP_${format(new Date(), 'yyyyMMdd_HHmm')}.xlsx`);
+        toast.success('Data berhasil diekspor');
     };
 
     // Enhanced columns with Activate shortcut for Inactive tab
@@ -241,18 +276,32 @@ export function AdminMembers() {
     ];
 
     const FilterContent = (
-        <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-gray-500" />
-            <select
-                value={filterRole}
-                onChange={(e) => setFilterRole(e.target.value)}
-                className="px-3 py-2 rounded-lg border border-gray-200 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-                <option value="All">Semua Role</option>
-                <option value="Admin">Admin</option>
-                <option value="Member">Member</option>
-                <option value="Pengurus">Pengurus</option>
-            </select>
+        <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+                <Filter className="w-4 h-4 text-gray-500" />
+                <select
+                    value={filterRole}
+                    onChange={(e) => setFilterRole(e.target.value)}
+                    className="px-3 py-2 rounded-lg border border-gray-200 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                    <option value="All">Semua Role</option>
+                    <option value="Admin">Admin</option>
+                    <option value="Member">Member</option>
+                    <option value="Pengurus">Pengurus</option>
+                </select>
+            </div>
+            <div className="flex items-center gap-2">
+                <Crown className="w-4 h-4 text-gray-500" />
+                <select
+                    value={filterPremium}
+                    onChange={(e) => setFilterPremium(e.target.value)}
+                    className="px-3 py-2 rounded-lg border border-gray-200 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                    <option value="All">Semua Status Akun</option>
+                    <option value="Premium">Premium</option>
+                    <option value="Reguler">Reguler</option>
+                </select>
+            </div>
         </div>
     );
 
@@ -265,7 +314,7 @@ export function AdminMembers() {
                 </div>
                 <div className="flex gap-2">
                     <Button variant="outline" onClick={fetchMembers}>Refresh</Button>
-                    <Button>Export Data</Button>
+                    <Button onClick={handleExport} className="bg-green-600 hover:bg-green-700">Export Data</Button>
                 </div>
             </div>
 
