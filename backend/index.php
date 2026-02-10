@@ -221,6 +221,16 @@ if ($resource === 'news') {
     } else {
         echo $controller->getSettings();
     }
+} elseif ($resource === 'gallery') {
+    include_once './controllers/GalleryController.php';
+    $controller = new GalleryController();
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        echo $controller->getImages();
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        echo $controller->createImage($input);
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action) {
+        echo $controller->deleteImage($action);
+    }
 } elseif ($resource === 'members') {
     include_once './controllers/MemberController.php';
     $controller = new MemberController();
