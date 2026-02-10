@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Camera, Save, User as UserIcon, Building2, GraduationCap, Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { api } from '../../lib/api';
+import { getFileUrl } from '../../lib/api';
 import { settingsService } from '../../services/settingsService';
 import { Button } from '../../components/ui/button';
 
@@ -131,7 +132,7 @@ export function EditProfile() {
                         <div className="relative group">
                             <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-gray-100 bg-gray-100 flex items-center justify-center">
                                 {avatarUrl ? (
-                                    <img src={avatarUrl} alt="Profil" className="w-full h-full object-cover" />
+                                    <img src={getFileUrl(avatarUrl)} alt="Profil" className="w-full h-full object-cover" />
                                 ) : (
                                     <UserIcon className="w-12 h-12 text-gray-400" />
                                 )}

@@ -23,6 +23,7 @@ import {
     UserCheck
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { getFileUrl } from '../../lib/api';
 // import { Button } from '../../components/ui/button';
 
 export function AdminLayout() {
@@ -89,7 +90,7 @@ export function AdminLayout() {
             <div className="relative">
                 <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold border-2 border-white shadow-sm overflow-hidden shrink-0">
                     {user?.foto_profile ? (
-                        <img src={user.foto_profile} alt="Profile" className="w-full h-full object-cover" />
+                        <img src={getFileUrl(user.foto_profile)} alt="Profile" className="w-full h-full object-cover" />
                     ) : (
                         <span>{user?.email?.charAt(0).toUpperCase()}</span>
                     )}

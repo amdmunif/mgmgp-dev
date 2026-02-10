@@ -12,6 +12,7 @@ import {
     Filter
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { getFileUrl } from '../../lib/api';
 import { Button } from '../../components/ui/button';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
@@ -128,7 +129,7 @@ export function AdminMembers() {
             cell: (member: Profile) => (
                 <div className="w-10 h-10 rounded-full bg-gray-100 overflow-hidden border border-gray-200">
                     {member.foto_profile ? (
-                        <img src={member.foto_profile} alt={member.nama} className="w-full h-full object-cover" />
+                        <img src={getFileUrl(member.foto_profile)} alt={member.nama} className="w-full h-full object-cover" />
                     ) : (
                         <div className="w-full h-full flex items-center justify-center bg-blue-100 text-blue-600 font-bold">
                             {member.nama ? member.nama.charAt(0).toUpperCase() : <User className="w-5 h-5" />}
@@ -324,7 +325,7 @@ export function AdminMembers() {
                             <div className="flex items-center gap-4">
                                 <div className="w-16 h-16 rounded-full bg-gray-100 overflow-hidden border border-gray-200 shrink-0">
                                     {viewingMember.foto_profile ? (
-                                        <img src={viewingMember.foto_profile} alt={viewingMember.nama} className="w-full h-full object-cover" />
+                                        <img src={getFileUrl(viewingMember.foto_profile)} alt={viewingMember.nama} className="w-full h-full object-cover" />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center bg-blue-100 text-blue-600 font-bold text-xl">
                                             {viewingMember.nama ? viewingMember.nama.charAt(0).toUpperCase() : <User className="w-8 h-8" />}

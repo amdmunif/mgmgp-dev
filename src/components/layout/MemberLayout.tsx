@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { cn } from '../../lib/utils';
+import { getFileUrl } from '../../lib/api';
 
 export function MemberLayout() {
     const navigate = useNavigate();
@@ -115,7 +116,7 @@ export function MemberLayout() {
             <div className="relative">
                 <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold border-2 border-white shadow-sm overflow-hidden shrink-0">
                     {user?.foto_profile ? (
-                        <img src={user.foto_profile} alt="Profile" className="w-full h-full object-cover" />
+                        <img src={getFileUrl(user.foto_profile)} alt="Profile" className="w-full h-full object-cover" />
                     ) : (
                         <span>{user?.email?.charAt(0).toUpperCase()}</span>
                     )}
