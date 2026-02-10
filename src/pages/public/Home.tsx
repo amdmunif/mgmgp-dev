@@ -42,6 +42,12 @@ export function Home() {
         fetchData();
     }, []);
 
+    const stripHtml = (html: string) => {
+        const tmp = document.createElement("DIV");
+        tmp.innerHTML = html;
+        return tmp.textContent || tmp.innerText || "";
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
@@ -169,7 +175,7 @@ export function Home() {
                                     <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2 group-hover:text-primary-600 transition-colors">
                                         <Link to={`/news/${item.id}`}>{item.title}</Link>
                                     </h3>
-                                    <p className="text-gray-600 text-sm line-clamp-3 mb-4">{item.content}</p>
+                                    <p className="text-gray-600 text-sm line-clamp-3 mb-4">{stripHtml(item.content)}</p>
                                     <Link to={`/news/${item.id}`} className="text-primary-600 font-semibold text-sm hover:underline flex items-center">
                                         Baca Selengkapnya <ArrowRight className="w-4 h-4 ml-1" />
                                     </Link>
@@ -218,7 +224,7 @@ export function Home() {
                                     <h3 className="text-2xl font-bold text-gray-900 mb-2 group-hover:text-primary-600 transition-colors">
                                         <Link to={`/events/${event.id}`}>{event.title}</Link>
                                     </h3>
-                                    <p className="text-gray-600 mb-4 line-clamp-2">{event.description}</p>
+                                    <p className="text-gray-600 mb-4 line-clamp-2">{stripHtml(event.description)}</p>
                                 </div>
                                 <div className="flex justify-end">
                                     <Link to={`/events/${event.id}`}>
