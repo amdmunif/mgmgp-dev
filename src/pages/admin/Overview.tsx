@@ -79,7 +79,7 @@ export function DashboardOverview() {
             trendUp: true
         },
         {
-            label: 'Premium Users',
+            label: 'Anggota Premium',
             value: stats.premium,
             icon: TrendingUp,
             color: 'bg-orange-500',
@@ -114,7 +114,7 @@ export function DashboardOverview() {
                                         <Users className="w-5 h-5" />
                                     </div>
                                     <div>
-                                        <p className="font-bold text-gray-900">{stats.pendingMembers} Member Baru</p>
+                                        <p className="font-bold text-gray-900">{stats.pendingMembers} Anggota Baru</p>
                                         <p className="text-xs text-gray-500">Menunggu konfirmasi aktivasi akun</p>
                                     </div>
                                 </div>

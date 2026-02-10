@@ -380,7 +380,7 @@ export function AdminLayout() {
                                         className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600"
                                         onClick={() => setIsProfileOpen(false)}
                                     >
-                                        <User className="w-4 h-4" /> Member Area
+                                        <User className="w-4 h-4" /> Area Anggota
                                     </Link>
 
                                     <div className="h-px bg-gray-100 my-1" />

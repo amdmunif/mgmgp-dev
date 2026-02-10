@@ -122,16 +122,16 @@ export function MemberLayout() {
                     )}
                 </div>
                 {isPremium && (
-                    <div className="absolute -bottom-1 -right-1 bg-yellow-400 text-white rounded-full p-0.5 border-2 border-white" title="Premium Member">
+                    <div className="absolute -bottom-1 -right-1 bg-yellow-400 text-white rounded-full p-0.5 border-2 border-white" title="Anggota Premium">
                         <Crown className="w-3 h-3" />
                     </div>
                 )}
             </div>
 
             <div className={cn("flex-1 min-w-0", mobile ? "block" : "hidden md:block")}>
-                <p className="text-sm font-bold text-gray-900 truncate">{user?.nama || 'Member'}</p>
+                <p className="text-sm font-bold text-gray-900 truncate">{user?.nama || 'Anggota'}</p>
                 {/* Show status on both mobile and desktop (in dropdown trigger) now? No, user asked for it IN dropdown content */}
-                {mobile && <p className="text-xs text-gray-500">{isPremium ? 'Premium Member' : 'Reguler Member'}</p>}
+                {mobile && <p className="text-xs text-gray-500">{isPremium ? 'Anggota Premium' : 'Anggota Reguler'}</p>}
             </div>
 
             {/* Dropdown Trigger for Desktop */}
@@ -142,7 +142,7 @@ export function MemberLayout() {
     );
 
     // Get current page label
-    const currentPage = menuItems.find(item => item.path === location.pathname) || { label: 'Member Area' };
+    const currentPage = menuItems.find(item => item.path === location.pathname) || { label: 'Area Anggota' };
 
     // Hardcode label for sub-pages or unknown paths
     const getPageTitle = () => {
@@ -174,7 +174,7 @@ export function MemberLayout() {
                             <BookOpen className="w-5 h-5" />
                         </div>
                     )}
-                    <span className="font-bold text-lg text-primary-900">MGMP Member</span>
+                    <span className="font-bold text-lg text-primary-900">MGMP Anggota</span>
 
                     <button onClick={() => setIsSidebarOpen(false)} className="md:hidden text-gray-500 hover:bg-gray-100 p-1 rounded ml-auto">
                         <X className="w-5 h-5" />
@@ -253,10 +253,10 @@ export function MemberLayout() {
                                     <BookOpen className="w-5 h-5" />
                                 </div>
                             )}
-                            <span className="font-bold text-lg text-primary-900">MGMP Member</span>
+                            <span className="font-bold text-lg text-primary-900">MGMP Anggota</span>
                         </div>
 
-                        {/* Page Title in Header (Hidden on mobile if user wants Branding, or maybe kept? User said "pastikan ada tulisan MGMP Member". Let's hide page title on mobile or show small?
+                        {/* Page Title in Header (Hidden on mobile if user wants Branding, or maybe kept? User said "pastikan ada tulisan MGMP Anggota". Let's hide page title on mobile or show small?
                            Let's hide Page Title on mobile to make room for Branding, or keep it if space allows. Safe bet: Show Branding on mobile as requested. Page Title can be in content or separate.
                            Wait, usually mobile headers are "Hamburger | Logo + AppName". Page title is secondary.
                            Existing code showed Page Title on mobile: `<h1 ...>{getPageTitle()}</h1>`.
@@ -282,10 +282,10 @@ export function MemberLayout() {
                                     <div className="flex items-center gap-2 mt-1">
                                         {isPremium ? (
                                             <span className="text-[10px] bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 py-0.5 rounded-full font-bold flex items-center gap-1 w-fit">
-                                                <Crown className="w-3 h-3" /> PREMIUM MEMBER
+                                                <Crown className="w-3 h-3" /> ANGGOTA PREMIUM
                                             </span>
                                         ) : (
-                                            <span className="text-[10px] bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full font-medium w-fit">REGULER MEMBER</span>
+                                            <span className="text-[10px] bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full font-medium w-fit">ANGGOTA REGULER</span>
                                         )}
                                     </div>
                                     <p className="text-xs text-gray-400 mt-1 truncate">{user?.email}</p>

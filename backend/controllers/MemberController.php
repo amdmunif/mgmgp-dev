@@ -74,11 +74,11 @@ class MemberController
             }
 
             $this->conn->commit();
-            return json_encode(["message" => "Member updated successfully"]);
+            return json_encode(["message" => "Data Anggota berhasil diperbarui"]);
         } catch (Exception $e) {
             $this->conn->rollBack();
             http_response_code(500);
-            return json_encode(["message" => "Failed to update member: " . $e->getMessage()]);
+            return json_encode(["message" => "Gagal memperbarui data anggota: " . $e->getMessage()]);
         }
     }
 
@@ -94,11 +94,11 @@ class MemberController
         $stmt->bindParam(':id', $id);
 
         if ($stmt->execute()) {
-            return json_encode(["message" => "Member deleted successfully"]);
+            return json_encode(["message" => "Data Anggota berhasil dihapus"]);
         }
 
         http_response_code(500);
-        return json_encode(["message" => "Failed to delete member"]);
+        return json_encode(["message" => "Gagal menghapus data anggota"]);
     }
 }
 ?>

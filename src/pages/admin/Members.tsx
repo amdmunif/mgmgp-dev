@@ -29,7 +29,7 @@ export function AdminMembers() {
     // Edit/View State
     const [editingMember, setEditingMember] = useState<Profile | null>(null);
     const [viewingMember, setViewingMember] = useState<Profile | null>(null);
-    const [editForm, setEditForm] = useState({ nama: '', email: '', role: 'Member', is_active: 0 });
+    const [editForm, setEditForm] = useState({ nama: '', email: '', role: 'Anggota', is_active: 0 });
     const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
@@ -78,10 +78,10 @@ export function AdminMembers() {
         if (!confirm(`Aktifkan akun ${member.nama}?`)) return;
         try {
             await memberService.update(member.id, { is_active: 1 });
-            toast.success('Member berhasil diaktifkan');
+            toast.success('Anggota berhasil diaktifkan');
             fetchMembers();
         } catch (error) {
-            toast.error('Gagal mengaktifkan member');
+            toast.error('Gagal mengaktifkan anggota');
         }
     };
 
@@ -92,7 +92,7 @@ export function AdminMembers() {
         setEditForm({
             nama: member.nama || '',
             email: member.email || '',
-            role: member.role || 'Member',
+            role: member.role || 'Anggota',
             is_active: Number(member.is_active) === 1 ? 1 : 0
         });
     };
@@ -101,10 +101,10 @@ export function AdminMembers() {
         if (!confirm('Apakah Anda yakin ingin menghapus member ini?')) return;
         try {
             await memberService.delete(id);
-            toast.success('Member dihapus');
+            toast.success('Anggota dihapus');
             fetchMembers();
         } catch (error) {
-            toast.error('Gagal menghapus member');
+            toast.error('Gagal menghapus anggota');
         }
     };
 
@@ -116,15 +116,15 @@ export function AdminMembers() {
             await memberService.update(editingMember.id, {
                 nama: editForm.nama,
                 email: editForm.email,
-                role: editForm.role as 'Admin' | 'Member' | 'Pengurus',
+                role: editForm.role as 'Admin' | 'Anggota' | 'Pengurus',
                 is_active: Number(editForm.is_active)
             });
-            toast.success('Member berhasil diupdate');
+            toast.success('Anggota berhasil diupdate');
             fetchMembers();
             setEditingMember(null);
         } catch (error) {
             console.error(error);
-            toast.error('Gagal update member');
+            toast.error('Gagal update anggota');
         } finally {
             setIsSaving(false);
         }
@@ -195,7 +195,7 @@ export function AdminMembers() {
                     : 'bg-gray-100 text-gray-600 border-gray-200'
                     }`}>
                     {member.role === 'Admin' ? <ShieldCheck className="w-3 h-3" /> : <User className="w-3 h-3" />}
-                    {member.role || 'Member'}
+                    {member.role || 'Anggota'}
                 </span>
             )
         },
@@ -244,7 +244,7 @@ export function AdminMembers() {
                         <button
                             onClick={() => handleActivate(member)}
                             className="p-2 hover:bg-green-50 rounded-lg text-gray-400 hover:text-green-600 transition-colors"
-                            title="Aktifkan Member"
+                            title="Aktifkan Anggota"
                         >
                             <ShieldCheck className="w-4 h-4" />
                         </button>
@@ -286,7 +286,7 @@ export function AdminMembers() {
                 >
                     <option value="All">Semua Role</option>
                     <option value="Admin">Admin</option>
-                    <option value="Member">Member</option>
+                    <option value="Anggota">Anggota</option>
                     <option value="Pengurus">Pengurus</option>
                 </select>
             </div>
@@ -327,7 +327,7 @@ export function AdminMembers() {
                         : 'border-transparent text-gray-500 hover:text-gray-700'
                         }`}
                 >
-                    Member Aktif
+                    Anggota Aktif
                 </button>
                 <button
                     onClick={() => setActiveTab('inactive')}
@@ -336,7 +336,7 @@ export function AdminMembers() {
                         : 'border-transparent text-gray-500 hover:text-gray-700'
                         }`}
                 >
-                    Verifikasi Member
+                    Verifikasi Anggota
                     {inactiveCount > 0 && (
                         <span className="w-5 h-5 rounded-full bg-red-100 text-red-600 text-xs flex items-center justify-center">
                             {inactiveCount}
@@ -463,7 +463,7 @@ export function AdminMembers() {
                                     onChange={(e) => setEditForm(prev => ({ ...prev, role: e.target.value }))}
                                     className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white"
                                 >
-                                    <option value="Member">Reguler Member</option>
+                                    <option value="Anggota">Anggota Reguler</option>
                                     <option value="Admin">Administrator</option>
                                     <option value="Pengurus">Pengurus</option>
                                 </select>

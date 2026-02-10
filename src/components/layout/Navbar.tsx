@@ -63,7 +63,7 @@ export function Navbar() {
                                 <Link to="/member">
                                     <Button variant="default" size="sm" className="bg-primary-900 hover:bg-primary-800">
                                         <LayoutDashboard className="w-4 h-4 mr-2" />
-                                        Member Area
+                                        Area Anggota
                                     </Button>
                                 </Link>
                                 <Link to="/member/profile">
