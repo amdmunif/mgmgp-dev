@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { cn } from '../../lib/utils';
-import { BookOpen, FileText, Presentation, File, Download } from 'lucide-react';
+import { BookOpen, FileText, Presentation, File, Download, Loader2 } from 'lucide-react';
 import { learningService } from '../../services/learningService';
+import { getFileUrl } from '../../lib/api';
 import type { LearningMaterial } from '../../types';
 
 type Tab = 'cp' | 'tp' | 'rpp';
@@ -78,7 +79,9 @@ export function Learning() {
 
             <div className="space-y-6 min-h-[300px]">
                 {loading ? (
-                    <div className="text-center py-20 text-gray-500">Memuat materi...</div>
+                    <div className="flex justify-center py-20">
+                        <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
+                    </div>
                 ) : filteredMaterials.length === 0 ? (
                     <div className="text-center py-20 bg-gray-50 rounded-lg">
                         <File className="w-12 h-12 text-gray-300 mx-auto mb-3" />
@@ -108,7 +111,7 @@ export function Learning() {
 
                                 {item.file_url ? (
                                     <a
-                                        href={item.file_url}
+                                        href={getFileUrl(item.file_url)}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="inline-flex items-center text-sm font-medium text-primary-600 hover:text-primary-700 mt-2"

@@ -1,17 +1,42 @@
 import { Link } from 'react-router-dom';
-import { useState } from 'react';
-import { MOCK_EVENTS } from '../../lib/mock';
+import { useState, useEffect } from 'react';
+import { api, getFileUrl } from '../../lib/api';
 import { formatDate } from '../../lib/utils';
 import { Button } from '../../components/ui/button';
-import { Calendar, MapPin, Search, ArrowRight } from 'lucide-react';
+import { Calendar, MapPin, Search, ArrowRight, Loader2 } from 'lucide-react';
+import type { Event } from '../../types';
 
 export function Events() {
+    const [events, setEvents] = useState<Event[]>([]);
+    const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
 
-    const filteredEvents = MOCK_EVENTS.filter(event =>
+    useEffect(() => {
+        const fetchEvents = async () => {
+            try {
+                const data = await api.get<Event[]>('/events');
+                setEvents(data);
+            } catch (error) {
+                console.error('Error fetching events:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchEvents();
+    }, []);
+
+    const filteredEvents = events.filter(event =>
         event.title.toLowerCase().includes(search.toLowerCase()) ||
         event.description.toLowerCase().includes(search.toLowerCase())
     );
+
+    if (loading) {
+        return (
+            <div className="min-h-[400px] flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-screen-xl mx-auto px-4 py-8">
@@ -38,7 +63,11 @@ export function Events() {
                 {filteredEvents.map((event) => (
                     <div key={event.id} className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col md:flex-row overflow-hidden group">
                         <div className="md:w-1/3 h-48 md:h-auto overflow-hidden relative">
-                            <img src={event.image_url} alt={event.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                            <img
+                                src={getFileUrl(event.image_url)}
+                                alt={event.title}
+                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                            />
                             <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-md text-sm font-bold shadow-sm">
                                 {new Date(event.date).toLocaleDateString('id-ID', { month: 'short', day: 'numeric' })}
                             </div>
@@ -65,6 +94,11 @@ export function Events() {
                         </div>
                     </div>
                 ))}
+                {!loading && filteredEvents.length === 0 && (
+                    <div className="text-center py-12 text-gray-400">
+                        Tidak ada agenda kegiatan yang ditemukan.
+                    </div>
+                )}
             </div>
         </div>
     );

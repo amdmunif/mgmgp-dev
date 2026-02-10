@@ -4,6 +4,7 @@ export interface Profile {
     role: 'Admin' | 'Pengurus' | 'Anggota';
     email: string;
     avatar_url?: string;
+    foto_profile?: string; // Standardized field from DB
     premium_until?: string | null;
 }
 
@@ -58,11 +59,14 @@ export interface QuestionOption {
 export interface Question {
     id: string;
     type: 'single_choice' | 'multiple_choice' | 'true_false' | 'essay';
-    text: string;
+    content: string; // Using content instead of text to match DB
     options?: QuestionOption[];
     points: number;
     tp_id?: string;
     tp_code?: string;
+    mapel: string;
+    kelas: string;
+    level: string;
 }
 
 export interface QuestionBank {
@@ -113,5 +117,18 @@ export interface Reference {
     created_at: string;
 }
 
-
-
+export interface SiteSettings {
+    site_title: string;
+    site_description: string;
+    logo_url: string;
+    email: string;
+    phone: string;
+    address: string;
+    profile_visi: string;
+    profile_misi: string; // JSON string or array
+    profile_sejarah: string;
+    profile_struktur: string; // JSON string or array
+    home_hero_title?: string;
+    home_hero_subtitle?: string;
+    home_hero_image?: string;
+}

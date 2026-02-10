@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { questionService, type Question } from '../../services/questionService';
 import { authService } from '../../services/authService';
+import { getFileUrl } from '../../lib/api';
 import { Button } from '../../components/ui/button';
 import { toast } from 'react-hot-toast';
 import { Document, Packer, Paragraph, TextRun, ImageRun } from 'docx';
@@ -434,7 +435,12 @@ export function QuestionBankPage() {
                             </button>
                         </div>
 
-                        <div className="prose prose-sm max-w-none mb-6 p-4 bg-gray-50 rounded-lg border border-gray-100" dangerouslySetInnerHTML={{ __html: viewingQuestion.content }} />
+                        <div
+                            className="prose prose-sm max-w-none mb-6 p-4 bg-gray-50 rounded-lg border border-gray-100 question-content"
+                            dangerouslySetInnerHTML={{
+                                __html: viewingQuestion.content.replace(/src="uploads\//g, `src="${getFileUrl('/uploads/')}`)
+                            }}
+                        />
 
                         <div className="space-y-2">
                             <h4 className="font-semibold text-sm text-gray-700">Pilihan Jawaban:</h4>

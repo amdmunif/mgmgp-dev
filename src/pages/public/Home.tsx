@@ -1,13 +1,54 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
-import { ArrowRight, Calendar, BookOpen, Users, MapPin, Mail, Phone, Send } from 'lucide-react';
-import { MOCK_NEWS, MOCK_EVENTS } from '../../lib/mock';
+import { ArrowRight, Calendar, BookOpen, Users, MapPin, Mail, Phone, Send, Loader2 } from 'lucide-react';
+import { api, getFileUrl } from '../../lib/api';
 import { formatDate } from '../../lib/utils';
+import type { NewsArticle, Event } from '../../types';
 
 export function Home() {
-    // Get latest 3 news and events
-    const latestNews = MOCK_NEWS.slice(0, 3);
-    const latestEvents = MOCK_EVENTS.slice(0, 3);
+    const [news, setNews] = useState<NewsArticle[]>([]);
+    const [events, setEvents] = useState<Event[]>([]);
+    const [stats, setStats] = useState({
+        members: 0,
+        materials: 0,
+        events: 0
+    });
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [newsRes, eventsRes, statsRes] = await Promise.all([
+                    api.get<NewsArticle[]>('/news'),
+                    api.get<Event[]>('/events'),
+                    api.get<any>('/stats')
+                ]);
+
+                setNews(newsRes.slice(0, 3));
+                setEvents(eventsRes.slice(0, 3));
+                setStats({
+                    members: statsRes.members || 0,
+                    materials: statsRes.materials || 0,
+                    events: statsRes.events || 0
+                });
+            } catch (error) {
+                console.error('Error fetching landing data:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, []);
+
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-16 pb-16">
@@ -46,7 +87,7 @@ export function Home() {
                             <Users className="w-8 h-8" />
                         </div>
                         <div>
-                            <h3 className="text-3xl font-bold text-gray-900">120+</h3>
+                            <h3 className="text-3xl font-bold text-gray-900">{stats.members || 0}+</h3>
                             <p className="text-gray-500">Anggota Aktif</p>
                         </div>
                     </div>
@@ -55,8 +96,8 @@ export function Home() {
                             <Calendar className="w-8 h-8" />
                         </div>
                         <div>
-                            <h3 className="text-3xl font-bold text-gray-900">24+</h3>
-                            <p className="text-gray-500">Kegiatan Tahunan</p>
+                            <h3 className="text-3xl font-bold text-gray-900">{stats.events || 0}+</h3>
+                            <p className="text-gray-500">Kegiatan</p>
                         </div>
                     </div>
                     <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100 flex items-center space-x-4">
@@ -64,7 +105,7 @@ export function Home() {
                             <BookOpen className="w-8 h-8" />
                         </div>
                         <div>
-                            <h3 className="text-3xl font-bold text-gray-900">50+</h3>
+                            <h3 className="text-3xl font-bold text-gray-900">{stats.materials || 0}+</h3>
                             <p className="text-gray-500">Modul Pembelajaran</p>
                         </div>
                     </div>
@@ -107,28 +148,35 @@ export function Home() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        {latestNews.map((news) => (
-                            <div key={news.id} className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow group">
+                        {news.map((item) => (
+                            <div key={item.id} className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow group">
                                 <div className="h-48 overflow-hidden relative">
-                                    <img src={news.image_url} alt={news.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                                    <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold shadow-sm text-primary-700">
-                                        {news.category}
-                                    </div>
+                                    <img
+                                        src={getFileUrl(item.image_url)}
+                                        alt={item.title}
+                                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                    />
+                                    {item.category && (
+                                        <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold shadow-sm text-primary-700">
+                                            {item.category}
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="p-6">
                                     <div className="text-xs text-gray-500 mb-3 flex items-center gap-2">
-                                        <Calendar className="w-3 h-3" /> {formatDate(news.created_at)}
+                                        <Calendar className="w-3 h-3" /> {formatDate(item.created_at)}
                                     </div>
                                     <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2 group-hover:text-primary-600 transition-colors">
-                                        <Link to={`/news/${news.id}`}>{news.title}</Link>
+                                        <Link to={`/news/${item.id}`}>{item.title}</Link>
                                     </h3>
-                                    <p className="text-gray-600 text-sm line-clamp-3 mb-4">{news.content}</p>
-                                    <Link to={`/news/${news.id}`} className="text-primary-600 font-semibold text-sm hover:underline flex items-center">
+                                    <p className="text-gray-600 text-sm line-clamp-3 mb-4">{item.content}</p>
+                                    <Link to={`/news/${item.id}`} className="text-primary-600 font-semibold text-sm hover:underline flex items-center">
                                         Baca Selengkapnya <ArrowRight className="w-4 h-4 ml-1" />
                                     </Link>
                                 </div>
                             </div>
                         ))}
+                        {news.length === 0 && <div className="col-span-3 text-center py-12 text-gray-400">Belum ada berita terbaru.</div>}
                     </div>
                 </div>
             </section>
@@ -146,10 +194,14 @@ export function Home() {
                 </div>
 
                 <div className="space-y-6">
-                    {latestEvents.map((event) => (
+                    {events.map((event) => (
                         <div key={event.id} className="bg-white border border-gray-100 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col md:flex-row group">
                             <div className="md:w-1/4 h-48 md:h-auto overflow-hidden relative">
-                                <img src={event.image_url} alt={event.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                                <img
+                                    src={getFileUrl(event.image_url)}
+                                    alt={event.title}
+                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                />
                                 <div className="absolute top-4 left-4 bg-primary-600 text-white px-4 py-2 rounded-lg text-center shadow-md">
                                     <span className="block text-xl font-bold">{new Date(event.date).getDate()}</span>
                                     <span className="text-xs uppercase">{new Date(event.date).toLocaleString('id-ID', { month: 'short' })}</span>
@@ -176,6 +228,7 @@ export function Home() {
                             </div>
                         </div>
                     ))}
+                    {events.length === 0 && <div className="text-center py-12 text-gray-400">Belum ada agenda kegiatan mendatang.</div>}
                 </div>
             </section>
 

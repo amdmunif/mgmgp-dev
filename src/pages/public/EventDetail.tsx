@@ -1,21 +1,64 @@
 import { useParams, Link } from 'react-router-dom';
-import { MOCK_EVENTS } from '../../lib/mock';
+import { useEffect, useState } from 'react';
+import { api, getFileUrl } from '../../lib/api';
 import { formatDate } from '../../lib/utils';
 import { Button } from '../../components/ui/button';
-import { Calendar, MapPin, ArrowLeft, Clock, Share2, ExternalLink, Lock } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Calendar, MapPin, ArrowLeft, Clock, Share2, Lock, Loader2 } from 'lucide-react';
 import { authService } from '../../services/authService';
+import type { Event } from '../../types';
 
 export function EventDetail() {
     const { id } = useParams<{ id: string }>();
-    const event = MOCK_EVENTS.find(e => e.id === id);
+    const [event, setEvent] = useState<Event | null>(null);
+    const [loading, setLoading] = useState(true);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [isJoining, setIsJoining] = useState(false);
+    const [participation, setParticipation] = useState<any>(null);
 
     useEffect(() => {
-        authService.getCurrentUser().then(session => {
-            setIsAuthenticated(!!session?.user);
-        });
-    }, []);
+        const fetchEventDetail = async () => {
+            try {
+                const [eventRes, userRes] = await Promise.all([
+                    api.get<Event>(`/events/${id}`),
+                    authService.getCurrentUser()
+                ]);
+                setEvent(eventRes);
+                setIsAuthenticated(!!userRes?.user);
+
+                if (userRes?.user) {
+                    const part = await api.get<any>(`/events/${id}/participation`);
+                    setParticipation(part);
+                }
+            } catch (error) {
+                console.error('Error fetching event detail:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchEventDetail();
+    }, [id]);
+
+    const handleJoin = async () => {
+        if (!event) return;
+        setIsJoining(true);
+        try {
+            await api.post(`/events/${event.id}/join`, {});
+            const part = await api.get<any>(`/events/${event.id}/participation`);
+            setParticipation(part);
+        } catch (error) {
+            console.error('Failed to join event:', error);
+        } finally {
+            setIsJoining(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
+            </div>
+        );
+    }
 
     if (!event) {
         return (
@@ -28,7 +71,6 @@ export function EventDetail() {
         );
     }
 
-    // Dummy logic for event time, assuming 08:00 - 16:00 if not specified
     const startTime = "08:00";
     const endTime = "16:00 WIB";
 
@@ -37,7 +79,7 @@ export function EventDetail() {
             {/* Header Image */}
             <div className="h-64 md:h-96 w-full relative">
                 <img
-                    src={event.image_url}
+                    src={getFileUrl(event.image_url)}
                     alt={event.title}
                     className="w-full h-full object-cover"
                 />
@@ -63,40 +105,17 @@ export function EventDetail() {
             </div>
 
             <div className="max-w-6xl mx-auto px-4 -mt-10 relative z-10 grid grid-cols-1 md:grid-cols-3 gap-8">
-                {/* Main Content */}
                 <div className="md:col-span-2 space-y-8">
                     <div className="bg-white rounded-xl shadow-sm p-8">
                         <h2 className="text-2xl font-bold text-gray-900 mb-4">Tentang Kegiatan</h2>
-                        <div className="prose text-gray-600 leading-relaxed">
+                        <div className="prose text-gray-600 leading-relaxed max-w-none">
                             {event.description.split('\n').map((paragraph, index) => (
                                 <p key={index} className="mb-4">{paragraph}</p>
                             ))}
-                            <p>
-                                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-                            </p>
-                            <h3>Materi yang akan dipelajari:</h3>
-                            <ul>
-                                <li>Pengenalan Konsep Dasar</li>
-                                <li>Implementasi Praktis di Kelas</li>
-                                <li>Evaluasi dan Asesmen</li>
-                                <li>Tanya Jawab dan Diskusi</li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    {/* Gallery Preview Loop (Mock) */}
-                    <div className="bg-white rounded-xl shadow-sm p-8">
-                        <h2 className="text-xl font-bold text-gray-900 mb-4">Dokumentasi Terkait</h2>
-                        <p className="text-gray-500 text-sm mb-4">Foto kegiatan sebelumnya atau terkait.</p>
-                        <div className="grid grid-cols-3 gap-4">
-                            <div className="bg-gray-200 aspect-square rounded-lg"></div>
-                            <div className="bg-gray-200 aspect-square rounded-lg"></div>
-                            <div className="bg-gray-200 aspect-square rounded-lg"></div>
                         </div>
                     </div>
                 </div>
 
-                {/* Sidebar Info */}
                 <div className="space-y-6">
                     <div className="bg-white rounded-xl shadow-md p-6 border-t-4 border-primary-600 sticky top-24">
                         <h3 className="font-bold text-gray-900 text-lg mb-4">Informasi Pendaftaran</h3>
@@ -114,22 +133,26 @@ export function EventDetail() {
                                 <div>
                                     <p className="text-sm text-gray-500">Lokasi Detail</p>
                                     <p className="font-medium text-gray-900">{event.location}</p>
-                                    <a href="#" className="text-xs text-primary-600 hover:underline flex items-center mt-1">
-                                        Lihat di Google Maps <ExternalLink className="w-3 h-3 ml-1" />
-                                    </a>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Restricted Logic */}
-                        {!event.is_registration_open ? (
+                        {participation ? (
+                            <div className="bg-green-50 text-green-700 p-4 rounded-lg text-center font-bold">
+                                Anda sudah terdaftar di kegiatan ini
+                            </div>
+                        ) : !event.is_registration_open ? (
                             <div className="bg-red-50 text-red-700 p-4 rounded-lg text-center font-medium">
                                 Pendaftaran Telah Ditutup
                             </div>
                         ) : isAuthenticated ? (
                             <div className="space-y-3">
-                                <Button className="w-full text-lg h-12 shadow-primary-500/20 hover:shadow-primary-500/40">
-                                    Daftar Sekarang
+                                <Button
+                                    className="w-full text-lg h-12 shadow-primary-500/20 hover:shadow-primary-500/40"
+                                    onClick={handleJoin}
+                                    disabled={isJoining}
+                                >
+                                    {isJoining ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Daftar Sekarang'}
                                 </Button>
                                 <p className="text-xs text-center text-gray-500">
                                     Kuota terbatas. Pendaftaran ditutup H-1 kegiatan.

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Book, Globe, Gamepad2, ExternalLink, Search } from 'lucide-react';
+import { Book, Globe, Gamepad2, ExternalLink, Search, Loader2 } from 'lucide-react';
 import { referenceService } from '../../services/resourcesService';
+import { getFileUrl } from '../../lib/api';
 import type { Reference } from '../../types';
 
 export function References() {
@@ -57,7 +58,9 @@ export function References() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {loading ? (
-                    <div className="col-span-full text-center py-20 text-gray-500">Memuat referensi...</div>
+                    <div className="col-span-full flex justify-center py-20">
+                        <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
+                    </div>
                 ) : filteredRefs.length === 0 ? (
                     <div className="col-span-full text-center py-20 bg-gray-50 rounded-xl">
                         <Book className="w-12 h-12 text-gray-300 mx-auto mb-3" />
@@ -74,7 +77,7 @@ export function References() {
                         >
                             <div className="aspect-video bg-gray-100 relative overflow-hidden flex items-center justify-center">
                                 {item.cover_image ? (
-                                    <img src={item.cover_image} alt={item.title} className="w-full h-full object-cover" />
+                                    <img src={getFileUrl(item.cover_image)} alt={item.title} className="w-full h-full object-cover" />
                                 ) : (
                                     getIcon(item.type)
                                 )}

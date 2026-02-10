@@ -1,17 +1,42 @@
 import { Link } from 'react-router-dom';
-import { useState } from 'react';
-import { MOCK_NEWS } from '../../lib/mock';
+import { useState, useEffect } from 'react';
+import { api, getFileUrl } from '../../lib/api';
 import { formatDate } from '../../lib/utils';
 import { Button } from '../../components/ui/button';
-import { Calendar, User, Search } from 'lucide-react';
+import { Calendar, User, Search, Loader2 } from 'lucide-react';
+import type { NewsArticle } from '../../types';
 
 export function News() {
+    const [news, setNews] = useState<NewsArticle[]>([]);
+    const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
 
-    const filteredNews = MOCK_NEWS.filter(news =>
-        news.title.toLowerCase().includes(search.toLowerCase()) ||
-        news.content.toLowerCase().includes(search.toLowerCase())
+    useEffect(() => {
+        const fetchNews = async () => {
+            try {
+                const data = await api.get<NewsArticle[]>('/news');
+                setNews(data);
+            } catch (error) {
+                console.error('Error fetching news:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchNews();
+    }, []);
+
+    const filteredNews = news.filter(item =>
+        item.title.toLowerCase().includes(search.toLowerCase()) ||
+        item.content.toLowerCase().includes(search.toLowerCase())
     );
+
+    if (loading) {
+        return (
+            <div className="min-h-[400px] flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-screen-xl mx-auto px-4 py-8">
@@ -35,26 +60,42 @@ export function News() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {filteredNews.map((news) => (
-                    <div key={news.id} className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-lg transition-shadow overflow-hidden flex flex-col">
+                {filteredNews.map((item) => (
+                    <div key={item.id} className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-lg transition-shadow overflow-hidden flex flex-col">
                         <div className="h-48 overflow-hidden relative">
-                            <img src={news.image_url} alt={news.title} className="w-full h-full object-cover transition-transform duration-500 hover:scale-110" />
+                            <img
+                                src={getFileUrl(item.image_url)}
+                                alt={item.title}
+                                className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
+                            />
+                            {item.category && (
+                                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold shadow-sm text-primary-700">
+                                    {item.category}
+                                </div>
+                            )}
                         </div>
                         <div className="p-5 flex-grow flex flex-col">
                             <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
-                                <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {formatDate(news.created_at)}</span>
-                                <span className="flex items-center gap-1"><User className="w-3 h-3" /> {news.author.name}</span>
+                                <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {formatDate(item.created_at)}</span>
+                                {item.author && (
+                                    <span className="flex items-center gap-1"><User className="w-3 h-3" /> {item.author.name}</span>
+                                )}
                             </div>
-                            <h5 className="mb-2 text-xl font-bold tracking-tight text-gray-900 line-clamp-2">{news.title}</h5>
-                            <p className="mb-4 font-normal text-gray-700 line-clamp-3 text-sm">{news.content}</p>
+                            <h5 className="mb-2 text-xl font-bold tracking-tight text-gray-900 line-clamp-2">{item.title}</h5>
+                            <p className="mb-4 font-normal text-gray-700 line-clamp-3 text-sm">{item.content}</p>
                             <div className="mt-auto pt-4">
-                                <Link to={`/news/${news.id}`}>
+                                <Link to={`/news/${item.id}`}>
                                     <Button variant="outline" className="w-full">Baca Selengkapnya</Button>
                                 </Link>
                             </div>
                         </div>
                     </div>
                 ))}
+                {!loading && filteredNews.length === 0 && (
+                    <div className="col-span-3 text-center py-12 text-gray-400">
+                        Tidak ada berita yang ditemukan.
+                    </div>
+                )}
             </div>
         </div>
     );
