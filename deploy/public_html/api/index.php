@@ -361,6 +361,10 @@ if ($resource === 'news') {
         echo $auth->register($input);
     } elseif ($action === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         echo $auth->login($input);
+    } elseif ($action === 'forgot-password' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        echo $auth->forgotPassword($input);
+    } elseif ($action === 'reset-password' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        echo $auth->resetPassword($input);
     } elseif ($action === 'profile') {
         // Need to extract User ID from Token (Middleware replacement)
         // For now, allow passing ID or check Authorization header decoding

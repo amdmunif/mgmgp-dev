@@ -1,0 +1,2 @@
+ALTER TABLE users ADD COLUMN reset_token VARCHAR(255) NULL DEFAULT NULL AFTER is_active;
+ALTER TABLE users ADD COLUMN reset_token_expiry DATETIME NULL DEFAULT NULL AFTER reset_token;

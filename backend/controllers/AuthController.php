@@ -194,5 +194,93 @@ class AuthController
         http_response_code(500);
         return json_encode(["message" => "Failed to update profile."]);
     }
+
+    public function forgotPassword($data)
+    {
+        $email = $data['email'] ?? '';
+        if (!$email) {
+            http_response_code(400);
+            return json_encode(["message" => "Email is required."]);
+        }
+
+        // Check if user exists
+        $query = "SELECT id FROM users WHERE email = :email";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':email', $email);
+        $stmt->execute();
+
+        if ($stmt->rowCount() == 0) {
+            // Do not reveal if user exists or not for security, but for now we might
+            http_response_code(404);
+            return json_encode(["message" => "Email not found."]);
+        }
+
+        $token = bin2hex(random_bytes(32));
+        $expiry = date('Y-m-d H:i:s', strtotime('+1 hour'));
+
+        $update = "UPDATE users SET reset_token = :token, reset_token_expiry = :expiry WHERE email = :email";
+        $stmtUpd = $this->conn->prepare($update);
+        $stmtUpd->bindParam(':token', $token);
+        $stmtUpd->bindParam(':expiry', $expiry);
+        $stmtUpd->bindParam(':email', $email);
+
+        if ($stmtUpd->execute()) {
+            // Send Email
+            $resetLink = "https://" . $_SERVER['HTTP_HOST'] . "/reset-password?token=" . $token . "&email=" . urlencode($email);
+            // NOTE: Replace hardcoded domain if needed or rely on HTTP_HOST
+
+            $subject = "Reset Password - MGMP Informatika";
+            $message = "Klik link berikut untuk mereset password Anda: " . $resetLink;
+            $headers = "From: noreply@mgmpinformatika.com";
+
+            // Simple mail() function - Ensure server is configured!
+            // If mail fails, we return generic success to avoid leaking/erroring to user in a way that blocks flow?
+            // Ideally we check bool result of mail()
+
+            if (mail($email, $subject, $message, $headers)) {
+                return json_encode(["message" => "Reset link sent to your email."]);
+            } else {
+                return json_encode(["message" => "Failed to send email. Contact admin. Token generated though."]);
+            }
+        }
+
+        http_response_code(500);
+        return json_encode(["message" => "Database error."]);
+    }
+
+    public function resetPassword($data)
+    {
+        $token = $data['token'] ?? '';
+        $email = $data['email'] ?? '';
+        $newPassword = $data['password'] ?? '';
+
+        if (!$token || !$email || !$newPassword) {
+            http_response_code(400);
+            return json_encode(["message" => "Invalid data."]);
+        }
+
+        // Verify token
+        $query = "SELECT id FROM users WHERE email = :email AND reset_token = :token AND reset_token_expiry > NOW()";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':email', $email);
+        $stmt->bindParam(':token', $token);
+        $stmt->execute();
+
+        if ($stmt->rowCount() > 0) {
+            $passwordHash = password_hash($newPassword, PASSWORD_BCRYPT);
+
+            $update = "UPDATE users SET password_hash = :password, reset_token = NULL, reset_token_expiry = NULL WHERE email = :email";
+            $stmtUpd = $this->conn->prepare($update);
+            $stmtUpd->bindParam(':password', $passwordHash);
+            $stmtUpd->bindParam(':email', $email);
+
+            if ($stmtUpd->execute()) {
+                return json_encode(["message" => "Password successfully updated. You can now login."]);
+            }
+        }
+
+        http_response_code(400);
+        return json_encode(["message" => "Invalid or expired token."]);
+    }
 }
 ?>

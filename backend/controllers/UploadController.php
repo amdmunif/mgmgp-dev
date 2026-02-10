@@ -6,7 +6,8 @@ class UploadController
     public function upload()
     {
         // Ensure upload directory exists
-        $uploadDir = __DIR__ . '/../uploads/';
+        // Pointing to public_html/uploads (sibling of api folder)
+        $uploadDir = __DIR__ . '/../../uploads/';
         if (!is_dir($uploadDir))
             mkdir($uploadDir, 0777, true);
 
@@ -17,7 +18,7 @@ class UploadController
             if (move_uploaded_file($_FILES['file']['tmp_name'], $uploadDir . $filename)) {
                 return json_encode([
                     "message" => "Upload successful",
-                    "url" => '/api/uploads/' . $filename // Adjust as needed
+                    "url" => '/uploads/' . $filename // Accessed directly from root
                 ]);
             }
         }

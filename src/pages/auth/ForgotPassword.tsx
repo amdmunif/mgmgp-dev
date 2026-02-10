@@ -2,35 +2,29 @@ import { useState } from 'react';
 import { Button } from '../../components/ui/button';
 import { Link } from 'react-router-dom';
 import { Loader2, ArrowLeft, KeyRound } from 'lucide-react';
-// import { api } from '../../lib/api'; // use if ready
+import { api } from '../../lib/api'; // use if ready
 
 export function ForgotPassword() {
     const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
-    const handleReset = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setMessage(null);
 
         try {
-            // Server Migration Note: Reset Password API not yet implemented in PHP backend.
-            await new Promise(resolve => setTimeout(resolve, 1000));
-
+            await api.post('/auth/forgot-password', { email });
             setMessage({
-                type: 'error',
-                text: 'Fitur Reset Password belum tersedia pada server baru. Silakan hubungi Admin.'
+                type: 'success',
+                text: 'Jika email terdaftar, link reset password akan dikirimkan.'
             });
-
-            // If implemented:
-            // await api.post('/auth/forgot-password', { email });
-            // setMessage({ type: 'success', text: '...' });
-
-        } catch (err: any) {
+            // Optionally redirect or clear form
+        } catch (error) {
             setMessage({
                 type: 'error',
-                text: err.message || 'Gagal mengirim link reset password'
+                text: 'Gagal memproses permintaan. Silakan coba lagi.'
             });
         } finally {
             setLoading(false);
@@ -55,7 +49,7 @@ export function ForgotPassword() {
                     </div>
                 )}
 
-                <form onSubmit={handleReset} className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="space-y-1.5">
                         <label className="block text-sm font-semibold text-gray-700">Email Terdaftar</label>
                         <input

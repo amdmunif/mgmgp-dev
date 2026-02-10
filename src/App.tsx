@@ -7,6 +7,7 @@ import { NewsDetail } from './pages/public/NewsDetail';
 import { Login } from './pages/auth/Login';
 import { Register } from './pages/auth/Register';
 import { ForgotPassword } from './pages/auth/ForgotPassword';
+import ResetPassword from './pages/auth/ResetPassword';
 import { Events } from './pages/public/Events';
 import { EventDetail } from './pages/public/EventDetail';
 import { Gallery } from './pages/public/Gallery';
@@ -96,6 +97,7 @@ function App() {
         <Route path="/login" element={<Layout><Login /></Layout>} />
         <Route path="/register" element={<Layout><Register /></Layout>} />
         <Route path="/forgot-password" element={<Layout><ForgotPassword /></Layout>} />
+        <Route path="/reset-password" element={<Layout><ResetPassword /></Layout>} />
 
         {/* Member Routes - Wrapped in MemberLayout */}
         <Route path="/member" element={<MemberLayout />}>
