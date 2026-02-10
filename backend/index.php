@@ -25,10 +25,7 @@ if (isset($uri_parts[0]) && $uri_parts[0] === 'api') {
     array_shift($uri_parts); // Remove 'api' prefix if present
 }
 
-// Serve    ImageIcon,
-    Mail,
-    ShieldAlert
-} from 'lucide-react';
+// Serve Static Files from 'uploads'
 if (isset($uri_parts[0]) && $uri_parts[0] === 'uploads') {
     $filename = $uri_parts[1] ?? '';
     $filename = basename($filename); // Sanitize

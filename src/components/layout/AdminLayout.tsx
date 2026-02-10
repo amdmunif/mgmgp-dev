@@ -22,7 +22,8 @@ import {
     UserCircle,
     UserCheck,
     ImageIcon,
-    Mail
+    Mail,
+    ShieldAlert
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { getFileUrl } from '../../lib/api';
