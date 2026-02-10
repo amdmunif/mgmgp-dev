@@ -20,3 +20,8 @@ export function formatDate(date: string | Date) {
         year: "numeric",
     }).format(new Date(date));
 }
+
+export function stripHtml(html: string) {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return doc.body.textContent || "";
+}

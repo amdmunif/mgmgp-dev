@@ -82,7 +82,7 @@ export function News() {
                                 )}
                             </div>
                             <h5 className="mb-2 text-xl font-bold tracking-tight text-gray-900 line-clamp-2">{item.title}</h5>
-                            <p className="mb-4 font-normal text-gray-700 line-clamp-3 text-sm">{item.content}</p>
+                            <p className="mb-4 font-normal text-gray-700 line-clamp-3 text-sm">{stripHtml(item.content)}</p>
                             <div className="mt-auto pt-4">
                                 <Link to={`/news/${item.id}`}>
                                     <Button variant="outline" className="w-full">Baca Selengkapnya</Button>

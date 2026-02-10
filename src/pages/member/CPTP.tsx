@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BookOpen, Target, Tag } from 'lucide-react';
+import { BookOpen, Target } from 'lucide-react';
 import { learningService } from '../../services/learningService';
 import type { LearningMaterial } from '../../types';
 
@@ -89,9 +89,10 @@ export function CPTP() {
                                 {cpData.filter(i => i.mapel === 'Informatika').map(item => (
                                     <div key={item.id}>
                                         <h3 className="font-bold text-gray-900 mb-2">{item.title}</h3>
-                                        <p className="text-sm text-gray-600 leading-relaxed text-justify">
-                                            {item.content}
-                                        </p>
+                                        <div
+                                            className="prose prose-sm max-w-none text-gray-600 leading-relaxed text-justify"
+                                            dangerouslySetInnerHTML={{ __html: item.content }}
+                                        />
                                     </div>
                                 ))}
                             </div>
@@ -110,9 +111,10 @@ export function CPTP() {
                                 {cpData.filter(i => i.mapel === 'KKA').map(item => (
                                     <div key={item.id}>
                                         <h3 className="font-bold text-gray-900 mb-2">{item.title}</h3>
-                                        <p className="text-sm text-gray-600 leading-relaxed text-justify">
-                                            {item.content}
-                                        </p>
+                                        <div
+                                            className="prose prose-sm max-w-none text-gray-600 leading-relaxed text-justify"
+                                            dangerouslySetInnerHTML={{ __html: item.content }}
+                                        />
                                     </div>
                                 ))}
                             </div>
@@ -185,10 +187,10 @@ export function CPTP() {
                                         </div>
                                         <div className="flex-1 bg-white border border-gray-200 rounded-xl p-4 hover:border-blue-300 hover:shadow-sm transition-all">
                                             <p className="text-gray-800 font-medium text-lg mb-2">{item.title}</p>
-                                            <div className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">
-                                                <Tag className="w-3 h-3" />
-                                                {item.content || 'Topik'}
-                                            </div>
+                                            <div
+                                                className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium"
+                                                dangerouslySetInnerHTML={{ __html: item.content ? `<span class="flex items-center gap-1"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"/></svg>${item.content}</span>` : 'Topik' }}
+                                            />
                                         </div>
                                     </div>
                                 ))

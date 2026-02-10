@@ -79,7 +79,7 @@ export function Events() {
                                     <span className="flex items-center gap-1"><MapPin className="w-4 h-4" /> {event.location}</span>
                                 </div>
                                 <h3 className="text-2xl font-bold text-gray-900 mb-2 group-hover:text-primary-600 transition-colors">{event.title}</h3>
-                                <p className="text-gray-600 mb-4">{event.description}</p>
+                                <p className="text-gray-600 mb-4">{stripHtml(event.description)}</p>
                             </div>
                             <div className="flex items-center justify-between mt-4">
                                 <span className={`px-3 py-1 rounded-full text-xs font-semibold ${event.is_registration_open ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>

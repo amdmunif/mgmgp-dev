@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
 import { ArrowRight, Calendar, BookOpen, Users, MapPin, Mail, Phone, Send, Loader2 } from 'lucide-react';
 import { api, getFileUrl } from '../../lib/api';
-import { formatDate } from '../../lib/utils';
+import { formatDate, stripHtml } from '../../lib/utils';
 import type { NewsArticle, Event } from '../../types';
 
 export function Home() {
@@ -41,12 +41,6 @@ export function Home() {
 
         fetchData();
     }, []);
-
-    const stripHtml = (html: string) => {
-        const tmp = document.createElement("DIV");
-        tmp.innerHTML = html;
-        return tmp.textContent || tmp.innerText || "";
-    };
 
     if (loading) {
         return (
