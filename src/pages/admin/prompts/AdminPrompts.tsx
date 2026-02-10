@@ -48,7 +48,7 @@ export function AdminPrompts() {
             const payload = {
                 id: editingPrompt.id,
                 ...data,
-                is_premium: data.is_premium ? 1 : 0
+                is_premium: 1
             };
             console.log('Sending Update Payload:', payload);
             await promptService.update(editingPrompt.id, payload as any);
@@ -275,15 +275,7 @@ function EditPromptModal({ prompt, onClose, onSave }: { prompt: Prompt, onClose:
                         />
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        <input
-                            type="checkbox"
-                            id="edit_prompt_is_premium"
-                            {...register('is_premium')}
-                            className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-                        />
-                        <label htmlFor="edit_prompt_is_premium" className="text-sm text-gray-700">Premium Content</label>
-                    </div>
+
 
                     <div className="pt-4 flex justify-end gap-3 sticky bottom-0 bg-white border-t border-gray-100">
                         <Button type="button" variant="outline" onClick={onClose}>Batal</Button>

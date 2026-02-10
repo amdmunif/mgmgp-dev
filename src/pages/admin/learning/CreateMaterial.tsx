@@ -42,6 +42,8 @@ export function CreateMaterial() {
 
             await learningService.create({
                 ...data,
+                // Automatically set is_premium based on type: CP and TP are free, others are premium
+                is_premium: !['cp', 'tp'].includes(data.type),
                 file_url: fileUrl,
                 // Clean up fields based on type if needed, but keeping them is fine
             });
@@ -113,6 +115,17 @@ export function CreateMaterial() {
                                 <option value="7">Kelas 7</option>
                                 <option value="8">Kelas 8</option>
                                 <option value="9">Kelas 9</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Semester</label>
+                            <select
+                                {...register('semester', { valueAsNumber: true })}
+                                className="w-full rounded-md border border-gray-300 py-2 px-3 focus:ring-2 focus:ring-primary-500"
+                            >
+                                <option value="1">Semester 1 (Ganjil)</option>
+                                <option value="2">Semester 2 (Genap)</option>
                             </select>
                         </div>
                     </div>

@@ -82,15 +82,7 @@ export function CreateGame() {
                         />
                     </div>
 
-                    <div className="flex items-center gap-2 bg-gray-50 p-4 rounded-lg border border-gray-100">
-                        <input
-                            type="checkbox"
-                            id="is_premium"
-                            {...register('is_premium')}
-                            className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-                        />
-                        <label htmlFor="is_premium" className="text-sm font-medium text-gray-700">Set sebagai Konten Premium</label>
-                    </div>
+
 
                     <div className="pt-4 flex justify-end gap-3">
                         <Button type="button" variant="outline" onClick={() => navigate(-1)}>Batal</Button>
