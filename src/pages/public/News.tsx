@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { api, getFileUrl } from '../../lib/api';
-import { formatDate } from '../../lib/utils';
+import { formatDate, stripHtml } from '../../lib/utils';
 import { Button } from '../../components/ui/button';
 import { Calendar, User, Search, Loader2 } from 'lucide-react';
 import type { NewsArticle } from '../../types';
