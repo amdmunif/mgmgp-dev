@@ -38,6 +38,7 @@ export function AdminLayout() {
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const [logoUrl, setLogoUrl] = useState<string>('');
     const [badges, setBadges] = useState({ members: 0, premium: 0 });
+    const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
 
     useEffect(() => {
         // Initial check
@@ -76,12 +77,30 @@ export function AdminLayout() {
             setUser(user);
         });
 
-
-
         return () => {
             subscription.unsubscribe();
         };
     }, [navigate]);
+
+    // Handle Auto-expansion when location changes
+    useEffect(() => {
+        const currentGroup = menuGroups.find(group =>
+            group.items.some(item => location.pathname === item.path)
+        );
+        if (currentGroup) {
+            setExpandedGroups(prev => ({
+                ...prev,
+                [currentGroup.title]: true
+            }));
+        }
+    }, [location.pathname]);
+
+    const toggleGroup = (title: string) => {
+        setExpandedGroups(prev => ({
+            ...prev,
+            [title]: !prev[title]
+        }));
+    };
 
     const handleLogout = async () => {
         await authService.logout();
@@ -201,46 +220,67 @@ export function AdminLayout() {
                         <UserProfileSection mobile={true} />
                     </div>
 
-                    {menuGroups.map((group, groupIndex) => (
-                        <div key={groupIndex}>
-                            <p className="px-4 text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{group.title}</p>
-                            <div className="space-y-1">
-                                {group.items.map((item) => {
-                                    const isActive = location.pathname === item.path;
-                                    return (
-                                        <Link
-                                            key={item.path}
-                                            to={item.path}
-                                            className={cn(
-                                                "flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200 group relative overflow-hidden",
-                                                isActive
-                                                    ? "bg-blue-600/10 text-blue-400 font-semibold"
-                                                    : "text-slate-400 hover:bg-slate-800 hover:text-white"
-                                            )}
-                                            onClick={() => setIsSidebarOpen(false)}
-                                        >
-                                            <item.icon className={cn(
-                                                "w-5 h-5 transition-transform duration-300",
-                                                isActive ? "text-blue-500 scale-110" : "group-hover:text-white group-hover:scale-110"
-                                            )} />
-                                            <span className="text-sm tracking-wide flex-1">{item.label}</span>
+                    {menuGroups.map((group, groupIndex) => {
+                        const isExpanded = !!expandedGroups[group.title];
+                        const hasActive = group.items.some(item => location.pathname === item.path);
 
-                                            {item.path === '/admin/members' && badges.members > 0 && (
-                                                <span className="bg-blue-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">{badges.members}</span>
-                                            )}
-                                            {item.path === '/admin/premium' && badges.premium > 0 && (
-                                                <span className="bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">{badges.premium}</span>
-                                            )}
+                        return (
+                            <div key={groupIndex} className="space-y-1">
+                                <button
+                                    onClick={() => toggleGroup(group.title)}
+                                    className={cn(
+                                        "w-full px-4 flex items-center justify-between py-2 group/header mb-1 hover:bg-slate-800/50 rounded-lg transition-colors",
+                                        hasActive ? "text-blue-400" : "text-slate-500"
+                                    )}
+                                >
+                                    <p className="text-[10px] font-bold uppercase tracking-wider">{group.title}</p>
+                                    <ChevronDown className={cn(
+                                        "w-3.5 h-3.5 transition-transform duration-300",
+                                        isExpanded ? "transform rotate-180" : ""
+                                    )} />
+                                </button>
 
-                                            {isActive && (
-                                                <div className="absolute inset-y-0 left-0 w-1 bg-blue-500 rounded-r-full" />
-                                            )}
-                                        </Link>
-                                    );
-                                })}
+                                <div className={cn(
+                                    "space-y-1 overflow-hidden transition-all duration-300 ease-in-out",
+                                    isExpanded ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
+                                )}>
+                                    {group.items.map((item) => {
+                                        const isActive = location.pathname === item.path;
+                                        return (
+                                            <Link
+                                                key={item.path}
+                                                to={item.path}
+                                                className={cn(
+                                                    "flex items-center gap-3 px-4 py-2 rounded-xl transition-all duration-200 group relative overflow-hidden ml-2 mr-2",
+                                                    isActive
+                                                        ? "bg-blue-600/15 text-blue-400 font-semibold"
+                                                        : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                                                )}
+                                                onClick={() => setIsSidebarOpen(false)}
+                                            >
+                                                <item.icon className={cn(
+                                                    "w-4 h-4 transition-transform duration-300",
+                                                    isActive ? "text-blue-500 scale-110" : "group-hover:text-white group-hover:scale-110"
+                                                )} />
+                                                <span className="text-sm tracking-wide flex-1">{item.label}</span>
+
+                                                {item.path === '/admin/members' && badges.members > 0 && (
+                                                    <span className="bg-blue-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">{badges.members}</span>
+                                                )}
+                                                {item.path === '/admin/premium' && badges.premium > 0 && (
+                                                    <span className="bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">{badges.premium}</span>
+                                                )}
+
+                                                {isActive && (
+                                                    <div className="absolute inset-y-0 left-0 w-1 bg-blue-500 rounded-r-full" />
+                                                )}
+                                            </Link>
+                                        );
+                                    })}
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
 
                     <button
                         onClick={handleLogout}
