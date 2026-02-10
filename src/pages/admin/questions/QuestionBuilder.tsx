@@ -243,22 +243,17 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
                         <label className="block text-sm font-bold text-gray-900 mb-4">Konten Pertanyaan</label>
                         <div className="prose-editor">
                             <Editor
-                                apiKey={import.meta.env.VITE_TINYMCE_API_KEY || 'no-api-key'}
+                                apiKey="v0pr5r6jas8tgvj6z52hcgoxpr0xn8rdhay23qjclny6tc5e"
                                 value={q.content}
                                 onEditorChange={(content) => setQ({ ...q, content })}
                                 init={{
                                     height: 500,
                                     menubar: true,
-                                    plugins: [
-                                        'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-                                        'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-                                        'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
-                                    ],
-                                    toolbar: 'undo redo | blocks | ' +
-                                        'bold italic forecolor | alignleft aligncenter ' +
-                                        'alignright alignjustify | bullist numlist outdent indent | ' +
-                                        'removeformat | help',
-                                    content_style: 'body { font-family:Inter,system-ui,sans-serif; font-size:16px; line-height:1.6 }'
+                                    plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount',
+                                    toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table | align lineheight | numlist bullist indent outdent | emoticons charmap | removeformat',
+                                    content_style: 'body { font-family:Inter,system-ui,sans-serif; font-size:16px; line-height:1.6 }',
+                                    branding: false,
+                                    promotion: false
                                 }}
                             />
                         </div>

@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { Button } from '../../../components/ui/button';
 import { ArrowLeft, Loader2, Upload } from 'lucide-react';
 import { learningService } from '../../../services/learningService';
+import { RichTextEditor } from '../../../components/ui/RichTextEditor';
 import type { MaterialType } from '../../../types';
 
 interface MaterialForm {
@@ -30,9 +31,14 @@ export function CreateMaterial() {
 
     const [submitting, setSubmitting] = useState(false);
     const [file, setFile] = useState<File | null>(null);
+    const [content, setContent] = useState('');
     const selectedType = watch('type');
 
     const onSubmit = async (data: MaterialForm) => {
+        if (!['rpp', 'slide', 'modul'].includes(data.type) && !content) {
+            alert('Konten wajib diisi untuk CP/TP');
+            return;
+        }
         setSubmitting(true);
         try {
             let fileUrl = undefined;
@@ -42,6 +48,7 @@ export function CreateMaterial() {
 
             await learningService.create({
                 ...data,
+                content: content,
                 // Automatically set is_premium based on type: CP and TP are free, others are premium
                 is_premium: !['cp', 'tp'].includes(data.type),
                 file_url: fileUrl,
@@ -145,11 +152,11 @@ export function CreateMaterial() {
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Konten / Deskripsi</label>
-                                <textarea
-                                    {...register('content', { required: isDocumentType ? false : 'Konten wajib diisi untuk CP/TP' })}
-                                    className="w-full rounded-md border border-gray-300 py-2 px-3 h-40 focus:ring-2 focus:ring-primary-500"
+                                <RichTextEditor
+                                    value={content}
+                                    onChange={(val) => setContent(val)}
                                     placeholder="Tuliskan isi Capaian Pembelajaran atau Tujuan Pembelajaran di sini..."
-                                ></textarea>
+                                />
                                 {errors.content && <p className="text-red-500 text-xs mt-1">{errors.content.message}</p>}
                             </div>
                         </div>

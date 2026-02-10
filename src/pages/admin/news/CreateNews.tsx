@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { Button } from '../../../components/ui/button';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { contentManagementService } from '../../../services/contentManagementService';
+import { RichTextEditor } from '../../../components/ui/RichTextEditor';
 
 interface NewsForm {
     title: string;
@@ -16,11 +17,16 @@ export function CreateNews() {
     const navigate = useNavigate();
     const { register, handleSubmit } = useForm<NewsForm>();
     const [submitting, setSubmitting] = useState(false);
+    const [content, setContent] = useState('');
 
     const onSubmit = async (data: NewsForm) => {
+        if (!content) {
+            alert('Konten berita wajib diisi');
+            return;
+        }
         setSubmitting(true);
         try {
-            await contentManagementService.createNews(data);
+            await contentManagementService.createNews({ ...data, content });
             navigate('/admin/news');
         } catch (error) {
             console.error(error);
@@ -50,7 +56,11 @@ export function CreateNews() {
                     </div>
                     <div>
                         <label className="block text-sm font-medium mb-1">Konten</label>
-                        <textarea {...register('content', { required: true })} className="w-full border rounded-md p-2 h-40" />
+                        <RichTextEditor
+                            value={content}
+                            onChange={(val) => setContent(val)}
+                            placeholder="Tulis isi berita di sini..."
+                        />
                     </div>
                     <div>
                         <label className="block text-sm font-medium mb-1">URL Gambar Cover</label>

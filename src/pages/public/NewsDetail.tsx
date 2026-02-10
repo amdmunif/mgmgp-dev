@@ -89,7 +89,7 @@ export function NewsDetail() {
             </div>
 
             <div
-                className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-a:text-primary-600"
+                className="prose prose-lg md:prose-xl max-w-none prose-headings:text-gray-900 prose-headings:font-extrabold prose-p:text-gray-600 prose-img:rounded-2xl prose-img:shadow-md prose-a:text-blue-600 prose-strong:text-gray-900"
                 dangerouslySetInnerHTML={{
                     __html: news.content.replace(/src="uploads\//g, `src="${getFileUrl('/uploads/')}`)
                 }}

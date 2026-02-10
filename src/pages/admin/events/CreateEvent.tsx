@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { Button } from '../../../components/ui/button';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { contentManagementService } from '../../../services/contentManagementService';
+import { RichTextEditor } from '../../../components/ui/RichTextEditor';
 
 interface EventForm {
     title: string;
@@ -18,11 +19,12 @@ export function CreateEvent() {
     const navigate = useNavigate();
     const { register, handleSubmit } = useForm<EventForm>();
     const [submitting, setSubmitting] = useState(false);
+    const [description, setDescription] = useState('');
 
     const onSubmit = async (data: EventForm) => {
         setSubmitting(true);
         try {
-            await contentManagementService.createEvent(data);
+            await contentManagementService.createEvent({ ...data, description });
             navigate('/admin/events');
         } catch (error) {
             console.error(error);
@@ -54,7 +56,11 @@ export function CreateEvent() {
                     </div>
                     <div>
                         <label className="block text-sm font-medium mb-1">Deskripsi</label>
-                        <textarea {...register('description')} className="w-full border rounded-md p-2 h-32" />
+                        <RichTextEditor
+                            value={description}
+                            onChange={(val) => setDescription(val)}
+                            placeholder="Tulis deskripsi agenda di sini..."
+                        />
                     </div>
                     <div>
                         <label className="block text-sm font-medium mb-1">URL Cover Image</label>

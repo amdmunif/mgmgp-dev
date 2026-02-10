@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '../../components/ui/button';
 import { Loader2, Save, Globe, Building2, UserPen, Upload, Trash2, Image as ImageIcon, CreditCard } from 'lucide-react';
 import { settingsService, type AppSettings } from '../../services/settingsService';
+import { RichTextEditor } from '../../components/ui/RichTextEditor';
 // Using simple state might be easier for this large form without complex validation logic yet.
 
 export function AdminWebSettings() {
@@ -31,6 +32,11 @@ export function AdminWebSettings() {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         if (!settings) return;
         setSettings({ ...settings, [e.target.name]: e.target.value });
+    };
+
+    const handleEditorChange = (fieldName: string, content: string) => {
+        if (!settings) return;
+        setSettings({ ...settings, [fieldName]: content });
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
@@ -203,54 +209,44 @@ export function AdminWebSettings() {
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Visi</label>
-                                <textarea
-                                    name="profile_visi"
+                                <RichTextEditor
                                     value={settings.profile_visi || ''}
-                                    onChange={handleChange}
-                                    rows={3}
-                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-mono text-sm"
+                                    onChange={(val) => handleEditorChange('profile_visi', val)}
+                                    height={200}
                                 />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Misi</label>
-                                <textarea
-                                    name="profile_misi"
+                                <RichTextEditor
                                     value={settings.profile_misi || ''}
-                                    onChange={handleChange}
-                                    rows={4}
-                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-mono text-sm"
+                                    onChange={(val) => handleEditorChange('profile_misi', val)}
+                                    height={250}
                                 />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Sejarah Singkat</label>
-                                <textarea
-                                    name="profile_sejarah"
+                                <RichTextEditor
                                     value={settings.profile_sejarah || ''}
-                                    onChange={handleChange}
-                                    rows={4}
-                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-mono text-sm"
+                                    onChange={(val) => handleEditorChange('profile_sejarah', val)}
+                                    height={300}
                                 />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Struktur Organisasi (HTML/Table)</label>
-                                <textarea
-                                    name="profile_struktur"
+                                <RichTextEditor
                                     value={settings.profile_struktur || ''}
-                                    onChange={handleChange}
-                                    rows={5}
-                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-mono text-sm"
+                                    onChange={(val) => handleEditorChange('profile_struktur', val)}
+                                    height={400}
                                 />
                             </div>
 
                             <div className="pt-4 border-t border-gray-100 mt-4">
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Ketentuan Upgrade Premium</label>
-                                <textarea
-                                    name="premium_rules"
+                                <RichTextEditor
                                     value={settings.premium_rules || ''}
-                                    onChange={handleChange}
-                                    rows={6}
-                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-mono text-sm"
-                                    placeholder="Masukkan ketentuan upgrade premium (gunakan tag HTML seperti <ul>, <li>)..."
+                                    onChange={(val) => handleEditorChange('premium_rules', val)}
+                                    height={300}
+                                    placeholder="Masukkan ketentuan upgrade premium..."
                                 />
                             </div>
                         </div>
