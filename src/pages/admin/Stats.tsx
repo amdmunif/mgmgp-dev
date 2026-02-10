@@ -2,13 +2,9 @@ import { useState, useEffect } from 'react';
 import { statsService, type TeacherStats } from '../../services/statsService';
 import {
     Users,
-    TrendingUp,
     Award,
     Home,
     Activity,
-    ChevronRight,
-    PieChart,
-    BarChart3,
     CheckCircle2
 } from 'lucide-react';
 
