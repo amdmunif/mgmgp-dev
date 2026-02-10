@@ -30,6 +30,52 @@ import { cn } from '../../lib/utils';
 import { getFileUrl } from '../../lib/api';
 // import { Button } from '../../components/ui/button';
 
+const menuGroups = [
+    {
+        title: "Utama",
+        items: [
+            { icon: LayoutDashboard, label: 'Dashboard', path: '/admin' },
+            { icon: TrendingUp, label: 'Statistik & Laporan', path: '/admin/stats' },
+            { icon: Mail, label: 'Pesan Masuk', path: '/admin/messages' },
+            { icon: ShieldAlert, label: 'Log Aktivitas', path: '/admin/logs' },
+        ]
+    },
+    {
+        title: "Pengguna",
+        items: [
+            { icon: Users, label: 'Data Anggota', path: '/admin/members' },
+            { icon: UserCheck, label: 'Kontributor', path: '/admin/contributors' },
+            { icon: Crown, label: 'Langganan Premium', path: '/admin/premium' },
+        ]
+    },
+    {
+        title: "Edukasi",
+        items: [
+            { icon: BookOpen, label: 'Materi Pembelajaran', path: '/admin/learning' },
+            { icon: FileText, label: 'Bank Soal (CBT)', path: '/admin/questions' },
+            { icon: Gamepad2, label: 'Bank Games', path: '/admin/games' },
+            { icon: Terminal, label: 'Prompt Library', path: '/admin/prompts' },
+            { icon: Book, label: 'Bank Referensi', path: '/admin/references' },
+        ]
+    },
+    {
+        title: "Konten Publik",
+        items: [
+            { icon: Calendar, label: 'Acara & Kegiatan', path: '/admin/events' },
+            { icon: FileText, label: 'Berita & Artikel', path: '/admin/news' },
+            { icon: ImageIcon, label: 'Galeri Foto', path: '/admin/gallery' },
+        ]
+    },
+    {
+        title: "Sistem & Alat",
+        items: [
+            { icon: FileText, label: 'Generator Surat', path: '/admin/letters' },
+            { icon: Globe, label: 'Pengaturan Web', path: '/admin/web-settings' },
+            { icon: Settings, label: 'Keamanan Akun', path: '/admin/settings' },
+        ]
+    }
+];
+
 export function AdminLayout() {
     const navigate = useNavigate();
     const location = useLocation();
@@ -141,52 +187,6 @@ export function AdminLayout() {
             )}
         </div>
     );
-
-    const menuGroups = [
-        {
-            title: "Utama",
-            items: [
-                { icon: LayoutDashboard, label: 'Dashboard', path: '/admin' },
-                { icon: TrendingUp, label: 'Statistik & Laporan', path: '/admin/stats' },
-                { icon: Mail, label: 'Pesan Masuk', path: '/admin/messages' },
-                { icon: ShieldAlert, label: 'Log Aktivitas', path: '/admin/logs' },
-            ]
-        },
-        {
-            title: "Pengguna",
-            items: [
-                { icon: Users, label: 'Data Anggota', path: '/admin/members' },
-                { icon: UserCheck, label: 'Kontributor', path: '/admin/contributors' },
-                { icon: Crown, label: 'Langganan Premium', path: '/admin/premium' },
-            ]
-        },
-        {
-            title: "Edukasi",
-            items: [
-                { icon: BookOpen, label: 'Materi Pembelajaran', path: '/admin/learning' },
-                { icon: FileText, label: 'Bank Soal (CBT)', path: '/admin/questions' },
-                { icon: Gamepad2, label: 'Bank Games', path: '/admin/games' },
-                { icon: Terminal, label: 'Prompt Library', path: '/admin/prompts' },
-                { icon: Book, label: 'Bank Referensi', path: '/admin/references' },
-            ]
-        },
-        {
-            title: "Konten Publik",
-            items: [
-                { icon: Calendar, label: 'Acara & Kegiatan', path: '/admin/events' },
-                { icon: FileText, label: 'Berita & Artikel', path: '/admin/news' },
-                { icon: ImageIcon, label: 'Galeri Foto', path: '/admin/gallery' },
-            ]
-        },
-        {
-            title: "Sistem & Alat",
-            items: [
-                { icon: FileText, label: 'Generator Surat', path: '/admin/letters' },
-                { icon: Globe, label: 'Pengaturan Web', path: '/admin/web-settings' },
-                { icon: Settings, label: 'Keamanan Akun', path: '/admin/settings' },
-            ]
-        }
-    ];
 
     if (!user) return <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white">
         <div className="flex flex-col items-center gap-4">
