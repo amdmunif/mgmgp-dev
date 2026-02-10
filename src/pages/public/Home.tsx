@@ -4,6 +4,8 @@ import { Button } from '../../components/ui/button';
 import { ArrowRight, Calendar, BookOpen, Users, MapPin, Mail, Phone, Send, Loader2 } from 'lucide-react';
 import { api, getFileUrl } from '../../lib/api';
 import { formatDate, stripHtml } from '../../lib/utils';
+import { contactService } from '../../services/contactService';
+import { toast } from 'react-hot-toast';
 import type { NewsArticle, Event } from '../../types';
 
 export function Home() {
@@ -15,6 +17,22 @@ export function Home() {
         events: 0
     });
     const [loading, setLoading] = useState(true);
+    const [contactForm, setContactForm] = useState({ name: '', email: '', message: '' });
+    const [submitting, setSubmitting] = useState(false);
+
+    const handleContactSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSubmitting(true);
+        try {
+            await contactService.send(contactForm);
+            toast.success('Pesan berhasil terkirim!');
+            setContactForm({ name: '', email: '', message: '' });
+        } catch (error) {
+            toast.error('Gagal mengirim pesan. Silakan coba lagi.');
+        } finally {
+            setSubmitting(false);
+        }
+    };
 
     useEffect(() => {
         const fetchData = async () => {
@@ -277,21 +295,46 @@ export function Home() {
                     </div>
 
                     <div className="bg-white rounded-xl p-6 text-gray-900 shadow-xl">
-                        <form className="space-y-4">
+                        <form className="space-y-4" onSubmit={handleContactSubmit}>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
-                                <input type="text" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all" placeholder="Nama Anda" />
+                                <input
+                                    type="text"
+                                    required
+                                    value={contactForm.name}
+                                    onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
+                                    placeholder="Nama Anda"
+                                />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                                <input type="email" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all" placeholder="email@contoh.com" />
+                                <input
+                                    type="email"
+                                    required
+                                    value={contactForm.email}
+                                    onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
+                                    placeholder="email@contoh.com"
+                                />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Pesan</label>
-                                <textarea rows={4} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all" placeholder="Tulis pesan Anda disini..."></textarea>
+                                <textarea
+                                    rows={4}
+                                    required
+                                    value={contactForm.message}
+                                    onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
+                                    placeholder="Tulis pesan Anda disini..."
+                                ></textarea>
                             </div>
-                            <Button className="w-full bg-primary-600 hover:bg-primary-700 text-white">
-                                <Send className="w-4 h-4 mr-2" /> Kirim Pesan
+                            <Button className="w-full bg-primary-600 hover:bg-primary-700 text-white" disabled={submitting}>
+                                {submitting ? (
+                                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Mengirim...</>
+                                ) : (
+                                    <><Send className="w-4 h-4 mr-2" /> Kirim Pesan</>
+                                )}
                             </Button>
                         </form>
                     </div>
