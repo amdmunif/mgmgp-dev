@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Mail, Trash2, Search, Loader2, Calendar, User, MessageSquare } from 'lucide-react';
-import { contactService, ContactMessage } from '../../../services/contactService';
+import { contactService, ContactMessage } from '../../services/contactService';
 import { toast } from 'react-hot-toast';
-import { formatDate } from '../../../lib/utils';
-import { Button } from '../../../components/ui/button';
+import { formatDate } from '../../lib/utils';
+import { Button } from '../../components/ui/button';
 
 export function AdminMessages() {
     const [messages, setMessages] = useState<ContactMessage[]>([]);

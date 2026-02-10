@@ -20,7 +20,9 @@ import {
     Globe,
     ChevronDown,
     UserCircle,
-    UserCheck
+    UserCheck,
+    ImageIcon,
+    Mail
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { getFileUrl } from '../../lib/api';
@@ -118,6 +120,7 @@ export function AdminLayout() {
             title: "Utama",
             items: [
                 { icon: LayoutDashboard, label: 'Dashboard', path: '/admin' },
+                { icon: Mail, label: 'Pesan', path: '/admin/messages' },
             ]
         },
         {
@@ -143,6 +146,7 @@ export function AdminLayout() {
                 { icon: Book, label: 'Bank Referensi', path: '/admin/references' },
                 { icon: Calendar, label: 'Acara & Kegiatan', path: '/admin/events' },
                 { icon: FileText, label: 'Berita', path: '/admin/news' },
+                { icon: ImageIcon, label: 'Galeri Foto', path: '/admin/gallery' },
             ]
         },
         {

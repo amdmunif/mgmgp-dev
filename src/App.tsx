@@ -45,6 +45,8 @@ import { AdminReferences } from './pages/admin/references/AdminReferences';
 // Imports
 import { VerificationList } from './pages/admin/contributors/VerificationList';
 import { CreateReference } from './pages/admin/references/CreateReference';
+import { AdminGallery } from './pages/admin/AdminGallery';
+import { AdminMessages } from './pages/admin/AdminMessages';
 
 // Routes
 <Route path="contributors" element={<VerificationList />} />
@@ -167,6 +169,8 @@ function App() {
           <Route path="prompts/create" element={<CreatePrompt />} />
           <Route path="references" element={<AdminReferences />} />
           <Route path="references/create" element={<CreateReference />} />
+          <Route path="gallery" element={<AdminGallery />} />
+          <Route path="messages" element={<AdminMessages />} />
           <Route path="contributors" element={<VerificationList />} />
         </Route>
 
