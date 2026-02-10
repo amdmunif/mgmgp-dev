@@ -121,47 +121,42 @@ export function AdminLayout() {
             title: "Utama",
             items: [
                 { icon: LayoutDashboard, label: 'Dashboard', path: '/admin' },
-                { icon: Mail, label: 'Pesan', path: '/admin/messages' },
+                { icon: Mail, label: 'Pesan Masuk', path: '/admin/messages' },
+                { icon: ShieldAlert, label: 'Log Aktivitas', path: '/admin/logs' },
             ]
         },
         {
-            title: "Menu Anggota",
+            title: "Pengguna",
             items: [
-                { icon: Users, label: 'Kelola Anggota', path: '/admin/members' },
-                { icon: UserCheck, label: 'Verifikasi Kontributor', path: '/admin/contributors' },
-                { icon: Crown, label: 'Kelola Langganan', path: '/admin/premium' },
+                { icon: Users, label: 'Anggota', path: '/admin/members' },
+                { icon: UserCheck, label: 'Kontributor', path: '/admin/contributors' },
+                { icon: Crown, label: 'Langganan', path: '/admin/premium' },
             ]
         },
         {
-            title: "Fitur Premium",
+            title: "Edukasi",
             items: [
-                { icon: BookOpen, label: 'Kelola Pembelajaran', path: '/admin/learning' },
+                { icon: BookOpen, label: 'Pembelajaran', path: '/admin/learning' },
                 { icon: FileText, label: 'Bank Soal', path: '/admin/questions' },
                 { icon: Gamepad2, label: 'Bank Games', path: '/admin/games' },
                 { icon: Terminal, label: 'Prompt Library', path: '/admin/prompts' },
+                { icon: Book, label: 'Bank Referensi', path: '/admin/references' },
             ]
         },
         {
-            title: "Manajemen Konten",
+            title: "Konten Publik",
             items: [
-                { icon: Book, label: 'Bank Referensi', path: '/admin/references' },
                 { icon: Calendar, label: 'Acara & Kegiatan', path: '/admin/events' },
-                { icon: FileText, label: 'Berita', path: '/admin/news' },
+                { icon: FileText, label: 'Berita & Artikel', path: '/admin/news' },
                 { icon: ImageIcon, label: 'Galeri Foto', path: '/admin/gallery' },
             ]
         },
         {
-            title: "Administrasi",
+            title: "Sistem & Alat",
             items: [
                 { icon: FileText, label: 'Generator Surat', path: '/admin/letters' },
-            ]
-        },
-        {
-            title: "Sistem",
-            items: [
                 { icon: Globe, label: 'Pengaturan Web', path: '/admin/web-settings' },
                 { icon: Settings, label: 'Akun Admin', path: '/admin/settings' },
-                { icon: ShieldAlert, label: 'Log Aktivitas', path: '/admin/logs' },
             ]
         }
     ];

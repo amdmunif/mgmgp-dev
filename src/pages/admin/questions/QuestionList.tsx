@@ -128,6 +128,41 @@ export function AdminQuestions() {
         }
     };
 
+    const downloadTemplate = () => {
+        const template = [
+            {
+                'Soal': 'Apa ibukota Indonesia?',
+                'A': 'Jakarta',
+                'B': 'Bandung',
+                'C': 'Surabaya',
+                'D': 'Medan',
+                'E': 'Nusantara',
+                'Jawaban': 'E',
+                'Mapel': 'Informatika',
+                'Kelas': '7',
+                'Level': 'Mudah'
+            },
+            {
+                'Soal': '<p>Berikut ini adalah contoh soal dengan format <b>HTML</b>.</p>',
+                'A': 'Opsi A',
+                'B': 'Opsi B',
+                'C': 'Opsi C',
+                'D': 'Opsi D',
+                'E': 'Opsi E',
+                'Jawaban': 'A',
+                'Mapel': 'Informatika',
+                'Kelas': '8',
+                'Level': 'Sedang'
+            }
+        ];
+
+        const ws = XLSX.utils.json_to_sheet(template);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Template Soal");
+        XLSX.writeFile(wb, "template_import_soal_mgmp.xlsx");
+        toast.success('Template berhasil diunduh');
+    };
+
     const handleImportExcel = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!excelFile) return;
@@ -144,14 +179,14 @@ export function AdminQuestions() {
                 if (!row['Soal'] || !row['Jawaban']) continue;
 
                 const options = [
-                    { id: Math.random().toString(36).substring(7), text: row['A'] || '', is_correct: row['Jawaban'] === 'A' },
-                    { id: Math.random().toString(36).substring(7), text: row['B'] || '', is_correct: row['Jawaban'] === 'B' },
-                    { id: Math.random().toString(36).substring(7), text: row['C'] || '', is_correct: row['Jawaban'] === 'C' },
-                    { id: Math.random().toString(36).substring(7), text: row['D'] || '', is_correct: row['Jawaban'] === 'D' },
+                    { id: Math.random().toString(36).substring(7), text: String(row['A'] || ''), is_correct: String(row['Jawaban']) === 'A' },
+                    { id: Math.random().toString(36).substring(7), text: String(row['B'] || ''), is_correct: String(row['Jawaban']) === 'B' },
+                    { id: Math.random().toString(36).substring(7), text: String(row['C'] || ''), is_correct: String(row['Jawaban']) === 'C' },
+                    { id: Math.random().toString(36).substring(7), text: String(row['D'] || ''), is_correct: String(row['Jawaban']) === 'D' },
                 ];
 
                 if (row['E']) {
-                    options.push({ id: Math.random().toString(36).substring(7), text: row['E'], is_correct: row['Jawaban'] === 'E' });
+                    options.push({ id: Math.random().toString(36).substring(7), text: String(row['E']), is_correct: String(row['Jawaban']) === 'E' });
                 }
 
                 const payload: Partial<Question> = {
@@ -560,6 +595,18 @@ export function AdminQuestions() {
                                     className="w-full"
                                 />
                             </div>
+
+                            <div className="flex flex-col gap-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={downloadTemplate}
+                                    className="w-full text-blue-600 border-blue-200 hover:bg-blue-50"
+                                >
+                                    <Upload className="w-4 h-4 mr-2 rotate-180" /> Unduh Template Excel
+                                </Button>
+                            </div>
+
                             <div className="flex justify-end gap-3 mt-6">
                                 <Button type="button" variant="outline" onClick={() => setIsExcelModalOpen(false)}>Batal</Button>
                                 <Button type="submit" disabled={importing} className="bg-green-600 hover:bg-green-700 text-white">

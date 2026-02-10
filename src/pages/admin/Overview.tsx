@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { statsService } from '../../services/statsService';
+import { auditService, type AuditLog } from '../../services/auditService';
+import { formatDate } from '../../lib/utils';
 import {
     Users,
     FileText,
@@ -7,8 +9,12 @@ import {
     TrendingUp,
     Activity,
     ArrowUpRight,
-    ArrowDownRight
+    ArrowDownRight,
+    Clock,
+    ShieldAlert,
+    ExternalLink
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export function DashboardOverview() {
     const [stats, setStats] = useState({
@@ -19,32 +25,33 @@ export function DashboardOverview() {
         pendingMembers: 0,
         pendingPremium: 0
     });
+    const [logs, setLogs] = useState<AuditLog[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetchStats();
-    }, []);
-
-    const fetchStats = async () => {
-        try {
-            const data = await statsService.getOverview();
-
-            if (data) {
+        Promise.all([
+            statsService.getOverview(),
+            auditService.getAll()
+        ]).then(([statsData, logsData]) => {
+            if (statsData) {
                 setStats({
-                    members: data.members || 0,
-                    materials: data.materials || 0,
-                    events: data.events || 0,
-                    premium: data.premium || 0,
-                    pendingMembers: data.pendingMembers || 0,
-                    pendingPremium: data.pendingPremium || 0
+                    members: statsData.members || 0,
+                    materials: statsData.materials || 0,
+                    events: statsData.events || 0,
+                    premium: statsData.premium || 0,
+                    pendingMembers: statsData.pendingMembers || 0,
+                    pendingPremium: statsData.pendingPremium || 0
                 });
             }
-        } catch (error) {
-            console.error('Error fetching stats:', error);
-        } finally {
+            if (logsData) {
+                setLogs(logsData.slice(0, 5)); // Only show top 5
+            }
+        }).catch(error => {
+            console.error('Error fetching dashboard data:', error);
+        }).finally(() => {
             setLoading(false);
-        }
-    };
+        });
+    }, []);
 
     const statCards = [
         {
@@ -157,27 +164,43 @@ export function DashboardOverview() {
 
             {/* Recent Activity Section */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <div className="flex items-center gap-3 mb-6">
-                    <Activity className="w-5 h-5 text-gray-400" />
-                    <h2 className="text-lg font-bold text-gray-900">Aktivitas Terkini</h2>
+                <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                        <ShieldAlert className="w-5 h-5 text-primary-600" />
+                        <h2 className="text-lg font-bold text-gray-900">Aktivitas Terkini</h2>
+                    </div>
                 </div>
 
                 <div className="space-y-6 relative before:absolute before:inset-y-0 before:left-2.5 before:w-0.5 before:bg-gray-100">
-                    {[1, 2, 3].map((_, i) => (
-                        <div key={i} className="flex gap-4 relative">
-                            <div className="w-5 h-5 rounded-full bg-blue-100 border-2 border-white ring-4 ring-gray-50 flex items-center justify-center z-10">
-                                <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                    {logs.length > 0 ? (
+                        logs.map((log) => (
+                            <div key={log.id} className="flex gap-4 relative group">
+                                <div className="w-5 h-5 rounded-full bg-white border-2 border-primary-500 ring-4 ring-gray-50 flex items-center justify-center z-10 transition-transform group-hover:scale-110">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-primary-500"></div>
+                                </div>
+                                <div className="flex-1 -mt-1">
+                                    <div className="flex items-center justify-between gap-2">
+                                        <p className="text-sm font-semibold text-gray-900">
+                                            {log.user_display_name || log.user_name} melakukan <span className="text-primary-600">{log.action}</span>
+                                        </p>
+                                        <span className="text-[10px] text-gray-400 font-mono flex items-center gap-1 shrink-0">
+                                            <Clock className="w-3 h-3" />
+                                            {formatDate(log.created_at)}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-0.5 italic">Target: {log.target || '-'}</p>
+                                </div>
                             </div>
-                            <div className="flex-1 -mt-1">
-                                <p className="text-sm font-medium text-gray-900">Sistem melakukan backup otomatis</p>
-                                <p className="text-xs text-gray-500">2 jam yang lalu</p>
-                            </div>
-                        </div>
-                    ))}
+                        ))
+                    ) : (
+                        <div className="text-center py-6 text-gray-400 text-sm">Belum ada aktivitas tercatat.</div>
+                    )}
                 </div>
 
                 <div className="mt-8 pt-6 border-t border-gray-100 text-center">
-                    <button className="text-sm text-blue-600 font-medium hover:text-blue-700">Lihat Semua Aktivitas</button>
+                    <Link to="/admin/logs" className="text-sm text-blue-600 font-bold hover:text-blue-700 flex items-center justify-center gap-2 group">
+                        Lihat Semua Aktivitas <ExternalLink className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </Link>
                 </div>
             </div>
         </div>
