@@ -4,6 +4,7 @@ import { Button } from '../../../components/ui/button';
 import { Plus, Trash2, Filter, CheckCircle, XCircle, FileText, Gamepad2, Upload, Pencil, Eye, Clock } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { questionService, type Question, type QuestionBank } from '../../../services/questionService';
+import { learningService } from '../../../services/learningService';
 import { cn } from '../../../lib/utils';
 import * as XLSX from 'xlsx';
 import { DataTable } from '../../../components/ui/DataTable';
@@ -16,7 +17,19 @@ export function AdminQuestions() {
     // Repository State
     const [questions, setQuestions] = useState<Question[]>([]);
     const [repoLoading, setRepoLoading] = useState(true);
-    const [filters, setFilters] = useState({ mapel: '', kelas: '', level: '', search: '' });
+    const [filters, setFilters] = useState({ mapel: '', kelas: '', level: '', search: '', tp: '' });
+    const [tpList, setTpList] = useState<any[]>([]);
+
+    useEffect(() => {
+        if (filters.mapel && filters.kelas) {
+            learningService.getAll('tp').then(tps => {
+                const filtered = tps.filter(t => t.mapel === filters.mapel && t.kelas === filters.kelas);
+                setTpList(filtered);
+            });
+        } else {
+            setTpList([]);
+        }
+    }, [filters.mapel, filters.kelas]);
 
     // Import State
     const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
@@ -363,7 +376,7 @@ export function AdminQuestions() {
                                         <select
                                             className="border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                             value={filters.mapel}
-                                            onChange={e => setFilters({ ...filters, mapel: e.target.value })}
+                                            onChange={e => setFilters({ ...filters, mapel: e.target.value, tp: '' })}
                                         >
                                             <option value="">Semua Mapel</option>
                                             <option value="Informatika">Informatika</option>
@@ -372,12 +385,36 @@ export function AdminQuestions() {
                                         <select
                                             className="border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                             value={filters.kelas}
-                                            onChange={e => setFilters({ ...filters, kelas: e.target.value })}
+                                            onChange={e => setFilters({ ...filters, kelas: e.target.value, tp: '' })}
                                         >
                                             <option value="">Semua Kelas</option>
                                             <option value="7">Kelas 7</option>
                                             <option value="8">Kelas 8</option>
                                             <option value="9">Kelas 9</option>
+                                        </select>
+                                        <select
+                                            className="border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-[200px]"
+                                            value={filters.tp}
+                                            onChange={e => setFilters({ ...filters, tp: e.target.value })}
+                                            disabled={!filters.mapel || !filters.kelas}
+                                            title={(!filters.mapel || !filters.kelas) ? "Pilih Mapel & Kelas dulu" : "Pilih TP"}
+                                        >
+                                            <option value="">Semua TP</option>
+                                            {tpList.map(tp => (
+                                                <option key={tp.id} value={tp.code || tp.id}>
+                                                    {tp.code ? `[${tp.code}] ` : ''}{tp.title.length > 20 ? tp.title.substring(0, 20) + '...' : tp.title}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <select
+                                            className="border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            value={filters.level}
+                                            onChange={e => setFilters({ ...filters, level: e.target.value })}
+                                        >
+                                            <option value="">Semua Level</option>
+                                            <option value="Mudah">Mudah</option>
+                                            <option value="Sedang">Sedang</option>
+                                            <option value="Sukar">Sukar</option>
                                         </select>
                                     </div>
                                 }
@@ -398,6 +435,7 @@ export function AdminQuestions() {
                                     <span className="px-2 py-0.5 bg-gray-100 rounded text-xs text-gray-600">{viewingQuestion.mapel}</span>
                                     <span className="px-2 py-0.5 bg-gray-100 rounded text-xs text-gray-600">{viewingQuestion.kelas}</span>
                                     <span className="px-2 py-0.5 bg-gray-100 rounded text-xs text-gray-600">{viewingQuestion.level}</span>
+                                    {viewingQuestion.tp_code && <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-medium">TP: {viewingQuestion.tp_code}</span>}
                                 </div>
                             </div>
                             <button onClick={() => setViewingQuestion(null)} className="text-gray-400 hover:text-gray-600">

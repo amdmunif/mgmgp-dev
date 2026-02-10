@@ -46,13 +46,15 @@ export function AdminPrompts() {
         if (!editingPrompt) return;
         try {
             const payload = {
+                id: editingPrompt.id,
                 ...data,
                 is_premium: data.is_premium ? 1 : 0
             };
+            console.log('Sending Update Payload:', payload);
             await promptService.update(editingPrompt.id, payload as any);
             toast.success('Prompt berhasil diupdate');
             setEditingPrompt(null);
-            loadData();
+            setTimeout(() => window.location.reload(), 500);
         } catch (error) {
             console.error(error);
             toast.error('Gagal mengupdate prompt');
@@ -208,7 +210,7 @@ function EditPromptModal({ prompt, onClose, onSave }: { prompt: Prompt, onClose:
             category: prompt.category,
             prompt_content: prompt.prompt_content,
             example_result: prompt.example_result,
-            is_premium: prompt.is_premium
+            is_premium: Number(prompt.is_premium) === 1
         }
     });
 

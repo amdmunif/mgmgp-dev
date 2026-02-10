@@ -4,6 +4,7 @@ import { Button } from '../../../components/ui/button';
 import { ArrowLeft, Plus, Save, GripVertical, CheckCircle2 } from 'lucide-react';
 import { questionService } from '../../../services/questionService';
 import type { Question } from '../../../services/questionService';
+import { learningService } from '../../../services/learningService';
 import { cn } from '../../../lib/utils';
 import { toast } from 'react-hot-toast';
 import { Editor } from '@tinymce/tinymce-react';
@@ -19,6 +20,7 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
     const { id } = useParams();
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(false);
+    const [tpList, setTpList] = useState<any[]>([]);
 
     // Question State
     const [q, setQ] = useState<Partial<Question>>({
@@ -40,6 +42,15 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
             loadQuestion(id);
         }
     }, [id]);
+
+    useEffect(() => {
+        if (q.mapel && q.kelas) {
+            learningService.getAll('tp').then(tps => {
+                const filtered = tps.filter(t => t.mapel === q.mapel && t.kelas === q.kelas);
+                setTpList(filtered);
+            });
+        }
+    }, [q.mapel, q.kelas]);
 
     async function loadQuestion(qId: string) {
         setFetching(true);
@@ -100,8 +111,8 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
             o.id === id ? { ...o, ...updates } : o
         );
 
-        // Single Choice Logic
-        if (q.type === 'single_choice' && updates.is_correct) {
+        // Single Choice & True/False Logic (Mutually Exclusive)
+        if ((q.type === 'single_choice' || q.type === 'true_false') && updates.is_correct) {
             newOptions = newOptions?.map((o: any) =>
                 o.id === id ? o : { ...o, is_correct: false }
             );
@@ -157,6 +168,33 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
                                 <option value="9">Kelas 9</option>
                             </select>
                         </div>
+
+                        {/* TP Selector */}
+                        {q.mapel && q.kelas && (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Tujuan Pembelajaran (TP)</label>
+                                <select
+                                    className="w-full px-3 py-2 border rounded-lg bg-white text-sm"
+                                    value={q.tp_code || ''}
+                                    onChange={e => {
+                                        const selected = tpList.find(t => (t.code || t.id) === e.target.value);
+                                        setQ({
+                                            ...q,
+                                            tp_code: selected?.code,
+                                            tp_id: selected?.id
+                                        });
+                                    }}
+                                >
+                                    <option value="">Pilih TP Referensi</option>
+                                    {tpList.map(tp => (
+                                        <option key={tp.id} value={tp.code || tp.id}>
+                                            {tp.code ? `[${tp.code}] ` : ''}{tp.title.length > 40 ? tp.title.substring(0, 40) + '...' : tp.title}
+                                        </option>
+                                    ))}
+                                    {tpList.length === 0 && <option disabled>Tidak ada data TP</option>}
+                                </select>
+                            </div>
+                        )}
 
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Tingkat Kesulitan</label>

@@ -38,6 +38,7 @@ export interface LearningMaterial {
     id: string;
     title: string;
     type: MaterialType;
+    code?: string; // New field for TP Code
     mapel: string;
     kelas?: string;
     semester?: number;
@@ -60,6 +61,8 @@ export interface Question {
     text: string;
     options?: QuestionOption[];
     points: number;
+    tp_id?: string;
+    tp_code?: string;
 }
 
 export interface QuestionBank {

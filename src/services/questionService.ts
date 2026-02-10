@@ -11,6 +11,8 @@ export interface Question {
     level: 'Mudah' | 'Sedang' | 'Sukar';
     mapel: string;
     kelas: string;
+    tp_id?: string;
+    tp_code?: string;
     creator_name?: string;
     status: 'draft' | 'pending' | 'verified' | 'rejected';
     created_at: string;
@@ -32,11 +34,12 @@ export interface QuestionBank {
 
 export const questionService = {
     // --- Repository (New) ---
-    async getAll(filters?: { mapel?: string; kelas?: string; level?: string; search?: string; creator_id?: string; status?: string }) {
+    async getAll(filters?: { mapel?: string; kelas?: string; level?: string; search?: string; creator_id?: string; status?: string; tp?: string }) {
         const params = new URLSearchParams();
         if (filters?.mapel && filters.mapel !== 'All') params.append('mapel', filters.mapel);
         if (filters?.kelas && filters.kelas !== 'All') params.append('kelas', filters.kelas);
         if (filters?.level && filters.level !== 'All') params.append('level', filters.level);
+        if (filters?.tp && filters.tp !== 'All') params.append('tp', filters.tp);
         if (filters?.search) params.append('search', filters.search);
         if (filters?.creator_id) params.append('creator_id', filters.creator_id);
         if (filters?.status) params.append('status', filters.status);

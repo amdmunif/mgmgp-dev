@@ -47,13 +47,16 @@ export function AdminGames() {
         try {
             // Ensure is_premium is sent as 1 or 0
             const payload = {
+                id: editingGame.id, // Add ID to body just in case
                 ...data,
                 is_premium: data.is_premium ? 1 : 0
             };
+            console.log('Sending Update Payload:', payload);
             await gameService.update(editingGame.id, payload as any);
             toast.success('Game berhasil diupdate');
             setEditingGame(null);
-            loadData();
+            // Force reload to verify DB persistence
+            setTimeout(() => window.location.reload(), 500);
         } catch (error) {
             console.error(error);
             toast.error('Gagal mengupdate game');
@@ -251,7 +254,7 @@ function EditGameModal({ game, onClose, onSave }: { game: Game, onClose: () => v
             title: game.title,
             description: game.description,
             link_url: game.link_url,
-            is_premium: game.is_premium
+            is_premium: Number(game.is_premium) === 1
         }
     });
 

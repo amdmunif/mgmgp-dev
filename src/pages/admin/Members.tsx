@@ -81,7 +81,7 @@ export function AdminMembers() {
             nama: member.nama || '',
             email: member.email || '',
             role: member.role || 'Member',
-            is_active: member.is_active ? 1 : 0
+            is_active: Number(member.is_active) === 1 ? 1 : 0
         });
     };
 

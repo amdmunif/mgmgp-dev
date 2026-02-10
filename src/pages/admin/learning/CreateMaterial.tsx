@@ -9,6 +9,7 @@ import type { MaterialType } from '../../../types';
 interface MaterialForm {
     title: string;
     type: MaterialType;
+    code?: string;
     mapel: string;
     kelas: string;
     semester: number;
@@ -117,14 +118,27 @@ export function CreateMaterial() {
                     </div>
 
                     {!isDocumentType ? (
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Konten / Deskripsi</label>
-                            <textarea
-                                {...register('content', { required: isDocumentType ? false : 'Konten wajib diisi untuk CP/TP' })}
-                                className="w-full rounded-md border border-gray-300 py-2 px-3 h-40 focus:ring-2 focus:ring-primary-500"
-                                placeholder="Tuliskan isi Capaian Pembelajaran atau Tujuan Pembelajaran di sini..."
-                            ></textarea>
-                            {errors.content && <p className="text-red-500 text-xs mt-1">{errors.content.message}</p>}
+                        <div className="space-y-4">
+                            {selectedType === 'tp' && (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Kode TP (Contoh: 7.1.1)</label>
+                                    <input
+                                        {...register('code')}
+                                        className="w-full rounded-md border border-gray-300 py-2 px-3 focus:ring-2 focus:ring-primary-500"
+                                        placeholder="Masukkan kode TP..."
+                                    />
+                                </div>
+                            )}
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Konten / Deskripsi</label>
+                                <textarea
+                                    {...register('content', { required: isDocumentType ? false : 'Konten wajib diisi untuk CP/TP' })}
+                                    className="w-full rounded-md border border-gray-300 py-2 px-3 h-40 focus:ring-2 focus:ring-primary-500"
+                                    placeholder="Tuliskan isi Capaian Pembelajaran atau Tujuan Pembelajaran di sini..."
+                                ></textarea>
+                                {errors.content && <p className="text-red-500 text-xs mt-1">{errors.content.message}</p>}
+                            </div>
                         </div>
                     ) : (
                         <div>
