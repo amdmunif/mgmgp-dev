@@ -108,11 +108,12 @@ export function EventDetail() {
                 <div className="md:col-span-2 space-y-8">
                     <div className="bg-white rounded-xl shadow-sm p-8">
                         <h2 className="text-2xl font-bold text-gray-900 mb-4">Tentang Kegiatan</h2>
-                        <div className="prose text-gray-600 leading-relaxed max-w-none">
-                            {event.description.split('\n').map((paragraph, index) => (
-                                <p key={index} className="mb-4">{paragraph}</p>
-                            ))}
-                        </div>
+                        <div
+                            className="prose text-gray-600 leading-relaxed max-w-none"
+                            dangerouslySetInnerHTML={{
+                                __html: event.description.replace(/src="uploads\//g, `src="${getFileUrl('/uploads/')}`)
+                            }}
+                        />
                     </div>
                 </div>
 

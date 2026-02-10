@@ -107,7 +107,14 @@ export function Learning() {
                                 </div>
 
                                 <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-primary-600 transition-colors">{item.title}</h3>
-                                {item.content && <p className="text-gray-600 leading-relaxed mb-4 line-clamp-3">{item.content}</p>}
+                                {item.content && (
+                                    <div
+                                        className="prose prose-sm text-gray-600 leading-relaxed mb-4 line-clamp-3"
+                                        dangerouslySetInnerHTML={{
+                                            __html: item.content.replace(/src="uploads\//g, `src="${getFileUrl('/uploads/')}`)
+                                        }}
+                                    />
+                                )}
 
                                 {item.file_url ? (
                                     <a
@@ -127,4 +134,3 @@ export function Learning() {
         </div>
     );
 }
-

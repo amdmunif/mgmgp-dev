@@ -88,13 +88,12 @@ export function NewsDetail() {
                 />
             </div>
 
-            <div className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-a:text-primary-600">
-                {news.content.split('\n').map((paragraph, index) => (
-                    <p key={index} className="mb-4 text-gray-700 leading-relaxed text-lg">
-                        {paragraph}
-                    </p>
-                ))}
-            </div>
+            <div
+                className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-a:text-primary-600"
+                dangerouslySetInnerHTML={{
+                    __html: news.content.replace(/src="uploads\//g, `src="${getFileUrl('/uploads/')}`)
+                }}
+            />
 
             {others.length > 0 && (
                 <div className="mt-16 pt-10 border-t border-gray-100">
