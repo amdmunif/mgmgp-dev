@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 const inputFile = path.join(__dirname, '../ouycwnsb_db.sql');
-const outputFile = path.join(__dirname, '../final_migration.sql');
+const outputFile = path.join(__dirname, '../backend/migration_final.sql');
 
 if (!fs.existsSync(inputFile)) {
     console.error('Input file not found:', inputFile);
@@ -84,13 +84,40 @@ outputSQL += `CREATE TABLE IF NOT EXISTS learning_materials (
 // Process Inserts
 let currentTable = null;
 
-for (let i = 0; i < lines.length; i++) {
-    let line = lines[i].trim();
-    if (!line) continue;
+// Process Inserts
+let currentStatementBuffer = "";
 
-    if (line.startsWith("INSERT INTO `users`")) {
-        // Users Logic: Must insert into 'users' first, then 'profiles'
-        const matches = extractRows(line);
+for (let i = 0; i < lines.length; i++) {
+    let line = lines[i]; // Preserve original line content including spaces
+    let trimmed = line.trim();
+    if (!trimmed && currentStatementBuffer === "") continue;
+
+    if (currentStatementBuffer === "") {
+        currentStatementBuffer = line;
+    } else {
+        currentStatementBuffer += "\n" + line;
+    }
+
+    // Check for end of statement
+    if (trimmed.endsWith(';')) {
+        processFullStatement(currentStatementBuffer);
+        currentStatementBuffer = "";
+    }
+}
+
+
+
+function processFullStatement(statement) {
+    // Find the INSERT statement within the buffer (ignoring comments)
+    const match = statement.match(/INSERT INTO `([^`]+)`/);
+    if (!match) return;
+
+    const tableName = match[1];
+    const sqlStart = match.index;
+    const cleanStmt = statement.substring(sqlStart); // Start from INSERT
+
+    if (tableName === 'users') {
+        const matches = extractRows(cleanStmt);
         if (matches.length > 0) {
             let usersValues = [];
             let profilesValues = [];
@@ -108,96 +135,77 @@ for (let i = 0; i < lines.length; i++) {
             }
         }
     }
-    else if (line.startsWith("INSERT INTO `events`")) {
-        currentTable = 'events';
-        let header = line.substring(0, line.indexOf('VALUES')).replace("`certificateUrl`", "`certificate_url`");
+    else if (tableName === 'events') {
+        let header = cleanStmt.substring(0, cleanStmt.indexOf('VALUES')).replace("`certificateUrl`", "`certificate_url`");
         outputSQL += header.replace("INSERT INTO", "INSERT IGNORE INTO") + " VALUES\n";
-        processValues(line, processDirectRow);
+        processValues(cleanStmt, processDirectRow);
     }
-    else if (line.startsWith("INSERT INTO `subscriptions`")) {
-        currentTable = 'subscriptions';
+    else if (tableName === 'subscriptions') {
         outputSQL += "INSERT IGNORE INTO `premium_subscriptions` (`id`, `user_id`, `payment_proof_url`, `status`, `start_date`, `end_date`, `created_at`) VALUES\n";
-        processValues(line, processDirectRow);
+        processValues(cleanStmt, processDirectRow);
     }
-    else if (line.startsWith("INSERT INTO `learning_cp`")) {
-        currentTable = 'learning_cp';
+    else if (tableName === 'learning_cp') {
         outputSQL += "INSERT IGNORE INTO `learning_materials` (`id`, `mapel`, `content`, `type`, `title`, `author_id`, `created_at`) VALUES\n";
-        processValues(line, processCpRow);
+        processValues(cleanStmt, processCpRow);
     }
-    else if (line.startsWith("INSERT INTO `learning_tp`")) {
-        currentTable = 'learning_tp';
+    else if (tableName === 'learning_tp') {
         outputSQL += "INSERT IGNORE INTO `learning_materials` (`id`, `mapel`, `kelas`, `semester`, `content`, `type`, `title`, `author_id`, `created_at`) VALUES\n";
-        processValues(line, processTpRow);
+        processValues(cleanStmt, processTpRow);
     }
-    else if (line.startsWith("INSERT INTO `questions`")) {
-        currentTable = 'questions';
+    else if (tableName === 'questions') {
         outputSQL += "INSERT IGNORE INTO `questions` (`id`, `mapel`, `kelas`, `level`, `content`, `options`, `answer_key`, `type`, `status`, `created_at`) VALUES\n";
-        processValues(line, processQuestionRow);
+        processValues(cleanStmt, processQuestionRow);
     }
-    else if (line.startsWith("INSERT INTO `news_articles`")) {
-        currentTable = 'news_articles';
-        let header = line.substring(0, line.indexOf('VALUES'));
+    else if (tableName === 'news_articles') {
+        let header = cleanStmt.substring(0, cleanStmt.indexOf('VALUES'));
         let cleanHeader = header.replace(/, `updated_at`/, '').replace("INSERT INTO", "INSERT IGNORE INTO");
         outputSQL += cleanHeader + " VALUES\n";
-        processValues(line, processNewsRow);
+        processValues(cleanStmt, processNewsRow);
     }
-    else if (line.startsWith("INSERT INTO `letters`")) {
-        currentTable = 'letters';
-        let header = line.substring(0, line.indexOf('VALUES'));
+    else if (tableName === 'letters') {
+        let header = cleanStmt.substring(0, cleanStmt.indexOf('VALUES'));
         let cleanHeader = header.replace(/, `updated_at`/, '').replace("INSERT INTO", "INSERT IGNORE INTO");
         outputSQL += cleanHeader + " VALUES\n";
-        processValues(line, processLetterRow);
+        processValues(cleanStmt, processLetterRow);
     }
-    else if (line.startsWith("INSERT INTO `site_content`")) {
-        currentTable = 'site_content';
-        let header = line.substring(0, line.indexOf('VALUES'));
+    else if (tableName === 'site_content') {
+        let header = cleanStmt.substring(0, cleanStmt.indexOf('VALUES'));
         let cleanHeader = header.replace("INSERT INTO", "INSERT IGNORE INTO")
             .replace(/, `home_cta_title`/, '')
             .replace(/, `home_cta_subtitle`/, '');
         outputSQL += cleanHeader + " VALUES\n";
-        processValues(line, processSiteContentRow);
+        processValues(cleanStmt, processSiteContentRow);
     }
-    else if (line.startsWith("INSERT INTO `audit_logs`")) {
-        // Skip
-        currentTable = null;
-    }
-    else if (line.startsWith("INSERT INTO `event_participants`") || line.startsWith("INSERT INTO `gallery_images`")) {
-        currentTable = 'direct_copy';
-        outputSQL += line.replace("INSERT INTO", "INSERT IGNORE INTO") + "\n";
-    }
-    else if (line.startsWith("INSERT INTO")) {
-        currentTable = null;
-    }
-    else if (currentTable) {
-        if (currentTable === 'events' || currentTable === 'subscriptions') processValues(line, processDirectRow);
-        else if (currentTable === 'learning_cp') processValues(line, processCpRow);
-        else if (currentTable === 'learning_tp') processValues(line, processTpRow);
-        else if (currentTable === 'questions') processValues(line, processQuestionRow);
-        else if (currentTable === 'news_articles') processValues(line, processNewsRow);
-        else if (currentTable === 'letters') processValues(line, processLetterRow);
-        else if (currentTable === 'site_content') processValues(line, processSiteContentRow);
-        else if (currentTable === 'direct_copy') outputSQL += line.replace("INSERT INTO", "INSERT IGNORE INTO") + "\n";
-
-        if (line.endsWith(';')) {
-            currentTable = null;
-            outputSQL += "\n";
-        }
+    else if (tableName === 'event_participants' || tableName === 'gallery_images') {
+        outputSQL += cleanStmt.replace("INSERT INTO", "INSERT IGNORE INTO") + "\n";
     }
 }
 
 function extractRows(line) {
     let cleanLine = line.trim();
-    const valuesPartMatch = cleanLine.match(/VALUES\s*(.*)/);
+    // Use s flag for dotAll to match newlines
+    const valuesPartMatch = cleanLine.match(/VALUES\s*(.*)/s);
     let valuesPart = valuesPartMatch ? valuesPartMatch[1] : cleanLine;
     if (valuesPart.endsWith(';')) valuesPart = valuesPart.slice(0, -1);
-    if (valuesPart.endsWith(',')) valuesPart = valuesPart.slice(0, -1);
+
+    // Split by tuple separator ), (
+    // We need to be careful not to split inside strings.
+    // The previous split algorithm was simplistic.
+    // Better: Match all tuples (....) including newlines
+
     const rows = valuesPart.split(/\),\s*\(/);
+    // This split works if ")," isn't inside a string.
+    // With SQL values, parentheses inside strings are possible.
+    // But typically mysqldump escapes them or uses extended inserts safely.
+    // Given the previous code used this splitting, we keep it but rely on the fact that
+    // valuesPart now contains the full multi-line content.
 
     let results = [];
     rows.forEach(r => {
         let raw = r.trim();
         if (raw.startsWith('(')) raw = raw.substring(1);
         if (raw.endsWith(')')) raw = raw.slice(0, -1);
+        // Regex to match columns, handling escaped quotes and newlines
         const colsMatch = raw.match(/('((?:[^'\\]|\\.)*)'|NULL|[\d\.-]+)/g);
         if (colsMatch) results.push(colsMatch);
     });

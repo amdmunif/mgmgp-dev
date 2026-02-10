@@ -6,7 +6,7 @@ try {
     $conn = $db->getConnection();
 
     // Read final_migration.sql
-    $sqlFile = __DIR__ . '/../final_migration.sql';
+    $sqlFile = __DIR__ . '/migration_final.sql';
     if (!file_exists($sqlFile)) {
         die("Error: Migration file not found at $sqlFile\n");
     }
