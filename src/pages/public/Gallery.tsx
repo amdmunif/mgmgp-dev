@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { getFileUrl } from '../../lib/api';
 import { galleryService, type GalleryImage } from '../../services/galleryService';
-import { Loader2, Image as ImageIcon } from 'lucide-react';
+import { Loader2, Image as ImageIcon, X } from 'lucide-react';
 
 export function Gallery() {
     const [images, setImages] = useState<GalleryImage[]>([]);
     const [loading, setLoading] = useState(true);
+    const [selectedImage, setSelectedImage] = useState<GalleryImage | null>(null);
 
     useEffect(() => {
         const fetchGallery = async () => {
@@ -42,6 +43,7 @@ export function Gallery() {
                     {images.map((item) => (
                         <div
                             key={item.id}
+                            onClick={() => setSelectedImage(item)}
                             className="group relative aspect-square overflow-hidden rounded-xl bg-gray-100 cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300"
                         >
                             <img
@@ -54,6 +56,45 @@ export function Gallery() {
                             </div>
                         </div>
                     ))}
+                </div>
+            )}
+
+            {/* Lightbox / Modal */}
+            {selectedImage && (
+                <div
+                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 md:p-10 animate-in fade-in zoom-in duration-300"
+                    onClick={() => setSelectedImage(null)}
+                >
+                    <button
+                        className="absolute top-6 right-6 text-white/70 hover:text-white transition-colors"
+                        onClick={() => setSelectedImage(null)}
+                    >
+                        <X className="w-10 h-10" />
+                    </button>
+
+                    <div
+                        className="relative max-w-5xl w-full max-h-full flex flex-col items-center"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="relative rounded-2xl overflow-hidden shadow-2xl bg-gray-900 border border-white/10">
+                            <img
+                                src={getFileUrl(selectedImage.image_url)}
+                                alt={selectedImage.caption}
+                                className="max-w-full max-h-[70vh] md:max-h-[80vh] object-contain"
+                            />
+                        </div>
+                        <div className="mt-6 text-center max-w-2xl">
+                            <h3 className="text-white text-xl md:text-2xl font-bold">{selectedImage.caption}</h3>
+                            <p className="text-white/60 mt-2 text-sm">
+                                {new Date(selectedImage.created_at).toLocaleDateString('id-ID', {
+                                    weekday: 'long',
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric'
+                                })}
+                            </p>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
