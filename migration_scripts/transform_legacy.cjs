@@ -103,55 +103,57 @@ for (let i = 0; i < lines.length; i++) {
             });
 
             if (usersValues.length > 0) {
-                outputSQL += "INSERT INTO `users` (id, email, password_hash, created_at, last_login) VALUES\n" + usersValues.join(",\n") + ";\n\n";
-                outputSQL += "INSERT INTO `profiles` (id, nama, email, password_hash, role, is_active, asal_sekolah, pendidikan_terakhir, jurusan, status_kepegawaian, ukuran_baju, no_hp, foto_profile, subscription_status, mapel, kelas, created_at, updated_at) VALUES\n" + profilesValues.join(",\n") + ";\n\n";
+                outputSQL += "INSERT IGNORE INTO `users` (id, email, password_hash, created_at, last_login) VALUES\n" + usersValues.join(",\n") + ";\n\n";
+                outputSQL += "INSERT IGNORE INTO `profiles` (id, nama, email, password_hash, role, is_active, asal_sekolah, pendidikan_terakhir, jurusan, status_kepegawaian, ukuran_baju, no_hp, foto_profile, subscription_status, mapel, kelas, created_at, updated_at) VALUES\n" + profilesValues.join(",\n") + ";\n\n";
             }
         }
     }
     else if (line.startsWith("INSERT INTO `events`")) {
         currentTable = 'events';
         let header = line.substring(0, line.indexOf('VALUES')).replace("`certificateUrl`", "`certificate_url`");
-        outputSQL += header + " VALUES\n";
+        outputSQL += header.replace("INSERT INTO", "INSERT IGNORE INTO") + " VALUES\n";
         processValues(line, processDirectRow);
     }
     else if (line.startsWith("INSERT INTO `subscriptions`")) {
         currentTable = 'subscriptions';
-        outputSQL += "INSERT INTO `premium_subscriptions` (`id`, `user_id`, `payment_proof_url`, `status`, `start_date`, `end_date`, `created_at`) VALUES\n";
+        outputSQL += "INSERT IGNORE INTO `premium_subscriptions` (`id`, `user_id`, `payment_proof_url`, `status`, `start_date`, `end_date`, `created_at`) VALUES\n";
         processValues(line, processDirectRow);
     }
     else if (line.startsWith("INSERT INTO `learning_cp`")) {
         currentTable = 'learning_cp';
-        outputSQL += "INSERT INTO `learning_materials` (`id`, `mapel`, `content`, `type`, `title`, `author_id`, `created_at`) VALUES\n";
+        outputSQL += "INSERT IGNORE INTO `learning_materials` (`id`, `mapel`, `content`, `type`, `title`, `author_id`, `created_at`) VALUES\n";
         processValues(line, processCpRow);
     }
     else if (line.startsWith("INSERT INTO `learning_tp`")) {
         currentTable = 'learning_tp';
-        outputSQL += "INSERT INTO `learning_materials` (`id`, `mapel`, `kelas`, `semester`, `content`, `type`, `title`, `author_id`, `created_at`) VALUES\n";
+        outputSQL += "INSERT IGNORE INTO `learning_materials` (`id`, `mapel`, `kelas`, `semester`, `content`, `type`, `title`, `author_id`, `created_at`) VALUES\n";
         processValues(line, processTpRow);
     }
     else if (line.startsWith("INSERT INTO `questions`")) {
         currentTable = 'questions';
-        outputSQL += "INSERT INTO `questions` (`id`, `mapel`, `kelas`, `level`, `content`, `options`, `answer_key`, `type`, `status`, `created_at`) VALUES\n";
+        outputSQL += "INSERT IGNORE INTO `questions` (`id`, `mapel`, `kelas`, `level`, `content`, `options`, `answer_key`, `type`, `status`, `created_at`) VALUES\n";
         processValues(line, processQuestionRow);
     }
     else if (line.startsWith("INSERT INTO `news_articles`")) {
         currentTable = 'news_articles';
         let header = line.substring(0, line.indexOf('VALUES'));
-        let cleanHeader = header.replace(/, `updated_at`/, '');
+        let cleanHeader = header.replace(/, `updated_at`/, '').replace("INSERT INTO", "INSERT IGNORE INTO");
         outputSQL += cleanHeader + " VALUES\n";
         processValues(line, processNewsRow);
     }
     else if (line.startsWith("INSERT INTO `letters`")) {
         currentTable = 'letters';
         let header = line.substring(0, line.indexOf('VALUES'));
-        let cleanHeader = header.replace(/, `updated_at`/, '');
+        let cleanHeader = header.replace(/, `updated_at`/, '').replace("INSERT INTO", "INSERT IGNORE INTO");
         outputSQL += cleanHeader + " VALUES\n";
         processValues(line, processLetterRow);
     }
     else if (line.startsWith("INSERT INTO `site_content`")) {
         currentTable = 'site_content';
         let header = line.substring(0, line.indexOf('VALUES'));
-        let cleanHeader = header.replace(/, `home_cta_title`/, '');
+        let cleanHeader = header.replace("INSERT INTO", "INSERT IGNORE INTO")
+            .replace(/, `home_cta_title`/, '')
+            .replace(/, `home_cta_subtitle`/, '');
         outputSQL += cleanHeader + " VALUES\n";
         processValues(line, processSiteContentRow);
     }
@@ -161,7 +163,7 @@ for (let i = 0; i < lines.length; i++) {
     }
     else if (line.startsWith("INSERT INTO `event_participants`") || line.startsWith("INSERT INTO `gallery_images`")) {
         currentTable = 'direct_copy';
-        outputSQL += line + "\n";
+        outputSQL += line.replace("INSERT INTO", "INSERT IGNORE INTO") + "\n";
     }
     else if (line.startsWith("INSERT INTO")) {
         currentTable = null;
@@ -174,7 +176,7 @@ for (let i = 0; i < lines.length; i++) {
         else if (currentTable === 'news_articles') processValues(line, processNewsRow);
         else if (currentTable === 'letters') processValues(line, processLetterRow);
         else if (currentTable === 'site_content') processValues(line, processSiteContentRow);
-        else if (currentTable === 'direct_copy') outputSQL += line + "\n";
+        else if (currentTable === 'direct_copy') outputSQL += line.replace("INSERT INTO", "INSERT IGNORE INTO") + "\n";
 
         if (line.endsWith(';')) {
             currentTable = null;
@@ -286,22 +288,11 @@ function processLetterRow(cols) {
 }
 
 function processSiteContentRow(cols) {
-    // Attempt remove home_cta_title. Assume index 2 (0-based) based on standard legacy schema?
-    // If unsafe, just return as is but we know column name failure.
-    // Let's assume remove 2nd index?
-    // Actually, simple strategy:
-    // Remove the element that corresponds to the deleted header column.
-    // Since we don't know the index, let's look at the failing query in user prompt.
-    // It didn't output the full query values.
-    // Let's just strip 'home_cta_title' from header and hope 2026 schema aligns?
-    // Actually schema had: home_hero_title, home_hero_subtitle, ...
-    // Legacy had home_cta_title.
-    // I will just strip one column. Usually it's index 1 or 2.
-    // I will try to remove index 1 (home_cta_title usually follows hero title).
-    // This is a guess.
+    // Attempt remove home_cta_title (idx 1?) and home_cta_subtitle (idx 2?)
+    // Safer approach: Remove index 1 and 2.
     const newCols = [...cols];
-    // Remove 2nd item?
-    newCols.splice(1, 1);
+    // Remove 2 items from index 1.
+    newCols.splice(1, 2);
     return `(${newCols.join(", ")})`;
 }
 
