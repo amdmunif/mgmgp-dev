@@ -1,8 +1,7 @@
-```javascript
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Loader2, Camera, X } from 'lucide-react';
-import { galleryService } from '../../services/galleryService';
-import type { GalleryImage } from '../../services/galleryService';
+import { Mail, Trash2, Search, Loader2, Calendar, User, MessageSquare } from 'lucide-react';
+import { contactService } from '../../services/contactService';
+import type { ContactMessage } from '../../services/contactService';
 import { toast } from 'react-hot-toast';
 import { formatDate } from '../../lib/utils';
 import { Button } from '../../components/ui/button';

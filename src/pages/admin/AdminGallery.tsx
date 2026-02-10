@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { ImageIcon, Plus, Trash2, Search, Loader2, Camera, X } from 'lucide-react';
-import { galleryService, GalleryImage } from '../../services/galleryService';
+import { Plus, Trash2, Loader2, Camera, X } from 'lucide-react';
+import { galleryService } from '../../services/galleryService';
+import type { GalleryImage } from '../../services/galleryService';
 import { toast } from 'react-hot-toast';
 import { api, getFileUrl } from '../../lib/api';
 import { Button } from '../../components/ui/button';
