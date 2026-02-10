@@ -7,10 +7,6 @@ import { Link } from 'react-router-dom';
 import { formatDate } from '../../../lib/utils';
 import { LETTER_TEMPLATES } from '../../../lib/templates';
 
-// Simple PDF generator mock (replace with real one via Edge Functions later)
-const generatePDF = (letter: any) => {
-    alert(`Generate PDF untuk surat: ${letter.letter_number}\nFitur ini akan diimplementasikan dengan React-PDF.`);
-};
 
 export function AdminLetters() {
     const [letters, setLetters] = useState<any[]>([]);

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
     BookOpen, Gamepad2, Terminal, Crown,
-    ArrowRight, Lock, LayoutDashboard, CalendarDays
+    ArrowRight, Lock, LayoutDashboard, Calendar
 } from 'lucide-react';
 import { authService } from '../../services/authService';
 import { statsService } from '../../services/statsService';

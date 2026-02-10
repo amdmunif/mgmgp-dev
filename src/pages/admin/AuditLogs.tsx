@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { auditService, type AuditLog } from '../../../services/auditService';
+import { auditService, type AuditLog } from '../../services/auditService';
 import { Activity, Search, Clock, ShieldAlert } from 'lucide-react';
-import { formatDate } from '../../../lib/utils';
+import { formatDate } from '../../lib/utils';
 import { Loader2 } from 'lucide-react';
 
 export function AuditLogs() {
@@ -96,7 +96,7 @@ export function AuditLogs() {
                                         <td className="px-6 py-4 whitespace-nowrap text-gray-600">
                                             <div className="flex items-center gap-2">
                                                 <Clock className="w-3.5 h-3.5 opacity-50" />
-                                                {formatDate(log.created_at, true)}
+                                                {formatDate(log.created_at)}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
