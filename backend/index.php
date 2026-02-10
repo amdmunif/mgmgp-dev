@@ -200,8 +200,13 @@ if ($resource === 'news') {
 
 } elseif ($resource === 'stats') {
     $controller = new StatsController();
-    if ($_SERVER['REQUEST_METHOD'] === 'GET')
-        echo $controller->getOverview();
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        if ($action === 'teachers') {
+            echo $controller->getTeacherStats();
+        } else {
+            echo $controller->getOverview();
+        }
+    }
 
 } elseif ($resource === 'games') {
     $controller = new ResourceController();

@@ -23,7 +23,8 @@ import {
     UserCheck,
     ImageIcon,
     Mail,
-    ShieldAlert
+    ShieldAlert,
+    TrendingUp
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { getFileUrl } from '../../lib/api';
@@ -140,6 +141,7 @@ export function AdminLayout() {
             title: "Utama",
             items: [
                 { icon: LayoutDashboard, label: 'Dashboard', path: '/admin' },
+                { icon: TrendingUp, label: 'Statistik & Laporan', path: '/admin/stats' }, // Added
                 { icon: Mail, label: 'Pesan Masuk', path: '/admin/messages' },
                 { icon: ShieldAlert, label: 'Log Aktivitas', path: '/admin/logs' },
             ]

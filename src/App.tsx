@@ -18,6 +18,7 @@ import { Learning } from './pages/public/Learning';
 import { AdminLayout } from './components/layout/AdminLayout';
 import { MemberLayout } from './components/layout/MemberLayout';
 import { DashboardOverview } from './pages/admin/Overview';
+import { AdminStats } from './pages/admin/Stats';
 import { AdminSettings } from './pages/admin/Settings';
 import { AdminWebSettings } from './pages/admin/WebSettings';
 import { AdminPremium } from './pages/admin/Premium';
@@ -145,6 +146,7 @@ function App() {
         {/* Admin Routes - Nested Layout */}
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<DashboardOverview />} />
+          <Route path="stats" element={<AdminStats />} />
           <Route path="members" element={<AdminMembers />} />
           <Route path="learning" element={<AdminMaterials />} />
           <Route path="learning/create" element={<CreateMaterial />} />
