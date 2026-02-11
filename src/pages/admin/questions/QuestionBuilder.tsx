@@ -34,7 +34,11 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(false);
     const [tpList, setTpList] = useState<any[]>([]);
-    const [open, setOpen] = useState(false);
+    const [isTpOpen, setIsTpOpen] = useState(false);
+
+    // ...
+
+
 
     // ...
 
@@ -193,12 +197,12 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
                         {q.mapel && q.kelas && (
                             <div className="flex flex-col gap-1">
                                 <label className="block text-sm font-medium text-gray-700">Tujuan Pembelajaran (TP)</label>
-                                <Popover open={open} onOpenChange={setOpen}>
+                                <Popover open={isTpOpen} onOpenChange={setIsTpOpen}>
                                     <PopoverTrigger asChild>
                                         <Button
                                             variant="outline"
                                             role="combobox"
-                                            aria-expanded={open}
+                                            aria-expanded={isTpOpen}
                                             className={cn(
                                                 "w-full justify-between font-normal text-left h-auto min-h-[40px] px-3 py-2",
                                                 !q.tp_code && "text-muted-foreground"
@@ -233,7 +237,7 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
                                                                     tp_code: (tp.code || tp.id) as any,
                                                                     tp_id: tp.id
                                                                 });
-                                                                setOpen(false);
+                                                                setIsTpOpen(false);
                                                             }}
                                                         >
                                                             <Check
@@ -246,16 +250,14 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
                                                             />
                                                             <div
                                                                 className="flex flex-col w-full"
-                                                                onClick={(e) => {
-                                                                    // Fallback click handler
-                                                                    e.stopPropagation();
-                                                                    console.log('Selected TP via onClick:', tp);
+                                                                onPointerDown={() => {
+                                                                    console.log('Selected TP via onPointerDown:', tp);
                                                                     setQ({
                                                                         ...q,
                                                                         tp_code: (tp.code || tp.id) as any,
                                                                         tp_id: tp.id
                                                                     });
-                                                                    setOpen(false);
+                                                                    setIsTpOpen(false);
                                                                 }}
                                                             >
                                                                 <span className="font-medium text-xs text-blue-600 font-mono">
