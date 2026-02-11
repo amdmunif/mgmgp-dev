@@ -247,6 +247,35 @@ if ($resource === 'news') {
         echo $controller->update($action, $input, $userId, $userName);
     if ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action)
         echo $controller->delete($action, $userId, $userName);
+} elseif ($resource === 'cp') {
+    include_once './controllers/CurriculumController.php';
+    $controller = new CurriculumController();
+
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        $mapel = $_GET['mapel'] ?? 'Informatika';
+        echo $controller->getCP($mapel);
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        echo $controller->saveCP($input, $userId, $userName);
+    }
+} elseif ($resource === 'tp') {
+    include_once './controllers/CurriculumController.php';
+    $controller = new CurriculumController();
+
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        // Filters from query params
+        $filters = [
+            'mapel' => $_GET['mapel'] ?? null,
+            'kelas' => $_GET['kelas'] ?? null,
+            'semester' => $_GET['semester'] ?? null
+        ];
+        echo $controller->getTPs($filters);
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        echo $controller->createTP($input, $userId, $userName);
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'PUT' && $action) {
+        echo $controller->updateTP($action, $input, $userId, $userName);
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action) {
+        echo $controller->deleteTP($action, $userId, $userName);
+    }
 } elseif ($resource === 'upload') {
     include_once './controllers/UploadController.php';
     $controller = new UploadController();
