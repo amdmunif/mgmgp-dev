@@ -3,6 +3,7 @@ import { Button } from '../../../components/ui/button';
 import { curriculumService } from '../../../services/curriculumService';
 import { Plus, Pencil, Trash2, ArrowLeft, Loader2, Save, Filter } from 'lucide-react';
 import type { TPData } from '../../../types';
+import { DataTable } from '../../../components/ui/DataTable';
 
 export function TPManager() {
     const [view, setView] = useState<'list' | 'form'>('list');
