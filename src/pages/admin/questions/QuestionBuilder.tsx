@@ -223,11 +223,11 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
                                                 <CommandGroup>
                                                     {tpList.map((tp) => (
                                                         <CommandItem
-                                                            value={`${tp.code || ''} ${tp.tujuan} ${tp.id}`} // Ensure uniqueness with ID
+                                                            value={`${tp.code || ''} ${tp.tujuan} ${tp.id}`.toLowerCase()}
                                                             key={tp.id}
-                                                            className="cursor-pointer" // Force cursor pointer
+                                                            className="cursor-pointer"
                                                             onSelect={() => {
-                                                                console.log('Selected TP:', tp);
+                                                                console.log('Selected TP via onSelect:', tp);
                                                                 setQ({
                                                                     ...q,
                                                                     tp_code: (tp.code || tp.id) as any,
@@ -244,7 +244,20 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
                                                                         : "opacity-0"
                                                                 )}
                                                             />
-                                                            <div className="flex flex-col">
+                                                            <div
+                                                                className="flex flex-col w-full"
+                                                                onClick={(e) => {
+                                                                    // Fallback click handler
+                                                                    e.stopPropagation();
+                                                                    console.log('Selected TP via onClick:', tp);
+                                                                    setQ({
+                                                                        ...q,
+                                                                        tp_code: (tp.code || tp.id) as any,
+                                                                        tp_id: tp.id
+                                                                    });
+                                                                    setOpen(false);
+                                                                }}
+                                                            >
                                                                 <span className="font-medium text-xs text-blue-600 font-mono">
                                                                     {tp.code || '-'}
                                                                 </span>
