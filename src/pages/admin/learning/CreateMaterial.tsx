@@ -154,18 +154,20 @@ export function CreateMaterial() {
                                     </select>
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Kelas</label>
-                                    <select
-                                        {...register('kelas')}
-                                        className="w-full rounded-md border border-gray-300 py-2 px-3 focus:ring-2 focus:ring-primary-500"
-                                    >
-                                        <option value="">- Pilih Kelas -</option>
-                                        <option value="7">Kelas 7</option>
-                                        <option value="8">Kelas 8</option>
-                                        <option value="9">Kelas 9</option>
-                                    </select>
-                                </div>
+                                {selectedType !== 'cp' && (
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Kelas</label>
+                                        <select
+                                            {...register('kelas')}
+                                            className="w-full rounded-md border border-gray-300 py-2 px-3 focus:ring-2 focus:ring-primary-500"
+                                        >
+                                            <option value="">- Pilih Kelas -</option>
+                                            <option value="7">Kelas 7</option>
+                                            <option value="8">Kelas 8</option>
+                                            <option value="9">Kelas 9</option>
+                                        </select>
+                                    </div>
+                                )}
 
                                 {selectedType !== 'cp' && (
                                     <div>
