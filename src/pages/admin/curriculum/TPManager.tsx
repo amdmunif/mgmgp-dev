@@ -104,82 +104,115 @@ export function TPManager() {
                     </h1>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 max-w-2xl">
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Mata Pelajaran</label>
-                                <select
-                                    className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                                    value={formData.mapel}
-                                    onChange={e => setFormData({ ...formData, mapel: e.target.value as any })}
-                                    required
-                                >
-                                    <option value="Informatika">Informatika</option>
-                                    <option value="KKA">KKA</option>
-                                </select>
+                <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden max-w-4xl mx-auto">
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-100 p-8">
+                        <h2 className="text-xl font-bold text-gray-800">
+                            {editingId ? 'Edit Data TP' : 'Input Data TP Baru'}
+                        </h2>
+                        <p className="text-gray-500 mt-1">Silakan lengkapi data Tujuan Pembelajaran di bawah ini.</p>
+                    </div>
+
+                    <form onSubmit={handleSubmit} className="p-8 space-y-8">
+                        {/* Section 1: Konfigurasi */}
+                        <div className="bg-gray-50/50 p-6 rounded-xl border border-dashed border-gray-200">
+                            <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                                Konfigurasi Kurikulum
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-500 uppercase mb-1.5">Mata Pelajaran</label>
+                                    <select
+                                        className="w-full rounded-lg border-gray-300 bg-white py-2.5 px-3 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-700"
+                                        value={formData.mapel}
+                                        onChange={e => setFormData({ ...formData, mapel: e.target.value as any })}
+                                        required
+                                    >
+                                        <option value="Informatika">Informatika</option>
+                                        <option value="KKA">KKA</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-500 uppercase mb-1.5">Kelas</label>
+                                    <select
+                                        className="w-full rounded-lg border-gray-300 bg-white py-2.5 px-3 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-700"
+                                        value={formData.kelas}
+                                        onChange={e => setFormData({ ...formData, kelas: e.target.value as any })}
+                                        required
+                                    >
+                                        <option value="7">Kelas 7</option>
+                                        <option value="8">Kelas 8</option>
+                                        <option value="9">Kelas 9</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-500 uppercase mb-1.5">Semester</label>
+                                    <select
+                                        className="w-full rounded-lg border-gray-300 bg-white py-2.5 px-3 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-700"
+                                        value={formData.semester}
+                                        onChange={e => setFormData({ ...formData, semester: e.target.value as any })}
+                                        required
+                                    >
+                                        <option value="Ganjil">Semester Ganjil</option>
+                                        <option value="Genap">Semester Genap</option>
+                                    </select>
+                                </div>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Kelas</label>
-                                <select
-                                    className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                                    value={formData.kelas}
-                                    onChange={e => setFormData({ ...formData, kelas: e.target.value as any })}
-                                    required
-                                >
-                                    <option value="7">Kelas 7</option>
-                                    <option value="8">Kelas 8</option>
-                                    <option value="9">Kelas 9</option>
-                                </select>
+                        </div>
+
+                        {/* Section 2: Konten */}
+                        <div className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">Kode TP <span className="text-red-500">*</span></label>
+                                    <input
+                                        type="text"
+                                        className="w-full rounded-lg border-gray-300 py-2.5 px-3 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-mono"
+                                        value={formData.code || ''}
+                                        onChange={e => setFormData({ ...formData, code: e.target.value })}
+                                        placeholder="7.1.1"
+                                    />
+                                    <p className="text-xs text-gray-400 mt-1.5">Format: [Kelas].[No.Urut]</p>
+                                </div>
+                                <div className="md:col-span-2">
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">Lingkup Materi <span className="text-red-500">*</span></label>
+                                    <input
+                                        type="text"
+                                        className="w-full rounded-lg border-gray-300 py-2.5 px-3 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                        value={formData.materi || ''}
+                                        onChange={e => setFormData({ ...formData, materi: e.target.value })}
+                                        placeholder="Contoh: Berpikir Komputasional"
+                                        required
+                                    />
+                                </div>
                             </div>
+
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Semester</label>
-                                <select
-                                    className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                                    value={formData.semester}
-                                    onChange={e => setFormData({ ...formData, semester: e.target.value as any })}
-                                    required
-                                >
-                                    <option value="Ganjil">Ganjil</option>
-                                    <option value="Genap">Genap</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Kode TP</label>
-                                <input
-                                    type="text"
-                                    className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                                    value={formData.code || ''}
-                                    onChange={e => setFormData({ ...formData, code: e.target.value })}
-                                    placeholder="Contoh: 7.1.1"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Lingkup Materi</label>
-                                <input
-                                    type="text"
-                                    className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                                    value={formData.materi || ''}
-                                    onChange={e => setFormData({ ...formData, materi: e.target.value })}
-                                    placeholder="Contoh: Berpikir Komputasional"
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">Deskripsi Tujuan Pembelajaran <span className="text-red-500">*</span></label>
+                                <textarea
+                                    className="w-full rounded-lg border-gray-300 py-3 px-4 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all h-32 leading-relaxed resize-y shadow-sm"
+                                    value={formData.tujuan || ''}
+                                    onChange={e => setFormData({ ...formData, tujuan: e.target.value })}
+                                    placeholder="Peserta didik mampu..."
                                     required
                                 />
                             </div>
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Tujuan Pembelajaran</label>
-                            <textarea
-                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 h-32"
-                                value={formData.tujuan || ''}
-                                onChange={e => setFormData({ ...formData, tujuan: e.target.value })}
-                                placeholder="Tuliskan deskripsi Tujuan Pembelajaran..."
-                                required
-                            />
-                        </div>
-
-                        <div className="flex justify-end pt-4">
-                            <Button type="submit" disabled={saving}>
+                        <div className="flex items-center justify-end gap-3 pt-6 border-t border-gray-100">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setView('list')}
+                                className="px-6"
+                            >
+                                Batal
+                            </Button>
+                            <Button
+                                type="submit"
+                                disabled={saving}
+                                className="px-8 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/20"
+                            >
                                 {saving ? (
                                     <>
                                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -188,7 +221,7 @@ export function TPManager() {
                                 ) : (
                                     <>
                                         <Save className="w-4 h-4 mr-2" />
-                                        Simpan
+                                        Simpan Data TP
                                     </>
                                 )}
                             </Button>
