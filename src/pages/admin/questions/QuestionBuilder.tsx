@@ -229,7 +229,7 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
                                                         <CommandItem
                                                             value={`${tp.code || ''} ${tp.tujuan} ${tp.id}`.toLowerCase()}
                                                             key={tp.id}
-                                                            className="cursor-pointer"
+                                                            className="cursor-pointer !pointer-events-auto !opacity-100"
                                                             onSelect={() => {
                                                                 console.log('Selected TP via onSelect:', tp);
                                                                 setQ({
