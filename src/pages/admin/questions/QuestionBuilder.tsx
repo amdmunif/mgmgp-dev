@@ -146,7 +146,7 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
     };
 
     return (
-        <div className="w-full p-6 md:p-8">
+        <div className="w-full p-6 md:p-8 min-h-screen bg-gray-50 flex flex-col items-start justify-start">
             {/* Header */}
             <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-4">
@@ -208,15 +208,17 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
                                                 !q.tp_code && "text-muted-foreground"
                                             )}
                                         >
-                                            {q.tp_code
-                                                ? (() => {
-                                                    const selected = tpList.find((tp) => (tp.code || tp.id) === String(q.tp_code));
-                                                    return selected
-                                                        ? `${selected.code ? `[${selected.code}] ` : ''}${selected.tujuan}`
-                                                        : q.tp_code;
-                                                })()
-                                                : "Pilih Tujuan Pembelajaran..."}
-                                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                            <span className="truncate block w-full pr-4">
+                                                {q.tp_code
+                                                    ? (() => {
+                                                        const selected = tpList.find((tp) => (tp.code || tp.id) === String(q.tp_code));
+                                                        return selected
+                                                            ? `${selected.code ? `[${selected.code}] ` : ''}${selected.tujuan}`
+                                                            : q.tp_code;
+                                                    })()
+                                                    : "Pilih Tujuan Pembelajaran..."}
+                                            </span>
+                                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 absolute right-3 top-1/2 -translate-y-1/2" />
                                         </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-[400px] p-0" align="start">
