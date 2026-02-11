@@ -20,6 +20,20 @@ export function AdminQuestions() {
     const [filters, setFilters] = useState({ mapel: '', kelas: '', level: '', search: '', tp: '' });
     const [tpList, setTpList] = useState<any[]>([]);
 
+    // Import State
+    const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
+    const [excelFile, setExcelFile] = useState<File | null>(null);
+    const [importing, setImporting] = useState(false);
+
+    // Legacy State
+    const [banks, setBanks] = useState<QuestionBank[]>([]);
+    const [legacyLoading, setLegacyLoading] = useState(true);
+    const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+    const [uploadData, setUploadData] = useState({
+        title: '', mapel: '', category: 'Latihan', is_premium: true, file: null as File | null
+    });
+    const [submitting, setSubmitting] = useState(false);
+
     // Filter TP List
     useEffect(() => {
         if (filters.mapel && filters.kelas) {
@@ -31,7 +45,169 @@ export function AdminQuestions() {
         }
     }, [filters.mapel, filters.kelas]);
 
-    // ...
+    useEffect(() => {
+        if (activeTab === 'legacy') loadLegacy();
+        else loadRepo();
+    }, [activeTab, filters]);
+
+    const loadRepo = async () => {
+        setRepoLoading(true);
+        try {
+            // Repository = Verified only. Verification = Pending only.
+            const statusFilter = activeTab === 'verification' ? 'pending' : 'verified';
+            const data = await questionService.getAll({ ...filters, status: statusFilter });
+            setQuestions(data);
+        } catch (error) { console.error(error); }
+        finally { setRepoLoading(false); }
+    };
+
+    const loadLegacy = async () => {
+        setLegacyLoading(true);
+        try {
+            const data = await questionService.getBanks();
+            setBanks(data);
+        } catch (error) { console.error(error); }
+        finally { setLegacyLoading(false); }
+    };
+
+    const handleDeleteRepo = async (id: string) => {
+        if (!confirm('Hapus soal ini?')) return;
+        try {
+            await questionService.delete(id);
+            toast.success('Soal dihapus');
+            loadRepo();
+        } catch (e) { toast.error('Gagal menghapus'); }
+    };
+
+    const handleVerify = async (id: string, approve: boolean) => {
+        if (!confirm(approve ? 'Verifikasi dan terbitkan soal ini?' : 'Tolak soal ini?')) return;
+        try {
+            await questionService.update(id, { status: approve ? 'verified' : 'rejected' });
+            toast.success(approve ? 'Soal berhasil diverifikasi' : 'Soal ditolak');
+            loadRepo();
+        } catch (e) {
+            console.error(e);
+            toast.error('Gagal memproses status');
+        }
+    };
+
+    const handleDeleteLegacy = async (id: string) => {
+        if (!confirm('Hapus item ini?')) return;
+        try {
+            await questionService.deleteBank(id);
+            toast.success('Item dihapus');
+            loadLegacy();
+        } catch (e) { toast.error('Gagal menghapus'); }
+    };
+
+    const handleUpload = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!uploadData.title || !uploadData.mapel || !uploadData.file) {
+            toast.error('Data tidak lengkap');
+            return;
+        }
+        setSubmitting(true);
+        try {
+            const url = await questionService.uploadFile(uploadData.file);
+            await questionService.createBank({
+                title: uploadData.title,
+                mapel: uploadData.mapel,
+                category: uploadData.category as any,
+                is_premium: uploadData.is_premium,
+                file_url: url
+            });
+            toast.success('Berhasil diupload');
+            setIsUploadModalOpen(false);
+            setUploadData({ title: '', mapel: '', category: 'Latihan', is_premium: true, file: null });
+            loadLegacy();
+        } catch (e) {
+            console.error(e);
+            toast.error('Gagal upload');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const downloadTemplate = () => {
+        const template = [
+            {
+                'Tipe Soal': 'PG',
+                'Soal': 'Apa ibukota Indonesia?',
+                'A': 'Jakarta',
+                'B': 'Bandung',
+                'C': 'Surabaya',
+                'D': 'Medan',
+                'E': 'Nusantara',
+                'Jawaban': 'E',
+                'Mapel': 'Informatika',
+                'Kelas': '7',
+                'Level': 'Mudah',
+                'Kode TP': '7.1'
+            },
+            {
+                'Tipe Soal': 'PGK',
+                'Soal': 'Manakah yang termasuk perangkat keras input? (Jawaban lebih dari satu)',
+                'A': 'Mouse',
+                'B': 'Monitor',
+                'C': 'Keyboard',
+                'D': 'Printer',
+                'E': 'Scanner',
+                'Jawaban': 'A,C,E',
+                'Mapel': 'Informatika',
+                'Kelas': '7',
+                'Level': 'Sedang',
+                'Kode TP': '7.2'
+            },
+            {
+                'Tipe Soal': 'BS',
+                'Soal': 'CPU adalah otak dari komputer.',
+                'A': '',
+                'B': '',
+                'C': '',
+                'D': '',
+                'E': '',
+                'Jawaban': 'Benar',
+                'Mapel': 'Informatika',
+                'Kelas': '7',
+                'Level': 'Mudah',
+                'Kode TP': '7.3'
+            },
+            {
+                'Tipe Soal': 'IS',
+                'Soal': 'Singkatan dari Random Access Memory adalah...',
+                'A': '',
+                'B': '',
+                'C': '',
+                'D': '',
+                'E': '',
+                'Jawaban': 'RAM',
+                'Mapel': 'Informatika',
+                'Kelas': '7',
+                'Level': 'Sedang',
+                'Kode TP': '7.4'
+            },
+            {
+                'Tipe Soal': 'ES',
+                'Soal': 'Jelaskan cara kerja CPU secara singkat!',
+                'A': '',
+                'B': '',
+                'C': '',
+                'D': '',
+                'E': '',
+                'Jawaban': 'CPU mengambil instruksi dari memori, menafsirkannya, dan mengeksekusinya.',
+                'Mapel': 'Informatika',
+                'Kelas': '7',
+                'Level': 'Sukar',
+                'Kode TP': '7.5'
+            }
+        ];
+
+        const ws = XLSX.utils.json_to_sheet(template);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Template Soal");
+        XLSX.writeFile(wb, "template_import_soal_mgmp_v2.xlsx");
+        toast.success('Template berhasil diunduh');
+    };
 
     const handleImportExcel = async (e: React.FormEvent) => {
         e.preventDefault();
