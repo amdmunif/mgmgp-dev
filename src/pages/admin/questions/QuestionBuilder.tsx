@@ -223,9 +223,11 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
                                                 <CommandGroup>
                                                     {tpList.map((tp) => (
                                                         <CommandItem
-                                                            value={`${tp.code || ''} ${tp.tujuan}`}
+                                                            value={`${tp.code || ''} ${tp.tujuan} ${tp.id}`} // Ensure uniqueness with ID
                                                             key={tp.id}
+                                                            className="cursor-pointer" // Force cursor pointer
                                                             onSelect={() => {
+                                                                console.log('Selected TP:', tp);
                                                                 setQ({
                                                                     ...q,
                                                                     tp_code: (tp.code || tp.id) as any,
