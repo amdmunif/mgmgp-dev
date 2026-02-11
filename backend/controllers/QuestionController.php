@@ -63,6 +63,13 @@ class QuestionController
             $params[':creator_id'] = $creatorId;
         }
 
+        // Add Type Filter
+        $type = $_GET['type'] ?? null;
+        if ($type && $type !== 'all') {
+            $query .= " AND q.type = :type";
+            $params[':type'] = $type;
+        }
+
         if ($status) {
             $query .= " AND q.status = :status";
             $params[':status'] = $status;

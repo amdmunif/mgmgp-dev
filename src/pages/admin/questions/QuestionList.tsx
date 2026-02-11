@@ -17,7 +17,7 @@ export function AdminQuestions() {
     // Repository State
     const [questions, setQuestions] = useState<Question[]>([]);
     const [repoLoading, setRepoLoading] = useState(true);
-    const [filters, setFilters] = useState({ mapel: '', kelas: '', level: '', search: '', tp: '' });
+    const [filters, setFilters] = useState({ mapel: '', kelas: '', level: '', search: '', tp: '', type: '' });
     const [tpList, setTpList] = useState<any[]>([]);
 
     // Import State
@@ -589,6 +589,19 @@ export function AdminQuestions() {
                                                     {tp.code ? `[${tp.code}] ` : ''}{tp.tujuan && tp.tujuan.length > 50 ? tp.tujuan.substring(0, 50) + '...' : tp.tujuan}
                                                 </option>
                                             ))}
+                                        </select>
+                                        <select
+                                            className="border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            value={filters.type}
+                                            onChange={e => setFilters({ ...filters, type: e.target.value })}
+                                        >
+                                            <option value="">Semua Tipe</option>
+                                            <option value="single_choice">Pilihan Ganda</option>
+                                            <option value="multiple_choice">Pilihan Ganda Kompleks</option>
+                                            <option value="true_false">Benar/Salah</option>
+                                            <option value="match">Menjodohkan</option>
+                                            <option value="short_answer">Isian Singkat</option>
+                                            <option value="essay">Uraian</option>
                                         </select>
                                         <select
                                             className="border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"

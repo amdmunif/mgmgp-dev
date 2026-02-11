@@ -20,7 +20,7 @@ export function QuestionBankPage() {
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [questions, setQuestions] = useState<Question[]>([]);
     const [loading, setLoading] = useState(true);
-    const [filters, setFilters] = useState({ mapel: '', kelas: '', level: '', search: '', tp: '' });
+    const [filters, setFilters] = useState({ mapel: '', kelas: '', level: '', search: '', tp: '', type: '' });
     const [tpList, setTpList] = useState<any[]>([]);
     const [user, setUser] = useState<any>(null);
 
@@ -345,6 +345,20 @@ export function QuestionBankPage() {
                             {tp.code ? `[${tp.code}] ` : ''}{tp.tujuan ? (tp.tujuan.length > 30 ? tp.tujuan.substring(0, 30) + '...' : tp.tujuan) : 'TP Tanpa Tujuan'}
                         </option>
                     ))}
+                </select>
+
+                <select
+                    className="border rounded-lg px-3 py-1.5 text-sm bg-gray-50 max-w-[150px]"
+                    value={filters.type}
+                    onChange={e => setFilters({ ...filters, type: e.target.value })}
+                >
+                    <option value="">Semua Tipe</option>
+                    <option value="single_choice">Pilihan Ganda</option>
+                    <option value="multiple_choice">PG Kompleks</option>
+                    <option value="true_false">Benar/Salah</option>
+                    <option value="match">Menjodohkan</option>
+                    <option value="short_answer">Isian Singkat</option>
+                    <option value="essay">Uraian</option>
                 </select>
 
                 <select

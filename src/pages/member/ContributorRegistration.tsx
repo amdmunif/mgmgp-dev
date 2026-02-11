@@ -14,10 +14,11 @@ export function ContributorRegistration() {
     const [applying, setApplying] = useState(false);
     const [myQuestions, setMyQuestions] = useState<Question[]>([]);
     const [viewingQuestion, setViewingQuestion] = useState<Question | null>(null);
+    const [filterType, setFilterType] = useState<string>('');
 
     useEffect(() => {
         loadData();
-    }, []);
+    }, [filterType]);
 
     const loadData = async () => {
         try {
@@ -27,7 +28,10 @@ export function ContributorRegistration() {
             // Fetch my questions
             const currentUser = await authService.getCurrentUser();
             if (currentUser?.user) {
-                const questions = await questionService.getAll({ creator_id: currentUser.user.id });
+                const questions = await questionService.getAll({
+                    creator_id: currentUser.user.id,
+                    type: filterType || undefined
+                });
                 setMyQuestions(questions);
             }
         } catch (error) {
@@ -172,7 +176,22 @@ export function ContributorRegistration() {
 
             {/* Questions List */}
             <div className="bg-white p-8 rounded-xl border border-gray-200 shadow-sm mt-8">
-                <h2 className="text-xl font-bold mb-6">Daftar Soal Saya ({myQuestions.length})</h2>
+                <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                    <h2 className="text-xl font-bold">Daftar Soal Saya ({myQuestions.length})</h2>
+                    <select
+                        className="border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-auto"
+                        value={filterType}
+                        onChange={(e) => setFilterType(e.target.value)}
+                    >
+                        <option value="">Semua Tipe Soal</option>
+                        <option value="single_choice">Pilihan Ganda</option>
+                        <option value="multiple_choice">Pilihan Ganda Kompleks</option>
+                        <option value="true_false">Benar/Salah</option>
+                        <option value="match">Menjodohkan</option>
+                        <option value="short_answer">Isian Singkat</option>
+                        <option value="essay">Uraian</option>
+                    </select>
+                </div>
 
                 {myQuestions.length === 0 ? (
                     <p className="text-gray-500 text-center py-4">Belum ada soal yang dibuat.</p>
