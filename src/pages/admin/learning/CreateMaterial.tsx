@@ -167,16 +167,18 @@ export function CreateMaterial() {
                                     </select>
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Semester</label>
-                                    <select
-                                        {...register('semester', { valueAsNumber: true })}
-                                        className="w-full rounded-md border border-gray-300 py-2 px-3 focus:ring-2 focus:ring-primary-500"
-                                    >
-                                        <option value="1">Semester 1 (Ganjil)</option>
-                                        <option value="2">Semester 2 (Genap)</option>
-                                    </select>
-                                </div>
+                                {selectedType !== 'cp' && (
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Semester</label>
+                                        <select
+                                            {...register('semester', { valueAsNumber: true })}
+                                            className="w-full rounded-md border border-gray-300 py-2 px-3 focus:ring-2 focus:ring-primary-500"
+                                        >
+                                            <option value="1">Semester 1 (Ganjil)</option>
+                                            <option value="2">Semester 2 (Genap)</option>
+                                        </select>
+                                    </div>
+                                )}
                             </div>
 
                             {!isDocumentType ? (
@@ -218,7 +220,7 @@ export function CreateMaterial() {
                                 </div>
                             )}
 
-// Premium checkbox removed, assumed premium by default
+
 
                             <div className="pt-4 border-t border-gray-100 flex justify-end gap-3">
                                 <Button type="button" variant="outline" onClick={() => navigate(-1)}>Batal</Button>
