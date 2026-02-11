@@ -522,13 +522,16 @@ export function AdminQuestions() {
                                             <option value="9">Kelas 9</option>
                                         </select>
                                         <select
-                                            className="border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-[200px]"
+                                            className={cn(
+                                                "border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-[200px] transition-colors",
+                                                (!filters.mapel || !filters.kelas) ? "text-gray-400" : "text-gray-900"
+                                            )}
                                             value={filters.tp}
                                             onChange={e => setFilters({ ...filters, tp: e.target.value })}
-                                            disabled={!filters.mapel || !filters.kelas}
-                                            title={(!filters.mapel || !filters.kelas) ? "Pilih Mapel & Kelas dulu" : "Pilih TP"}
                                         >
-                                            <option value="">Semua TP</option>
+                                            <option value="">
+                                                {(!filters.mapel || !filters.kelas) ? "Pilih Mapel & Kelas..." : "Semua TP"}
+                                            </option>
                                             {tpList.map(tp => (
                                                 <option key={tp.id} value={tp.code || tp.id}>
                                                     {tp.code ? `[${tp.code}] ` : ''}{tp.tujuan && tp.tujuan.length > 50 ? tp.tujuan.substring(0, 50) + '...' : tp.tujuan}

@@ -330,14 +330,20 @@ export function QuestionBankPage() {
                 </select>
 
                 <select
-                    className="border rounded-lg px-3 py-1.5 text-sm bg-gray-50 max-w-[150px]"
+                    className={cn(
+                        "border rounded-lg px-3 py-1.5 text-sm bg-gray-50 max-w-[200px] transition-colors",
+                        (!filters.mapel || !filters.kelas) ? "text-gray-400" : "text-gray-900"
+                    )}
                     value={filters.tp}
                     onChange={e => setFilters({ ...filters, tp: e.target.value })}
-                    disabled={!filters.mapel || !filters.kelas}
                 >
-                    <option value="">Semua TP</option>
+                    <option value="">
+                        {(!filters.mapel || !filters.kelas) ? "Pilih Mapel & Kelas..." : "Semua TP"}
+                    </option>
                     {tpList.map(tp => (
-                        <option key={tp.id} value={tp.code || tp.id}>{tp.code || tp.tujuan.substring(0, 20)}</option>
+                        <option key={tp.id} value={tp.code || tp.id}>
+                            {tp.code ? `[${tp.code}] ` : ''}{tp.tujuan ? (tp.tujuan.length > 30 ? tp.tujuan.substring(0, 30) + '...' : tp.tujuan) : 'TP Tanpa Tujuan'}
+                        </option>
                     ))}
                 </select>
 
