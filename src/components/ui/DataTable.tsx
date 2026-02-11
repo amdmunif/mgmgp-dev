@@ -6,7 +6,7 @@ import { cn } from '../../lib/utils';
 interface DataTableProps<T> {
     data: T[];
     columns: {
-        header: string;
+        header: string | React.ReactNode;
         accessorKey?: keyof T;
         cell?: (item: T) => React.ReactNode;
         className?: string; // Additional classes for TH and TD
@@ -24,6 +24,7 @@ export function DataTable<T extends Record<string, any>>({
     filterContent
 }: DataTableProps<T>) {
     const [currentPage, setCurrentPage] = useState(1);
+    const [limit, setLimit] = useState(pageSize);
     const [searchTerm, setSearchTerm] = useState('');
     const [sortConfig, setSortConfig] = useState<{ key: keyof T | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
 
@@ -40,12 +41,6 @@ export function DataTable<T extends Record<string, any>>({
                 })
             );
         }
-
-        // Additional filtering logic is handled by parent passing filtered 'data', 
-        // but if we needed internal filtering we could add it here.
-        // For now, we rely on parent filtering for complex filters (mapel, kelas etc) 
-        // OR the parent passes pre-filtered data. 
-        // Actually, if parent passes pre-filtered data, Global Search might work on THAT subset.
 
         return result;
     }, [data, searchTerm, searchKeys]);
@@ -65,8 +60,8 @@ export function DataTable<T extends Record<string, any>>({
     }, [filteredData, sortConfig]);
 
     // Pagination
-    const totalPages = Math.ceil(sortedData.length / pageSize);
-    const paginatedData = sortedData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+    const totalPages = Math.ceil(sortedData.length / limit);
+    const paginatedData = sortedData.slice((currentPage - 1) * limit, currentPage * limit);
 
     const handleSort = (key: keyof T) => {
         setSortConfig((current) => ({
@@ -151,11 +146,27 @@ export function DataTable<T extends Record<string, any>>({
             </div>
 
             {/* Pagination */}
-            {totalPages > 1 && (
-                <div className="flex items-center justify-between px-2">
-                    <p className="text-sm text-gray-500">
-                        Halaman {currentPage} dari {totalPages}
+            <div className="flex flex-col sm:flex-row items-center justify-between px-2 gap-4">
+                <div className="flex items-center gap-4 text-sm text-gray-500">
+                    <p>
+                        Halaman {currentPage} of {totalPages} ({sortedData.length} data)
                     </p>
+                    <select
+                        className="border rounded px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        value={limit}
+                        onChange={(e) => {
+                            setLimit(Number(e.target.value));
+                            setCurrentPage(1);
+                        }}
+                    >
+                        <option value={10}>10</option>
+                        <option value={20}>20</option>
+                        <option value={50}>50</option>
+                        <option value={100}>100</option>
+                    </select>
+                </div>
+
+                {totalPages > 1 && (
                     <div className="flex gap-2">
                         <Button
                             variant="outline"
@@ -174,8 +185,8 @@ export function DataTable<T extends Record<string, any>>({
                             <ChevronRight className="h-4 w-4" />
                         </Button>
                     </div>
-                </div>
-            )}
+                )}
+            </div>
         </div>
     );
 }

@@ -3,6 +3,7 @@ import { cn } from '../../lib/utils';
 import {
     FileText, Search, Filter, CheckSquare, Square, FileSpreadsheet, File as FileIcon, Eye, CheckCircle
 } from 'lucide-react';
+import { DataTable } from '../../components/ui/DataTable';
 import { curriculumService } from '../../services/curriculumService';
 import { questionService, type Question } from '../../services/questionService';
 import { authService } from '../../services/authService';
@@ -385,91 +386,98 @@ export function QuestionBankPage() {
             </div>
 
             {/* Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <table className="w-full text-left">
-                    <thead className="bg-gray-50 border-b border-gray-100">
-                        <tr>
-                            <th className="px-6 py-4 w-12">
-                                <span className="sr-only">Detail</span>
-                            </th>
-                            <th className="px-6 py-4 w-12">
-                                <button onClick={toggleSelectAll}>
-                                    {selectedIds.size === questions.length && questions.length > 0 ? (
-                                        <CheckSquare className="w-5 h-5 text-primary-600" />
-                                    ) : (
-                                        <Square className="w-5 h-5 text-gray-400" />
-                                    )}
-                                </button>
-                            </th>
-                            <th className="px-6 py-4 font-semibold text-gray-700">Soal</th>
-                            <th className="px-6 py-4 font-semibold text-gray-700 w-32">Mapel</th>
-                            <th className="px-6 py-4 font-semibold text-gray-700 w-24">Kelas</th>
-                            <th className="px-6 py-4 font-semibold text-gray-700 w-24">Level</th>
-                            <th className="px-6 py-4 font-semibold text-gray-700 w-24">Tipe</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                        {loading ? (
-                            <tr><td colSpan={7} className="p-8 text-center text-gray-500">Loading...</td></tr>
-                        ) : questions.length === 0 ? (
-                            <tr><td colSpan={7} className="p-8 text-center text-gray-500">Tidak ada soal ditemukan.</td></tr>
-                        ) : (
-                            questions.map(q => (
-                                <tr key={q.id} className={cn("hover:bg-gray-50/50 transition-colors", selectedIds.has(q.id) && "bg-blue-50/30")}>
-                                    <td className="px-6 py-4">
-                                        <button onClick={() => setViewingQuestion(q)} className="text-gray-400 hover:text-blue-600 transition-colors">
-                                            <Eye className="w-5 h-5" />
-                                        </button>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <button onClick={() => toggleSelect(q.id)}>
-                                            {selectedIds.has(q.id) ? (
-                                                <CheckSquare className="w-5 h-5 text-primary-600" />
-                                            ) : (
-                                                <Square className="w-5 h-5 text-gray-300 hover:text-gray-400" />
-                                            )}
-                                        </button>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="line-clamp-2 text-sm text-gray-800" dangerouslySetInnerHTML={{ __html: q.content }} />
-                                    </td>
-                                    <td className="px-6 py-4 text-sm text-gray-600">
-                                        {q.mapel}
-                                        {q.tp_code && (
-                                            <div className="mt-1">
-                                                <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-blue-50 text-[10px] font-mono font-medium text-blue-700">
-                                                    {q.tp_code}
-                                                </span>
-                                            </div>
-                                        )}
-                                    </td>
-                                    <td className="px-6 py-4 text-center">
-                                        <span className="inline-flex items-center px-2 py-1 rounded bg-gray-100 text-xs font-medium text-gray-800">
-                                            {q.kelas}
+            <DataTable
+                data={questions}
+                pageSize={20}
+                columns={[
+                    {
+                        header: (
+                            <button onClick={toggleSelectAll}>
+                                {selectedIds.size === questions.length && questions.length > 0 ? (
+                                    <CheckSquare className="w-5 h-5 text-primary-600" />
+                                ) : (
+                                    <Square className="w-5 h-5 text-gray-400" />
+                                )}
+                            </button>
+                        ),
+                        cell: (q) => (
+                            <button onClick={() => toggleSelect(q.id)}>
+                                {selectedIds.has(q.id) ? (
+                                    <CheckSquare className="w-5 h-5 text-primary-600" />
+                                ) : (
+                                    <Square className="w-5 h-5 text-gray-300 hover:text-gray-400" />
+                                )}
+                            </button>
+                        ),
+                        className: "w-12 text-center"
+                    },
+                    {
+                        header: "Soal",
+                        accessorKey: "content",
+                        cell: (q) => (
+                            <div className="line-clamp-2 text-sm text-gray-800" dangerouslySetInnerHTML={{ __html: q.content }} />
+                        )
+                    },
+                    {
+                        header: "Mapel",
+                        accessorKey: "mapel",
+                        cell: (q) => (
+                            <div className="text-sm text-gray-600">
+                                {q.mapel}
+                                {q.tp_code && (
+                                    <div className="mt-1">
+                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-blue-50 text-[10px] font-mono font-medium text-blue-700">
+                                            {q.tp_code}
                                         </span>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className={cn(
-                                            "inline-flex items-center px-2 py-1 rounded text-xs font-medium",
-                                            q.level === 'Mudah' ? "bg-green-100 text-green-800" :
-                                                q.level === 'Sedang' ? "bg-yellow-100 text-yellow-800" :
-                                                    "bg-red-100 text-red-800"
-                                        )}>
-                                            {q.level}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-sm text-gray-500 capitalize">
-                                        {q.type.replace('_', ' ')}
-                                    </td>
-                                </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
-            </div>
-            <p className="mt-4 text-xs text-center text-gray-400">
-                Menampilkan {questions.length} soal. Pilih soal untuk mendownload dalam format Word, Excel, atau PDF.
-            </p>
+                                    </div>
+                                )}
+                            </div>
+                        ),
+                        className: "w-32"
+                    },
+                    {
+                        header: "Kelas",
+                        accessorKey: "kelas",
+                        cell: (q) => (
+                            <span className="inline-flex items-center px-2 py-1 rounded bg-gray-100 text-xs font-medium text-gray-800">
+                                {q.kelas}
+                            </span>
+                        ),
+                        className: "w-24 text-center"
+                    },
+                    {
+                        header: "Level",
+                        accessorKey: "level",
+                        cell: (q) => (
+                            <span className={cn(
+                                "inline-flex items-center px-2 py-1 rounded text-xs font-medium",
+                                q.level === 'Mudah' ? "bg-green-100 text-green-800" :
+                                    q.level === 'Sedang' ? "bg-yellow-100 text-yellow-800" :
+                                        "bg-red-100 text-red-800"
+                            )}>
+                                {q.level}
+                            </span>
+                        ),
+                        className: "w-24"
+                    },
+                    {
+                        header: "Tipe",
+                        accessorKey: "type",
+                        cell: (q) => <span className="capitalize">{q.type.replace('_', ' ')}</span>,
+                        className: "w-24"
+                    },
+                    {
+                        header: "Aksi",
+                        cell: (q) => (
+                            <button onClick={() => setViewingQuestion(q)} className="text-gray-400 hover:text-blue-600 transition-colors" title="Lihat Detail">
+                                <Eye className="w-5 h-5" />
+                            </button>
+                        ),
+                        className: "w-16 text-center"
+                    }
+                ]}
+            />
+            {loading && <p className="text-center text-gray-500 py-4">Loading data...</p>}
 
             {/* Preview Modal */}
             {viewingQuestion && (
