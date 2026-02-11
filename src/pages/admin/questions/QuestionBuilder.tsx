@@ -148,7 +148,7 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
     return (
         <div className="w-full p-6 md:p-8 min-h-screen bg-gray-50 flex flex-col items-start justify-start">
             {/* Header */}
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center justify-between mb-8 w-full">
                 <div className="flex items-center gap-4">
                     <Button variant="ghost" onClick={() => navigate(basePath)}>
                         <ArrowLeft className="w-4 h-4 mr-2" /> Kembali
@@ -160,7 +160,7 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
                 </Button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 w-full">
                 {/* Meta Sidebar (1 Col) */}
                 <div className="space-y-6 lg:col-span-1">
                     <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-4">
