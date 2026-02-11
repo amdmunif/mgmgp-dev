@@ -317,6 +317,14 @@ export function AdminQuestions() {
         },
         { header: 'Mapel', accessorKey: 'mapel' as keyof Question, className: 'w-32' },
         {
+            header: 'TP',
+            accessorKey: 'tp_code' as keyof Question,
+            className: 'w-24',
+            cell: (q: Question) => (
+                q.tp_code ? <span className="inline-flex items-center px-2 py-1 rounded bg-blue-50 text-xs font-mono font-medium text-blue-700">{q.tp_code}</span> : <span className="text-gray-400">-</span>
+            )
+        },
+        {
             header: 'Kelas',
             accessorKey: 'kelas' as keyof Question,
             className: 'w-24 text-center',

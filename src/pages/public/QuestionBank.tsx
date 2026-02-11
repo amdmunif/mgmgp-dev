@@ -3,6 +3,7 @@ import { cn } from '../../lib/utils';
 import {
     FileText, Search, Filter, CheckSquare, Square, FileSpreadsheet, File as FileIcon, Eye, CheckCircle
 } from 'lucide-react';
+import { curriculumService } from '../../services/curriculumService';
 import { questionService, type Question } from '../../services/questionService';
 import { authService } from '../../services/authService';
 import { getFileUrl } from '../../lib/api';
@@ -19,7 +20,8 @@ export function QuestionBankPage() {
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [questions, setQuestions] = useState<Question[]>([]);
     const [loading, setLoading] = useState(true);
-    const [filters, setFilters] = useState({ mapel: '', kelas: '', level: '', search: '' });
+    const [filters, setFilters] = useState({ mapel: '', kelas: '', level: '', search: '', tp: '' });
+    const [tpList, setTpList] = useState<any[]>([]);
     const [user, setUser] = useState<any>(null);
 
     useEffect(() => {
@@ -28,6 +30,17 @@ export function QuestionBankPage() {
         });
         loadData();
     }, [filters]);
+
+    // Fetch TPs when mapel/kelas changes
+    useEffect(() => {
+        if (filters.mapel && filters.kelas) {
+            curriculumService.getTPs({ mapel: filters.mapel, kelas: filters.kelas })
+                .then(tps => setTpList(tps))
+                .catch(err => console.error(err));
+        } else {
+            setTpList([]);
+        }
+    }, [filters.mapel, filters.kelas]);
 
     const loadData = async () => {
         setLoading(true);
@@ -308,12 +321,24 @@ export function QuestionBankPage() {
                 <select
                     className="border rounded-lg px-3 py-1.5 text-sm bg-gray-50"
                     value={filters.kelas}
-                    onChange={e => setFilters({ ...filters, kelas: e.target.value })}
+                    onChange={e => setFilters({ ...filters, kelas: e.target.value, tp: '' })}
                 >
                     <option value="">Semua Kelas</option>
                     <option value="7">Kelas 7</option>
                     <option value="8">Kelas 8</option>
                     <option value="9">Kelas 9</option>
+                </select>
+
+                <select
+                    className="border rounded-lg px-3 py-1.5 text-sm bg-gray-50 max-w-[150px]"
+                    value={filters.tp}
+                    onChange={e => setFilters({ ...filters, tp: e.target.value })}
+                    disabled={!filters.mapel || !filters.kelas}
+                >
+                    <option value="">Semua TP</option>
+                    {tpList.map(tp => (
+                        <option key={tp.id} value={tp.code || tp.id}>{tp.code || tp.tujuan.substring(0, 20)}</option>
+                    ))}
                 </select>
 
                 <select
@@ -388,7 +413,16 @@ export function QuestionBankPage() {
                                     <td className="px-6 py-4">
                                         <div className="line-clamp-2 text-sm text-gray-800" dangerouslySetInnerHTML={{ __html: q.content }} />
                                     </td>
-                                    <td className="px-6 py-4 text-sm text-gray-600">{q.mapel}</td>
+                                    <td className="px-6 py-4 text-sm text-gray-600">
+                                        {q.mapel}
+                                        {q.tp_code && (
+                                            <div className="mt-1">
+                                                <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-blue-50 text-[10px] font-mono font-medium text-blue-700">
+                                                    {q.tp_code}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </td>
                                     <td className="px-6 py-4 text-center">
                                         <span className="inline-flex items-center px-2 py-1 rounded bg-gray-100 text-xs font-medium text-gray-800">
                                             {q.kelas}
@@ -428,6 +462,11 @@ export function QuestionBankPage() {
                                     <span className="px-2 py-0.5 bg-gray-100 rounded text-xs text-gray-600">{viewingQuestion.mapel}</span>
                                     <span className="px-2 py-0.5 bg-gray-100 rounded text-xs text-gray-600">{viewingQuestion.kelas}</span>
                                     <span className="px-2 py-0.5 bg-gray-100 rounded text-xs text-gray-600">{viewingQuestion.level}</span>
+                                    {viewingQuestion.tp_code && (
+                                        <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-medium font-mono">
+                                            TP: {viewingQuestion.tp_code}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                             <button onClick={() => setViewingQuestion(null)} className="text-gray-400 hover:text-gray-600">

@@ -183,6 +183,7 @@ export function ContributorRegistration() {
                                 <tr>
                                     <th className="px-4 py-3 rounded-l-lg">Soal</th>
                                     <th className="px-4 py-3">Mapel</th>
+                                    <th className="px-4 py-3">TP</th>
                                     <th className="px-4 py-3">Kelas</th>
                                     <th className="px-4 py-3 text-center">Status</th>
                                     <th className="px-4 py-3 text-right rounded-r-lg">Aksi</th>
@@ -195,6 +196,13 @@ export function ContributorRegistration() {
                                             <div className="line-clamp-1 text-sm font-medium" dangerouslySetInnerHTML={{ __html: q.content }} />
                                         </td>
                                         <td className="px-4 py-3 text-sm text-gray-600">{q.mapel}</td>
+                                        <td className="px-4 py-3 text-sm text-gray-600">
+                                            {q.tp_code ? (
+                                                <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-blue-50 text-[10px] font-mono font-medium text-blue-700">
+                                                    {q.tp_code}
+                                                </span>
+                                            ) : '-'}
+                                        </td>
                                         <td className="px-4 py-3 text-sm text-gray-600">{q.kelas}</td>
                                         <td className="px-4 py-3 text-center">
                                             {q.status === 'verified' ? (
@@ -239,7 +247,19 @@ export function ContributorRegistration() {
                         <div className="flex justify-between items-start mb-6">
                             <div>
                                 <h2 className="text-xl font-bold">Detail Pertanyaan</h2>
-                                <span className="text-sm text-gray-500">{viewingQuestion.mapel} - Kelas {viewingQuestion.kelas}</span>
+                                <div className="flex gap-2 items-center text-sm text-gray-500 mt-1">
+                                    <span>{viewingQuestion.mapel}</span>
+                                    <span>•</span>
+                                    <span>Kelas {viewingQuestion.kelas}</span>
+                                    {viewingQuestion.tp_code && (
+                                        <>
+                                            <span>•</span>
+                                            <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-medium font-mono">
+                                                TP: {viewingQuestion.tp_code}
+                                            </span>
+                                        </>
+                                    )}
+                                </div>
                             </div>
                             <button onClick={() => setViewingQuestion(null)} className="text-gray-400 hover:text-gray-600">
                                 <span className="text-2xl">&times;</span>
