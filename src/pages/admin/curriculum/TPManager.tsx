@@ -113,14 +113,15 @@ export function TPManager() {
                         <p className="text-gray-500 mt-1">Silakan lengkapi data Tujuan Pembelajaran di bawah ini.</p>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="p-8 space-y-8">
-                        {/* Section 1: Konfigurasi */}
-                        <div className="bg-gray-50/50 p-6 rounded-xl border border-dashed border-gray-200">
-                            <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 flex items-center gap-2">
-                                <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                                Konfigurasi Kurikulum
-                            </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <form onSubmit={handleSubmit} className="p-8 grid grid-cols-1 lg:grid-cols-4 gap-8">
+                        {/* Metadata Sidebar */}
+                        <div className="space-y-6 lg:col-span-1">
+                            <div className="bg-gray-50/50 p-6 rounded-xl border border-dashed border-gray-200 space-y-6">
+                                <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider flex items-center gap-2 border-b border-gray-200 pb-2">
+                                    <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                                    Konfigurasi
+                                </h3>
+
                                 <div>
                                     <label className="block text-xs font-semibold text-gray-500 uppercase mb-1.5">Mata Pelajaran</label>
                                     <select
@@ -159,73 +160,83 @@ export function TPManager() {
                                     </select>
                                 </div>
                             </div>
+
+                            <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                                <label className="block text-xs font-semibold text-blue-700 uppercase mb-2">Petunjuk</label>
+                                <ul className="text-xs text-blue-600 space-y-1 list-disc pl-4">
+                                    <li>Kode TP: <b>[Kelas].[No]</b> (Misal: 7.1)</li>
+                                    <li>Lingkup materi: Topik utama</li>
+                                    <li>Deskripsi: Harus operasional</li>
+                                </ul>
+                            </div>
                         </div>
 
-                        {/* Section 2: Konten */}
-                        <div className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">Kode TP <span className="text-red-500">*</span></label>
-                                    <input
-                                        type="text"
-                                        className="w-full rounded-lg border-gray-300 py-2.5 px-3 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-mono"
-                                        value={formData.code || ''}
-                                        onChange={e => setFormData({ ...formData, code: e.target.value })}
-                                        placeholder="7.1.1"
-                                    />
-                                    <p className="text-xs text-gray-400 mt-1.5">Format: [Kelas].[No.Urut]</p>
+                        {/* Content Area */}
+                        <div className="lg:col-span-3 space-y-6">
+                            <div className="space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">Kode TP <span className="text-red-500">*</span></label>
+                                        <input
+                                            type="text"
+                                            className="w-full rounded-lg border-gray-300 py-2.5 px-3 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-mono"
+                                            value={formData.code || ''}
+                                            onChange={e => setFormData({ ...formData, code: e.target.value })}
+                                            placeholder="7.1.1"
+                                        />
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">Lingkup Materi <span className="text-red-500">*</span></label>
+                                        <input
+                                            type="text"
+                                            className="w-full rounded-lg border-gray-300 py-2.5 px-3 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                            value={formData.materi || ''}
+                                            onChange={e => setFormData({ ...formData, materi: e.target.value })}
+                                            placeholder="Contoh: Berpikir Komputasional"
+                                            required
+                                        />
+                                    </div>
                                 </div>
-                                <div className="md:col-span-2">
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">Lingkup Materi <span className="text-red-500">*</span></label>
-                                    <input
-                                        type="text"
-                                        className="w-full rounded-lg border-gray-300 py-2.5 px-3 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-                                        value={formData.materi || ''}
-                                        onChange={e => setFormData({ ...formData, materi: e.target.value })}
-                                        placeholder="Contoh: Berpikir Komputasional"
+
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">Deskripsi Tujuan Pembelajaran <span className="text-red-500">*</span></label>
+                                    <textarea
+                                        className="w-full rounded-lg border-gray-300 py-3 px-4 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all h-40 leading-relaxed resize-y shadow-sm"
+                                        value={formData.tujuan || ''}
+                                        onChange={e => setFormData({ ...formData, tujuan: e.target.value })}
+                                        placeholder="Peserta didik mampu..."
                                         required
                                     />
                                 </div>
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">Deskripsi Tujuan Pembelajaran <span className="text-red-500">*</span></label>
-                                <textarea
-                                    className="w-full rounded-lg border-gray-300 py-3 px-4 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all h-32 leading-relaxed resize-y shadow-sm"
-                                    value={formData.tujuan || ''}
-                                    onChange={e => setFormData({ ...formData, tujuan: e.target.value })}
-                                    placeholder="Peserta didik mampu..."
-                                    required
-                                />
+                            <div className="flex items-center justify-end gap-3 pt-6 border-t border-gray-100 mt-8">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setView('list')}
+                                    className="px-6"
+                                >
+                                    Batal
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    disabled={saving}
+                                    className="px-8 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/20"
+                                >
+                                    {saving ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                            Menyimpan...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Save className="w-4 h-4 mr-2" />
+                                            Simpan Data
+                                        </>
+                                    )}
+                                </Button>
                             </div>
-                        </div>
-
-                        <div className="flex items-center justify-end gap-3 pt-6 border-t border-gray-100">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => setView('list')}
-                                className="px-6"
-                            >
-                                Batal
-                            </Button>
-                            <Button
-                                type="submit"
-                                disabled={saving}
-                                className="px-8 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/20"
-                            >
-                                {saving ? (
-                                    <>
-                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                        Menyimpan...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Save className="w-4 h-4 mr-2" />
-                                        Simpan Data TP
-                                    </>
-                                )}
-                            </Button>
                         </div>
                     </form>
                 </div>
@@ -247,93 +258,95 @@ export function TPManager() {
             </div>
 
             {/* Filters */}
-            {/* Filters */}
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-wrap gap-4 items-center">
-                <div className="flex items-center gap-2">
-                    <Filter className="w-4 h-4 text-gray-500" />
-                    <span className="text-sm font-medium text-gray-700">Filter:</span>
-                </div>
-
-                <select
-                    className="rounded-lg border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500 min-w-[150px]"
-                    value={filterMapel}
-                    onChange={e => setFilterMapel(e.target.value as any)}
-                >
-                    <option value="all">Semua Mapel</option>
-                    <option value="Informatika">Informatika</option>
-                    <option value="KKA">Koding & Kecerdasan Artifisial</option>
-                </select>
-
-                <select
-                    className="rounded-lg border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500 min-w-[120px]"
-                    value={filterKelas}
-                    onChange={e => setFilterKelas(e.target.value)}
-                >
-                    <option value="all">Semua Kelas</option>
-                    <option value="7">Kelas 7</option>
-                    <option value="8">Kelas 8</option>
-                    <option value="9">Kelas 9</option>
-                </select>
-
-                <select
-                    className="rounded-lg border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500 min-w-[150px]"
-                    value={filterSemester}
-                    onChange={e => setFilterSemester(e.target.value)}
-                >
-                    <option value="all">Semua Semester</option>
-                    <option value="Ganjil">Semester Ganjil</option>
-                    <option value="Genap">Semester Genap</option>
-                </select>
-            </div>
-
             {/* List */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden p-6">
                 {loading ? (
                     <div className="flex justify-center p-12">
                         <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
                     </div>
-                ) : tps.length === 0 ? (
-                    <div className="p-12 text-center text-gray-500">
-                        Belum ada data TP untuk filter yang dipilih.
-                    </div>
                 ) : (
-                    <table className="w-full text-sm text-left">
-                        <thead className="bg-gray-50 text-gray-700 font-medium border-b border-gray-200">
-                            <tr>
-                                <th className="px-6 py-3 w-32">Kode</th>
-                                <th className="px-6 py-3 w-1/4">Lingkup Materi</th>
-                                <th className="px-6 py-3">Tujuan Pembelajaran</th>
-                                <th className="px-6 py-3 text-right">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            {tps.map(tp => (
-                                <tr key={tp.id} className="hover:bg-gray-50 transition-colors">
-                                    <td className="px-6 py-4 font-mono text-xs text-gray-500">{tp.code || '-'}</td>
-                                    <td className="px-6 py-4 font-medium text-gray-900">{tp.materi}</td>
-                                    <td className="px-6 py-4 text-gray-600">{tp.tujuan}</td>
-                                    <td className="px-6 py-4 text-right">
-                                        <div className="flex justify-end gap-2">
-                                            <button
-                                                onClick={() => handleEdit(tp)}
-                                                className="p-1 text-blue-600 hover:bg-blue-50 rounded"
-                                                title="Edit"
-                                            >
-                                                <Pencil className="w-4 h-4" />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDelete(tp.id)}
-                                                className="p-1 text-red-600 hover:bg-red-50 rounded"
-                                                title="Hapus"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                    <DataTable
+                        data={tps}
+                        columns={[
+                            {
+                                header: 'Kode',
+                                accessorKey: 'code',
+                                className: 'w-32',
+                                cell: (tp: TPData) => <span className="font-mono text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">{tp.code || '-'}</span>
+                            },
+                            {
+                                header: 'Lingkup Materi',
+                                accessorKey: 'materi',
+                                className: 'w-1/4 font-medium text-gray-900'
+                            },
+                            {
+                                header: 'Tujuan Pembelajaran',
+                                accessorKey: 'tujuan',
+                                cell: (tp: TPData) => <div className="text-gray-600 line-clamp-2">{tp.tujuan}</div>
+                            },
+                            {
+                                header: 'Aksi',
+                                className: 'text-right w-32',
+                                cell: (tp: TPData) => (
+                                    <div className="flex justify-end gap-2">
+                                        <button
+                                            onClick={() => handleEdit(tp)}
+                                            className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                                            title="Edit"
+                                        >
+                                            <Pencil className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => handleDelete(tp.id)}
+                                            className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                                            title="Hapus"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                )
+                            }
+                        ]}
+                        searchKeys={['code', 'materi', 'tujuan']}
+                        pageSize={10}
+                        filterContent={
+                            <div className="flex items-center gap-2">
+                                <Filter className="w-4 h-4 text-gray-500" />
+                                <span className="text-sm font-medium text-gray-700 mr-2">Filter:</span>
+
+                                <select
+                                    className="border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[150px]"
+                                    value={filterMapel}
+                                    onChange={e => setFilterMapel(e.target.value as any)}
+                                >
+                                    <option value="all">Semua Mapel</option>
+                                    <option value="Informatika">Informatika</option>
+                                    <option value="KKA">Koding & Kecerdasan Artifisial</option>
+                                </select>
+
+                                <select
+                                    className="border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[120px]"
+                                    value={filterKelas}
+                                    onChange={e => setFilterKelas(e.target.value)}
+                                >
+                                    <option value="all">Semua Kelas</option>
+                                    <option value="7">Kelas 7</option>
+                                    <option value="8">Kelas 8</option>
+                                    <option value="9">Kelas 9</option>
+                                </select>
+
+                                <select
+                                    className="border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[150px]"
+                                    value={filterSemester}
+                                    onChange={e => setFilterSemester(e.target.value)}
+                                >
+                                    <option value="all">Semua Semester</option>
+                                    <option value="Ganjil">Semester Ganjil</option>
+                                    <option value="Genap">Semester Genap</option>
+                                </select>
+                            </div>
+                        }
+                    />
                 )}
             </div>
         </div>
