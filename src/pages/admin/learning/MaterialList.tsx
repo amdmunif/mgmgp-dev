@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../../../components/ui/button';
-import { Plus, Search, FileText, BookOpen, Presentation, File, Filter, Book, Eye, Pencil, Trash2, X, ExternalLink } from 'lucide-react';
+import { Plus, Search, FileText, Presentation, File, Filter, Book, Eye, Pencil, Trash2, X, ExternalLink } from 'lucide-react';
 import { learningService } from '../../../services/learningService';
 import type { LearningMaterial, MaterialType } from '../../../types';
 import { formatDate } from '../../../lib/utils';
@@ -43,8 +43,6 @@ export function AdminMaterials() {
 
     const getIcon = (type: MaterialType) => {
         switch (type) {
-            case 'cp': return <BookOpen className="w-5 h-5 text-blue-500" />;
-            case 'tp': return <FileText className="w-5 h-5 text-green-500" />;
             case 'rpp': return <File className="w-5 h-5 text-orange-500" />;
             case 'slide': return <Presentation className="w-5 h-5 text-purple-500" />;
             default: return <FileText className="w-5 h-5" />;
@@ -61,7 +59,7 @@ export function AdminMaterials() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">Perangkat Ajar</h1>
-                    <p className="text-gray-500">Kelola CP, TP, RPP, dan Slide Presentasi.</p>
+                    <p className="text-gray-500">Kelola Modul Ajar, Bahan Bacaan, dan Slide Presentasi.</p>
                 </div>
                 <Link to="/admin/learning/create">
                     <Button className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/20"><Plus className="w-4 h-4 mr-2" /> Tambah Materi</Button>
@@ -87,10 +85,9 @@ export function AdminMaterials() {
                         onChange={(e) => setFilterType(e.target.value as any)}
                     >
                         <option value="all">Semua Tipe</option>
-                        <option value="cp">Capaian Pembelajaran (CP)</option>
-                        <option value="tp">Tujuan Pembelajaran (TP)</option>
                         <option value="rpp">Modul Ajar</option>
                         <option value="slide">Slide Presentasi</option>
+                        <option value="modul">Bahan Bacaan / E-Book</option>
                     </select>
                 </div>
             </div>

@@ -1,47 +1,64 @@
 import { useState, useEffect } from 'react';
-import { BookOpen, Target } from 'lucide-react';
-import { learningService } from '../../services/learningService';
-import type { LearningMaterial } from '../../types';
+import { BookOpen, Target, Loader2 } from 'lucide-react';
+import { curriculumService } from '../../services/curriculumService';
+import type { CPData, TPData } from '../../types';
 
 export function CPTP() {
     const [activeTab, setActiveTab] = useState<'CP' | 'TP'>('CP');
+    const [loading, setLoading] = useState(false);
 
-    // Filters State
-    const [selectedMapel, setSelectedMapel] = useState<'Informatika' | 'KKA'>('Informatika');
-    const [selectedKelas, setSelectedKelas] = useState<'7' | '8' | '9'>('7');
-    const [selectedSemester, setSelectedSemester] = useState<'Ganjil' | 'Genap'>('Ganjil');
+    // CP State
+    const [cpInformatika, setCpInformatika] = useState<CPData | null>(null);
+    const [cpKKA, setCpKKA] = useState<CPData | null>(null);
 
-    // State
-    const [tpData, setTpData] = useState<LearningMaterial[]>([]);
-    const [cpData, setCpData] = useState<LearningMaterial[]>([]);
-    const [loading, setLoading] = useState(true);
+    // TP State
+    const [tps, setTps] = useState<TPData[]>([]);
+    const [tpMapel, setTpMapel] = useState<'Informatika' | 'KKA'>('Informatika');
+    const [tpKelas, setTpKelas] = useState<string>('7');
+    const [tpSemester, setTpSemester] = useState<string>('Ganjil');
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [cps, tps] = await Promise.all([
-                    learningService.getAll('cp'),
-                    learningService.getAll('tp')
-                ]);
-                setCpData(cps);
-                setTpData(tps);
-            } catch (error) {
-                console.error("Failed to fetch data", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchData();
-    }, []);
+        if (activeTab === 'CP') {
+            fetchCPs();
+        } else {
+            fetchTPs();
+        }
+    }, [activeTab, tpMapel, tpKelas, tpSemester]);
 
-    const filteredData = tpData.filter(item =>
-        item.mapel === selectedMapel &&
-        item.kelas === selectedKelas &&
-        String(item.semester) === selectedSemester
-    );
+    const fetchCPs = async () => {
+        setLoading(true);
+        try {
+            const [inf, kka] = await Promise.all([
+                curriculumService.getCP('Informatika'),
+                curriculumService.getCP('KKA')
+            ]);
+            setCpInformatika(inf);
+            setCpKKA(kka);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchTPs = async () => {
+        setLoading(true);
+        try {
+            const data = await curriculumService.getTPs({
+                mapel: tpMapel,
+                kelas: tpKelas,
+                semester: tpSemester
+            });
+            setTps(data);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-8 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             {/* Header */}
             <div className="text-center space-y-2">
                 <h1 className="text-3xl font-bold text-gray-900">Referensi Pembelajaran</h1>
@@ -50,11 +67,11 @@ export function CPTP() {
 
             {/* Tabs */}
             <div className="flex justify-center">
-                <div className="inline-flex bg-gray-100 p-1 rounded-xl">
+                <div className="inline-flex bg-white p-1 rounded-xl shadow-sm border border-gray-200">
                     <button
                         onClick={() => setActiveTab('CP')}
                         className={`px-6 py-2.5 text-sm font-semibold rounded-lg transition-all flex items-center gap-2 ${activeTab === 'CP'
-                            ? 'bg-white text-blue-600 shadow-sm'
+                            ? 'bg-blue-600 text-white shadow-sm'
                             : 'text-gray-500 hover:text-gray-900'
                             }`}
                     >
@@ -63,7 +80,7 @@ export function CPTP() {
                     <button
                         onClick={() => setActiveTab('TP')}
                         className={`px-6 py-2.5 text-sm font-semibold rounded-lg transition-all flex items-center gap-2 ${activeTab === 'TP'
-                            ? 'bg-white text-blue-600 shadow-sm'
+                            ? 'bg-blue-600 text-white shadow-sm'
                             : 'text-gray-500 hover:text-gray-900'
                             }`}
                     >
@@ -73,130 +90,133 @@ export function CPTP() {
             </div>
 
             {/* Content Area */}
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 min-h-[500px]">
-                {activeTab === 'CP' ? (
+            <div className="min-h-[500px]">
+                {loading ? (
+                    <div className="flex justify-center py-20">
+                        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                    </div>
+                ) : activeTab === 'CP' ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {/* Column 1: Informatika */}
-                        <div className="bg-blue-50/50 rounded-xl border border-blue-100 overflow-hidden">
-                            <div className="bg-blue-100 p-4 border-b border-blue-200">
-                                <h2 className="text-lg font-bold text-blue-800">Informatika</h2>
+                        {/* Informatika */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-blue-100 overflow-hidden">
+                            <div className="bg-blue-50/50 p-6 border-b border-blue-100">
+                                <h2 className="text-xl font-bold text-blue-900">Informatika</h2>
+                                <p className="text-sm text-blue-600 mt-1">Capaian Pembelajaran</p>
                             </div>
-                            <div className="p-6 space-y-6">
-                                {loading && <p className="text-gray-500 text-sm">Loading...</p>}
-                                {!loading && cpData.filter(i => i.mapel === 'Informatika').length === 0 && (
-                                    <p className="text-gray-500 text-sm italic">Belum ada data CP Informatika.</p>
+                            <div className="p-8">
+                                {cpInformatika ? (
+                                    <div
+                                        className="prose prose-blue prose-sm max-w-none text-gray-600 leading-relaxed text-justify"
+                                        dangerouslySetInnerHTML={{ __html: cpInformatika.content }}
+                                    />
+                                ) : (
+                                    <p className="text-gray-500 italic text-center py-8">Belum ada data CP Informatika.</p>
                                 )}
-                                {cpData.filter(i => i.mapel === 'Informatika').map(item => (
-                                    <div key={item.id}>
-                                        <h3 className="font-bold text-gray-900 mb-2">{item.title}</h3>
-                                        <div
-                                            className="prose prose-sm max-w-none text-gray-600 leading-relaxed text-justify"
-                                            dangerouslySetInnerHTML={{ __html: item.content || '' }}
-                                        />
-                                    </div>
-                                ))}
                             </div>
                         </div>
 
-                        {/* Column 2: KKA */}
-                        <div className="bg-green-50/50 rounded-xl border border-green-100 overflow-hidden">
-                            <div className="bg-green-100 p-4 border-b border-green-200">
-                                <h2 className="text-lg font-bold text-green-800">Keterampilan Komputer & Akomodasi (KKA)</h2>
+                        {/* KKA */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-green-100 overflow-hidden">
+                            <div className="bg-green-50/50 p-6 border-b border-green-100">
+                                <h2 className="text-xl font-bold text-green-900">KKA</h2>
+                                <p className="text-sm text-green-600 mt-1">Keterampilan Komputer & Akomodasi</p>
                             </div>
-                            <div className="p-6 space-y-6">
-                                {loading && <p className="text-gray-500 text-sm">Loading...</p>}
-                                {!loading && cpData.filter(i => i.mapel === 'KKA').length === 0 && (
-                                    <p className="text-gray-500 text-sm italic">Belum ada data CP KKA.</p>
+                            <div className="p-8">
+                                {cpKKA ? (
+                                    <div
+                                        className="prose prose-green prose-sm max-w-none text-gray-600 leading-relaxed text-justify"
+                                        dangerouslySetInnerHTML={{ __html: cpKKA.content }}
+                                    />
+                                ) : (
+                                    <p className="text-gray-500 italic text-center py-8">Belum ada data CP KKA.</p>
                                 )}
-                                {cpData.filter(i => i.mapel === 'KKA').map(item => (
-                                    <div key={item.id}>
-                                        <h3 className="font-bold text-gray-900 mb-2">{item.title}</h3>
-                                        <div
-                                            className="prose prose-sm max-w-none text-gray-600 leading-relaxed text-justify"
-                                            dangerouslySetInnerHTML={{ __html: item.content || '' }}
-                                        />
-                                    </div>
-                                ))}
                             </div>
                         </div>
                     </div>
                 ) : (
-                    <div className="space-y-6">
+                    <div className="space-y-8">
                         {/* Filters */}
-                        <div className="flex flex-wrap items-center justify-center gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                            <div className="flex bg-white rounded-lg border border-gray-200 overflow-hidden p-1">
+                        <div className="flex flex-wrap items-center justify-center gap-4 bg-white p-2 rounded-xl border border-gray-200 shadow-sm w-fit mx-auto">
+                            <div className="flex bg-gray-100 rounded-lg p-1">
                                 <button
-                                    onClick={() => setSelectedMapel('Informatika')}
-                                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${selectedMapel === 'Informatika' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-50'}`}
+                                    onClick={() => setTpMapel('Informatika')}
+                                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${tpMapel === 'Informatika' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                                 >
                                     Informatika
                                 </button>
                                 <button
-                                    onClick={() => setSelectedMapel('KKA')}
-                                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${selectedMapel === 'KKA' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-50'}`}
+                                    onClick={() => setTpMapel('KKA')}
+                                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${tpMapel === 'KKA' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                                 >
                                     KKA
                                 </button>
                             </div>
 
-                            <div className="h-6 w-px bg-gray-300 mx-2 hidden md:block"></div>
+                            <div className="h-6 w-px bg-gray-300 hidden md:block" />
 
-                            <div className="flex bg-white rounded-lg border border-gray-200 overflow-hidden p-1">
+                            <div className="flex bg-gray-100 rounded-lg p-1">
                                 {['7', '8', '9'].map((k) => (
                                     <button
                                         key={k}
-                                        onClick={() => setSelectedKelas(k as any)}
-                                        className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${selectedKelas === k ? 'bg-slate-700 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-50'}`}
+                                        onClick={() => setTpKelas(k)}
+                                        className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${tpKelas === k ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                                     >
                                         Kelas {k}
                                     </button>
                                 ))}
                             </div>
 
-                            <div className="h-6 w-px bg-gray-300 mx-2 hidden md:block"></div>
+                            <div className="h-6 w-px bg-gray-300 hidden md:block" />
 
-                            <div className="flex bg-white rounded-lg border border-gray-200 overflow-hidden p-1">
+                            <div className="flex bg-gray-100 rounded-lg p-1">
                                 {['Ganjil', 'Genap'].map((s) => (
                                     <button
                                         key={s}
-                                        onClick={() => setSelectedSemester(s as any)}
-                                        className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${selectedSemester === s ? 'bg-slate-700 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-50'}`}
+                                        onClick={() => setTpSemester(s)}
+                                        className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${tpSemester === s ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                                     >
-                                        {s}
+                                        Semester {s}
                                     </button>
                                 ))}
                             </div>
                         </div>
 
-                        {/* Title Display */}
-                        <div className="text-center py-4">
-                            <h2 className="text-xl font-bold text-gray-800">
-                                Tujuan Pembelajaran {selectedMapel} - Kelas {selectedKelas} Semester {selectedSemester}
-                            </h2>
-                        </div>
-
-                        {/* Results List */}
-                        <div className="space-y-4">
-                            {loading ? (
-                                <div className="text-center py-12 text-gray-500">Loading...</div>
-                            ) : filteredData.length > 0 ? (
-                                filteredData.map((item, index) => (
-                                    <div key={item.id} className="flex gap-4 group">
-                                        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                                            {index + 1}
+                        {/* List */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                            {tps.length > 0 ? (
+                                <div className="divide-y divide-gray-100">
+                                    {tps.map((tp, index) => (
+                                        <div key={tp.id} className="p-6 hover:bg-gray-50 transition-colors group">
+                                            <div className="flex gap-4">
+                                                <div className="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-sm group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                                                    {index + 1}
+                                                </div>
+                                                <div className="space-y-2 flex-1">
+                                                    <div className="flex items-center gap-2">
+                                                        {tp.code && (
+                                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-bold bg-blue-50 text-blue-700 border border-blue-100">
+                                                                {tp.code}
+                                                            </span>
+                                                        )}
+                                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                                            {tp.materi}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-gray-900 leading-relaxed">
+                                                        {tp.tujuan}
+                                                    </p>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className="flex-1 bg-white border border-gray-200 rounded-xl p-4 hover:border-blue-300 hover:shadow-sm transition-all">
-                                            <p className="text-gray-800 font-medium text-lg mb-2">{item.title}</p>
-                                            <div
-                                                className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium"
-                                                dangerouslySetInnerHTML={{ __html: item.content ? `<span class="flex items-center gap-1"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"/></svg>${item.content}</span>` : 'Topik' }}
-                                            />
-                                        </div>
-                                    </div>
-                                ))
+                                    ))}
+                                </div>
                             ) : (
-                                <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-                                    <p>Belum ada data Tujuan Pembelajaran untuk filter ini.</p>
+                                <div className="text-center py-16 bg-gray-50">
+                                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
+                                        <Target className="w-8 h-8" />
+                                    </div>
+                                    <h3 className="text-lg font-medium text-gray-900">Belum ada data</h3>
+                                    <p className="text-gray-500 mt-1">Tidak ada Tujuan Pembelajaran untuk filter yang dipilih.</p>
                                 </div>
                             )}
                         </div>

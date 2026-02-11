@@ -1,14 +1,11 @@
 import { useState, useEffect } from 'react';
 import { cn } from '../../lib/utils';
-import { BookOpen, FileText, Presentation, File, Download, Loader2 } from 'lucide-react';
+import { File, Download, Loader2 } from 'lucide-react';
 import { learningService } from '../../services/learningService';
 import { getFileUrl } from '../../lib/api';
 import type { LearningMaterial } from '../../types';
 
-type Tab = 'cp' | 'tp' | 'rpp';
-
 export function Learning() {
-    const [activeTab, setActiveTab] = useState<Tab>('cp');
     const [materials, setMaterials] = useState<LearningMaterial[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -28,54 +25,20 @@ export function Learning() {
     };
 
     const filteredMaterials = materials.filter(m => {
-        if (activeTab === 'cp') return m.type === 'cp';
-        if (activeTab === 'tp') return m.type === 'tp';
-        if (activeTab === 'rpp') return m.type === 'rpp' || m.type === 'slide' || m.type === 'modul';
-        return false;
+        // Only show RPP, Slide, Modul (ignore any old CP/TP data if returned)
+        return ['rpp', 'slide', 'modul'].includes(m.type);
     });
 
     return (
         <div className="max-w-screen-xl mx-auto px-4 py-8">
             <div className="text-center mb-12">
-                <h1 className="text-3xl font-bold text-gray-900">Referensi Pembelajaran</h1>
-                <p className="text-gray-500 mt-2">Kumpulan Capaian Pembelajaran (CP), Tujuan Pembelajaran (TP), dan Perangkat Ajar Kurikulum Merdeka.</p>
+                <h1 className="text-3xl font-bold text-gray-900">Perangkat Ajar</h1>
+                <p className="text-gray-500 mt-2">Kumpulan Modul Ajar, Bahan Bacaan, dan Slide Presentasi Kurikulum Merdeka.</p>
             </div>
 
-            <div className="flex justify-center mb-8 border-b border-gray-200 overflow-x-auto">
-                <button
-                    onClick={() => setActiveTab('cp')}
-                    className={cn(
-                        "px-6 py-3 font-medium text-sm transition-colors relative flex items-center gap-2 whitespace-nowrap",
-                        activeTab === 'cp' ? "text-primary-600" : "text-gray-500 hover:text-gray-700"
-                    )}
-                >
-                    <BookOpen className="w-4 h-4" />
-                    Capaian Pembelajaran (CP)
-                    {activeTab === 'cp' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary-600"></div>}
-                </button>
-                <button
-                    onClick={() => setActiveTab('tp')}
-                    className={cn(
-                        "px-6 py-3 font-medium text-sm transition-colors relative flex items-center gap-2 whitespace-nowrap",
-                        activeTab === 'tp' ? "text-primary-600" : "text-gray-500 hover:text-gray-700"
-                    )}
-                >
-                    <FileText className="w-4 h-4" />
-                    Tujuan Pembelajaran (TP)
-                    {activeTab === 'tp' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary-600"></div>}
-                </button>
-                <button
-                    onClick={() => setActiveTab('rpp')}
-                    className={cn(
-                        "px-6 py-3 font-medium text-sm transition-colors relative flex items-center gap-2 whitespace-nowrap",
-                        activeTab === 'rpp' ? "text-primary-600" : "text-gray-500 hover:text-gray-700"
-                    )}
-                >
-                    <Presentation className="w-4 h-4" />
-                    Modul Ajar
-                    {activeTab === 'rpp' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary-600"></div>}
-                </button>
-            </div>
+            {/* <div className="flex justify-center mb-8 border-b border-gray-200 overflow-x-auto">
+               Tabs removed as we only show general materials here now. CP/TP is in separate menu.
+            </div> */}
 
             <div className="space-y-6 min-h-[300px]">
                 {loading ? (
@@ -89,14 +52,14 @@ export function Learning() {
                         <p className="text-gray-500">Silakan cek kembali nanti atau hubungi admin.</p>
                     </div>
                 ) : (
-                    <div className={cn("grid gap-6", activeTab === 'rpp' ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1")}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredMaterials.map((item) => (
                             <div key={item.id} className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-all group">
                                 <div className="flex items-center gap-2 mb-3">
                                     <span className="px-2 py-1 bg-primary-50 text-primary-700 text-xs font-semibold rounded uppercase">{item.mapel}</span>
                                     {item.kelas && <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs font-semibold rounded">Kelas {item.kelas}</span>}
                                     {item.is_premium && <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded">Premium</span>}
-                                    {activeTab === 'rpp' && (
+                                    {['rpp', 'slide', 'modul'].includes(item.type) && (
                                         <span className={cn(
                                             "px-2 py-1 text-xs font-semibold rounded uppercase ml-auto",
                                             item.type === 'slide' ? "bg-purple-100 text-purple-700" : "bg-orange-100 text-orange-700"

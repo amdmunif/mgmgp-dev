@@ -24,7 +24,9 @@ import {
     ImageIcon,
     Mail,
     ShieldAlert,
-    TrendingUp
+    TrendingUp,
+    Target,
+    ListChecks
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { getFileUrl } from '../../lib/api';
@@ -52,6 +54,8 @@ const menuGroups = [
         title: "Edukasi",
         items: [
             { icon: BookOpen, label: 'Materi Pembelajaran', path: '/admin/learning' },
+            { icon: Target, label: 'Capaian Pembelajaran', path: '/admin/cp' },
+            { icon: ListChecks, label: 'Tujuan Pembelajaran', path: '/admin/tp' },
             { icon: FileText, label: 'Bank Soal (CBT)', path: '/admin/questions' },
             { icon: Gamepad2, label: 'Bank Games', path: '/admin/games' },
             { icon: Terminal, label: 'Prompt Library', path: '/admin/prompts' },

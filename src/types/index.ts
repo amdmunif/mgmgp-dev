@@ -132,3 +132,24 @@ export interface SiteSettings {
     home_hero_subtitle?: string;
     home_hero_image?: string;
 }
+
+export interface CPData {
+    id: string;
+    mapel: 'Informatika' | 'KKA';
+    content: string;
+    materi?: string;
+    updated_by?: string;
+    updated_at?: string;
+}
+
+export interface TPData {
+    id: string;
+    mapel: 'Informatika' | 'KKA';
+    kelas: '7' | '8' | '9';
+    semester: 'Ganjil' | 'Genap';
+    code?: string; // TP Code e.g. "7.1.1"
+    materi: string; // Scope/Topic
+    tujuan: string;
+    created_by?: string;
+    created_at?: string;
+}

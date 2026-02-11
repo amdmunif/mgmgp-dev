@@ -49,6 +49,8 @@ import { CreateReference } from './pages/admin/references/CreateReference';
 import { AdminGallery } from './pages/admin/AdminGallery';
 import { AdminMessages } from './pages/admin/AdminMessages';
 import { AuditLogs } from './pages/admin/AuditLogs';
+import { CPManager } from './pages/admin/curriculum/CPManager';
+import { TPManager } from './pages/admin/curriculum/TPManager';
 
 // Routes
 <Route path="contributors" element={<VerificationList />} />
@@ -148,6 +150,8 @@ function App() {
           <Route index element={<DashboardOverview />} />
           <Route path="stats" element={<AdminStats />} />
           <Route path="members" element={<AdminMembers />} />
+          <Route path="cp" element={<CPManager />} />
+          <Route path="tp" element={<TPManager />} />
           <Route path="learning" element={<AdminMaterials />} />
           <Route path="learning/create" element={<CreateMaterial />} />
           <Route path="learning/edit/:id" element={<CreateMaterial />} />

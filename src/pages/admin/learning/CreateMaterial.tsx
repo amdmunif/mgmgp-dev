@@ -23,7 +23,7 @@ export function CreateMaterial() {
     const { id } = useParams();
     const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<MaterialForm>({
         defaultValues: {
-            type: 'cp',
+            type: 'rpp',
             mapel: 'Informatika',
             semester: 1,
             is_premium: true
@@ -62,10 +62,6 @@ export function CreateMaterial() {
     const selectedType = watch('type');
 
     const onSubmit = async (data: MaterialForm) => {
-        if (!['rpp', 'slide', 'modul'].includes(data.type) && !content) {
-            alert('Konten wajib diisi untuk CP/TP');
-            return;
-        }
         setSubmitting(true);
         try {
             let fileUrl = undefined;
@@ -73,14 +69,11 @@ export function CreateMaterial() {
                 fileUrl = await learningService.uploadDocument(file);
             }
 
-            // Sanitize data for CP (remove kelas and semester)
+            // Sanitize data
             const cleanData = {
                 ...data,
-                // Explicitly set kelas and semester to null/undefined for CP
-                kelas: data.type === 'cp' ? undefined : data.kelas,
-                semester: data.type === 'cp' ? undefined : data.semester,
                 content: content,
-                is_premium: !['cp', 'tp'].includes(data.type),
+                is_premium: data.is_premium,
                 file_url: fileUrl,
             };
 
@@ -137,8 +130,6 @@ export function CreateMaterial() {
                                         {...register('type')}
                                         className="w-full rounded-md border border-gray-300 py-2 px-3 focus:ring-2 focus:ring-primary-500"
                                     >
-                                        <option value="cp">Capaian Pembelajaran (CP)</option>
-                                        <option value="tp">Tujuan Pembelajaran (TP)</option>
                                         <option value="rpp">Modul Ajar</option>
                                         <option value="slide">Slide Presentasi</option>
                                         <option value="modul">Bahan Bacaan / E-Book</option>
@@ -156,33 +147,29 @@ export function CreateMaterial() {
                                     </select>
                                 </div>
 
-                                {selectedType !== 'cp' && (
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Kelas</label>
-                                        <select
-                                            {...register('kelas')}
-                                            className="w-full rounded-md border border-gray-300 py-2 px-3 focus:ring-2 focus:ring-primary-500"
-                                        >
-                                            <option value="">- Pilih Kelas -</option>
-                                            <option value="7">Kelas 7</option>
-                                            <option value="8">Kelas 8</option>
-                                            <option value="9">Kelas 9</option>
-                                        </select>
-                                    </div>
-                                )}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Kelas</label>
+                                    <select
+                                        {...register('kelas')}
+                                        className="w-full rounded-md border border-gray-300 py-2 px-3 focus:ring-2 focus:ring-primary-500"
+                                    >
+                                        <option value="">- Pilih Kelas -</option>
+                                        <option value="7">Kelas 7</option>
+                                        <option value="8">Kelas 8</option>
+                                        <option value="9">Kelas 9</option>
+                                    </select>
+                                </div>
 
-                                {selectedType !== 'cp' && (
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Semester</label>
-                                        <select
-                                            {...register('semester', { valueAsNumber: true })}
-                                            className="w-full rounded-md border border-gray-300 py-2 px-3 focus:ring-2 focus:ring-primary-500"
-                                        >
-                                            <option value="1">Semester 1 (Ganjil)</option>
-                                            <option value="2">Semester 2 (Genap)</option>
-                                        </select>
-                                    </div>
-                                )}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Semester</label>
+                                    <select
+                                        {...register('semester', { valueAsNumber: true })}
+                                        className="w-full rounded-md border border-gray-300 py-2 px-3 focus:ring-2 focus:ring-primary-500"
+                                    >
+                                        <option value="1">Semester 1 (Ganjil)</option>
+                                        <option value={2}>Semester 2 (Genap)</option>
+                                    </select>
+                                </div>
                             </div>
 
                             {!isDocumentType ? (
