@@ -1,13 +1,26 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '../../../components/ui/button';
-import { ArrowLeft, Plus, Save, GripVertical, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Plus, Save, GripVertical, CheckCircle2, Check, ChevronsUpDown } from 'lucide-react';
 import { questionService } from '../../../services/questionService';
 import type { Question } from '../../../services/questionService';
 import { learningService } from '../../../services/learningService';
 import { cn } from '../../../lib/utils';
 import { toast } from 'react-hot-toast';
 import { Editor } from '@tinymce/tinymce-react';
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+} from "../../../components/ui/command";
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "../../../components/ui/popover";
 
 interface QuestionBuilderProps {
     basePath?: string;
