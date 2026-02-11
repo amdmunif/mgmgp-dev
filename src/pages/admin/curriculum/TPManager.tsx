@@ -11,9 +11,9 @@ export function TPManager() {
     const [saving, setSaving] = useState(false);
 
     // Filters
-    const [filterMapel, setFilterMapel] = useState<'Informatika' | 'KKA'>('Informatika');
-    const [filterKelas, setFilterKelas] = useState<string>('7');
-    const [filterSemester, setFilterSemester] = useState<string>('Ganjil');
+    const [filterMapel, setFilterMapel] = useState<string>('all');
+    const [filterKelas, setFilterKelas] = useState<string>('all');
+    const [filterSemester, setFilterSemester] = useState<string>('all');
 
     // Form State
     const [formData, setFormData] = useState<Partial<TPData>>({});
@@ -44,9 +44,9 @@ export function TPManager() {
 
     const handleCreate = () => {
         setFormData({
-            mapel: filterMapel,
-            kelas: filterKelas as any,
-            semester: filterSemester as any,
+            mapel: filterMapel !== 'all' ? filterMapel as any : 'Informatika',
+            kelas: filterKelas !== 'all' ? filterKelas as any : '7',
+            semester: filterSemester !== 'all' ? filterSemester as any : 'Ganjil',
             code: '',
             materi: '',
             tujuan: ''
@@ -129,7 +129,7 @@ export function TPManager() {
                                         required
                                     >
                                         <option value="Informatika">Informatika</option>
-                                        <option value="KKA">KKA</option>
+                                        <option value="KKA">Koding dan Kecerdasan Artifisial (KKA)</option>
                                     </select>
                                 </div>
                                 <div>
@@ -234,38 +234,52 @@ export function TPManager() {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold text-gray-900">Manajemen Tujuan Pembelajaran (TP)</h1>
-                <Button onClick={handleCreate}>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900">Tujuan Pembelajaran (TP)</h1>
+                    <p className="text-gray-500">Kelola Tujuan Pembelajaran (TP) untuk Bank Soal dan Rapor.</p>
+                </div>
+                <Button onClick={handleCreate} className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/20">
                     <Plus className="w-4 h-4 mr-2" />
-                    Tambah TP
+                    Tambah TP Baru
                 </Button>
             </div>
 
             {/* Filters */}
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex gap-4 flex-wrap">
+            {/* Filters */}
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-wrap gap-4 items-center">
+                <div className="flex items-center gap-2">
+                    <Filter className="w-4 h-4 text-gray-500" />
+                    <span className="text-sm font-medium text-gray-700">Filter:</span>
+                </div>
+
                 <select
-                    className="rounded-lg border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500"
+                    className="rounded-lg border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500 min-w-[150px]"
                     value={filterMapel}
                     onChange={e => setFilterMapel(e.target.value as any)}
                 >
+                    <option value="all">Semua Mapel</option>
                     <option value="Informatika">Informatika</option>
-                    <option value="KKA">KKA</option>
+                    <option value="KKA">Koding & Kecerdasan Artifisial</option>
                 </select>
+
                 <select
-                    className="rounded-lg border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500"
+                    className="rounded-lg border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500 min-w-[120px]"
                     value={filterKelas}
                     onChange={e => setFilterKelas(e.target.value)}
                 >
+                    <option value="all">Semua Kelas</option>
                     <option value="7">Kelas 7</option>
                     <option value="8">Kelas 8</option>
                     <option value="9">Kelas 9</option>
                 </select>
+
                 <select
-                    className="rounded-lg border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500"
+                    className="rounded-lg border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500 min-w-[150px]"
                     value={filterSemester}
                     onChange={e => setFilterSemester(e.target.value)}
                 >
+                    <option value="all">Semua Semester</option>
                     <option value="Ganjil">Semester Ganjil</option>
                     <option value="Genap">Semester Genap</option>
                 </select>

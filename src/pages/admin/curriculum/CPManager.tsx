@@ -61,8 +61,11 @@ export function CPManager() {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold text-gray-900">Manajemen Capaian Pembelajaran</h1>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900">Capaian Pembelajaran (CP)</h1>
+                    <p className="text-gray-500">Kelola konten Capaian Pembelajaran untuk setiap mata pelajaran.</p>
+                </div>
             </div>
 
             {/* Tabs */}
@@ -83,7 +86,7 @@ export function CPManager() {
                         : 'text-gray-600 hover:bg-gray-50'
                         }`}
                 >
-                    Keterampilan Komputer & Akomodasi (KKA)
+                    Koding dan Kecerdasan Artifisial (KKA)
                 </button>
             </div>
 

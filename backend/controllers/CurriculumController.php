@@ -90,15 +90,15 @@ class CurriculumController
         $query = "SELECT * FROM learning_tp WHERE 1=1";
         $params = [];
 
-        if (isset($filters['mapel']) && $filters['mapel']) {
+        if (isset($filters['mapel']) && $filters['mapel'] && $filters['mapel'] !== 'all') {
             $query .= " AND mapel = :mapel";
             $params[':mapel'] = $filters['mapel'];
         }
-        if (isset($filters['kelas']) && $filters['kelas']) {
+        if (isset($filters['kelas']) && $filters['kelas'] && $filters['kelas'] !== 'all') {
             $query .= " AND kelas = :kelas";
             $params[':kelas'] = $filters['kelas'];
         }
-        if (isset($filters['semester']) && $filters['semester']) {
+        if (isset($filters['semester']) && $filters['semester'] && $filters['semester'] !== 'all') {
             $query .= " AND semester = :semester";
             $params[':semester'] = $filters['semester'];
         }
