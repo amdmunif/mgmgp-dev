@@ -34,6 +34,9 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(false);
     const [tpList, setTpList] = useState<any[]>([]);
+    const [open, setOpen] = useState(false);
+
+    // ...
 
     // Question State
     const [q, setQ] = useState<Partial<Question>>({
@@ -190,11 +193,12 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
                         {q.mapel && q.kelas && (
                             <div className="flex flex-col gap-1">
                                 <label className="block text-sm font-medium text-gray-700">Tujuan Pembelajaran (TP)</label>
-                                <Popover>
+                                <Popover open={open} onOpenChange={setOpen}>
                                     <PopoverTrigger asChild>
                                         <Button
                                             variant="outline"
                                             role="combobox"
+                                            aria-expanded={open}
                                             className={cn(
                                                 "w-full justify-between font-normal text-left h-auto min-h-[40px] px-3 py-2",
                                                 !q.tp_code && "text-muted-foreground"
@@ -204,8 +208,8 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
                                                 ? (() => {
                                                     const selected = tpList.find((tp) => (tp.code || tp.id) === String(q.tp_code));
                                                     return selected
-                                                        ? `${selected.code ? `[${selected.code}] ` : ''}${selected.title}`
-                                                        : q.tp_code; // Fallback if not found in list but exists
+                                                        ? `${selected.code ? `[${selected.code}] ` : ''}${selected.tujuan}`
+                                                        : q.tp_code;
                                                 })()
                                                 : "Pilih Tujuan Pembelajaran..."}
                                             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -219,14 +223,15 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
                                                 <CommandGroup>
                                                     {tpList.map((tp) => (
                                                         <CommandItem
-                                                            value={`${tp.code || ''} ${tp.title}`}
+                                                            value={`${tp.code || ''} ${tp.tujuan}`}
                                                             key={tp.id}
                                                             onSelect={() => {
                                                                 setQ({
                                                                     ...q,
-                                                                    tp_code: (tp.code || tp.id) as any, // Use code if available, else ID
+                                                                    tp_code: (tp.code || tp.id) as any,
                                                                     tp_id: tp.id
                                                                 });
+                                                                setOpen(false);
                                                             }}
                                                         >
                                                             <Check
@@ -238,11 +243,11 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
                                                                 )}
                                                             />
                                                             <div className="flex flex-col">
-                                                                <span className="font-medium text-xs text-gray-500 font-mono">
+                                                                <span className="font-medium text-xs text-blue-600 font-mono">
                                                                     {tp.code || '-'}
                                                                 </span>
-                                                                <span className="text-sm line-clamp-2">
-                                                                    {tp.title}
+                                                                <span className="text-sm line-clamp-2 text-gray-700">
+                                                                    {tp.tujuan}
                                                                 </span>
                                                             </div>
                                                         </CommandItem>

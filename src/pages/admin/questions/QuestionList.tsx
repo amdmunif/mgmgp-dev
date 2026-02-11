@@ -523,7 +523,7 @@ export function AdminQuestions() {
                                             <option value="">Semua TP</option>
                                             {tpList.map(tp => (
                                                 <option key={tp.id} value={tp.code || tp.id}>
-                                                    {tp.code ? `[${tp.code}] ` : ''}{tp.title.length > 20 ? tp.title.substring(0, 20) + '...' : tp.title}
+                                                    {tp.code ? `[${tp.code}] ` : ''}{tp.tujuan && tp.tujuan.length > 50 ? tp.tujuan.substring(0, 50) + '...' : tp.tujuan}
                                                 </option>
                                             ))}
                                         </select>
