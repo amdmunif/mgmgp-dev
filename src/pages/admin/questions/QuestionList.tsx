@@ -128,7 +128,7 @@ export function AdminQuestions() {
         }
     };
 
-    const downloadTemplate = () => {
+    const downloadTemplate = async () => {
         const template = [
             {
                 'Tipe Soal': 'PG',
@@ -202,11 +202,63 @@ export function AdminQuestions() {
             }
         ];
 
+        // 1. Sheet Template Soal
         const ws = XLSX.utils.json_to_sheet(template);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Template Soal");
+
+        // 2. Sheet Petunjuk Pengisian
+        const petunjukData = [
+            ['PETUNJUK PENGISIAN TEMPLATE SOAL'],
+            [''],
+            ['KOLOM', 'PENJELASAN'],
+            ['Tipe Soal', 'Kode tipe soal: PG (Pilihan Ganda), PGK (Pilihan Ganda Kompleks), BS (Benar Salah), MJ (Menjodohkan), IS (Isian Singkat), ES (Essay).'],
+            ['Soal', 'Teks pertanyaan. Bisa mengandung HTML sederhana.'],
+            ['A, B, C, D, E', 'Opsi jawaban. Wajib diisi untuk PG dan PGK. Kosongkan untuk IS/ES.'],
+            ['Jawaban', 'Kunci jawaban. PG: "A". PGK: "A,C". BS: "Benar" atau "Salah". IS/ES: Teks jawaban.'],
+            ['Mapel', 'Mata Pelajaran: "Informatika" atau "KKA".'],
+            ['Kelas', 'Tingkat Kelas: "7", "8", atau "9".'],
+            ['Level', 'Tingkat Kesulitan: "Mudah", "Sedang", "Sukar".'],
+            ['Kode TP', 'Kode Tujuan Pembelajaran (Lihat daftar di bawah).'],
+            [''],
+            ['DAFTAR KODE TP (TUJUAN PEMBELAJARAN)'],
+            ['KODE', 'MAPEL', 'KELAS', 'TUJUAN PEMBELAJARAN'],
+        ];
+
+        // Fetch ALL TPs for reference if possible, or use current list
+        let referenceTps = tpList;
+        if (referenceTps.length === 0) {
+            try {
+                // Try to fetch all if list is empty
+                referenceTps = await curriculumService.getTPs({});
+            } catch (e) {
+                console.error("Failed to fetch TPs for template", e);
+            }
+        }
+
+        referenceTps.forEach(tp => {
+            petunjukData.push([
+                tp.code || tp.id,
+                tp.mapel,
+                tp.kelas,
+                tp.tujuan
+            ]);
+        });
+
+        const wsPetunjuk = XLSX.utils.aoa_to_sheet(petunjukData);
+
+        // Auto-width for readability
+        wsPetunjuk['!cols'] = [
+            { wch: 20 }, // Kode
+            { wch: 15 }, // Mapel
+            { wch: 10 }, // Kelas
+            { wch: 80 }  // Tujuan
+        ];
+
+        XLSX.utils.book_append_sheet(wb, wsPetunjuk, "Petunjuk & Kode TP");
+
         XLSX.writeFile(wb, "template_import_soal_mgmp_v2.xlsx");
-        toast.success('Template berhasil diunduh');
+        toast.success('Template berhasil diunduh. Cek sheet "Petunjuk & Kode TP".');
     };
 
     const handleImportExcel = async (e: React.FormEvent) => {
