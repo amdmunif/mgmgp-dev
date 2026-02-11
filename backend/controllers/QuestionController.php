@@ -85,13 +85,20 @@ class QuestionController
             $params[':search'] = "%$search%";
         }
 
-        // Add TP Filter (Robust: Matches Code OR ID)
+        // Add TP Filter (Robust with LEFT JOIN)
+        // We join to be able to filter by tp code OR tp id from the param
+        // The LEFT JOIN is implicit here via subqueries or we can rewrite the main query.
+        // Let's stick to the robust WHERE clause which is safer for existing queries without changing the main select structure drastically.
+        // But the user asked for "connection between questions and learning_tp".
+        // Let's assume the input :tp can be ID or Code.
+
         $tp = $_GET['tp'] ?? null;
         if ($tp) {
             $query .= " AND (
-                q.tp_code = :tp 
+                q.tp_id = :tp 
+                OR q.tp_code = :tp 
+                OR q.tp_id = (SELECT id FROM learning_tp WHERE code = :tp LIMIT 1)
                 OR q.tp_code = (SELECT code FROM learning_tp WHERE id = :tp LIMIT 1)
-                OR q.tp_code = (SELECT id FROM learning_tp WHERE code = :tp LIMIT 1)
             )";
             $params[':tp'] = $tp;
         }
@@ -128,8 +135,8 @@ class QuestionController
         $status = in_array($role, ['Admin', 'Pengurus']) ? 'verified' : 'pending';
 
         $id = Helper::uuid();
-        $query = "INSERT INTO questions (id, content, type, options, answer_key, explanation, level, mapel, kelas, creator_id, status, tp_code, created_at) 
-                  VALUES (:id, :content, :type, :options, :answer_key, :explanation, :level, :mapel, :kelas, :creator_id, :status, :tp_code, NOW())";
+        $query = "INSERT INTO questions (id, content, type, options, answer_key, explanation, level, mapel, kelas, creator_id, status, tp_code, tp_id, created_at) 
+                  VALUES (:id, :content, :type, :options, :answer_key, :explanation, :level, :mapel, :kelas, :creator_id, :status, :tp_code, :tp_id, NOW())";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id', $id);
@@ -147,6 +154,8 @@ class QuestionController
         $stmt->bindParam(':creator_id', $userId);
         $stmt->bindParam(':status', $status);
         $stmt->bindParam(':tp_code', $data['tp_code']);
+        $tpId = $data['tp_id'] ?? null;
+        $stmt->bindParam(':tp_id', $tpId);
 
         if ($stmt->execute()) {
             return json_encode([
@@ -211,7 +220,8 @@ class QuestionController
                   level = :level, 
                   mapel = :mapel, 
                   kelas = :kelas,
-                  tp_code = :tp_code
+                  tp_code = :tp_code,
+                  tp_id = :tp_id
                   WHERE id = :id";
 
         $stmt = $this->conn->prepare($query);
@@ -226,6 +236,8 @@ class QuestionController
         $stmt->bindParam(':mapel', $data['mapel']);
         $stmt->bindParam(':kelas', $data['kelas']);
         $stmt->bindParam(':tp_code', $data['tp_code']);
+        $tpId = $data['tp_id'] ?? null;
+        $stmt->bindParam(':tp_id', $tpId);
 
         if ($stmt->execute()) {
             return json_encode(["message" => "Question updated"]);
