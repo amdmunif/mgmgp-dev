@@ -169,30 +169,72 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
                             </select>
                         </div>
 
-                        {/* TP Selector */}
+                        {/* TP Selector (Combobox) */}
                         {q.mapel && q.kelas && (
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Tujuan Pembelajaran (TP)</label>
-                                <select
-                                    className="w-full px-3 py-2 border rounded-lg bg-white text-sm"
-                                    value={q.tp_code || ''}
-                                    onChange={e => {
-                                        const selected = tpList.find(t => (t.code || t.id) === e.target.value);
-                                        setQ({
-                                            ...q,
-                                            tp_code: selected?.code,
-                                            tp_id: selected?.id
-                                        });
-                                    }}
-                                >
-                                    <option value="">Pilih TP Referensi</option>
-                                    {tpList.map(tp => (
-                                        <option key={tp.id} value={tp.code || tp.id}>
-                                            {tp.code ? `[${tp.code}] ` : ''}{tp.title.length > 40 ? tp.title.substring(0, 40) + '...' : tp.title}
-                                        </option>
-                                    ))}
-                                    {tpList.length === 0 && <option disabled>Tidak ada data TP</option>}
-                                </select>
+                            <div className="flex flex-col gap-1">
+                                <label className="block text-sm font-medium text-gray-700">Tujuan Pembelajaran (TP)</label>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            role="combobox"
+                                            className={cn(
+                                                "w-full justify-between font-normal text-left h-auto min-h-[40px] px-3 py-2",
+                                                !q.tp_code && "text-muted-foreground"
+                                            )}
+                                        >
+                                            {q.tp_code
+                                                ? (() => {
+                                                    const selected = tpList.find((tp) => (tp.code || tp.id) === String(q.tp_code));
+                                                    return selected
+                                                        ? `${selected.code ? `[${selected.code}] ` : ''}${selected.title}`
+                                                        : q.tp_code; // Fallback if not found in list but exists
+                                                })()
+                                                : "Pilih Tujuan Pembelajaran..."}
+                                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-[400px] p-0" align="start">
+                                        <Command>
+                                            <CommandInput placeholder="Cari kode atau deskripsi TP..." />
+                                            <CommandList>
+                                                <CommandEmpty>TP tidak ditemukan.</CommandEmpty>
+                                                <CommandGroup>
+                                                    {tpList.map((tp) => (
+                                                        <CommandItem
+                                                            value={`${tp.code || ''} ${tp.title}`}
+                                                            key={tp.id}
+                                                            onSelect={() => {
+                                                                setQ({
+                                                                    ...q,
+                                                                    tp_code: (tp.code || tp.id) as any, // Use code if available, else ID
+                                                                    tp_id: tp.id
+                                                                });
+                                                            }}
+                                                        >
+                                                            <Check
+                                                                className={cn(
+                                                                    "mr-2 h-4 w-4",
+                                                                    q.tp_code === (tp.code || tp.id)
+                                                                        ? "opacity-100"
+                                                                        : "opacity-0"
+                                                                )}
+                                                            />
+                                                            <div className="flex flex-col">
+                                                                <span className="font-medium text-xs text-gray-500 font-mono">
+                                                                    {tp.code || '-'}
+                                                                </span>
+                                                                <span className="text-sm line-clamp-2">
+                                                                    {tp.title}
+                                                                </span>
+                                                            </div>
+                                                        </CommandItem>
+                                                    ))}
+                                                </CommandGroup>
+                                            </CommandList>
+                                        </Command>
+                                    </PopoverContent>
+                                </Popover>
                             </div>
                         )}
 

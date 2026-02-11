@@ -131,6 +131,7 @@ export function AdminQuestions() {
     const downloadTemplate = () => {
         const template = [
             {
+                'Tipe Soal': 'PG',
                 'Soal': 'Apa ibukota Indonesia?',
                 'A': 'Jakarta',
                 'B': 'Bandung',
@@ -140,26 +141,71 @@ export function AdminQuestions() {
                 'Jawaban': 'E',
                 'Mapel': 'Informatika',
                 'Kelas': '7',
-                'Level': 'Mudah'
+                'Level': 'Mudah',
+                'Kode TP': '7.1'
             },
             {
-                'Soal': '<p>Berikut ini adalah contoh soal dengan format <b>HTML</b>.</p>',
-                'A': 'Opsi A',
-                'B': 'Opsi B',
-                'C': 'Opsi C',
-                'D': 'Opsi D',
-                'E': 'Opsi E',
-                'Jawaban': 'A',
+                'Tipe Soal': 'PGK',
+                'Soal': 'Manakah yang termasuk perangkat keras input? (Jawaban lebih dari satu)',
+                'A': 'Mouse',
+                'B': 'Monitor',
+                'C': 'Keyboard',
+                'D': 'Printer',
+                'E': 'Scanner',
+                'Jawaban': 'A,C,E',
                 'Mapel': 'Informatika',
-                'Kelas': '8',
-                'Level': 'Sedang'
+                'Kelas': '7',
+                'Level': 'Sedang',
+                'Kode TP': '7.2'
+            },
+            {
+                'Tipe Soal': 'BS',
+                'Soal': 'CPU adalah otak dari komputer.',
+                'A': '',
+                'B': '',
+                'C': '',
+                'D': '',
+                'E': '',
+                'Jawaban': 'Benar',
+                'Mapel': 'Informatika',
+                'Kelas': '7',
+                'Level': 'Mudah',
+                'Kode TP': '7.3'
+            },
+            {
+                'Tipe Soal': 'IS',
+                'Soal': 'Singkatan dari Random Access Memory adalah...',
+                'A': '',
+                'B': '',
+                'C': '',
+                'D': '',
+                'E': '',
+                'Jawaban': 'RAM',
+                'Mapel': 'Informatika',
+                'Kelas': '7',
+                'Level': 'Sedang',
+                'Kode TP': '7.4'
+            },
+            {
+                'Tipe Soal': 'ES',
+                'Soal': 'Jelaskan cara kerja CPU secara singkat!',
+                'A': '',
+                'B': '',
+                'C': '',
+                'D': '',
+                'E': '',
+                'Jawaban': 'CPU mengambil instruksi dari memori, menafsirkannya, dan mengeksekusinya.',
+                'Mapel': 'Informatika',
+                'Kelas': '7',
+                'Level': 'Sukar',
+                'Kode TP': '7.5'
             }
         ];
 
         const ws = XLSX.utils.json_to_sheet(template);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Template Soal");
-        XLSX.writeFile(wb, "template_import_soal_mgmp.xlsx");
+        XLSX.writeFile(wb, "template_import_soal_mgmp_v2.xlsx");
         toast.success('Template berhasil diunduh');
     };
 
@@ -169,6 +215,10 @@ export function AdminQuestions() {
 
         setImporting(true);
         try {
+            // 1. Fetch available TPs for lookup
+            const allTPs = await learningService.getAll('tp');
+            const tpMap = new Map(allTPs.map((t: any) => [t.code, t])); // Map Code -> TP Object
+
             const data = await excelFile.arrayBuffer();
             const workbook = XLSX.read(data);
             const sheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -178,26 +228,62 @@ export function AdminQuestions() {
             for (const row of json) {
                 if (!row['Soal'] || !row['Jawaban']) continue;
 
-                const options = [
-                    { id: Math.random().toString(36).substring(7), text: String(row['A'] || ''), is_correct: String(row['Jawaban']) === 'A' },
-                    { id: Math.random().toString(36).substring(7), text: String(row['B'] || ''), is_correct: String(row['Jawaban']) === 'B' },
-                    { id: Math.random().toString(36).substring(7), text: String(row['C'] || ''), is_correct: String(row['Jawaban']) === 'C' },
-                    { id: Math.random().toString(36).substring(7), text: String(row['D'] || ''), is_correct: String(row['Jawaban']) === 'D' },
-                ];
+                const typeMap: Record<string, string> = {
+                    'PG': 'single_choice',
+                    'PGK': 'multiple_choice',
+                    'BS': 'true_false',
+                    'IS': 'short_answer',
+                    'ES': 'essay'
+                };
 
-                if (row['E']) {
-                    options.push({ id: Math.random().toString(36).substring(7), text: String(row['E']), is_correct: String(row['Jawaban']) === 'E' });
+                const type = typeMap[row['Tipe Soal']] || 'single_choice';
+                const tpCode = row['Kode TP'];
+                const matchedTP = tpCode ? tpMap.get(String(tpCode)) : null;
+
+                let options: any[] = [];
+                let answerKey = String(row['Jawaban']);
+
+                if (type === 'single_choice') {
+                    options = [
+                        { id: Math.random().toString(36).substring(7), text: String(row['A'] || ''), is_correct: answerKey === 'A' },
+                        { id: Math.random().toString(36).substring(7), text: String(row['B'] || ''), is_correct: answerKey === 'B' },
+                        { id: Math.random().toString(36).substring(7), text: String(row['C'] || ''), is_correct: answerKey === 'C' },
+                        { id: Math.random().toString(36).substring(7), text: String(row['D'] || ''), is_correct: answerKey === 'D' },
+                    ];
+                    if (row['E']) {
+                        options.push({ id: Math.random().toString(36).substring(7), text: String(row['E']), is_correct: answerKey === 'E' });
+                    }
+                } else if (type === 'multiple_choice') {
+                    const keys = answerKey.split(',').map(k => k.trim());
+                    options = [
+                        { id: Math.random().toString(36).substring(7), text: String(row['A'] || ''), is_correct: keys.includes('A') },
+                        { id: Math.random().toString(36).substring(7), text: String(row['B'] || ''), is_correct: keys.includes('B') },
+                        { id: Math.random().toString(36).substring(7), text: String(row['C'] || ''), is_correct: keys.includes('C') },
+                        { id: Math.random().toString(36).substring(7), text: String(row['D'] || ''), is_correct: keys.includes('D') },
+                    ];
+                    if (row['E']) {
+                        options.push({ id: Math.random().toString(36).substring(7), text: String(row['E']), is_correct: keys.includes('E') });
+                    }
+                } else if (type === 'true_false') {
+                    const isTrue = answerKey.toLowerCase() === 'benar';
+                    options = [
+                        { id: Math.random().toString(36).substring(7), text: 'Benar', is_correct: isTrue },
+                        { id: Math.random().toString(36).substring(7), text: 'Salah', is_correct: !isTrue }
+                    ];
                 }
+                // For 'short_answer' and 'essay', options are empty, answerKey is the text itself.
 
                 const payload: Partial<Question> = {
                     content: row['Soal'],
-                    type: 'single_choice',
+                    type: type as any,
                     options,
-                    answer_key: row['Jawaban'],
+                    answer_key: answerKey,
                     mapel: row['Mapel'] || 'Informatika',
                     kelas: row['Kelas'] ? String(row['Kelas']) : '7',
                     level: row['Level'] || 'Sedang',
-                    status: 'verified' // Auto verified if imported by Admin
+                    status: 'verified', // Auto verified
+                    tp_id: matchedTP ? matchedTP.id : undefined,
+                    tp_code: matchedTP ? matchedTP.code : undefined
                 };
 
                 await questionService.create(payload);
