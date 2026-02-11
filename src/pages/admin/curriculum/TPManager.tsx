@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '../../../components/ui/button';
 import { curriculumService } from '../../../services/curriculumService';
-import { Plus, Pencil, Trash2, ArrowLeft, Loader2, Save } from 'lucide-react';
+import { Plus, Pencil, Trash2, ArrowLeft, Loader2, Save, Filter } from 'lucide-react';
 import type { TPData } from '../../../types';
 
 export function TPManager() {
