@@ -85,6 +85,13 @@ class QuestionController
             $params[':search'] = "%$search%";
         }
 
+        // Add TP Filter
+        $tp = $_GET['tp'] ?? null;
+        if ($tp) {
+            $query .= " AND q.tp_code = :tp";
+            $params[':tp'] = $tp;
+        }
+
         $query .= " ORDER BY q.created_at DESC";
 
         $stmt = $this->conn->prepare($query);
@@ -117,8 +124,8 @@ class QuestionController
         $status = in_array($role, ['Admin', 'Pengurus']) ? 'verified' : 'pending';
 
         $id = Helper::uuid();
-        $query = "INSERT INTO questions (id, content, type, options, answer_key, explanation, level, mapel, kelas, creator_id, status, created_at) 
-                  VALUES (:id, :content, :type, :options, :answer_key, :explanation, :level, :mapel, :kelas, :creator_id, :status, NOW())";
+        $query = "INSERT INTO questions (id, content, type, options, answer_key, explanation, level, mapel, kelas, creator_id, status, tp_code, created_at) 
+                  VALUES (:id, :content, :type, :options, :answer_key, :explanation, :level, :mapel, :kelas, :creator_id, :status, :tp_code, NOW())";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id', $id);
@@ -135,6 +142,7 @@ class QuestionController
         $stmt->bindParam(':kelas', $data['kelas']);
         $stmt->bindParam(':creator_id', $userId);
         $stmt->bindParam(':status', $status);
+        $stmt->bindParam(':tp_code', $data['tp_code']);
 
         if ($stmt->execute()) {
             return json_encode([
@@ -198,7 +206,8 @@ class QuestionController
                   explanation = :explanation, 
                   level = :level, 
                   mapel = :mapel, 
-                  kelas = :kelas 
+                  kelas = :kelas,
+                  tp_code = :tp_code
                   WHERE id = :id";
 
         $stmt = $this->conn->prepare($query);
@@ -212,6 +221,7 @@ class QuestionController
         $stmt->bindParam(':level', $data['level']);
         $stmt->bindParam(':mapel', $data['mapel']);
         $stmt->bindParam(':kelas', $data['kelas']);
+        $stmt->bindParam(':tp_code', $data['tp_code']);
 
         if ($stmt->execute()) {
             return json_encode(["message" => "Question updated"]);
