@@ -4,8 +4,8 @@ import type { CPData, TPData } from '../types';
 export const curriculumService = {
     // CP Methods
     async getCP(mapel: 'Informatika' | 'KKA') {
-        const response = await api.get<CPData[]>(`/cp?mapel=${mapel}`);
-        return response[0] || null;
+        const response = await api.get<CPData>(`/cp?mapel=${mapel}`);
+        return response;
     },
 
     async updateCP(id: string, data: Partial<CPData>) {
