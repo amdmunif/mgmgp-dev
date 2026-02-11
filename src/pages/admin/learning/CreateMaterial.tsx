@@ -73,26 +73,28 @@ export function CreateMaterial() {
                 fileUrl = await learningService.uploadDocument(file);
             }
 
+            // Sanitize data for CP (remove kelas and semester)
+            const cleanData = {
+                ...data,
+                // Explicitly set kelas and semester to null/undefined for CP
+                kelas: data.type === 'cp' ? undefined : data.kelas,
+                semester: data.type === 'cp' ? undefined : data.semester,
+                content: content,
+                is_premium: !['cp', 'tp'].includes(data.type),
+                file_url: fileUrl,
+            };
+
             if (id) {
-                await learningService.update(id, {
-                    ...data,
-                    content: content,
-                    is_premium: !['cp', 'tp'].includes(data.type),
-                    file_url: fileUrl,
-                });
+                await learningService.update(id, cleanData);
             } else {
-                await learningService.create({
-                    ...data,
-                    content: content,
-                    is_premium: !['cp', 'tp'].includes(data.type),
-                    file_url: fileUrl,
-                });
+                await learningService.create(cleanData);
             }
 
             navigate('/admin/learning');
         } catch (error) {
             console.error(error);
-            alert('Gagal menyimpan materi');
+            const errorMessage = error instanceof Error ? error.message : 'Terjadi kesalahan saat menyimpan data';
+            alert(`Gagal menyimpan materi: ${errorMessage}`);
         } finally {
             setSubmitting(false);
         }
