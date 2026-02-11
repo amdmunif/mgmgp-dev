@@ -85,10 +85,14 @@ class QuestionController
             $params[':search'] = "%$search%";
         }
 
-        // Add TP Filter
+        // Add TP Filter (Robust: Matches Code OR ID)
         $tp = $_GET['tp'] ?? null;
         if ($tp) {
-            $query .= " AND q.tp_code = :tp";
+            $query .= " AND (
+                q.tp_code = :tp 
+                OR q.tp_code = (SELECT code FROM learning_tp WHERE id = :tp LIMIT 1)
+                OR q.tp_code = (SELECT id FROM learning_tp WHERE code = :tp LIMIT 1)
+            )";
             $params[':tp'] = $tp;
         }
 
