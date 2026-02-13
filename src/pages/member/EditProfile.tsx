@@ -113,7 +113,7 @@ export function EditProfile() {
     if (loading) return <div className="p-8 text-center text-gray-500"><Loader2 className="animate-spin inline mr-2" /> Loading data...</div>;
 
     return (
-        <div className="max-w-4xl mx-auto p-6 md:p-8">
+        <div className="max-w-5xl p-6 md:p-8">
             <div className="flex items-center gap-3 mb-8">
                 <div className="bg-primary-100 p-3 rounded-xl">
                     <UserIcon className="w-8 h-8 text-primary-600" />

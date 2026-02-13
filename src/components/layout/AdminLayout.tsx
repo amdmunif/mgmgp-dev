@@ -22,9 +22,6 @@ import {
     UserCircle,
     UserCheck,
     ImageIcon,
-    Mail,
-    ShieldAlert,
-    TrendingUp,
     Target,
     ListChecks
 } from 'lucide-react';
@@ -37,9 +34,6 @@ const menuGroups = [
         title: "Utama",
         items: [
             { icon: LayoutDashboard, label: 'Dashboard', path: '/admin' },
-            { icon: TrendingUp, label: 'Statistik & Laporan', path: '/admin/stats' },
-            { icon: Mail, label: 'Pesan Masuk', path: '/admin/messages' },
-            { icon: ShieldAlert, label: 'Log Aktivitas', path: '/admin/logs' },
         ]
     },
     {
@@ -357,26 +351,7 @@ export function AdminLayout() {
                             </div>
 
                             <div className="hidden lg:block">
-                                <h1 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-                                    {(() => {
-                                        let activeLabel = 'Dashboard';
-                                        let ActiveIcon = LayoutDashboard;
-                                        menuGroups.forEach(group => {
-                                            const item = group.items.find(i => i.path === location.pathname);
-                                            if (item) {
-                                                activeLabel = item.label;
-                                                ActiveIcon = item.icon;
-                                            }
-                                        });
-                                        return (
-                                            <>
-                                                <ActiveIcon className="w-5 h-5 text-blue-600" />
-                                                {activeLabel}
-                                            </>
-                                        );
-                                    })()}
-                                </h1>
-                                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-0.5">Sistem Manajemen MGMP Terintegrasi</p>
+                                {/* Page title removed to avoid duplication with page content */}
                             </div>
                         </div>
                     </div>

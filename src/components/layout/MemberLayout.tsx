@@ -141,14 +141,10 @@ export function MemberLayout() {
         </div>
     );
 
-    // Get current page label
-    const currentPage = menuItems.find(item => item.path === location.pathname) || { label: 'Area Anggota' };
+
 
     // Hardcode label for sub-pages or unknown paths
-    const getPageTitle = () => {
-        if (location.pathname === '/member/profile') return 'Edit Profil';
-        return currentPage.label;
-    };
+    // Page title logic removed as per user request (duplicates content page title)
 
     return (
         <div className="min-h-screen bg-gray-100 flex pb-16 md:pb-0">
@@ -262,7 +258,7 @@ export function MemberLayout() {
                            Existing code showed Page Title on mobile: `<h1 ...>{getPageTitle()}</h1>`.
                            I will hide Page Title on mobile and show Branding instead.
                         */}
-                        <h1 className="hidden md:block text-lg md:text-xl font-bold text-gray-800 truncate">{getPageTitle()}</h1>
+                        {/* Page Title removed to avoid duplication */}
                     </div>
 
                     {/* Desktop Right: User Dropdown */}
@@ -343,7 +339,7 @@ export function MemberLayout() {
                         </div>
                     )}
 
-                    <div className="animate-in fade-in duration-500">
+                    <div className="animate-in fade-in duration-500 max-w-[1600px] mx-auto">
                         <Outlet />
                     </div>
                 </main>

@@ -12,9 +12,12 @@ import {
     ArrowDownRight,
     Clock,
     ShieldAlert,
-    ExternalLink
+    LayoutDashboard,
+    Mail
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { AdminStats } from './Stats';
+import { AdminMessages } from './AdminMessages';
+import { AuditLogs } from './AuditLogs';
 
 export function DashboardOverview() {
     const [stats, setStats] = useState({
@@ -88,120 +91,168 @@ export function DashboardOverview() {
         }
     ];
 
+    const tabs = [
+        { id: 'overview', label: 'Ringkasan', icon: LayoutDashboard },
+        { id: 'stats', label: 'Statistik Guru', icon: TrendingUp },
+        { id: 'messages', label: 'Pesan Masuk', icon: Mail },
+        { id: 'logs', label: 'Log Aktivitas', icon: ShieldAlert },
+    ];
+
+    const [activeTab, setActiveTab] = useState('overview');
+
     if (loading) return <div>Loading statistics...</div>;
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Ringkasan Sistem</h1>
-                    <p className="text-gray-500">Overview performa dan statistik MGMP hari ini.</p>
+                    <h1 className="text-2xl font-bold text-gray-900">Dashboard Admin</h1>
+                    <p className="text-gray-500">Pusat kontrol dan informasi sistem MGMP.</p>
                 </div>
             </div>
 
-            {/* Notifications / Action Required */}
-            {(stats.pendingMembers > 0 || stats.pendingPremium > 0) && (
-                <div className="bg-orange-50 border border-orange-200 rounded-2xl p-6 animate-in slide-in-from-top-4 duration-500">
-                    <h2 className="text-lg font-bold text-orange-900 mb-4 flex items-center gap-2">
-                        <Activity className="w-5 h-5" />
-                        Perlu Tindakan
-                    </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {stats.pendingMembers > 0 && (
-                            <div className="bg-white p-4 rounded-xl border border-orange-100 flex items-center justify-between shadow-sm">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
-                                        <Users className="w-5 h-5" />
-                                    </div>
-                                    <div>
-                                        <p className="font-bold text-gray-900">{stats.pendingMembers} Anggota Baru</p>
-                                        <p className="text-xs text-gray-500">Menunggu konfirmasi aktivasi akun</p>
-                                    </div>
-                                </div>
-                                <a href="/admin/members?status=pending" className="text-sm font-semibold text-blue-600 hover:text-blue-700 px-4 py-2 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
-                                    Review
-                                </a>
-                            </div>
-                        )}
-                        {stats.pendingPremium > 0 && (
-                            <div className="bg-white p-4 rounded-xl border border-orange-100 flex items-center justify-between shadow-sm">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-yellow-100 text-yellow-600 rounded-lg">
-                                        <TrendingUp className="w-5 h-5" />
-                                    </div>
-                                    <div>
-                                        <p className="font-bold text-gray-900">{stats.pendingPremium} Upgrade Premium</p>
-                                        <p className="text-xs text-gray-500">Menunggu verifikasi pembayaran</p>
-                                    </div>
-                                </div>
-                                <a href="/admin/premium" className="text-sm font-semibold text-yellow-600 hover:text-yellow-700 px-4 py-2 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors">
-                                    Cek Request
-                                </a>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
-
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {statCards.map((stat, i) => (
-                    <div key={i} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-                        <div className="flex items-start justify-between mb-4">
-                            <div className={`p-3 rounded-xl ${stat.color} bg-opacity-10 text-${stat.color.replace('bg-', '')}-600`}>
-                                <stat.icon className={`w-6 h-6`} />
-                            </div>
-                            <span className={`flex items-center text-xs font-bold ${stat.trendUp ? 'text-green-600' : 'text-red-600'} bg-gray-50 px-2 py-1 rounded-full`}>
-                                {stat.trendUp ? <ArrowUpRight className="w-3 h-3 mr-1" /> : <ArrowDownRight className="w-3 h-3 mr-1" />}
-                                {stat.trend}
-                            </span>
-                        </div>
-                        <h3 className="text-3xl font-bold text-gray-900 mb-1">{stat.value}</h3>
-                        <p className="text-sm text-gray-500 font-medium">{stat.label}</p>
-                    </div>
+            {/* Tab Navigation */}
+            <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-1">
+                {tabs.map((tab) => (
+                    <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`
+                            flex items-center gap-2 px-4 py-2 rounded-t-lg text-sm font-bold transition-colors relative
+                            ${activeTab === tab.id
+                                ? 'text-primary-600 bg-white border-x border-t border-gray-200 -mb-px z-10'
+                                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}
+                        `}
+                    >
+                        <tab.icon className="w-4 h-4" />
+                        {tab.label}
+                        {/* Optional: Add badges if available (e.g. unread messages count) */}
+                    </button>
                 ))}
             </div>
 
-            {/* Recent Activity Section */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-3">
-                        <ShieldAlert className="w-5 h-5 text-primary-600" />
-                        <h2 className="text-lg font-bold text-gray-900">Aktivitas Terkini</h2>
-                    </div>
-                </div>
-
-                <div className="space-y-6 relative before:absolute before:inset-y-0 before:left-2.5 before:w-0.5 before:bg-gray-100">
-                    {logs.length > 0 ? (
-                        logs.map((log) => (
-                            <div key={log.id} className="flex gap-4 relative group">
-                                <div className="w-5 h-5 rounded-full bg-white border-2 border-primary-500 ring-4 ring-gray-50 flex items-center justify-center z-10 transition-transform group-hover:scale-110">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-primary-500"></div>
-                                </div>
-                                <div className="flex-1 -mt-1">
-                                    <div className="flex items-center justify-between gap-2">
-                                        <p className="text-sm font-semibold text-gray-900">
-                                            {log.user_display_name || log.user_name} melakukan <span className="text-primary-600">{log.action}</span>
-                                        </p>
-                                        <span className="text-[10px] text-gray-400 font-mono flex items-center gap-1 shrink-0">
-                                            <Clock className="w-3 h-3" />
-                                            {formatDate(log.created_at)}
-                                        </span>
-                                    </div>
-                                    <p className="text-xs text-gray-500 mt-0.5 italic">Target: {log.target || '-'}</p>
+            <div className="bg-white/50 min-h-[500px]">
+                {activeTab === 'overview' && (
+                    <div className="space-y-8 animate-in fade-in duration-300">
+                        {/* Notifications / Action Required */}
+                        {(stats.pendingMembers > 0 || stats.pendingPremium > 0) && (
+                            <div className="bg-orange-50 border border-orange-200 rounded-2xl p-6">
+                                <h2 className="text-lg font-bold text-orange-900 mb-4 flex items-center gap-2">
+                                    <Activity className="w-5 h-5" />
+                                    Perlu Tindakan
+                                </h2>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {stats.pendingMembers > 0 && (
+                                        <div className="bg-white p-4 rounded-xl border border-orange-100 flex items-center justify-between shadow-sm">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
+                                                    <Users className="w-5 h-5" />
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-gray-900">{stats.pendingMembers} Anggota Baru</p>
+                                                    <p className="text-xs text-gray-500">Menunggu konfirmasi aktivasi akun</p>
+                                                </div>
+                                            </div>
+                                            <a href="/admin/members?status=pending" className="text-sm font-semibold text-blue-600 hover:text-blue-700 px-4 py-2 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
+                                                Review
+                                            </a>
+                                        </div>
+                                    )}
+                                    {stats.pendingPremium > 0 && (
+                                        <div className="bg-white p-4 rounded-xl border border-orange-100 flex items-center justify-between shadow-sm">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 bg-yellow-100 text-yellow-600 rounded-lg">
+                                                    <TrendingUp className="w-5 h-5" />
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-gray-900">{stats.pendingPremium} Upgrade Premium</p>
+                                                    <p className="text-xs text-gray-500">Menunggu verifikasi pembayaran</p>
+                                                </div>
+                                            </div>
+                                            <a href="/admin/premium" className="text-sm font-semibold text-yellow-600 hover:text-yellow-700 px-4 py-2 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors">
+                                                Cek Request
+                                            </a>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
-                        ))
-                    ) : (
-                        <div className="text-center py-6 text-gray-400 text-sm">Belum ada aktivitas tercatat.</div>
-                    )}
-                </div>
+                        )}
 
-                <div className="mt-8 pt-6 border-t border-gray-100 text-center">
-                    <Link to="/admin/logs" className="text-sm text-blue-600 font-bold hover:text-blue-700 flex items-center justify-center gap-2 group">
-                        Lihat Semua Aktivitas <ExternalLink className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                    </Link>
-                </div>
+                        {/* Stats Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {statCards.map((stat, i) => (
+                                <div key={i} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                                    <div className="flex items-start justify-between mb-4">
+                                        <div className={`p-3 rounded-xl ${stat.color} bg-opacity-10 text-${stat.color.replace('bg-', '')}-600`}>
+                                            <stat.icon className={`w-6 h-6`} />
+                                        </div>
+                                        <span className={`flex items-center text-xs font-bold ${stat.trendUp ? 'text-green-600' : 'text-red-600'} bg-gray-50 px-2 py-1 rounded-full`}>
+                                            {stat.trendUp ? <ArrowUpRight className="w-3 h-3 mr-1" /> : <ArrowDownRight className="w-3 h-3 mr-1" />}
+                                            {stat.trend}
+                                        </span>
+                                    </div>
+                                    <h3 className="text-3xl font-bold text-gray-900 mb-1">{stat.value}</h3>
+                                    <p className="text-sm text-gray-500 font-medium">{stat.label}</p>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Recent Activity Section (Mini) */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                            <div className="flex items-center justify-between mb-6">
+                                <div className="flex items-center gap-3">
+                                    <ShieldAlert className="w-5 h-5 text-primary-600" />
+                                    <h2 className="text-lg font-bold text-gray-900">Aktivitas Terkini</h2>
+                                </div>
+                                <button onClick={() => setActiveTab('logs')} className="text-sm text-blue-600 hover:underline">Lihat Semua</button>
+                            </div>
+
+                            <div className="space-y-6 relative before:absolute before:inset-y-0 before:left-2.5 before:w-0.5 before:bg-gray-100">
+                                {logs.length > 0 ? (
+                                    logs.map((log) => (
+                                        <div key={log.id} className="flex gap-4 relative group">
+                                            <div className="w-5 h-5 rounded-full bg-white border-2 border-primary-500 ring-4 ring-gray-50 flex items-center justify-center z-10 transition-transform group-hover:scale-110">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-primary-500"></div>
+                                            </div>
+                                            <div className="flex-1 -mt-1">
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <p className="text-sm font-semibold text-gray-900">
+                                                        {log.user_display_name || log.user_name} melakukan <span className="text-primary-600">{log.action}</span>
+                                                    </p>
+                                                    <span className="text-[10px] text-gray-400 font-mono flex items-center gap-1 shrink-0">
+                                                        <Clock className="w-3 h-3" />
+                                                        {formatDate(log.created_at)}
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs text-gray-500 mt-0.5 italic">Target: {log.target || '-'}</p>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="text-center py-6 text-gray-400 text-sm">Belum ada aktivitas tercatat.</div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'stats' && (
+                    <div className="animate-in fade-in duration-300">
+                        <AdminStats />
+                    </div>
+                )}
+
+                {activeTab === 'messages' && (
+                    <div className="animate-in fade-in duration-300">
+                        <AdminMessages />
+                    </div>
+                )}
+
+                {activeTab === 'logs' && (
+                    <div className="animate-in fade-in duration-300">
+                        <AuditLogs />
+                    </div>
+                )}
             </div>
         </div>
     );

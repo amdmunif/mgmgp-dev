@@ -104,7 +104,7 @@ export function CreateMaterial() {
     const isDocumentType = ['rpp', 'slide', 'modul'].includes(selectedType);
 
     return (
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-4xl">
             <button onClick={() => navigate(-1)} className="flex items-center text-gray-500 hover:text-gray-900 mb-6 transition-colors">
                 <ArrowLeft className="w-4 h-4 mr-2" /> Kembali
             </button>
