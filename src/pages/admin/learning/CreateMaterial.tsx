@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { Button } from '../../../components/ui/button';
-import { ArrowLeft, Loader2, Upload } from 'lucide-react';
+import { ArrowLeft, Loader2, Upload, File as FileIcon } from 'lucide-react';
 import { learningService } from '../../../services/learningService';
 import { RichTextEditor } from '../../../components/ui/RichTextEditor';
 import type { MaterialType } from '../../../types';
@@ -33,6 +33,7 @@ export function CreateMaterial() {
 
     const [submitting, setSubmitting] = useState(false);
     const [file, setFile] = useState<File | null>(null);
+    const [existingFileUrl, setExistingFileUrl] = useState<string | null>(null);
     const [content, setContent] = useState('');
     const [loading, setLoading] = useState(false);
 
@@ -53,6 +54,7 @@ export function CreateMaterial() {
             setValue('semester', data.semester || 1);
             setValue('code', data.code);
             setValue('link_url', data.link_url);
+            setExistingFileUrl(data.file_url || null);
             setContent(data.content || '');
         } catch (error) {
             console.error(error);
@@ -195,8 +197,26 @@ export function CreateMaterial() {
                                     <div>
                                         <h3 className="text-sm font-medium text-gray-700 mb-3">File / Link Materi</h3>
                                         <div className="space-y-4">
+                                            {existingFileUrl && !file && (
+                                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between">
+                                                    <div className="flex items-center gap-2 overflow-hidden">
+                                                        <div className="bg-blue-100 p-2 rounded">
+                                                            <FileIcon className="w-4 h-4 text-blue-600" />
+                                                        </div>
+                                                        <div className="overflow-hidden">
+                                                            <p className="text-xs font-medium text-blue-900 truncate">File saat ini:</p>
+                                                            <a href={existingFileUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline truncate block">
+                                                                {existingFileUrl.split('/').pop()}
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+
                                             <div>
-                                                <label className="block text-xs font-medium text-gray-500 mb-1">Opsi 1: Upload File (PDF/PPTX)</label>
+                                                <label className="block text-xs font-medium text-gray-500 mb-1">
+                                                    {existingFileUrl ? 'Ganti File (Biarkan kosong jika tidak ingin mengubah)' : 'Opsi 1: Upload File (PDF/PPTX)'}
+                                                </label>
                                                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition-colors">
                                                     <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                                                     <input
@@ -224,11 +244,13 @@ export function CreateMaterial() {
                                 )}
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Konten / Deskripsi</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Konten / Deskripsi <span className="text-gray-400 font-normal text-xs">(Opsional)</span>
+                                    </label>
                                     <RichTextEditor
                                         value={content}
                                         onChange={(val) => setContent(val)}
-                                        placeholder="Tuliskan deskripsi materi, Capaian Pembelajaran atau Tujuan Pembelajaran di sini..."
+                                        placeholder="Tuliskan deskripsi tambahan, Capaian Pembelajaran atau Tujuan Pembelajaran di sini..."
                                     />
                                     {errors.content && <p className="text-red-500 text-xs mt-1">{errors.content.message}</p>}
                                 </div>
@@ -246,6 +268,6 @@ export function CreateMaterial() {
                     </>
                 )}
             </div>
-        </div >
+        </div>
     );
 }
