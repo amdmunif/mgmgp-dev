@@ -106,7 +106,7 @@ export function CreateMaterial() {
     const isDocumentType = ['rpp', 'slide', 'modul'].includes(selectedType);
 
     return (
-        <div className="max-w-4xl">
+        <div className="w-full">
             <button onClick={() => navigate(-1)} className="flex items-center text-gray-500 hover:text-gray-900 mb-6 transition-colors">
                 <ArrowLeft className="w-4 h-4 mr-2" /> Kembali
             </button>
@@ -123,9 +123,9 @@ export function CreateMaterial() {
                         </h1>
 
                         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-8">
                                 {/* Main Content Column */}
-                                <div className="lg:col-span-2 space-y-6">
+                                <div className="lg:col-span-2 xl:col-span-3 space-y-6">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Judul Materi</label>
                                         <input
