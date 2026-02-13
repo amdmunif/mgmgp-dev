@@ -38,84 +38,27 @@ class LearningController
 
     public function create($userId, $userName)
     {
-        // Handle Multipart Form Data
-        $data = $_POST;
-        // ... (remaining logic same but add log)
-        // [Existing logic for file uploads and database insertion...]
+        if (!$userId) {
+            http_response_code(401);
+            return json_encode(["message" => "Unauthorized"]);
+        }
+
+        // Handle JSON Input
+        $input = file_get_contents("php://input");
+        $data = json_decode($input, true);
+        if (!$data) {
+            $data = $_POST;
+        }
+
         $id = Helper::uuid();
         $is_premium = isset($data['is_premium']) ? $data['is_premium'] : 0;
         $type = $data['type'] ?? 'modul';
 
-        // [SIMPLIFIED for replace but I must keep the whole method logic or target precisely]
-        // I will target the success block.
-
-        // Re-writing with log integration
-        // (Assuming I should keep the logic within create as is, just add log)
-
-        $rpp_url = null;
-        $slide_url = null;
-        $file_url = null;
-
-        // Ensure upload directory exists
-        $uploadDir = __DIR__ . '/../uploads/';
-        if (!is_dir($uploadDir))
-            mkdir($uploadDir, 0777, true);
-
-        // Upload Helper
-        $uploadFile = function ($fileKey) use ($uploadDir) {
-            if (isset($_FILES[$fileKey]) && $_FILES[$fileKey]['error'] === UPLOAD_ERR_OK) {
-                $ext = pathinfo($_FILES[$fileKey]['name'], PATHINFO_EXTENSION);
-                $filename = uniqid() . '.' . $ext;
-                if (move_uploaded_file($_FILES[$fileKey]['tmp_name'], $uploadDir . $filename)) {
-                    // Return URL relative to API root (assuming /api/uploads/...)
-                    // Adjust base URL as needed for production
-                    return '/api/uploads/' . $filename;
-                }
-            }
-            return null;
-        };
-
-        $rpp_url = $uploadFile('rpp_file');
-        $slide_url = $uploadFile('slide_file');
-        $file_url = $uploadFile('file'); // Generic file
-
-        // Fallback for URLs passed as text (if files not uploaded but URL provided)
-        if (!$rpp_url && isset($data['rpp_url']))
-            $rpp_url = $data['rpp_url'];
-        if (!$slide_url && isset($data['slide_url']))
-            $slide_url = $data['slide_url'];
-        if (!$file_url && isset($data['file_url']))
-            $file_url = $data['file_url'];
-
-        // Logic for different migration schemas:
-        // 'teaching_resources' schema has rpp_url and slide_url
-        // 'learning_materials' schema in database.sql has file_url and type
-
-        // Let's support both logic based on 'type'
-        $type = $data['type'] ?? 'modul'; // modul, rpp, slide
-
-        // Helper to check if string is URL
-        $isUrl = function ($str) {
-            return filter_var($str, FILTER_VALIDATE_URL) !== false;
-        };
-
         // link_url handling
         $link_url = isset($data['link_url']) ? $data['link_url'] : null;
+        $file_url = isset($data['file_url']) ? $data['file_url'] : null;
 
         $stmt = $this->conn->prepare("INSERT INTO learning_materials (id, title, mapel, kelas, semester, type, file_url, link_url, content, is_premium, author_id) VALUES (:id, :title, :mapel, :kelas, :semester, :type, :file_url, :link_url, :content, :is_premium, :author_id)");
-
-        // Determine primary file_url based on type
-        $final_file_url = $file_url;
-        if ($type === 'rpp')
-            $final_file_url = $rpp_url;
-        if ($type === 'slide')
-            $final_file_url = $slide_url;
-
-        // If final_file_url is empty but link_url is provided and type is document-like, maybe we should set file_url to null or keep logic as is?
-        // The requester wants "bisa memasukkan link, jadi bisa memilih, bahkan bisa mengisi ke-2nya".
-        // So they are separate fields in DB.
-
-        $is_premium = isset($data['is_premium']) ? $data['is_premium'] : 0;
 
         $stmt->bindParam(':id', $id);
         $stmt->bindParam(':title', $data['title']);
@@ -123,22 +66,29 @@ class LearningController
         $stmt->bindParam(':kelas', $data['kelas']);
         $stmt->bindParam(':semester', $data['semester']);
         $stmt->bindParam(':type', $type);
-        $stmt->bindParam(':file_url', $final_file_url);
+        $stmt->bindParam(':file_url', $file_url);
         $stmt->bindParam(':link_url', $link_url);
         $stmt->bindParam(':content', $data['content']);
         $stmt->bindParam(':is_premium', $is_premium);
-        $stmt->bindParam(':author_id', $data['author_id']);
+        $stmt->bindParam(':author_id', $userId); // Use authenticated userId
 
         if ($stmt->execute()) {
             Helper::log($this->conn, $userId, $userName, 'CREATE_LEARNING', $data['title']);
             return json_encode(["message" => "Material created", "id" => $id]);
         }
+
+        error_log("Failed to create material: " . print_r($stmt->errorInfo(), true));
         http_response_code(500);
         return json_encode(["message" => "Failed to create material"]);
     }
 
     public function delete($id, $userId, $userName)
     {
+        if (!$userId) {
+            http_response_code(401);
+            return json_encode(["message" => "Unauthorized"]);
+        }
+
         // Get title for logging
         $title = "Unknown Material";
         $stmtTitle = $this->conn->prepare("SELECT title FROM learning_materials WHERE id = :id");
@@ -161,6 +111,18 @@ class LearningController
 
     public function update($id, $data, $userId, $userName)
     {
+        if (!$userId) {
+            http_response_code(401);
+            return json_encode(["message" => "Unauthorized"]);
+        }
+
+        // Handle JSON Input
+        $input = file_get_contents("php://input");
+        $jsonData = json_decode($input, true);
+        if ($jsonData) {
+            $data = array_merge($data, $jsonData);
+        }
+
         $query = "UPDATE learning_materials SET 
                     title = :title, 
                     mapel = :mapel, 
@@ -191,6 +153,8 @@ class LearningController
             Helper::log($this->conn, $userId, $userName, 'UPDATE_LEARNING', $data['title']);
             return json_encode(["message" => "Material updated"]);
         }
+
+        error_log("Failed to update material: " . print_r($stmt->errorInfo(), true));
         http_response_code(500);
         return json_encode(["message" => "Failed to update material"]);
     }
