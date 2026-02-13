@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { Button } from '../../../components/ui/button';
-import { ArrowLeft, Loader2, Upload, File as FileIcon } from 'lucide-react';
+import { ArrowLeft, Loader2, File as FileIcon } from 'lucide-react';
 import { learningService } from '../../../services/learningService';
 import { RichTextEditor } from '../../../components/ui/RichTextEditor';
 import type { MaterialType } from '../../../types';
