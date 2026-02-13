@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
-import { Book, Download, Presentation, FileText } from 'lucide-react';
+import { Book, Download, Presentation, FileText, X } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { learningService } from '../../services/learningService';
 import { cn } from '../../lib/utils';
 import type { LearningMaterial } from '../../types';
+import { FileViewer } from '../../components/ui/FileViewer';
 
 export function Modules() {
     const [materials, setMaterials] = useState<LearningMaterial[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'modul' | 'slide'>('modul');
+    const [viewingMaterial, setViewingMaterial] = useState<LearningMaterial | null>(null);
 
     useEffect(() => {
         const loadData = async () => {
@@ -116,11 +118,13 @@ export function Modules() {
                                 <div className="text-xs text-gray-400 mb-4 line-clamp-2" dangerouslySetInnerHTML={{ __html: mod.content || '' }} />
                             </div>
                             <div className="mt-4 pt-4 border-t border-gray-50 flex gap-2">
-                                <a href={mod.file_url} target="_blank" rel="noopener noreferrer" className="flex-1">
-                                    <Button variant="outline" className="w-full bg-white border-gray-200 text-gray-700 hover:bg-gray-50">
-                                        <Book className="w-4 h-4 mr-2" /> Lihat
-                                    </Button>
-                                </a>
+                                <Button
+                                    variant="outline"
+                                    className="flex-1 bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
+                                    onClick={() => setViewingMaterial(mod)}
+                                >
+                                    <Book className="w-4 h-4 mr-2" /> Lihat
+                                </Button>
                                 <a href={mod.file_url} target="_blank" rel="noopener noreferrer" className="flex-1">
                                     <Button className="w-full bg-white border-2 border-yellow-400 text-yellow-600 hover:bg-yellow-50">
                                         <Download className="w-4 h-4 mr-2" /> Download
@@ -129,6 +133,51 @@ export function Modules() {
                             </div>
                         </div>
                     ))}
+                </div>
+            )}
+
+            {/* View Modal */}
+            {viewingMaterial && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl w-full max-w-4xl h-[90vh] flex flex-col overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+                        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50 shrink-0">
+                            <div>
+                                <h3 className="font-bold text-gray-900 line-clamp-1">{viewingMaterial.title}</h3>
+                                <p className="text-xs text-gray-500">{viewingMaterial.mapel} - {viewingMaterial.type.toUpperCase()}</p>
+                            </div>
+                            <button onClick={() => setViewingMaterial(null)} className="text-gray-400 hover:text-gray-600 transition-colors p-1 hover:bg-gray-100 rounded-lg">
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+                        <div className="flex-1 bg-gray-100 overflow-hidden relative">
+                            {viewingMaterial.file_url ? (
+                                <FileViewer
+                                    url={viewingMaterial.file_url}
+                                    title={viewingMaterial.title}
+                                    className="h-full border-0 rounded-none"
+                                />
+                            ) : (
+                                <div className="flex items-center justify-center h-full text-gray-400">
+                                    File tidak tersedia
+                                </div>
+                            )}
+                        </div>
+                        <div className="px-6 py-4 border-t border-gray-50 flex justify-between items-center bg-white shrink-0">
+                            <span className="text-xs text-gray-400">
+                                Jika pratinjau tidak muncul, silakan download file.
+                            </span>
+                            <div className="flex gap-3">
+                                <Button variant="outline" onClick={() => setViewingMaterial(null)}>Tutup</Button>
+                                {viewingMaterial.file_url && (
+                                    <a href={viewingMaterial.file_url} target="_blank" rel="noopener noreferrer">
+                                        <Button className="bg-yellow-500 hover:bg-yellow-600 text-white border-none">
+                                            <Download className="w-4 h-4 mr-2" /> Download File
+                                        </Button>
+                                    </a>
+                                )}
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

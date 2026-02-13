@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../../../components/ui/button';
-import { Plus, Search, FileText, Presentation, File, Filter, Book, Eye, Pencil, Trash2, X, ExternalLink } from 'lucide-react';
+import { Plus, Search, FileText, Presentation, File, Filter, Book, Eye, Pencil, Trash2, X } from 'lucide-react';
 import { learningService } from '../../../services/learningService';
 import type { LearningMaterial, MaterialType } from '../../../types';
 import { formatDate } from '../../../lib/utils';
+
+import { FileViewer } from '../../../components/ui/FileViewer';
 
 export function AdminMaterials() {
     const [materials, setMaterials] = useState<LearningMaterial[]>([]);
@@ -213,24 +215,15 @@ export function AdminMaterials() {
                             )}
 
                             {viewingMaterial.file_url && (
-                                <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-white rounded-lg shadow-sm flex items-center justify-center">
-                                            <FileText className="w-6 h-6 text-blue-600" />
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-bold text-blue-900">Lampiran Materi</p>
-                                            <p className="text-xs text-blue-600">Klik untuk melihat atau mengunduh</p>
-                                        </div>
+                                <div className="space-y-2">
+                                    <h4 className="font-bold text-gray-900 text-sm">Pratinjau Materi:</h4>
+                                    <div className="h-[400px] w-full bg-gray-100 rounded-xl overflow-hidden border border-gray-200">
+                                        <FileViewer
+                                            url={viewingMaterial.file_url}
+                                            title={viewingMaterial.title}
+                                            className="h-full border-0"
+                                        />
                                     </div>
-                                    <a
-                                        href={viewingMaterial.file_url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20"
-                                    >
-                                        Buka File <ExternalLink className="w-4 h-4" />
-                                    </a>
                                 </div>
                             )}
                         </div>
