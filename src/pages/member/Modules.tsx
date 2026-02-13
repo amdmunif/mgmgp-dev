@@ -115,10 +115,15 @@ export function Modules() {
                                 {mod.mapel && <p className="text-sm text-gray-500 mb-1">{mod.mapel}</p>}
                                 <div className="text-xs text-gray-400 mb-4 line-clamp-2" dangerouslySetInnerHTML={{ __html: mod.content || '' }} />
                             </div>
-                            <div className="mt-4 pt-4 border-t border-gray-50">
-                                <a href={mod.file_url} target="_blank" rel="noopener noreferrer">
+                            <div className="mt-4 pt-4 border-t border-gray-50 flex gap-2">
+                                <a href={mod.file_url} target="_blank" rel="noopener noreferrer" className="flex-1">
+                                    <Button variant="outline" className="w-full bg-white border-gray-200 text-gray-700 hover:bg-gray-50">
+                                        <Book className="w-4 h-4 mr-2" /> Lihat
+                                    </Button>
+                                </a>
+                                <a href={mod.file_url} target="_blank" rel="noopener noreferrer" className="flex-1">
                                     <Button className="w-full bg-white border-2 border-yellow-400 text-yellow-600 hover:bg-yellow-50">
-                                        <Download className="w-4 h-4 mr-2" /> Download {activeTab === 'modul' ? 'Modul' : 'Slide'}
+                                        <Download className="w-4 h-4 mr-2" /> Download
                                     </Button>
                                 </a>
                             </div>

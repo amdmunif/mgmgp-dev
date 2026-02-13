@@ -138,7 +138,7 @@ export function AdminMaterials() {
                                         {formatDate(item.created_at)}
                                     </td>
                                     <td className="px-6 py-4 text-right">
-                                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <div className="flex items-center justify-end gap-2">
                                             <button
                                                 onClick={() => setViewingMaterial(item)}
                                                 className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-blue-600 transition-colors"
