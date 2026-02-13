@@ -123,9 +123,9 @@ export function CreateMaterial() {
                         </h1>
 
                         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                            <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                 {/* Main Content Column */}
-                                <div className="lg:col-span-2 xl:col-span-3 space-y-6">
+                                <div className="space-y-6">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Judul Materi</label>
                                         <input
@@ -152,7 +152,7 @@ export function CreateMaterial() {
                                 </div>
 
                                 {/* Sidebar / Meta Info Column */}
-                                <div className="lg:col-span-1 space-y-6 bg-gray-50 p-6 rounded-xl h-fit sticky top-6">
+                                <div className="space-y-6 bg-gray-50 p-6 rounded-xl h-fit sticky top-6">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Tipe Materi</label>
                                         <select
