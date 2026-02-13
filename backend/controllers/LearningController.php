@@ -94,9 +94,15 @@ class LearningController
         // Let's support both logic based on 'type'
         $type = $data['type'] ?? 'modul'; // modul, rpp, slide
 
-        $query = "INSERT INTO learning_materials (id, title, mapel, kelas, semester, type, file_url, content, is_premium, author_id) VALUES (:id, :title, :mapel, :kelas, :semester, :type, :file_url, :content, :is_premium, :author_id)";
+        // Helper to check if string is URL
+        $isUrl = function ($str) {
+            return filter_var($str, FILTER_VALIDATE_URL) !== false;
+        };
 
-        $stmt = $this->conn->prepare($query);
+        // link_url handling
+        $link_url = isset($data['link_url']) ? $data['link_url'] : null;
+
+        $stmt = $this->conn->prepare("INSERT INTO learning_materials (id, title, mapel, kelas, semester, type, file_url, link_url, content, is_premium, author_id) VALUES (:id, :title, :mapel, :kelas, :semester, :type, :file_url, :link_url, :content, :is_premium, :author_id)");
 
         // Determine primary file_url based on type
         $final_file_url = $file_url;
@@ -104,6 +110,10 @@ class LearningController
             $final_file_url = $rpp_url;
         if ($type === 'slide')
             $final_file_url = $slide_url;
+
+        // If final_file_url is empty but link_url is provided and type is document-like, maybe we should set file_url to null or keep logic as is?
+        // The requester wants "bisa memasukkan link, jadi bisa memilih, bahkan bisa mengisi ke-2nya".
+        // So they are separate fields in DB.
 
         $is_premium = isset($data['is_premium']) ? $data['is_premium'] : 0;
 
@@ -114,6 +124,7 @@ class LearningController
         $stmt->bindParam(':semester', $data['semester']);
         $stmt->bindParam(':type', $type);
         $stmt->bindParam(':file_url', $final_file_url);
+        $stmt->bindParam(':link_url', $link_url);
         $stmt->bindParam(':content', $data['content']);
         $stmt->bindParam(':is_premium', $is_premium);
         $stmt->bindParam(':author_id', $data['author_id']);
@@ -157,12 +168,14 @@ class LearningController
                     semester = :semester, 
                     type = :type, 
                     content = :content, 
-                    is_premium = :is_premium 
+                    is_premium = :is_premium,
+                    link_url = :link_url
                   WHERE id = :id";
 
         $stmt = $this->conn->prepare($query);
 
         $is_premium = isset($data['is_premium']) ? $data['is_premium'] : 0;
+        $link_url = isset($data['link_url']) ? $data['link_url'] : null;
 
         $stmt->bindParam(':id', $id);
         $stmt->bindParam(':title', $data['title']);
@@ -172,6 +185,7 @@ class LearningController
         $stmt->bindParam(':type', $data['type']);
         $stmt->bindParam(':content', $data['content']);
         $stmt->bindParam(':is_premium', $is_premium);
+        $stmt->bindParam(':link_url', $link_url);
 
         if ($stmt->execute()) {
             Helper::log($this->conn, $userId, $userName, 'UPDATE_LEARNING', $data['title']);

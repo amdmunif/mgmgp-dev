@@ -16,6 +16,7 @@ interface MaterialForm {
     semester: number;
     content: string;
     is_premium: boolean;
+    link_url?: string;
 }
 
 export function CreateMaterial() {
@@ -51,6 +52,7 @@ export function CreateMaterial() {
             setValue('kelas', data.kelas || '');
             setValue('semester', data.semester || 1);
             setValue('code', data.code);
+            setValue('link_url', data.link_url);
             setContent(data.content || '');
         } catch (error) {
             console.error(error);
@@ -62,6 +64,11 @@ export function CreateMaterial() {
     const selectedType = watch('type');
 
     const onSubmit = async (data: MaterialForm) => {
+        if (isDocumentType && !file && !data.link_url && !id) {
+            alert('Silakan upload file atau masukkan Link URL!');
+            return;
+        }
+
         setSubmitting(true);
         try {
             let fileUrl = undefined;
@@ -75,6 +82,7 @@ export function CreateMaterial() {
                 content: content,
                 is_premium: data.is_premium,
                 file_url: fileUrl,
+                link_url: data.link_url,
             };
 
             if (id) {
@@ -197,16 +205,32 @@ export function CreateMaterial() {
                                 </div>
                             ) : (
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Upload File (PDF/PPTX)</label>
-                                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition-colors">
-                                        <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                                        <input
-                                            type="file"
-                                            accept=".pdf,.ppt,.pptx,.doc,.docx"
-                                            onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
-                                            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
-                                        />
-                                        <p className="text-xs text-gray-400 mt-2">Max Size: 10MB</p>
+                                    <h3 className="text-sm font-medium text-gray-700 mb-3">File / Link Materi</h3>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-500 mb-1">Opsi 1: Upload File (PDF/PPTX)</label>
+                                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition-colors">
+                                                <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                                                <input
+                                                    type="file"
+                                                    accept=".pdf,.ppt,.pptx,.doc,.docx"
+                                                    onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
+                                                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
+                                                />
+                                                <p className="text-xs text-gray-400 mt-2">Max Size: 10MB</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="text-center text-xs text-gray-400 font-medium">- ATAU / DAN -</div>
+
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-500 mb-1">Opsi 2: Link Eksternal (Google Drive / YouTube / Lainnya)</label>
+                                            <input
+                                                {...register('link_url')}
+                                                className="w-full rounded-md border border-gray-300 py-2 px-3 focus:ring-2 focus:ring-primary-500"
+                                                placeholder="https://..."
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             )}

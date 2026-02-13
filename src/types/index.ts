@@ -45,6 +45,7 @@ export interface LearningMaterial {
     semester?: number;
     content?: string;
     file_url?: string;
+    link_url?: string;
     is_premium: boolean;
     created_at: string;
     author_id?: string;
