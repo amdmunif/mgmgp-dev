@@ -123,146 +123,153 @@ export function CreateMaterial() {
                         </h1>
 
                         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Judul Materi</label>
-                                    <input
-                                        {...register('title', { required: 'Judul wajib diisi' })}
-                                        className="w-full rounded-md border border-gray-300 py-2 px-3 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                                        placeholder="Contoh: Modul Ajar Algoritma"
-                                    />
-                                    {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title.message}</p>}
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Tipe Materi</label>
-                                    <select
-                                        {...register('type')}
-                                        className="w-full rounded-md border border-gray-300 py-2 px-3 focus:ring-2 focus:ring-primary-500"
-                                    >
-                                        <option value="rpp">Modul Ajar</option>
-                                        <option value="slide">Slide Presentasi</option>
-                                        <option value="modul">Bahan Bacaan / E-Book</option>
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Mata Pelajaran</label>
-                                    <select
-                                        {...register('mapel')}
-                                        className="w-full rounded-md border border-gray-300 py-2 px-3 focus:ring-2 focus:ring-primary-500"
-                                    >
-                                        <option value="Informatika">Informatika</option>
-                                        <option value="KKA">KKA</option>
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Kelas</label>
-                                    <select
-                                        {...register('kelas')}
-                                        className="w-full rounded-md border border-gray-300 py-2 px-3 focus:ring-2 focus:ring-primary-500"
-                                    >
-                                        <option value="">- Pilih Kelas -</option>
-                                        <option value="7">Kelas 7</option>
-                                        <option value="8">Kelas 8</option>
-                                        <option value="9">Kelas 9</option>
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Semester</label>
-                                    <select
-                                        {...register('semester', { valueAsNumber: true })}
-                                        className="w-full rounded-md border border-gray-300 py-2 px-3 focus:ring-2 focus:ring-primary-500"
-                                    >
-                                        <option value="1">Semester 1 (Ganjil)</option>
-                                        <option value={2}>Semester 2 (Genap)</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div className="space-y-6">
-                                {selectedType === 'tp' && (
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                {/* Main Content Column */}
+                                <div className="lg:col-span-2 space-y-6">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Kode TP (Contoh: 7.1.1)</label>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Judul Materi</label>
                                         <input
-                                            {...register('code')}
-                                            className="w-full rounded-md border border-gray-300 py-2 px-3 focus:ring-2 focus:ring-primary-500"
-                                            placeholder="Masukkan kode TP..."
+                                            {...register('title', { required: 'Judul wajib diisi' })}
+                                            className="w-full rounded-md border border-gray-300 py-2 px-3 focus:ring-2 focus:ring-primary-500 focus:border-transparent text-lg font-medium"
+                                            placeholder="Contoh: Modul Ajar Algoritma"
                                         />
+                                        {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title.message}</p>}
                                     </div>
-                                )}
 
-                                {isDocumentType && (
                                     <div>
-                                        <h3 className="text-sm font-medium text-gray-700 mb-3">File / Link Materi</h3>
-                                        <div className="space-y-4">
-                                            {existingFileUrl && !file && (
-                                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between">
-                                                    <div className="flex items-center gap-2 overflow-hidden">
-                                                        <div className="bg-blue-100 p-2 rounded">
-                                                            <FileIcon className="w-4 h-4 text-blue-600" />
-                                                        </div>
-                                                        <div className="overflow-hidden">
-                                                            <p className="text-xs font-medium text-blue-900 truncate">File saat ini:</p>
-                                                            <a href={existingFileUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline truncate block">
-                                                                {existingFileUrl.split('/').pop()}
-                                                            </a>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            )}
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Konten / Deskripsi <span className="text-gray-400 font-normal text-xs">(Opsional)</span>
+                                        </label>
+                                        <div className="min-h-[300px]">
+                                            <RichTextEditor
+                                                value={content}
+                                                onChange={(val) => setContent(val)}
+                                                placeholder="Tuliskan deskripsi tambahan, Capaian Pembelajaran atau Tujuan Pembelajaran di sini..."
+                                            />
+                                        </div>
+                                        {errors.content && <p className="text-red-500 text-xs mt-1">{errors.content.message}</p>}
+                                    </div>
+                                </div>
 
-                                            <div>
-                                                <label className="block text-xs font-medium text-gray-500 mb-1">
-                                                    {existingFileUrl ? 'Ganti File (Biarkan kosong jika tidak ingin mengubah)' : 'Opsi 1: Upload File (PDF/PPTX)'}
-                                                </label>
-                                                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition-colors">
-                                                    <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                                                    <input
-                                                        type="file"
-                                                        accept=".pdf,.ppt,.pptx,.doc,.docx"
-                                                        onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
-                                                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
-                                                    />
-                                                    <p className="text-xs text-gray-400 mt-2">Max Size: 10MB</p>
-                                                </div>
-                                            </div>
+                                {/* Sidebar / Meta Info Column */}
+                                <div className="lg:col-span-1 space-y-6 bg-gray-50 p-6 rounded-xl h-fit sticky top-6">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Tipe Materi</label>
+                                        <select
+                                            {...register('type')}
+                                            className="w-full rounded-md border border-gray-300 py-2 px-3 focus:ring-2 focus:ring-primary-500 bg-white"
+                                        >
+                                            <option value="rpp">Modul Ajar</option>
+                                            <option value="slide">Slide Presentasi</option>
+                                            <option value="modul">Bahan Bacaan / E-Book</option>
+                                        </select>
+                                    </div>
 
-                                            <div className="text-center text-xs text-gray-400 font-medium">- ATAU / DAN -</div>
+                                    {selectedType === 'tp' && (
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Kode TP (Contoh: 7.1.1)</label>
+                                            <input
+                                                {...register('code')}
+                                                className="w-full rounded-md border border-gray-300 py-2 px-3 focus:ring-2 focus:ring-primary-500 bg-white"
+                                                placeholder="Masukkan kode TP..."
+                                            />
+                                        </div>
+                                    )}
 
-                                            <div>
-                                                <label className="block text-xs font-medium text-gray-500 mb-1">Opsi 2: Link Eksternal (Google Drive / YouTube / Lainnya)</label>
-                                                <input
-                                                    {...register('link_url')}
-                                                    className="w-full rounded-md border border-gray-300 py-2 px-3 focus:ring-2 focus:ring-primary-500"
-                                                    placeholder="https://..."
-                                                />
-                                            </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Mata Pelajaran</label>
+                                            <select
+                                                {...register('mapel')}
+                                                className="w-full rounded-md border border-gray-300 py-2 px-3 focus:ring-2 focus:ring-primary-500 bg-white"
+                                            >
+                                                <option value="Informatika">Informatika</option>
+                                                <option value="KKA">KKA</option>
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Kelas</label>
+                                            <select
+                                                {...register('kelas')}
+                                                className="w-full rounded-md border border-gray-300 py-2 px-3 focus:ring-2 focus:ring-primary-500 bg-white"
+                                            >
+                                                <option value="">- Pilih -</option>
+                                                <option value="7">Kelas 7</option>
+                                                <option value="8">Kelas 8</option>
+                                                <option value="9">Kelas 9</option>
+                                            </select>
                                         </div>
                                     </div>
-                                )}
 
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Konten / Deskripsi <span className="text-gray-400 font-normal text-xs">(Opsional)</span>
-                                    </label>
-                                    <RichTextEditor
-                                        value={content}
-                                        onChange={(val) => setContent(val)}
-                                        placeholder="Tuliskan deskripsi tambahan, Capaian Pembelajaran atau Tujuan Pembelajaran di sini..."
-                                    />
-                                    {errors.content && <p className="text-red-500 text-xs mt-1">{errors.content.message}</p>}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Semester</label>
+                                        <select
+                                            {...register('semester', { valueAsNumber: true })}
+                                            className="w-full rounded-md border border-gray-300 py-2 px-3 focus:ring-2 focus:ring-primary-500 bg-white"
+                                        >
+                                            <option value="1">Semester 1 (Ganjil)</option>
+                                            <option value={2}>Semester 2 (Genap)</option>
+                                        </select>
+                                    </div>
+
+                                    {isDocumentType && (
+                                        <div className="border-t border-gray-200 pt-4 mt-4">
+                                            <h3 className="text-sm font-medium text-gray-700 mb-3">File / Link Materi</h3>
+                                            <div className="space-y-4">
+                                                {existingFileUrl && !file && (
+                                                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <div className="bg-blue-100 p-1.5 rounded">
+                                                                <FileIcon className="w-3.5 h-3.5 text-blue-600" />
+                                                            </div>
+                                                            <p className="text-xs font-medium text-blue-900">File Terupload:</p>
+                                                        </div>
+                                                        <a href={existingFileUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline break-all block pl-7">
+                                                            {existingFileUrl.split('/').pop()}
+                                                        </a>
+                                                    </div>
+                                                )}
+
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-500 mb-1">
+                                                        {existingFileUrl ? 'Ganti File' : 'Upload File (PDF/PPTX)'}
+                                                    </label>
+                                                    <div className="relative">
+                                                        <input
+                                                            type="file"
+                                                            accept=".pdf,.ppt,.pptx,.doc,.docx"
+                                                            onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
+                                                            className="block w-full text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div className="relative flex py-1 items-center">
+                                                    <div className="flex-grow border-t border-gray-200"></div>
+                                                    <span className="flex-shrink-0 mx-2 text-gray-300 text-[10px]">ATAU LINK</span>
+                                                    <div className="flex-grow border-t border-gray-200"></div>
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-500 mb-1">Link Eksternal</label>
+                                                    <input
+                                                        {...register('link_url')}
+                                                        className="w-full rounded-md border border-gray-300 py-1.5 px-2.5 text-sm focus:ring-2 focus:ring-primary-500 bg-white"
+                                                        placeholder="https://..."
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="pt-4 mt-6 border-t border-gray-200 flex flex-col gap-2">
+                                        <Button type="submit" disabled={submitting} className="w-full">
+                                            {submitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Menyimpan...</> : (id ? 'Update Materi' : 'Simpan Materi')}
+                                        </Button>
+                                        <Button type="button" variant="outline" onClick={() => navigate(-1)} className="w-full bg-white">Batal</Button>
+                                    </div>
                                 </div>
-                            </div>
-
-
-
-                            <div className="pt-4 border-t border-gray-100 flex justify-end gap-3">
-                                <Button type="button" variant="outline" onClick={() => navigate(-1)}>Batal</Button>
-                                <Button type="submit" disabled={submitting}>
-                                    {submitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Menyimpan...</> : (id ? 'Update Materi' : 'Simpan Materi')}
-                                </Button>
                             </div>
                         </form>
                     </>
