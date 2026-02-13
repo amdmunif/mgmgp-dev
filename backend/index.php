@@ -194,7 +194,7 @@ if ($resource === 'news') {
     if ($_SERVER['REQUEST_METHOD'] === 'POST')
         echo $controller->create($input);
     if ($_SERVER['REQUEST_METHOD'] === 'PUT' && $action)
-        echo $controller->update($action, $input);
+        echo $controller->update($action, $input, $userId, $userName);
     if ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action)
         echo $controller->delete($action);
 
@@ -239,8 +239,12 @@ if ($resource === 'news') {
         echo $controller->deleteReference($action);
 } elseif ($resource === 'learning') {
     $controller = new LearningController();
-    if ($_SERVER['REQUEST_METHOD'] === 'GET')
-        echo $controller->getAll();
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        if ($action)
+            echo $controller->getById($action);
+        else
+            echo $controller->getAll();
+    }
     if ($_SERVER['REQUEST_METHOD'] === 'POST')
         echo $controller->create($userId, $userName);
     if ($_SERVER['REQUEST_METHOD'] === 'PUT' && $action)
