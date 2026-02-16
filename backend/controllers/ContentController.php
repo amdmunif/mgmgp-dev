@@ -318,5 +318,33 @@ class ContentController
         http_response_code(500);
         return json_encode(["message" => "Failed to update status"]);
     }
+
+    public function markSelfAttendance($eventId, $userId)
+    {
+        // 1. Verify user is registered
+        $checkQuery = "SELECT * FROM event_participants WHERE event_id = :eid AND user_id = :uid";
+        $checkStmt = $this->conn->prepare($checkQuery);
+        $checkStmt->bindParam(':eid', $eventId);
+        $checkStmt->bindParam(':uid', $userId);
+        $checkStmt->execute();
+
+        if ($checkStmt->rowCount() === 0) {
+            http_response_code(400);
+            return json_encode(["message" => "User not registered for this event"]);
+        }
+
+        // 2. Mark as attended
+        $updateQuery = "UPDATE event_participants SET status = 'attended', is_hadir = 1 WHERE event_id = :eid AND user_id = :uid";
+        $updateStmt = $this->conn->prepare($updateQuery);
+        $updateStmt->bindParam(':eid', $eventId);
+        $updateStmt->bindParam(':uid', $userId);
+
+        if ($updateStmt->execute()) {
+            return json_encode(["message" => "Attendance marked successfully"]);
+        }
+
+        http_response_code(500);
+        return json_encode(["message" => "Failed to mark attendance"]);
+    }
 }
 ?>

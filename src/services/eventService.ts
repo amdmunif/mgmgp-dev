@@ -52,4 +52,9 @@ export const eventService = {
     async joinEvent(eventId: string) {
         return await api.post(`/events/${eventId}/join`, {});
     },
+
+    // Mark self attendance
+    async markAttendance(eventId: string) {
+        return await api.post(`/events/${eventId}/attendance`, {});
+    }
 };

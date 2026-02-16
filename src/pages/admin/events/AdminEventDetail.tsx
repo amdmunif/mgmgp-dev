@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { contentManagementService } from '../../../services/contentManagementService';
 import { ArrowLeft, Calendar, MapPin, Users, CheckCircle, XCircle, Search } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { getFileUrl } from '../../../lib/api';
 
 interface Participant {
     user_id: string;
@@ -186,7 +187,7 @@ export function AdminEventDetail() {
                                                     <div className="flex items-center">
                                                         <div className="flex-shrink-0 h-10 w-10">
                                                             {participant.foto_profile ? (
-                                                                <img className="h-10 w-10 rounded-full object-cover border border-gray-200" src={participant.foto_profile} alt="" />
+                                                                <img className="h-10 w-10 rounded-full object-cover border border-gray-200" src={getFileUrl(participant.foto_profile)} alt="" />
                                                             ) : (
                                                                 <div className="h-10 w-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm">
                                                                     {participant.nama.charAt(0).toUpperCase()}
