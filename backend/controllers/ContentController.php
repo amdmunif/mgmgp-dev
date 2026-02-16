@@ -281,5 +281,42 @@ class ContentController
         }
         return json_encode($formatted);
     }
+
+    public function getEventParticipants($eventId)
+    {
+        // Fetch participants with user details
+        $query = "SELECT ep.*, p.nama, p.email, p.foto_profile 
+                  FROM event_participants ep
+                  JOIN profiles p ON ep.user_id = p.id
+                  WHERE ep.event_id = :eid
+                  ORDER BY ep.registered_at DESC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':eid', $eventId);
+        $stmt->execute();
+        return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+    }
+
+    public function updateParticipantStatus($eventId, $userId, $status)
+    {
+        // Update both status and is_hadir for compatibility
+        $isHadir = ($status === 'attended') ? 1 : 0;
+
+        // Check if status column exists in schema by try-catch or just update is_hadir if status fails?
+        // Safest approach: Update what we know exists first.
+        // Assuming status column exists based on getUpcomingEvents query.
+
+        $query = "UPDATE event_participants SET status = :status, is_hadir = :is_hadir WHERE event_id = :eid AND user_id = :uid";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':status', $status);
+        $stmt->bindParam(':is_hadir', $isHadir, PDO::PARAM_INT);
+        $stmt->bindParam(':eid', $eventId);
+        $stmt->bindParam(':uid', $userId);
+
+        if ($stmt->execute()) {
+            return json_encode(["message" => "Status updated"]);
+        }
+        http_response_code(500);
+        return json_encode(["message" => "Failed to update status"]);
+    }
 }
 ?>

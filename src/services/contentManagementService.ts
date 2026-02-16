@@ -34,5 +34,11 @@ export const contentManagementService = {
     },
     async deleteEvent(id: string) {
         return await api.delete(`/events/${id}`);
+    },
+    async getEventParticipants(eventId: string) {
+        return await api.get<any[]>(`/events/${eventId}/participants`);
+    },
+    async updateParticipantStatus(eventId: string, userId: string, status: string) {
+        return await api.put(`/events/${eventId}/participants/${userId}`, { status });
     }
 };

@@ -99,8 +99,7 @@ export function AdminEvents() {
                                 <td className="px-6 py-4 text-right">
                                     <div className="flex items-center justify-end gap-2">
                                         <Link
-                                            to={`/events/${item.id}`}
-                                            target="_blank"
+                                            to={`/admin/events/${item.id}`}
                                             className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
                                             title="Lihat Agenda"
                                         >

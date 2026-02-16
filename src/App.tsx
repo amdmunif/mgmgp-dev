@@ -36,6 +36,7 @@ import { UpgradePremium } from './pages/member/UpgradePremium';
 import { AdminNews } from './pages/admin/news/AdminNews';
 import { CreateNews } from './pages/admin/news/CreateNews';
 import { AdminEvents } from './pages/admin/events/AdminEvents';
+import { AdminEventDetail } from './pages/admin/events/AdminEventDetail';
 import { CreateEvent } from './pages/admin/events/CreateEvent';
 import { AdminMembers } from './pages/admin/Members';
 import { AdminGames } from './pages/admin/games/AdminGames';
@@ -165,6 +166,7 @@ function App() {
 
           <Route path="events" element={<AdminEvents />} />
           <Route path="events/create" element={<CreateEvent />} />
+          <Route path="events/:id" element={<AdminEventDetail />} />
           <Route path="events/edit/:id" element={<CreateEvent />} />
 
           <Route path="letters" element={<AdminLetters />} />

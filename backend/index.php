@@ -127,6 +127,9 @@ if ($resource === 'news') {
                 http_response_code(401);
                 echo json_encode(["message" => "Unauthorized"]);
             }
+        } elseif ($action && $subAction === 'participants') {
+            // GET /events/:id/participants
+            echo $controller->getEventParticipants($action);
         } elseif ($action) {
             echo $controller->getEventDetail($action);
         } else {
@@ -154,7 +157,24 @@ if ($resource === 'news') {
         }
     }
     if ($_SERVER['REQUEST_METHOD'] === 'PUT' && $action) {
-        echo $controller->updateEvent($action, $input, $userId, $userName);
+        if ($subAction === 'participants') {
+            // PUT /events/:id/participants/:userId
+            // URL structure: /events/ID/participants/USERID
+            // $uri_parts[0]=events, [1]=ID (action), [2]=participants (subAction), [3]=USERID
+
+            // We need to parse URI parts again or grab from parts in index.php context
+            // $uri_parts is available globally in this file scope
+            $targetUserId = isset($uri_parts[3]) ? $uri_parts[3] : null;
+
+            if ($targetUserId) {
+                echo $controller->updateParticipantStatus($action, $targetUserId, $input['status']);
+            } else {
+                http_response_code(400);
+                echo json_encode(["message" => "User ID required"]);
+            }
+        } else {
+            echo $controller->updateEvent($action, $input, $userId, $userName);
+        }
     }
     if ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action)
         echo $controller->deleteEvent($action, $userId, $userName);
