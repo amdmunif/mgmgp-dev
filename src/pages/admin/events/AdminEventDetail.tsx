@@ -34,6 +34,7 @@ export function AdminEventDetail() {
     const [participants, setParticipants] = useState<Participant[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const [filterStatus, setFilterStatus] = useState<'all' | 'attended' | 'not_attended'>('all');
 
     useEffect(() => {
         if (id) {
@@ -100,7 +101,7 @@ export function AdminEventDetail() {
 
     const toggleSelectAll = (checked: boolean) => {
         if (checked) {
-            setSelectedIds(participants.map(p => p.user_id));
+            setSelectedIds(processedParticipants.map(p => p.user_id));
         } else {
             setSelectedIds([]);
         }
@@ -125,13 +126,29 @@ export function AdminEventDetail() {
         });
     };
 
+    const processedParticipants = useMemo(() => {
+        let result = [...participants];
+
+        // Filter
+        if (filterStatus === 'attended') {
+            result = result.filter(p => Number(p.is_hadir) === 1);
+        } else if (filterStatus === 'not_attended') {
+            result = result.filter(p => Number(p.is_hadir) === 0);
+        }
+
+        // Sort by registered_at ascending (oldest first)
+        result.sort((a, b) => new Date(a.registered_at).getTime() - new Date(b.registered_at).getTime());
+
+        return result;
+    }, [participants, filterStatus]);
+
     const columns = useMemo(() => [
         {
             header: (
                 <input
                     type="checkbox"
                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    checked={participants.length > 0 && selectedIds.length === participants.length}
+                    checked={processedParticipants.length > 0 && selectedIds.length === processedParticipants.length}
                     onChange={(e) => toggleSelectAll(e.target.checked)}
                 />
             ),
@@ -269,32 +286,44 @@ export function AdminEventDetail() {
                             <Users className="w-5 h-5 text-gray-600" />
                             Daftar Peserta
                         </h2>
-                        {selectedIds.length > 0 && (
-                            <div className="flex gap-2">
-                                <Button
-                                    size="sm"
-                                    className="bg-green-600 hover:bg-green-700 text-white"
-                                    onClick={() => handleBulkUpdate('attended')}
-                                >
-                                    <CheckCircle className="w-4 h-4 mr-1" />
-                                    Tandai Hadir ({selectedIds.length})
-                                </Button>
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="text-red-600 border-red-200 hover:bg-red-50"
-                                    onClick={() => handleBulkUpdate('registered')}
-                                >
-                                    <XCircle className="w-4 h-4 mr-1" />
-                                    Batal Absen ({selectedIds.length})
-                                </Button>
-                            </div>
-                        )}
+                        <div className="flex flex-wrap items-center gap-3">
+                            <select
+                                value={filterStatus}
+                                onChange={(e) => setFilterStatus(e.target.value as any)}
+                                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                            >
+                                <option value="all">Semua Status</option>
+                                <option value="attended">Hadir</option>
+                                <option value="not_attended">Tidak Hadir</option>
+                            </select>
+
+                            {selectedIds.length > 0 && (
+                                <div className="flex gap-2">
+                                    <Button
+                                        size="sm"
+                                        className="bg-green-600 hover:bg-green-700 text-white"
+                                        onClick={() => handleBulkUpdate('attended')}
+                                    >
+                                        <CheckCircle className="w-4 h-4 mr-1" />
+                                        Tandai Hadir ({selectedIds.length})
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="text-red-600 border-red-200 hover:bg-red-50"
+                                        onClick={() => handleBulkUpdate('registered')}
+                                    >
+                                        <XCircle className="w-4 h-4 mr-1" />
+                                        Batal Absen ({selectedIds.length})
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     <DataTable
                         columns={columns}
-                        data={participants}
+                        data={processedParticipants}
                         searchKeys={['nama', 'email']}
                         pageSize={10}
                     />
