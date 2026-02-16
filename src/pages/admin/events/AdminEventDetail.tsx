@@ -58,6 +58,24 @@ export function AdminEventDetail() {
         }
     };
 
+    const handleStatusUpdate = async (userId: string, currentStatus: string) => {
+        if (!id) return;
+        const isAttended = currentStatus === 'attended';
+        const newStatus = isAttended ? 'registered' : 'attended';
+        try {
+            await contentManagementService.updateParticipantStatus(id, userId, newStatus);
+            const updatedParticipants = participants.map(p =>
+                p.user_id === userId
+                    ? { ...p, status: newStatus, is_hadir: !isAttended ? 1 : 0 }
+                    : p
+            );
+            setParticipants(updatedParticipants);
+            toast.success(!isAttended ? 'Peserta ditandai hadir' : 'Absensi dibatalkan');
+        } catch (error) {
+            toast.error('Gagal memperbarui status');
+        }
+    };
+
     const handleBulkUpdate = async (status: string) => {
         if (!id || selectedIds.length === 0) return;
         if (!confirm(`Apakah Anda yakin ingin mengubah status ${selectedIds.length} peserta terpilih?`)) return;
