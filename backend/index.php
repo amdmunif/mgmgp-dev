@@ -152,6 +152,18 @@ if ($resource === 'news') {
                 http_response_code(401);
                 echo json_encode(["message" => "Unauthorized"]);
             }
+        } elseif ($action && $subAction === 'participants' && isset($uri_parts[3]) && $uri_parts[3] === 'bulk') {
+            // POST /events/:id/participants/bulk
+            $userIds = $input['user_ids'] ?? [];
+            $status = $input['status'] ?? 'registered';
+
+            // Check admin role
+            if ($currUser && $currUser['role'] === 'Admin')
+                echo $controller->updateParticipantsBulk($action, $userIds, $status);
+            else {
+                http_response_code(403);
+                echo json_encode(["message" => "Forbidden"]);
+            }
         } else {
             echo $controller->createEvent($input, $userId, $userName);
         }

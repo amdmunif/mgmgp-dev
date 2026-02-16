@@ -346,5 +346,31 @@ class ContentController
         http_response_code(500);
         return json_encode(["message" => "Failed to mark attendance"]);
     }
+
+    public function updateParticipantsBulk($eventId, $userIds, $status)
+    {
+        if (!is_array($userIds) || empty($userIds)) {
+            http_response_code(400);
+            return json_encode(["message" => "Invalid user IDs"]);
+        }
+
+        $isHadir = ($status === 'attended') ? 1 : 0;
+
+        // Construct placeholders for IN clause
+        $placeholders = implode(',', array_fill(0, count($userIds), '?'));
+
+        $query = "UPDATE event_participants SET status = ?, is_hadir = ? WHERE event_id = ? AND user_id IN ($placeholders)";
+        $stmt = $this->conn->prepare($query);
+
+        // Bind parameters: status, is_hadir, eventId, ...userIds
+        $params = array_merge([$status, $isHadir, $eventId], $userIds);
+
+        if ($stmt->execute($params)) {
+            return json_encode(["message" => "Bulk update successful"]);
+        }
+
+        http_response_code(500);
+        return json_encode(["message" => "Failed to update participants"]);
+    }
 }
 ?>

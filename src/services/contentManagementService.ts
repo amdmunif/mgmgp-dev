@@ -40,5 +40,9 @@ export const contentManagementService = {
     },
     async updateParticipantStatus(eventId: string, userId: string, status: string) {
         return await api.put(`/events/${eventId}/participants/${userId}`, { status });
+    },
+
+    async updateParticipantsBulk(eventId: string, userIds: string[], status: string) {
+        return await api.post(`/events/${eventId}/participants/bulk`, { user_ids: userIds, status });
     }
 };
