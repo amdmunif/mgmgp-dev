@@ -58,9 +58,9 @@ export function AdminEventDetail() {
         }
     };
 
-    const handleStatusUpdate = async (userId: string, currentStatus: string) => {
+    const handleStatusUpdate = async (userId: string, currentIsHadir: number) => {
         if (!id) return;
-        const isAttended = currentStatus === 'attended';
+        const isAttended = currentIsHadir === 1;
         const newStatus = isAttended ? 'registered' : 'attended';
         try {
             await contentManagementService.updateParticipantStatus(id, userId, newStatus);
@@ -197,7 +197,7 @@ export function AdminEventDetail() {
                 return (
                     <div className="flex justify-center">
                         <button
-                            onClick={() => handleStatusUpdate(item.user_id, item.status)}
+                            onClick={() => handleStatusUpdate(item.user_id, item.is_hadir)}
                             className={`inline-flex items-center gap-1 px-3 py-1 rounded-md text-xs font-medium transition-colors ${isPresent
                                 ? 'text-red-700 bg-red-50 hover:bg-red-100'
                                 : 'text-green-700 bg-green-50 hover:bg-green-100'
