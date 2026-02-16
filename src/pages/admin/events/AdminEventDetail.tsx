@@ -204,7 +204,7 @@ export function AdminEventDetail() {
                                 }`}
                         >
                             {isPresent ? <XCircle className="w-3 h-3" /> : <CheckCircle className="w-3 h-3" />}
-                            {isPresent ? 'Batal' : 'Hadir'}
+                            {isPresent ? 'Batal' : 'Absen'}
                         </button>
                     </div>
                 );
@@ -277,7 +277,7 @@ export function AdminEventDetail() {
                                     onClick={() => handleBulkUpdate('attended')}
                                 >
                                     <CheckCircle className="w-4 h-4 mr-1" />
-                                    Tandai Hadir ({selectedIds.length})
+                                    Tandai Sudah Absen ({selectedIds.length})
                                 </Button>
                                 <Button
                                     size="sm"
