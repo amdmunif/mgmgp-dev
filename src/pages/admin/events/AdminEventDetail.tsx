@@ -160,14 +160,35 @@ export function AdminEventDetail() {
             header: "Status",
             accessorKey: "status" as keyof Participant,
             cell: (item: Participant) => {
-                const isPresent = item.status === 'attended' || item.is_hadir === 1;
+                const isPresent = item.is_hadir === 1;
                 return (
                     <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${isPresent
                         ? 'bg-green-100 text-green-800'
-                        : 'bg-yellow-100 text-yellow-800'
+                        : 'bg-gray-100 text-gray-800'
                         }`}>
-                        {isPresent ? 'Hadir' : 'Terdaftar'}
+                        {isPresent ? 'Sudah Absen' : 'Belum Absen'}
                     </span>
+                );
+            },
+            className: "text-center"
+        },
+        {
+            header: "Aksi",
+            cell: (item: Participant) => {
+                const isPresent = item.is_hadir === 1;
+                return (
+                    <div className="flex justify-center">
+                        <button
+                            onClick={() => handleStatusUpdate(item.user_id, item.status)}
+                            className={`inline-flex items-center gap-1 px-3 py-1 rounded-md text-xs font-medium transition-colors ${isPresent
+                                ? 'text-red-700 bg-red-50 hover:bg-red-100'
+                                : 'text-green-700 bg-green-50 hover:bg-green-100'
+                                }`}
+                        >
+                            {isPresent ? <XCircle className="w-3 h-3" /> : <CheckCircle className="w-3 h-3" />}
+                            {isPresent ? 'Batal' : 'Hadir'}
+                        </button>
+                    </div>
                 );
             },
             className: "text-center"
@@ -209,9 +230,15 @@ export function AdminEventDetail() {
                     </div>
                     <div className="px-4 py-2 bg-green-50 rounded-lg border border-green-100 text-center min-w-[100px]">
                         <div className="text-xl font-bold text-green-600">
-                            {participants.filter(p => p.status === 'attended' || p.is_hadir === 1).length}
+                            {participants.filter(p => p.is_hadir === 1).length}
                         </div>
-                        <div className="text-xs text-green-800 font-medium">HADIR</div>
+                        <div className="text-xs text-green-800 font-medium">SUDAH ABSEN</div>
+                    </div>
+                    <div className="px-4 py-2 bg-gray-50 rounded-lg border border-gray-100 text-center min-w-[100px]">
+                        <div className="text-xl font-bold text-gray-600">
+                            {participants.filter(p => p.is_hadir === 0).length}
+                        </div>
+                        <div className="text-xs text-gray-800 font-medium">BELUM ABSEN</div>
                     </div>
                 </div>
             </div>
@@ -232,7 +259,7 @@ export function AdminEventDetail() {
                                     onClick={() => handleBulkUpdate('attended')}
                                 >
                                     <CheckCircle className="w-4 h-4 mr-1" />
-                                    Hadir ({selectedIds.length})
+                                    Tandai Hadir ({selectedIds.length})
                                 </Button>
                                 <Button
                                     size="sm"
@@ -241,7 +268,7 @@ export function AdminEventDetail() {
                                     onClick={() => handleBulkUpdate('registered')}
                                 >
                                     <XCircle className="w-4 h-4 mr-1" />
-                                    Batal ({selectedIds.length})
+                                    Batal Absen ({selectedIds.length})
                                 </Button>
                             </div>
                         )}
