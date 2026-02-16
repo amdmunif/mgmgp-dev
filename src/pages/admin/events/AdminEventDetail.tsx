@@ -179,97 +179,80 @@ export function AdminEventDetail() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center gap-4">
-                <button
-                    onClick={() => navigate('/admin/events')}
-                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                >
-                    <ArrowLeft className="w-6 h-6" />
-                </button>
-                <div>
-                    <h1 className="text-2xl font-bold">{event.title}</h1>
-                    <div className="flex items-center gap-4 text-gray-500 mt-1">
-                        <span className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
-                            {formatDate(event.date)}
-                        </span>
-                        <span className="flex items-center gap-1">
-                            <MapPin className="w-4 h-4" />
-                            {event.location}
-                        </span>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                    <button
+                        onClick={() => navigate('/admin/events')}
+                        className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                    >
+                        <ArrowLeft className="w-6 h-6" />
+                    </button>
+                    <div>
+                        <h1 className="text-2xl font-bold">{event.title}</h1>
+                        <div className="flex items-center gap-4 text-gray-500 mt-1">
+                            <span className="flex items-center gap-1">
+                                <Calendar className="w-4 h-4" />
+                                {formatDate(event.date)}
+                            </span>
+                            <span className="flex items-center gap-1">
+                                <MapPin className="w-4 h-4" />
+                                {event.location}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex gap-4">
+                    <div className="px-4 py-2 bg-blue-50 rounded-lg border border-blue-100 text-center min-w-[100px]">
+                        <div className="text-xl font-bold text-blue-600">{participants.length}</div>
+                        <div className="text-xs text-blue-800 font-medium">TOTAL PESERTA</div>
+                    </div>
+                    <div className="px-4 py-2 bg-green-50 rounded-lg border border-green-100 text-center min-w-[100px]">
+                        <div className="text-xl font-bold text-green-600">
+                            {participants.filter(p => p.status === 'attended' || p.is_hadir === 1).length}
+                        </div>
+                        <div className="text-xs text-green-800 font-medium">HADIR</div>
                     </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Event Stats / Info Card */}
-                <div className="md:col-span-1 space-y-6">
-                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-4">
-                        <div className="aspect-video w-full rounded-lg overflow-hidden bg-gray-100 relative">
-                            {event.image_url ? (
-                                <img src={event.image_url} alt={event.title} className="w-full h-full object-cover" />
-                            ) : (
-                                <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-                                    No Image
-                                </div>
-                            )}
-                        </div>
-                        <div>
-                            <h3 className="font-semibold mb-3">Statistik Kehadiran</h3>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="p-4 bg-blue-50 rounded-lg text-center">
-                                    <div className="text-2xl font-bold text-blue-600">{participants.length}</div>
-                                    <div className="text-xs text-blue-800 mt-1 font-medium">TOTAL PESERTA</div>
-                                </div>
-                                <div className="p-4 bg-green-50 rounded-lg text-center">
-                                    <div className="text-2xl font-bold text-green-600">
-                                        {participants.filter(p => p.status === 'attended' || p.is_hadir === 1).length}
-                                    </div>
-                                    <div className="text-xs text-green-800 mt-1 font-medium">HADIR</div>
-                                </div>
+            {/* Participants List */}
+            <div className="space-y-4">
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                        <h2 className="text-lg font-bold flex items-center gap-2">
+                            <Users className="w-5 h-5 text-gray-600" />
+                            Daftar Peserta
+                        </h2>
+                        {selectedIds.length > 0 && (
+                            <div className="flex gap-2">
+                                <Button
+                                    size="sm"
+                                    className="bg-green-600 hover:bg-green-700 text-white"
+                                    onClick={() => handleBulkUpdate('attended')}
+                                >
+                                    <CheckCircle className="w-4 h-4 mr-1" />
+                                    Hadir ({selectedIds.length})
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-red-600 border-red-200 hover:bg-red-50"
+                                    onClick={() => handleBulkUpdate('registered')}
+                                >
+                                    <XCircle className="w-4 h-4 mr-1" />
+                                    Batal ({selectedIds.length})
+                                </Button>
                             </div>
-                        </div>
+                        )}
                     </div>
-                </div>
 
-                {/* Participants List */}
-                <div className="md:col-span-2 space-y-4">
-                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                            <h2 className="text-lg font-bold flex items-center gap-2">
-                                <Users className="w-5 h-5 text-gray-600" />
-                                Daftar Peserta
-                            </h2>
-                            {selectedIds.length > 0 && (
-                                <div className="flex gap-2">
-                                    <Button
-                                        size="sm"
-                                        className="bg-green-600 hover:bg-green-700 text-white"
-                                        onClick={() => handleBulkUpdate('attended')}
-                                    >
-                                        <CheckCircle className="w-4 h-4 mr-1" />
-                                        Hadir ({selectedIds.length})
-                                    </Button>
-                                    <Button
-                                        size="sm"
-                                        variant="outline"
-                                        className="text-red-600 border-red-200 hover:bg-red-50"
-                                        onClick={() => handleBulkUpdate('registered')}
-                                    >
-                                        <XCircle className="w-4 h-4 mr-1" />
-                                        Batal ({selectedIds.length})
-                                    </Button>
-                                </div>
-                            )}
-                        </div>
-
-                        <DataTable
-                            columns={columns}
-                            data={participants}
-                            searchKeys={['nama', 'email']}
-                            pageSize={10}
-                        />
-                    </div>
+                    <DataTable
+                        columns={columns}
+                        data={participants}
+                        searchKeys={['nama', 'email']}
+                        pageSize={10}
+                    />
                 </div>
             </div>
         </div>
