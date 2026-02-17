@@ -1,16 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Camera, Save, User as UserIcon, Building2, GraduationCap, Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { api } from '../../lib/api';
 import { getFileUrl } from '../../lib/api';
 import { settingsService } from '../../services/settingsService';
 import { Button } from '../../components/ui/button';
-
-import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useOutletContext } from 'react-router-dom';
 
 export function EditProfile() {
-    const navigate = useNavigate();
     const { setPageHeader } = useOutletContext<any>();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);

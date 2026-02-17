@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Button } from '../../components/ui/button';
-import { Loader2, Upload, CheckCircle, Clock, XCircle, CreditCard, ShieldCheck } from 'lucide-react';
+import { Loader2, Upload, CheckCircle, Clock, XCircle, CreditCard, ShieldCheck, Crown } from 'lucide-react';
 import { settingsService, type AppSettings } from '../../services/settingsService';
 import { premiumService, type PremiumRequest } from '../../services/premiumService';
 import { cn } from '../../lib/utils';
 
-import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useOutletContext } from 'react-router-dom';
 
 export function UpgradePremium() {
     const { setPageHeader } = useOutletContext<any>();
