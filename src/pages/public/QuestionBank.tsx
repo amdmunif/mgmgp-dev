@@ -1,6 +1,8 @@
+```
 import { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { cn } from '../../lib/utils';
+import {
 FileText, CheckSquare, Square, FileSpreadsheet, File as FileIcon, Eye, CheckCircle, FileQuestion
 } from 'lucide-react';
 import { DataTable } from '../../components/ui/DataTable';
@@ -69,7 +71,7 @@ export function QuestionBankPage() {
     const getFilename = (ext: string) => {
         const name = user?.nama ? user.nama.replace(/\s+/g, '_') : 'Guest';
         const date = format(new Date(), 'dd-MM-yyyy');
-        return `${name}_${date}_banksoal_mgmp_if.${ext}`;
+        return `${ name }_${ date } _banksoal_mgmp_if.${ ext } `;
     };
 
     const toggleSelect = (id: string) => {
@@ -119,7 +121,7 @@ export function QuestionBankPage() {
             const textContent = tempDiv.textContent || "";
             docChildren.push(new Paragraph({
                 children: [
-                    new TextRun({ text: `${idx + 1}. `, bold: true }),
+                    new TextRun({ text: `${ idx + 1 }.`, bold: true }),
                     new TextRun({ text: textContent.trim() })
                 ],
                 spacing: { after: 100 }
@@ -146,7 +148,7 @@ export function QuestionBankPage() {
             if (q.type !== 'essay' && q.type !== 'short_answer' && q.options) {
                 q.options.forEach((opt: any, optIdx: number) => {
                     docChildren.push(new Paragraph({
-                        children: [new TextRun({ text: `${String.fromCharCode(65 + optIdx)}. ${opt.text}` })],
+                        children: [new TextRun({ text: `${ String.fromCharCode(65 + optIdx) }. ${ opt.text } ` })],
                         indent: { left: 720 },
                     }));
                 });
@@ -176,7 +178,7 @@ export function QuestionBankPage() {
                 }
             }
             docChildren.push(new Paragraph({
-                children: [new TextRun({ text: `${idx + 1}. ${answer}`, bold: true })]
+                children: [new TextRun({ text: `${ idx + 1 }. ${ answer } `, bold: true })]
             }));
         });
 
@@ -245,7 +247,7 @@ export function QuestionBankPage() {
 
             // Question Text
             doc.setFont("helvetica", "bold");
-            doc.text(`${idx + 1}.`, 14, y);
+            doc.text(`${ idx + 1 }.`, 14, y);
             doc.setFont("helvetica", "normal");
 
             const cleanText = q.content.replace(/<[^>]+>/g, '').trim();
@@ -257,7 +259,7 @@ export function QuestionBankPage() {
             if (q.type !== 'essay' && q.type !== 'short_answer' && q.options) {
                 q.options.forEach((opt: any, optIdx: number) => {
                     if (y > 280) { doc.addPage(); y = 20; }
-                    doc.text(`${String.fromCharCode(65 + optIdx)}. ${opt.text}`, 25, y);
+                    doc.text(`${ String.fromCharCode(65 + optIdx) }. ${ opt.text } `, 25, y);
                     y += 5;
                 });
             }
@@ -280,7 +282,7 @@ export function QuestionBankPage() {
                 const correctIdx = q.options?.findIndex((o: any) => o.is_correct);
                 answer = correctIdx !== -1 && correctIdx !== undefined ? String.fromCharCode(65 + correctIdx) : '-';
             }
-            doc.text(`${idx + 1}. ${answer}`, 14, y);
+            doc.text(`${ idx + 1 }. ${ answer } `, 14, y);
             y += 6;
         });
 
@@ -359,7 +361,7 @@ export function QuestionBankPage() {
                             </option>
                             {tpList.map(tp => (
                                 <option key={tp.id} value={tp.code || tp.id}>
-                                    {tp.code ? `[${tp.code}] ` : ''}{tp.tujuan ? (tp.tujuan.length > 30 ? tp.tujuan.substring(0, 30) + '...' : tp.tujuan) : 'TP Tanpa Tujuan'}
+                                    {tp.code ? `[${ tp.code }]` : ''}{tp.tujuan ? (tp.tujuan.length > 30 ? tp.tujuan.substring(0, 30) + '...' : tp.tujuan) : 'TP Tanpa Tujuan'}
                                 </option>
                             ))}
                         </select>
@@ -506,29 +508,31 @@ export function QuestionBankPage() {
                         <div
                             className="prose prose-sm max-w-none mb-6 p-4 bg-gray-50 rounded-lg border border-gray-100 question-content"
                             dangerouslySetInnerHTML={{
-                                __html: viewingQuestion.content.replace(/src="uploads\//g, `src="${getFileUrl('/uploads/')}`)
+                                __html: viewingQuestion.content.replace(/src="uploads\//g, `src = "${getFileUrl('/uploads/')}`)
                             }}
                         />
 
-                        <div className="space-y-2">
-                            <h4 className="font-semibold text-sm text-gray-700">Pilihan Jawaban:</h4>
-                            {viewingQuestion.options?.map((opt: any, idx: number) => (
-                                <div key={idx} className={cn("p-3 rounded-lg border flex items-center gap-3", opt.is_correct ? "bg-green-50 border-green-200" : "bg-white border-gray-200")}>
-                                    <span className={cn("w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold shrink-0", opt.is_correct ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500")}>
-                                        {String.fromCharCode(65 + idx)}
-                                    </span>
-                                    <span className={cn("text-sm", opt.is_correct && "font-medium text-green-800")}>{opt.text}</span>
-                                    {opt.is_correct && <CheckCircle className="w-4 h-4 text-green-600 ml-auto" />}
-                                </div>
-                            ))}
-                        </div>
-
-                        <div className="mt-6 flex justify-end">
-                            <Button onClick={() => setViewingQuestion(null)}>Tutup</Button>
-                        </div>
-                    </div>
-                </div>
-            )}
+    < div className = "space-y-2" >
+        <h4 className="font-semibold text-sm text-gray-700">Pilihan Jawaban:</h4>
+{
+    viewingQuestion.options?.map((opt: any, idx: number) => (
+        <div key={idx} className={cn("p-3 rounded-lg border flex items-center gap-3", opt.is_correct ? "bg-green-50 border-green-200" : "bg-white border-gray-200")}>
+            <span className={cn("w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold shrink-0", opt.is_correct ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500")}>
+                {String.fromCharCode(65 + idx)}
+            </span>
+            <span className={cn("text-sm", opt.is_correct && "font-medium text-green-800")}>{opt.text}</span>
+            {opt.is_correct && <CheckCircle className="w-4 h-4 text-green-600 ml-auto" />}
         </div>
+    ))
+}
+                        </div >
+
+    <div className="mt-6 flex justify-end">
+        <Button onClick={() => setViewingQuestion(null)}>Tutup</Button>
+    </div>
+                    </div >
+                </div >
+            )}
+        </div >
     );
 }
