@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, ReactNode } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import type { ReactNode } from 'react';
 import { useNavigate, Link, Outlet, useLocation } from 'react-router-dom';
 import { authService } from '../../services/authService';
 import {
