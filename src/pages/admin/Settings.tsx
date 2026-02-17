@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { api } from '../../lib/api';
 import { Button } from '../../components/ui/button';
 import { Loader2, Save, User as UserIcon } from 'lucide-react';
 
 export function AdminSettings() {
+    const { setPageHeader } = useOutletContext<any>() || {};
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
@@ -19,8 +21,15 @@ export function AdminSettings() {
     });
 
     useEffect(() => {
+        if (setPageHeader) {
+            setPageHeader({
+                title: 'Pengaturan Profil',
+                description: 'Informasi ini akan digunakan untuk sertifikat dan database anggota.',
+                icon: <UserIcon className="w-6 h-6" />
+            });
+        }
         getProfile();
-    }, []);
+    }, [setPageHeader]);
 
     const getProfile = async () => {
         try {
@@ -68,16 +77,11 @@ export function AdminSettings() {
     if (loading) return <div className="p-8"><Loader2 className="animate-spin" /> Loading profil...</div>;
 
     return (
-        <div className="max-w-4xl mx-auto">
-            <div className="flex items-center gap-3 mb-6">
-                <UserIcon className="w-8 h-8 text-primary-600" />
-                <h1 className="text-2xl font-bold text-gray-900">Pengaturan Profil</h1>
-            </div>
-
+        <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500">
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div className="p-6 border-b border-gray-100 bg-gray-50/50">
                     <h2 className="font-semibold text-gray-900">Biodata Diri</h2>
-                    <p className="text-sm text-gray-500">Informasi ini akan digunakan untuk sertifikat dan database anggota.</p>
+                    <p className="text-sm text-gray-500">Lengkapi data diri Anda untuk keperluan administrasi.</p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">

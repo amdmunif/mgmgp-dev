@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Button } from '../../../components/ui/button';
-import { Plus, Trash2, Filter, CheckCircle, XCircle, FileText, Gamepad2, Upload, Pencil, Eye, Clock } from 'lucide-react';
+import { Plus, Trash2, Filter, CheckCircle, XCircle, FileText, Gamepad2, Upload, Pencil, Eye, Clock, Database } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { questionService, type Question, type QuestionBank } from '../../../services/questionService';
 import { curriculumService } from '../../../services/curriculumService';
@@ -10,6 +10,7 @@ import * as XLSX from 'xlsx';
 import { DataTable } from '../../../components/ui/DataTable';
 
 export function AdminQuestions() {
+    const { setPageHeader } = useOutletContext<any>() || {};
     const navigate = useNavigate();
     const [viewingQuestion, setViewingQuestion] = useState<Question | null>(null);
     const [activeTab, setActiveTab] = useState<'repository' | 'verification' | 'legacy'>('repository');
@@ -33,6 +34,16 @@ export function AdminQuestions() {
         title: '', mapel: '', category: 'Latihan', is_premium: true, file: null as File | null
     });
     const [submitting, setSubmitting] = useState(false);
+
+    useEffect(() => {
+        if (setPageHeader) {
+            setPageHeader({
+                title: 'Bank Soal',
+                description: 'Kelola repository soal dan arsip file.',
+                icon: <Database className="w-6 h-6" />
+            });
+        }
+    }, [setPageHeader]);
 
     // Filter TP List
     useEffect(() => {
@@ -485,27 +496,21 @@ export function AdminQuestions() {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Bank Soal</h1>
-                    <p className="text-gray-500 text-sm">Kelola repository soal dan arsip file.</p>
-                </div>
-                <div className="flex gap-2">
-                    {activeTab === 'repository' ? (
-                        <>
-                            <Button onClick={() => setIsExcelModalOpen(true)} variant="outline" className="bg-green-50 text-green-600 border-green-200 hover:bg-green-100">
-                                <FileText className="w-4 h-4 mr-2" /> Import Excel
-                            </Button>
-                            <Button onClick={() => navigate('/admin/questions/create')}>
-                                <Plus className="w-4 h-4 mr-2" /> Buat Soal Baru
-                            </Button>
-                        </>
-                    ) : activeTab === 'legacy' ? (
-                        <Button onClick={() => setIsUploadModalOpen(true)}>
-                            <Upload className="w-4 h-4 mr-2" /> Upload File
+            <div className="flex justify-end items-center gap-2">
+                {activeTab === 'repository' ? (
+                    <>
+                        <Button onClick={() => setIsExcelModalOpen(true)} variant="outline" className="bg-green-50 text-green-600 border-green-200 hover:bg-green-100">
+                            <FileText className="w-4 h-4 mr-2" /> Import Excel
                         </Button>
-                    ) : null}
-                </div>
+                        <Button onClick={() => navigate('/admin/questions/create')}>
+                            <Plus className="w-4 h-4 mr-2" /> Buat Soal Baru
+                        </Button>
+                    </>
+                ) : activeTab === 'legacy' ? (
+                    <Button onClick={() => setIsUploadModalOpen(true)}>
+                        <Upload className="w-4 h-4 mr-2" /> Upload File
+                    </Button>
+                ) : null}
             </div>
 
             {/* Tabs */}
@@ -542,82 +547,82 @@ export function AdminQuestions() {
             {/* REPOSITORY & VERIFICATION TAB */}
             {(activeTab === 'repository' || activeTab === 'verification') && (
                 <div className="space-y-6">
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden p-6">
-                        {repoLoading ? (
-                            <div className="text-center p-8 text-gray-500">Loading...</div>
-                        ) : (
-                            <DataTable
-                                data={questions}
-                                columns={repoColumns}
-                                searchKeys={['content', 'mapel', 'creator_name']}
-                                pageSize={10}
-                                filterContent={
-                                    <div className="flex items-center gap-2">
-                                        <Filter className="w-4 h-4 text-gray-500" />
-                                        <select
-                                            className="border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            value={filters.mapel}
-                                            onChange={e => setFilters({ ...filters, mapel: e.target.value, tp: '' })}
-                                        >
-                                            <option value="">Semua Mapel</option>
-                                            <option value="Informatika">Informatika</option>
-                                            <option value="KKA">KKA</option>
-                                        </select>
-                                        <select
-                                            className="border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            value={filters.kelas}
-                                            onChange={e => setFilters({ ...filters, kelas: e.target.value, tp: '' })}
-                                        >
-                                            <option value="">Semua Kelas</option>
-                                            <option value="7">Kelas 7</option>
-                                            <option value="8">Kelas 8</option>
-                                            <option value="9">Kelas 9</option>
-                                        </select>
-                                        <select
-                                            className={cn(
-                                                "border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-[200px] transition-colors",
-                                                (!filters.mapel || !filters.kelas) ? "text-gray-400" : "text-gray-900"
-                                            )}
-                                            value={filters.tp}
-                                            onChange={e => setFilters({ ...filters, tp: e.target.value })}
-                                        >
-                                            <option value="">
-                                                {(!filters.mapel || !filters.kelas) ? "Pilih Mapel & Kelas..." : "Semua TP"}
+                    {repoLoading ? (
+                        <div className="flex justify-center p-8">
+                            <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                        </div>
+                    ) : (
+                        <DataTable
+                            data={questions}
+                            columns={repoColumns}
+                            searchKeys={['content', 'mapel', 'creator_name']}
+                            pageSize={10}
+                            filterContent={
+                                <div className="flex items-center gap-2">
+                                    <Filter className="w-4 h-4 text-gray-500" />
+                                    <select
+                                        className="border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        value={filters.mapel}
+                                        onChange={e => setFilters({ ...filters, mapel: e.target.value, tp: '' })}
+                                    >
+                                        <option value="">Semua Mapel</option>
+                                        <option value="Informatika">Informatika</option>
+                                        <option value="KKA">KKA</option>
+                                    </select>
+                                    <select
+                                        className="border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        value={filters.kelas}
+                                        onChange={e => setFilters({ ...filters, kelas: e.target.value, tp: '' })}
+                                    >
+                                        <option value="">Semua Kelas</option>
+                                        <option value="7">Kelas 7</option>
+                                        <option value="8">Kelas 8</option>
+                                        <option value="9">Kelas 9</option>
+                                    </select>
+                                    <select
+                                        className={cn(
+                                            "border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-[200px] transition-colors",
+                                            (!filters.mapel || !filters.kelas) ? "text-gray-400" : "text-gray-900"
+                                        )}
+                                        value={filters.tp}
+                                        onChange={e => setFilters({ ...filters, tp: e.target.value })}
+                                    >
+                                        <option value="">
+                                            {(!filters.mapel || !filters.kelas) ? "Pilih Mapel & Kelas..." : "Semua TP"}
+                                        </option>
+                                        {tpList.map(tp => (
+                                            <option key={tp.id} value={tp.code || tp.id}>
+                                                {tp.code ? `[${tp.code}] ` : ''}{tp.tujuan && tp.tujuan.length > 50 ? tp.tujuan.substring(0, 50) + '...' : tp.tujuan}
                                             </option>
-                                            {tpList.map(tp => (
-                                                <option key={tp.id} value={tp.code || tp.id}>
-                                                    {tp.code ? `[${tp.code}] ` : ''}{tp.tujuan && tp.tujuan.length > 50 ? tp.tujuan.substring(0, 50) + '...' : tp.tujuan}
-                                                </option>
-                                            ))}
-                                        </select>
-                                        <select
-                                            className="border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            value={filters.type}
-                                            onChange={e => setFilters({ ...filters, type: e.target.value })}
-                                        >
-                                            <option value="">Semua Tipe</option>
-                                            <option value="single_choice">Pilihan Ganda</option>
-                                            <option value="multiple_choice">Pilihan Ganda Kompleks</option>
-                                            <option value="true_false">Benar/Salah</option>
-                                            <option value="match">Menjodohkan</option>
-                                            <option value="short_answer">Isian Singkat</option>
-                                            <option value="essay">Uraian</option>
-                                        </select>
-                                        <select
-                                            className="border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            value={filters.level}
-                                            onChange={e => setFilters({ ...filters, level: e.target.value })}
-                                        >
-                                            <option value="">Semua Level</option>
-                                            <option value="Mudah">Mudah</option>
-                                            <option value="Sedang">Sedang</option>
-                                            <option value="Sukar">Sukar</option>
-                                        </select>
-                                    </div>
-                                }
-                            />
-                        )}
-                    </div>
+                                        ))}
+                                    </select>
+                                    <select
+                                        className="border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        value={filters.type}
+                                        onChange={e => setFilters({ ...filters, type: e.target.value })}
+                                    >
+                                        <option value="">Semua Tipe</option>
+                                        <option value="single_choice">Pilihan Ganda</option>
+                                        <option value="multiple_choice">Pilihan Ganda Kompleks</option>
+                                        <option value="true_false">Benar/Salah</option>
+                                        <option value="match">Menjodohkan</option>
+                                        <option value="short_answer">Isian Singkat</option>
+                                        <option value="essay">Uraian</option>
+                                    </select>
+                                    <select
+                                        className="border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        value={filters.level}
+                                        onChange={e => setFilters({ ...filters, level: e.target.value })}
+                                    >
+                                        <option value="">Semua Level</option>
+                                        <option value="Mudah">Mudah</option>
+                                        <option value="Sedang">Sedang</option>
+                                        <option value="Sukar">Sukar</option>
+                                    </select>
+                                </div>
+                            }
+                        />
+                    )}
                 </div>
             )}
 
@@ -671,9 +676,11 @@ export function AdminQuestions() {
 
             {/* LEGACY TAB */}
             {activeTab === 'legacy' && (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden p-6 animate-in fade-in slide-in-from-top-2">
+                <div className="animate-in fade-in slide-in-from-top-2">
                     {legacyLoading ? (
-                        <div className="text-center p-8 text-gray-500">Loading...</div>
+                        <div className="flex justify-center p-8">
+                            <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                        </div>
                     ) : (
                         <DataTable
                             data={banks}

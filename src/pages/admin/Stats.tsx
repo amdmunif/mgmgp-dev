@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { statsService, type TeacherStats } from '../../services/statsService';
 import {
     Users,
@@ -9,15 +10,23 @@ import {
 } from 'lucide-react';
 
 export function AdminStats() {
+    const { setPageHeader } = useOutletContext<any>() || {};
     const [stats, setStats] = useState<TeacherStats | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        if (setPageHeader) {
+            setPageHeader({
+                title: 'Statistik & Laporan Guru',
+                description: 'Analisis demografi dan tingkat keaktifan anggota MGMP.',
+                icon: <Activity className="w-6 h-6" />
+            });
+        }
         statsService.getTeacherStats()
             .then(res => setStats(res))
             .catch(err => console.error('Error fetching teacher stats:', err))
             .finally(() => setLoading(false));
-    }, []);
+    }, [setPageHeader]);
 
     if (loading) {
         return (
@@ -33,12 +42,6 @@ export function AdminStats() {
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
-            {/* Header */}
-            <div>
-                <h1 className="text-2xl font-bold text-gray-900">Statistik & Laporan Guru</h1>
-                <p className="text-gray-500">Analisis demografi dan tingkat keaktifan anggota MGMP.</p>
-            </div>
-
             {/* Top KPIs */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">

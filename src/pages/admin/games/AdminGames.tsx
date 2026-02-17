@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useOutletContext } from 'react-router-dom';
 import { Button } from '../../../components/ui/button';
 import { Plus, Trash2, Gamepad2, Pencil, X, Loader2, Copy, Eye } from 'lucide-react';
 import { gameService } from '../../../services/gameService';
@@ -9,14 +9,22 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
 
 export function AdminGames() {
+    const { setPageHeader } = useOutletContext<any>() || {};
     const [games, setGames] = useState<Game[]>([]);
     const [loading, setLoading] = useState(true);
     const [viewingGame, setViewingGame] = useState<Game | null>(null);
     const [editingGame, setEditingGame] = useState<Game | null>(null);
 
     useEffect(() => {
+        if (setPageHeader) {
+            setPageHeader({
+                title: 'Bank Games',
+                description: 'Kelola daftar game edukasi untuk member.',
+                icon: <Gamepad2 className="w-6 h-6" />
+            });
+        }
         loadData();
-    }, []);
+    }, [setPageHeader]);
 
     const loadData = async () => {
         setLoading(true);
@@ -140,11 +148,7 @@ export function AdminGames() {
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Bank Games</h1>
-                    <p className="text-gray-500">Kelola daftar game edukasi untuk member.</p>
-                </div>
+            <div className="flex justify-end items-center">
                 <Link to="/admin/games/create">
                     <Button>
                         <Plus className="w-4 h-4 mr-2" /> Tambah Game

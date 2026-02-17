@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
 import { Loader2, Save, Globe, Building2, UserPen, Upload, Trash2, Image as ImageIcon, CreditCard } from 'lucide-react';
 import { settingsService, type AppSettings } from '../../services/settingsService';
@@ -6,6 +7,7 @@ import { RichTextEditor } from '../../components/ui/RichTextEditor';
 // Using simple state might be easier for this large form without complex validation logic yet.
 
 export function AdminWebSettings() {
+    const { setPageHeader } = useOutletContext<any>() || {};
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [settings, setSettings] = useState<AppSettings | null>(null);
@@ -15,8 +17,15 @@ export function AdminWebSettings() {
     const [previews, setPreviews] = useState<{ [key: string]: string | null }>({});
 
     useEffect(() => {
+        if (setPageHeader) {
+            setPageHeader({
+                title: 'Pengaturan Sistem',
+                description: 'Atur konten, branding, dan fungsionalitas website.',
+                icon: <Globe className="w-6 h-6" />
+            });
+        }
         loadSettings();
-    }, []);
+    }, [setPageHeader]);
 
     async function loadSettings() {
         try {
@@ -144,12 +153,8 @@ export function AdminWebSettings() {
     );
 
     return (
-        <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-8">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Pengaturan Sistem</h1>
-                    <p className="text-sm text-gray-500 mt-1">Atur konten, branding, dan fungsionalitas website.</p>
-                </div>
+        <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
+            <div className="flex justify-end">
                 <Button onClick={handleSubmit} disabled={saving} size="lg" className="bg-blue-600 hover:bg-blue-700">
                     {saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Menyimpan...</> : <><Save className="w-4 h-4 mr-2" /> Simpan Perubahan</>}
                 </Button>

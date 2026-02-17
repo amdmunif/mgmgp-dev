@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Loader2, Camera, X } from 'lucide-react';
+import { useOutletContext } from 'react-router-dom';
+import { Plus, Trash2, Loader2, Camera, X, Image as ImageIcon } from 'lucide-react';
 import { galleryService } from '../../services/galleryService';
 import type { GalleryImage } from '../../services/galleryService';
 import { toast } from 'react-hot-toast';
@@ -7,6 +8,7 @@ import { api, getFileUrl } from '../../lib/api';
 import { Button } from '../../components/ui/button';
 
 export function AdminGallery() {
+    const { setPageHeader } = useOutletContext<any>() || {};
     const [images, setImages] = useState<GalleryImage[]>([]);
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
@@ -14,8 +16,15 @@ export function AdminGallery() {
     const [newImage, setNewImage] = useState({ image_url: '', caption: '', event_id: '' });
 
     useEffect(() => {
+        if (setPageHeader) {
+            setPageHeader({
+                title: 'Manajemen Galeri',
+                description: 'Kelola koleksi foto kegiatan MGMP.',
+                icon: <ImageIcon className="w-6 h-6" />
+            });
+        }
         fetchImages();
-    }, []);
+    }, [setPageHeader]);
 
     const fetchImages = async () => {
         try {
@@ -83,11 +92,7 @@ export function AdminGallery() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Manajemen Galeri</h2>
-                    <p className="text-gray-500 text-sm">Kelola koleksi foto kegiatan MGMP</p>
-                </div>
+            <div className="flex items-center justify-end">
                 <Button onClick={() => setIsAddModalOpen(true)} className="bg-blue-600 hover:bg-blue-700">
                     <Plus className="w-4 h-4 mr-2" /> Tambah Foto
                 </Button>

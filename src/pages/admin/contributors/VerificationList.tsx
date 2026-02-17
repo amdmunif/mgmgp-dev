@@ -1,20 +1,29 @@
 import { useState, useEffect } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { contributorService } from '../../../services/contributorService';
 import type { ContributorApplication } from '../../../services/contributorService';
 import { Button } from '../../../components/ui/button';
-import { Check, X, Loader2, Eye } from 'lucide-react';
+import { Check, X, Loader2, Eye, UserCheck } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { DataTable } from '../../../components/ui/DataTable';
 
 export function VerificationList() {
+    const { setPageHeader } = useOutletContext<any>() || {};
     const [applications, setApplications] = useState<ContributorApplication[]>([]);
     const [loading, setLoading] = useState(true);
     const [processing, setProcessing] = useState<number | null>(null);
     const [filterStatus, setFilterStatus] = useState('All');
 
     useEffect(() => {
+        if (setPageHeader) {
+            setPageHeader({
+                title: 'Verifikasi Kontributor',
+                description: 'Review dan kelola pendaftaran kontributor materi.',
+                icon: <UserCheck className="w-6 h-6" />
+            });
+        }
         loadData();
-    }, []);
+    }, [setPageHeader]);
 
     const loadData = async () => {
         try {
@@ -149,9 +158,7 @@ export function VerificationList() {
     if (loading) return <div className="p-8 text-center">Loading...</div>;
 
     return (
-        <div className="p-6 space-y-6">
-            <h1 className="text-2xl font-bold text-gray-900">Verifikasi Kontributor</h1>
-
+        <div className="space-y-6 animate-in fade-in duration-500">
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden p-6">
                 <DataTable
                     data={filteredApps}

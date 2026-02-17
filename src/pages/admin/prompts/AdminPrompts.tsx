@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useOutletContext } from 'react-router-dom';
 import { Button } from '../../../components/ui/button';
 import { Plus, Trash2, Terminal, Pencil, X, Eye, Loader2 } from 'lucide-react';
 import { promptService } from '../../../services/resourcesService';
@@ -9,14 +9,22 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
 
 export function AdminPrompts() {
+    const { setPageHeader } = useOutletContext<any>() || {};
     const [prompts, setPrompts] = useState<Prompt[]>([]);
     const [loading, setLoading] = useState(true);
     const [viewingPrompt, setViewingPrompt] = useState<Prompt | null>(null);
     const [editingPrompt, setEditingPrompt] = useState<Prompt | null>(null);
 
     useEffect(() => {
+        if (setPageHeader) {
+            setPageHeader({
+                title: 'Prompt Library',
+                description: 'Kelola koleksi prompt AI untuk member.',
+                icon: <Terminal className="w-6 h-6" />
+            });
+        }
         loadData();
-    }, []);
+    }, [setPageHeader]);
 
     const loadData = async () => {
         setLoading(true);
@@ -128,11 +136,7 @@ export function AdminPrompts() {
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Prompt Library</h1>
-                    <p className="text-gray-500">Kelola koleksi prompt AI untuk member.</p>
-                </div>
+            <div className="flex justify-end items-center">
                 <Link to="/admin/prompts/create">
                     <Button>
                         <Plus className="w-4 h-4 mr-2" /> Tambah Prompt
