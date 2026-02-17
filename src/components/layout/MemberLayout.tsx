@@ -32,7 +32,12 @@ export function MemberLayout() {
     const [user, setUser] = useState<any>(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
-    const [logoUrl, setLogoUrl] = useState<string>('');
+    const [pageHeader, setPageHeader] = useState<{
+        title: string;
+        description?: string;
+        icon?: ReactNode;
+    } | null>(null);
+
     const sidebarRef = useRef<HTMLDivElement>(null);
     const profileRef = useRef<HTMLDivElement>(null);
 
@@ -147,13 +152,6 @@ export function MemberLayout() {
 
     // Hardcode label for sub-pages or unknown paths
     // Page title logic removed as per user request (duplicates content page title)
-
-    // Page Header State
-    const [pageHeader, setPageHeader] = useState<{
-        title: string;
-        description?: string;
-        icon?: ReactNode;
-    } | null>(null);
 
     return (
         <div className="min-h-screen bg-gray-100 flex pb-16 md:pb-0">

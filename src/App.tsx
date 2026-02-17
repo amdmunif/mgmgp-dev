@@ -104,8 +104,16 @@ function App() {
         <Route path="/forgot-password" element={<Layout><ForgotPassword /></Layout>} />
         <Route path="/reset-password" element={<Layout><ResetPassword /></Layout>} />
 
+import { ErrorBoundary } from './components/ui/ErrorBoundary';
+
+// ...
+
         {/* Member Routes - Wrapped in MemberLayout */}
-        <Route path="/member" element={<MemberLayout />}>
+        <Route path="/member" element={
+          <ErrorBoundary>
+            <MemberLayout />
+          </ErrorBoundary>
+        }>
           <Route index element={<MemberDashboard />} />
           <Route path="profile" element={<EditProfile />} />
           <Route path="upgrade" element={<UpgradePremium />} />
