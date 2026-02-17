@@ -43,6 +43,18 @@ if (isset($uri_parts[0]) && $uri_parts[0] === 'uploads') {
     }
 }
 
+// Temporary Debug Route
+if (isset($uri_parts[0]) && $uri_parts[0] === 'debug-db') {
+    include_once 'check_db_browser.php';
+    exit();
+}
+
+// Temporary Migration Route
+if (isset($uri_parts[0]) && $uri_parts[0] === 'migrate-db') {
+    include_once 'migrate_premium_browser.php';
+    exit();
+}
+
 include_once './controllers/AuthController.php';
 include_once './controllers/ResourceController.php';
 include_once './controllers/LearningController.php';
