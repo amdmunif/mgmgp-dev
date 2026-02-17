@@ -104,13 +104,7 @@ export function AdminReferences() {
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
-            <div className="flex justify-end items-center">
-                <Link to="/admin/references/create">
-                    <Button>
-                        <Plus className="w-4 h-4 mr-2" /> Tambah Referensi
-                    </Button>
-                </Link>
-            </div>
+
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden p-6">
                 {loading ? (
@@ -121,6 +115,13 @@ export function AdminReferences() {
                         columns={columns}
                         searchKeys={['title', 'type']}
                         pageSize={10}
+                        filterContent={
+                            <Link to="/admin/references/create">
+                                <Button className="h-9">
+                                    <Plus className="w-4 h-4 mr-2" /> Tambah Referensi
+                                </Button>
+                            </Link>
+                        }
                     />
                 )}
             </div>

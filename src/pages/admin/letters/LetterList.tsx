@@ -103,13 +103,7 @@ export function AdminLetters() {
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
-            <div className="flex justify-end items-center">
-                <Link to="/admin/letters/create">
-                    <Button className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/20">
-                        <Plus className="w-4 h-4 mr-2" /> Buat Surat Baru
-                    </Button>
-                </Link>
-            </div>
+
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden p-6">
                 {loading ? (
@@ -120,6 +114,13 @@ export function AdminLetters() {
                         columns={columns}
                         searchKeys={['letter_number', 'subject', 'recipient']}
                         pageSize={10}
+                        filterContent={
+                            <Link to="/admin/letters/create">
+                                <Button className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/20 h-9">
+                                    <Plus className="w-4 h-4 mr-2" /> Buat Surat
+                                </Button>
+                            </Link>
+                        }
                     />
                 )}
             </div>

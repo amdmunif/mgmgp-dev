@@ -116,13 +116,7 @@ export function AdminNews() {
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
-            <div className="flex justify-end items-center">
-                <Link to="/admin/news/create">
-                    <Button className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/20">
-                        <Plus className="w-4 h-4 mr-2" /> Tulis Berita
-                    </Button>
-                </Link>
-            </div>
+
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden p-6">
                 {loading ? (
@@ -133,6 +127,13 @@ export function AdminNews() {
                         columns={columns}
                         searchKeys={['title', 'category']}
                         pageSize={10}
+                        filterContent={
+                            <Link to="/admin/news/create">
+                                <Button className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/20 h-9">
+                                    <Plus className="w-4 h-4 mr-2" /> Tulis Berita
+                                </Button>
+                            </Link>
+                        }
                     />
                 )}
             </div>

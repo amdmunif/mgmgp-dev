@@ -496,22 +496,7 @@ export function AdminQuestions() {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-end items-center gap-2">
-                {activeTab === 'repository' ? (
-                    <>
-                        <Button onClick={() => setIsExcelModalOpen(true)} variant="outline" className="bg-green-50 text-green-600 border-green-200 hover:bg-green-100">
-                            <FileText className="w-4 h-4 mr-2" /> Import Excel
-                        </Button>
-                        <Button onClick={() => navigate('/admin/questions/create')}>
-                            <Plus className="w-4 h-4 mr-2" /> Buat Soal Baru
-                        </Button>
-                    </>
-                ) : activeTab === 'legacy' ? (
-                    <Button onClick={() => setIsUploadModalOpen(true)}>
-                        <Upload className="w-4 h-4 mr-2" /> Upload File
-                    </Button>
-                ) : null}
-            </div>
+
 
             {/* Tabs */}
             <div className="flex border-b border-gray-200 mb-6 overflow-x-auto">
@@ -619,6 +604,17 @@ export function AdminQuestions() {
                                         <option value="Sedang">Sedang</option>
                                         <option value="Sukar">Sukar</option>
                                     </select>
+
+                                    {activeTab === 'repository' && (
+                                        <>
+                                            <Button onClick={() => setIsExcelModalOpen(true)} variant="outline" className="bg-green-50 text-green-600 border-green-200 hover:bg-green-100 h-9">
+                                                <FileText className="w-4 h-4 mr-2" /> Import Excel
+                                            </Button>
+                                            <Button onClick={() => navigate('/admin/questions/create')} className="h-9">
+                                                <Plus className="w-4 h-4 mr-2" /> Buat Soal
+                                            </Button>
+                                        </>
+                                    )}
                                 </div>
                             }
                         />
@@ -687,6 +683,13 @@ export function AdminQuestions() {
                             columns={legacyColumns}
                             searchKeys={['title', 'mapel', 'category']}
                             pageSize={10}
+                            filterContent={
+                                <div className="flex items-center gap-2">
+                                    <Button onClick={() => setIsUploadModalOpen(true)} className="h-9">
+                                        <Upload className="w-4 h-4 mr-2" /> Upload File
+                                    </Button>
+                                </div>
+                            }
                         />
                     )}
                 </div>

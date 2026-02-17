@@ -141,11 +141,7 @@ export function AdminMaterials() {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-end gap-4">
-                <Link to="/admin/learning/create">
-                    <Button className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/20"><Plus className="w-4 h-4 mr-2" /> Tambah Materi</Button>
-                </Link>
-            </div>
+
 
             {loading ? (
                 <div className="flex justify-center p-8">
@@ -160,16 +156,23 @@ export function AdminMaterials() {
                     onSearchChange={setSearch}
                     pageSize={10}
                     filterContent={
-                        <select
-                            className="w-full md:w-auto rounded-lg border border-gray-300 py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50/50"
-                            value={filterType}
-                            onChange={(e) => setFilterType(e.target.value as any)}
-                        >
-                            <option value="all">Semua Tipe</option>
-                            <option value="rpp">Modul Ajar</option>
-                            <option value="slide">Slide Presentasi</option>
-                            <option value="modul">Bahan Bacaan / E-Book</option>
-                        </select>
+                        <div className="flex items-center gap-2">
+                            <select
+                                className="w-full md:w-auto rounded-lg border border-gray-300 py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50/50"
+                                value={filterType}
+                                onChange={(e) => setFilterType(e.target.value as any)}
+                            >
+                                <option value="all">Semua Tipe</option>
+                                <option value="rpp">Modul Ajar</option>
+                                <option value="slide">Slide Presentasi</option>
+                                <option value="modul">Bahan Bacaan / E-Book</option>
+                            </select>
+                            <Link to="/admin/learning/create">
+                                <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/20 h-9">
+                                    <Plus className="w-4 h-4 mr-1" /> Tambah
+                                </Button>
+                            </Link>
+                        </div>
                     }
                 />
             )}

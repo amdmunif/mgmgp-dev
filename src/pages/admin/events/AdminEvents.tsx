@@ -119,13 +119,7 @@ export function AdminEvents() {
     return (
         <div className="space-y-6">
             {/* Action Bar */}
-            <div className="flex justify-end">
-                <Link to="/admin/events/create">
-                    <Button className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/20">
-                        <Plus className="w-4 h-4 mr-2" /> Buat Agenda Baru
-                    </Button>
-                </Link>
-            </div>
+
 
             {loading ? (
                 <div className="flex justify-center p-8">
@@ -139,6 +133,13 @@ export function AdminEvents() {
                     searchValue={searchTerm}
                     onSearchChange={setSearchTerm}
                     pageSize={10}
+                    filterContent={
+                        <Link to="/admin/events/create">
+                            <Button className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/20 h-9">
+                                <Plus className="w-4 h-4 mr-2" /> Buat Agenda
+                            </Button>
+                        </Link>
+                    }
                 />
             )}
         </div>

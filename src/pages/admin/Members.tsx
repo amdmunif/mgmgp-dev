@@ -284,7 +284,7 @@ export function AdminMembers() {
     ];
 
     const FilterContent = (
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col md:flex-row gap-4 items-center">
             <div className="flex items-center gap-2">
                 <Filter className="w-4 h-4 text-gray-500" />
                 <select
@@ -310,15 +310,16 @@ export function AdminMembers() {
                     <option value="Reguler">Reguler</option>
                 </select>
             </div>
+            <div className="flex items-center gap-2 ml-auto">
+                <Button variant="outline" size="sm" onClick={fetchMembers} className="h-9">Refresh</Button>
+                <Button onClick={handleExport} size="sm" className="bg-green-600 hover:bg-green-700 h-9">Export Data</Button>
+            </div>
         </div>
     );
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={fetchMembers}>Refresh</Button>
-                <Button onClick={handleExport} className="bg-green-600 hover:bg-green-700">Export Data</Button>
-            </div>
+
 
             {/* Tabs */}
             <div className="flex border-b border-gray-200 mb-6">

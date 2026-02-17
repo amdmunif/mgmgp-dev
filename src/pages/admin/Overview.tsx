@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { statsService } from '../../services/statsService';
 import { auditService, type AuditLog } from '../../services/auditService';
 import { formatDate } from '../../lib/utils';
@@ -20,6 +21,7 @@ import { AdminMessages } from './AdminMessages';
 import { AuditLogs } from './AuditLogs';
 
 export function DashboardOverview() {
+    const { setPageHeader } = useOutletContext<any>() || {};
     const [stats, setStats] = useState({
         members: 0,
         materials: 0,
@@ -32,6 +34,14 @@ export function DashboardOverview() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        if (setPageHeader) {
+            setPageHeader({
+                title: 'Dashboard Admin',
+                description: 'Pusat kontrol dan informasi sistem MGMP.',
+                icon: <LayoutDashboard className="w-6 h-6" />
+            });
+        }
+
         Promise.all([
             statsService.getOverview(),
             auditService.getAll()
@@ -54,7 +64,7 @@ export function DashboardOverview() {
         }).finally(() => {
             setLoading(false);
         });
-    }, []);
+    }, [setPageHeader]);
 
     const statCards = [
         {
@@ -104,12 +114,7 @@ export function DashboardOverview() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Dashboard Admin</h1>
-                    <p className="text-gray-500">Pusat kontrol dan informasi sistem MGMP.</p>
-                </div>
-            </div>
+
 
             {/* Tab Navigation */}
             <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-1">

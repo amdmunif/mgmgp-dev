@@ -255,12 +255,7 @@ export function TPManager() {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-end">
-                <Button onClick={handleCreate} className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/20">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Tambah TP Baru
-                </Button>
-            </div>
+
 
             {/* Filters */}
             {/* List */}
@@ -348,6 +343,10 @@ export function TPManager() {
                                 <option value="Ganjil">Semester Ganjil</option>
                                 <option value="Genap">Semester Genap</option>
                             </select>
+                            <Button onClick={handleCreate} size="sm" className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/20 h-9 ml-2">
+                                <Plus className="w-4 h-4 mr-1" />
+                                Tambah TP
+                            </Button>
                         </div>
                     }
                 />

@@ -93,7 +93,7 @@ export function AdminGallery() {
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-end">
-                <Button onClick={() => setIsAddModalOpen(true)} className="bg-blue-600 hover:bg-blue-700">
+                <Button onClick={() => setIsAddModalOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/20">
                     <Plus className="w-4 h-4 mr-2" /> Tambah Foto
                 </Button>
             </div>
