@@ -14,6 +14,8 @@ interface DataTableProps<T> {
     searchKeys?: (keyof T)[]; // keys to search in
     pageSize?: number;
     filterContent?: React.ReactNode; // Optional slot for filters
+    searchValue?: string;
+    onSearchChange?: (value: string) => void;
 }
 
 export function DataTable<T extends Record<string, any>>({
@@ -21,19 +23,27 @@ export function DataTable<T extends Record<string, any>>({
     columns,
     searchKeys = [],
     pageSize = 10,
-    filterContent
+    filterContent,
+    searchValue,
+    onSearchChange
 }: DataTableProps<T>) {
     const [currentPage, setCurrentPage] = useState(1);
     const [limit, setLimit] = useState(pageSize);
     const [searchTerm, setSearchTerm] = useState('');
     const [sortConfig, setSortConfig] = useState<{ key: keyof T | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
 
+    // Use controlled or uncontrolled search term
+    const effectiveSearchTerm = searchValue !== undefined ? searchValue : searchTerm;
+
     // Filter
     const filteredData = useMemo(() => {
+        // If controlled search is used (onSearchChange provided), assume parent handles filtering
+        if (onSearchChange) return data;
+
         let result = data;
 
-        if (searchTerm) {
-            const lowerTerm = searchTerm.toLowerCase();
+        if (effectiveSearchTerm) {
+            const lowerTerm = effectiveSearchTerm.toLowerCase();
             result = result.filter((item) =>
                 searchKeys.some((key) => {
                     const val = item[key];
@@ -43,7 +53,7 @@ export function DataTable<T extends Record<string, any>>({
         }
 
         return result;
-    }, [data, searchTerm, searchKeys]);
+    }, [data, effectiveSearchTerm, searchKeys, onSearchChange]);
 
     // Sort
     const sortedData = useMemo(() => {
@@ -81,9 +91,13 @@ export function DataTable<T extends Record<string, any>>({
                             <input
                                 type="text"
                                 placeholder="Cari data..."
-                                value={searchTerm}
+                                value={effectiveSearchTerm}
                                 onChange={(e) => {
-                                    setSearchTerm(e.target.value);
+                                    if (onSearchChange) {
+                                        onSearchChange(e.target.value);
+                                    } else {
+                                        setSearchTerm(e.target.value);
+                                    }
                                     setCurrentPage(1);
                                 }}
                                 className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm bg-gray-50"

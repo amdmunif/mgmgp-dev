@@ -316,93 +316,81 @@ export function QuestionBankPage() {
                 )}
             </div>
 
-            {/* Filters */}
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6 flex flex-wrap gap-4 items-center">
-                <div className="flex items-center gap-2 text-gray-500">
-                    <Filter className="w-4 h-4" />
-                    <span className="text-sm font-semibold">Filter:</span>
-                </div>
 
-                <select
-                    className="border rounded-lg px-3 py-1.5 text-sm bg-gray-50"
-                    value={filters.mapel}
-                    onChange={e => setFilters({ ...filters, mapel: e.target.value })}
-                >
-                    <option value="">Semua Mapel</option>
-                    <option value="Informatika">Informatika</option>
-                    <option value="KKA">KKA</option>
-                </select>
-
-                <select
-                    className="border rounded-lg px-3 py-1.5 text-sm bg-gray-50"
-                    value={filters.kelas}
-                    onChange={e => setFilters({ ...filters, kelas: e.target.value, tp: '' })}
-                >
-                    <option value="">Semua Kelas</option>
-                    <option value="7">Kelas 7</option>
-                    <option value="8">Kelas 8</option>
-                    <option value="9">Kelas 9</option>
-                </select>
-
-                <select
-                    className={cn(
-                        "border rounded-lg px-3 py-1.5 text-sm bg-gray-50 max-w-[200px] transition-colors",
-                        (!filters.mapel || !filters.kelas) ? "text-gray-400" : "text-gray-900"
-                    )}
-                    value={filters.tp}
-                    onChange={e => setFilters({ ...filters, tp: e.target.value })}
-                >
-                    <option value="">
-                        {(!filters.mapel || !filters.kelas) ? "Pilih Mapel & Kelas..." : "Semua TP"}
-                    </option>
-                    {tpList.map(tp => (
-                        <option key={tp.id} value={tp.code || tp.id}>
-                            {tp.code ? `[${tp.code}] ` : ''}{tp.tujuan ? (tp.tujuan.length > 30 ? tp.tujuan.substring(0, 30) + '...' : tp.tujuan) : 'TP Tanpa Tujuan'}
-                        </option>
-                    ))}
-                </select>
-
-                <select
-                    className="border rounded-lg px-3 py-1.5 text-sm bg-gray-50 max-w-[150px]"
-                    value={filters.type}
-                    onChange={e => setFilters({ ...filters, type: e.target.value })}
-                >
-                    <option value="">Semua Tipe</option>
-                    <option value="single_choice">Pilihan Ganda</option>
-                    <option value="multiple_choice">PG Kompleks</option>
-                    <option value="true_false">Benar/Salah</option>
-                    <option value="match">Menjodohkan</option>
-                    <option value="short_answer">Isian Singkat</option>
-                    <option value="essay">Uraian</option>
-                </select>
-
-                <select
-                    className="border rounded-lg px-3 py-1.5 text-sm bg-gray-50"
-                    value={filters.level}
-                    onChange={e => setFilters({ ...filters, level: e.target.value })}
-                >
-                    <option value="">Semua Level</option>
-                    <option value="Mudah">Mudah</option>
-                    <option value="Sedang">Sedang</option>
-                    <option value="Sukar">Sukar</option>
-                </select>
-
-                <div className="flex-1 min-w-[200px] relative">
-                    <Search className="w-4 h-4 absolute left-3 top-2 text-gray-400" />
-                    <input
-                        type="text"
-                        placeholder="Cari konten soal..."
-                        className="w-full pl-9 pr-4 py-1.5 border rounded-lg text-sm"
-                        value={filters.search}
-                        onChange={e => setFilters({ ...filters, search: e.target.value })}
-                    />
-                </div>
-            </div>
-
-            {/* Table */}
+            {/* DataTable with Filters */}
             <DataTable
                 data={questions}
                 pageSize={20}
+                searchKeys={['content']} // Enable search input
+                searchValue={filters.search}
+                onSearchChange={(value) => setFilters({ ...filters, search: value })}
+                filterContent={
+                    <>
+                        <select
+                            className="border rounded-lg px-3 py-1.5 text-sm bg-gray-50"
+                            value={filters.mapel}
+                            onChange={e => setFilters({ ...filters, mapel: e.target.value })}
+                        >
+                            <option value="">Semua Mapel</option>
+                            <option value="Informatika">Informatika</option>
+                            <option value="KKA">KKA</option>
+                        </select>
+
+                        <select
+                            className="border rounded-lg px-3 py-1.5 text-sm bg-gray-50"
+                            value={filters.kelas}
+                            onChange={e => setFilters({ ...filters, kelas: e.target.value, tp: '' })}
+                        >
+                            <option value="">Semua Kelas</option>
+                            <option value="7">Kelas 7</option>
+                            <option value="8">Kelas 8</option>
+                            <option value="9">Kelas 9</option>
+                        </select>
+
+                        <select
+                            className={cn(
+                                "border rounded-lg px-3 py-1.5 text-sm bg-gray-50 max-w-[200px] transition-colors",
+                                (!filters.mapel || !filters.kelas) ? "text-gray-400" : "text-gray-900"
+                            )}
+                            value={filters.tp}
+                            onChange={e => setFilters({ ...filters, tp: e.target.value })}
+                        >
+                            <option value="">
+                                {(!filters.mapel || !filters.kelas) ? "Pilih Mapel & Kelas..." : "Semua TP"}
+                            </option>
+                            {tpList.map(tp => (
+                                <option key={tp.id} value={tp.code || tp.id}>
+                                    {tp.code ? `[${tp.code}] ` : ''}{tp.tujuan ? (tp.tujuan.length > 30 ? tp.tujuan.substring(0, 30) + '...' : tp.tujuan) : 'TP Tanpa Tujuan'}
+                                </option>
+                            ))}
+                        </select>
+
+                        <select
+                            className="border rounded-lg px-3 py-1.5 text-sm bg-gray-50 max-w-[150px]"
+                            value={filters.type}
+                            onChange={e => setFilters({ ...filters, type: e.target.value })}
+                        >
+                            <option value="">Semua Tipe</option>
+                            <option value="single_choice">Pilihan Ganda</option>
+                            <option value="multiple_choice">PG Kompleks</option>
+                            <option value="true_false">Benar/Salah</option>
+                            <option value="match">Menjodohkan</option>
+                            <option value="short_answer">Isian Singkat</option>
+                            <option value="essay">Uraian</option>
+                        </select>
+
+                        <select
+                            className="border rounded-lg px-3 py-1.5 text-sm bg-gray-50"
+                            value={filters.level}
+                            onChange={e => setFilters({ ...filters, level: e.target.value })}
+                        >
+                            <option value="">Semua Level</option>
+                            <option value="Mudah">Mudah</option>
+                            <option value="Sedang">Sedang</option>
+                            <option value="Sukar">Sukar</option>
+                        </select>
+                    </>
+                }
                 columns={[
                     {
                         header: (
