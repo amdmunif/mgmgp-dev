@@ -6,6 +6,7 @@ import { Button } from '../../components/ui/button';
 import { CheckCircle2, AlertCircle, Clock, Trophy, ChevronRight, PenTool, XCircle, Eye, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useNavigate, useOutletContext } from 'react-router-dom';
+import { DataTable } from '../../components/ui/DataTable';
 
 export function ContributorRegistration() {
     const navigate = useNavigate();
@@ -85,6 +86,81 @@ export function ContributorRegistration() {
     const count = status.question_count || 0;
     const progress = Math.min((count / 100) * 100, 100);
     const canApply = count >= 100 && !isContributor && !isPending;
+
+    // Define columns for DataTable
+    const columns = [
+        {
+            header: 'Soal',
+            accessorKey: 'content' as keyof Question,
+            className: 'min-w-[300px]',
+            cell: (item: Question) => (
+                <div className="line-clamp-2 text-sm font-medium max-w-md" dangerouslySetInnerHTML={{ __html: item.content }} />
+            )
+        },
+        {
+            header: 'Mapel',
+            accessorKey: 'mapel' as keyof Question,
+            className: 'w-[150px]'
+        },
+        {
+            header: 'TP',
+            accessorKey: 'tp_code' as keyof Question,
+            className: 'w-[100px]',
+            cell: (item: Question) => item.tp_code ? (
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-blue-50 text-[10px] font-mono font-medium text-blue-700">
+                    {item.tp_code}
+                </span>
+            ) : '-'
+        },
+        {
+            header: 'Kelas',
+            accessorKey: 'kelas' as keyof Question,
+            className: 'w-[80px]'
+        },
+        {
+            header: 'Status',
+            accessorKey: 'status' as keyof Question,
+            className: 'w-[120px] text-center',
+            cell: (item: Question) => {
+                if (item.status === 'verified') {
+                    return (
+                        <span className="inline-flex items-center text-xs font-medium text-green-700 bg-green-50 px-2 py-1 rounded-full">
+                            <CheckCircle2 className="w-3 h-3 mr-1" /> Verified
+                        </span>
+                    );
+                }
+                if (item.status === 'rejected') {
+                    return (
+                        <span className="inline-flex items-center text-xs font-medium text-red-700 bg-red-50 px-2 py-1 rounded-full">
+                            <XCircle className="w-3 h-3 mr-1" /> Rejected
+                        </span>
+                    );
+                }
+                return (
+                    <span className="inline-flex items-center text-xs font-medium text-yellow-700 bg-yellow-50 px-2 py-1 rounded-full">
+                        <Clock className="w-3 h-3 mr-1" /> Pending
+                    </span>
+                );
+            }
+        },
+        {
+            header: 'Aksi',
+            className: 'text-right w-[150px]',
+            cell: (item: Question) => (
+                <div className="flex items-center justify-end gap-1">
+                    <Button variant="ghost" size="sm" onClick={() => setViewingQuestion(item)} title="Lihat">
+                        <Eye className="w-4 h-4 text-gray-500" />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => navigate(`/member/questions/edit/${item.id}`)} title="Edit">
+                        <Pencil className="w-4 h-4 text-blue-500" />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => handleDelete(item.id)} title="Hapus">
+                        <Trash2 className="w-4 h-4 text-red-500" />
+                    </Button>
+                </div>
+            )
+        }
+    ];
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
@@ -176,89 +252,33 @@ export function ContributorRegistration() {
                 )}
             </div>
 
-            {/* Questions List */}
+            {/* Questions List with DataTable */}
             <div className="bg-white p-8 rounded-xl border border-gray-200 shadow-sm mt-8">
-                <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                <div className="mb-6">
                     <h2 className="text-xl font-bold">Daftar Soal Saya ({myQuestions.length})</h2>
-                    <select
-                        className="border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-auto"
-                        value={filterType}
-                        onChange={(e) => setFilterType(e.target.value)}
-                    >
-                        <option value="">Semua Tipe Soal</option>
-                        <option value="single_choice">Pilihan Ganda</option>
-                        <option value="multiple_choice">Pilihan Ganda Kompleks</option>
-                        <option value="true_false">Benar/Salah</option>
-                        <option value="match">Menjodohkan</option>
-                        <option value="short_answer">Isian Singkat</option>
-                        <option value="essay">Uraian</option>
-                    </select>
                 </div>
 
-                {myQuestions.length === 0 ? (
-                    <p className="text-gray-500 text-center py-4">Belum ada soal yang dibuat.</p>
-                ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left">
-                            <thead className="bg-gray-50 text-gray-700 text-sm">
-                                <tr>
-                                    <th className="px-4 py-3 rounded-l-lg">Soal</th>
-                                    <th className="px-4 py-3">Mapel</th>
-                                    <th className="px-4 py-3">TP</th>
-                                    <th className="px-4 py-3">Kelas</th>
-                                    <th className="px-4 py-3 text-center">Status</th>
-                                    <th className="px-4 py-3 text-right rounded-r-lg">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {myQuestions.map((q) => (
-                                    <tr key={q.id}>
-                                        <td className="px-4 py-3">
-                                            <div className="line-clamp-1 text-sm font-medium" dangerouslySetInnerHTML={{ __html: q.content }} />
-                                        </td>
-                                        <td className="px-4 py-3 text-sm text-gray-600">{q.mapel}</td>
-                                        <td className="px-4 py-3 text-sm text-gray-600">
-                                            {q.tp_code ? (
-                                                <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-blue-50 text-[10px] font-mono font-medium text-blue-700">
-                                                    {q.tp_code}
-                                                </span>
-                                            ) : '-'}
-                                        </td>
-                                        <td className="px-4 py-3 text-sm text-gray-600">{q.kelas}</td>
-                                        <td className="px-4 py-3 text-center">
-                                            {q.status === 'verified' ? (
-                                                <span className="inline-flex items-center text-xs font-medium text-green-700 bg-green-50 px-2 py-1 rounded-full">
-                                                    <CheckCircle2 className="w-3 h-3 mr-1" /> Verified
-                                                </span>
-                                            ) : q.status === 'rejected' ? (
-                                                <span className="inline-flex items-center text-xs font-medium text-red-700 bg-red-50 px-2 py-1 rounded-full">
-                                                    <XCircle className="w-3 h-3 mr-1" /> Rejected
-                                                </span>
-                                            ) : (
-                                                <span className="inline-flex items-center text-xs font-medium text-yellow-700 bg-yellow-50 px-2 py-1 rounded-full">
-                                                    <Clock className="w-3 h-3 mr-1" /> Pending
-                                                </span>
-                                            )}
-                                        </td>
-                                        <td className="px-4 py-3 text-right">
-                                            <div className="flex items-center justify-end gap-1">
-                                                <Button variant="ghost" size="sm" onClick={() => setViewingQuestion(q)} title="Lihat">
-                                                    <Eye className="w-4 h-4 text-gray-500" />
-                                                </Button>
-                                                <Button variant="ghost" size="sm" onClick={() => navigate(`/member/questions/edit/${q.id}`)} title="Edit">
-                                                    <Pencil className="w-4 h-4 text-blue-500" />
-                                                </Button>
-                                                <Button variant="ghost" size="sm" onClick={() => handleDelete(q.id)} title="Hapus">
-                                                    <Trash2 className="w-4 h-4 text-red-500" />
-                                                </Button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
+                <DataTable
+                    data={myQuestions}
+                    columns={columns}
+                    searchKeys={['content', 'mapel', 'tp_code', 'kelas']}
+                    pageSize={10}
+                    filterContent={
+                        <select
+                            className="border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-auto"
+                            value={filterType}
+                            onChange={(e) => setFilterType(e.target.value)}
+                        >
+                            <option value="">Semua Tipe Soal</option>
+                            <option value="single_choice">Pilihan Ganda</option>
+                            <option value="multiple_choice">Pilihan Ganda Kompleks</option>
+                            <option value="true_false">Benar/Salah</option>
+                            <option value="match">Menjodohkan</option>
+                            <option value="short_answer">Isian Singkat</option>
+                            <option value="essay">Uraian</option>
+                        </select>
+                    }
+                />
             </div>
 
             {/* View Modal */}
