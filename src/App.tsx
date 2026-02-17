@@ -53,9 +53,6 @@ import { AuditLogs } from './pages/admin/AuditLogs';
 import { CPManager } from './pages/admin/curriculum/CPManager';
 import { TPManager } from './pages/admin/curriculum/TPManager';
 
-// Routes
-<Route path="contributors" element={<VerificationList />} />
-
 // Member Feature Pages
 import { CPTP } from './pages/member/CPTP';
 import { MemberEvents } from './pages/member/Events';
@@ -152,7 +149,11 @@ function App() {
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<DashboardOverview />} />
           <Route path="stats" element={<AdminStats />} />
-          <Route path="members" element={<AdminMembers />} />
+          <Route path="users" element={<AdminMembers />} />
+          <Route path="contributors" element={<VerificationList />} />
+          <Route path="letters" element={<AdminLetters />} />
+          <Route path="letters/create" element={<CreateLetter />} />
+          <Route path="letters/edit/:id" element={<CreateLetter />} />
           <Route path="cp" element={<CPManager />} />
           <Route path="tp" element={<TPManager />} />
           <Route path="learning" element={<AdminMaterials />} />
