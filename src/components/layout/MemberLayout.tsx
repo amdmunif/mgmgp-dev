@@ -1,17 +1,4 @@
-import { ErrorBoundary } from '../ui/ErrorBoundary';
-
-// ... existing imports
-
-<div className="animate-in fade-in duration-500 max-w-[1600px] mx-auto">
-    <ErrorBoundary>
-        <Outlet context={{ setPageHeader }} />
-    </ErrorBoundary>
-</div>
-                </main >
-            </div >
-        </div >
-    );
-}
+import { useState, useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { useNavigate, Link, Outlet, useLocation } from 'react-router-dom';
 import { authService } from '../../services/authService';
