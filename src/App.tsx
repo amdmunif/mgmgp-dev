@@ -62,6 +62,7 @@ import { Games } from './pages/member/Games';
 import { Modules } from './pages/member/Modules';
 import { ContributorRegistration } from './pages/member/ContributorRegistration';
 import { PremiumGuard } from './components/auth/PremiumGuard';
+import { ErrorBoundary } from './components/ui/ErrorBoundary';
 
 import { settingsService } from './services/settingsService';
 
@@ -103,10 +104,6 @@ function App() {
         <Route path="/register" element={<Layout><Register /></Layout>} />
         <Route path="/forgot-password" element={<Layout><ForgotPassword /></Layout>} />
         <Route path="/reset-password" element={<Layout><ResetPassword /></Layout>} />
-
-import { ErrorBoundary } from './components/ui/ErrorBoundary';
-
-// ...
 
         {/* Member Routes - Wrapped in MemberLayout */}
         <Route path="/member" element={
