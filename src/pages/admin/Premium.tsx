@@ -1,15 +1,27 @@
 import { useState, useEffect } from 'react';
 import { premiumService, type PremiumRequest } from '../../services/premiumService';
 import { Button } from '../../components/ui/button';
-import { Check, X, Loader2, Image as ImageIcon } from 'lucide-react';
+import { Check, X, Loader2, Image as ImageIcon, Crown } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { cn } from '../../lib/utils';
 import { DataTable } from '../../components/ui/DataTable';
+import { useOutletContext } from 'react-router-dom';
 
 export function AdminPremium() {
+    const { setPageHeader } = useOutletContext<any>() || {};
     const [requests, setRequests] = useState<PremiumRequest[]>([]);
     const [loading, setLoading] = useState(true);
     const [processingId, setProcessingId] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (setPageHeader) {
+            setPageHeader({
+                title: 'Permintaan Premium',
+                description: 'Kelola permintaan upgrade akun ke premium.',
+                icon: <Crown className="w-6 h-6" />
+            });
+        }
+    }, [setPageHeader]);
 
     useEffect(() => {
         loadData();
@@ -123,17 +135,12 @@ export function AdminPremium() {
 
     return (
         <div className="space-y-6">
-            <h1 className="text-2xl font-bold text-gray-900">Permintaan Premium</h1>
-            <p className="text-gray-500">Kelola permintaan upgrade akun ke premium.</p>
-
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden p-6">
-                <DataTable
-                    data={requests}
-                    columns={columns}
-                    searchKeys={['status']}
-                    pageSize={10}
-                />
-            </div>
+            <DataTable
+                data={requests}
+                columns={columns}
+                searchKeys={['status']}
+                pageSize={10}
+            />
         </div>
     );
 }

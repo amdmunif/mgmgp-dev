@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { memberService, type Profile } from '../../services/memberService';
+import { useOutletContext } from 'react-router-dom';
 import {
     ShieldCheck,
     Crown,
@@ -9,7 +10,8 @@ import {
     Pencil,
     X,
     Eye,
-    Filter
+    Filter,
+    Users
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { getFileUrl } from '../../lib/api';
@@ -21,6 +23,7 @@ import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 
 export function AdminMembers() {
+    const { setPageHeader } = useOutletContext<any>() || {};
     const [members, setMembers] = useState<Profile[]>([]);
     const [loading, setLoading] = useState(true);
     const [filterRole, setFilterRole] = useState('All');
@@ -33,8 +36,15 @@ export function AdminMembers() {
     const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
+        if (setPageHeader) {
+            setPageHeader({
+                title: 'Manajemen Anggota',
+                description: 'Kelola data anggota dan hak akses pengguna.',
+                icon: <Users className="w-6 h-6" />
+            });
+        }
         fetchMembers();
-    }, []);
+    }, [setPageHeader]);
 
     const fetchMembers = async () => {
         setLoading(true);
@@ -49,8 +59,6 @@ export function AdminMembers() {
     };
 
     const [activeTab, setActiveTab] = useState<'active' | 'inactive'>('active');
-
-    // ... existing useEffect ...
 
     // Derived state for counts
     const inactiveCount = members.filter(m => Number(m.is_active) === 0).length;
@@ -307,15 +315,9 @@ export function AdminMembers() {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Manajemen Anggota</h1>
-                    <p className="text-gray-500">Kelola data anggota dan hak akses pengguna.</p>
-                </div>
-                <div className="flex gap-2">
-                    <Button variant="outline" onClick={fetchMembers}>Refresh</Button>
-                    <Button onClick={handleExport} className="bg-green-600 hover:bg-green-700">Export Data</Button>
-                </div>
+            <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={fetchMembers}>Refresh</Button>
+                <Button onClick={handleExport} className="bg-green-600 hover:bg-green-700">Export Data</Button>
             </div>
 
             {/* Tabs */}
@@ -346,19 +348,17 @@ export function AdminMembers() {
             </div>
 
             {/* Data Table */}
-            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                {loading ? (
-                    <div className="p-8 text-center text-gray-500">Memuat data...</div>
-                ) : (
-                    <DataTable
-                        data={filteredMembers}
-                        columns={columns}
-                        searchKeys={['nama', 'email']}
-                        pageSize={10}
-                        filterContent={FilterContent}
-                    />
-                )}
-            </div>
+            {loading ? (
+                <div className="p-8 text-center text-gray-500">Memuat data...</div>
+            ) : (
+                <DataTable
+                    data={filteredMembers}
+                    columns={columns}
+                    searchKeys={['nama', 'email']}
+                    pageSize={10}
+                    filterContent={FilterContent}
+                />
+            )}
 
             {/* View Modal */}
             {viewingMember && (
