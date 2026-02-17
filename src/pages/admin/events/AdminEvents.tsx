@@ -127,14 +127,20 @@ export function AdminEvents() {
                 </Link>
             </div>
 
-            <DataTable
-                data={filteredEvents}
-                columns={columns}
-                searchKeys={['title', 'location', 'description']}
-                searchValue={searchTerm}
-                onSearchChange={setSearchTerm}
-                pageSize={10}
-            />
+            {loading ? (
+                <div className="flex justify-center p-8">
+                    <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                </div>
+            ) : (
+                <DataTable
+                    data={filteredEvents}
+                    columns={columns}
+                    searchKeys={['title', 'location', 'description']}
+                    searchValue={searchTerm}
+                    onSearchChange={setSearchTerm}
+                    pageSize={10}
+                />
+            )}
         </div>
     );
 }
