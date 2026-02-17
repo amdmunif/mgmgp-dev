@@ -8,7 +8,6 @@ import type { Event as EventType } from '../../services/eventService';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { toast } from 'react-hot-toast';
-import { cn } from '../../lib/utils';
 import { getFileUrl } from '../../lib/api';
 
 export function MemberEventDetail() {
@@ -152,7 +151,7 @@ export function MemberEventDetail() {
                                 <div>
                                     <div className="flex items-center gap-3 mb-2">
                                         <span className="px-3 py-1 bg-primary-50 text-primary-700 rounded-lg text-xs font-bold uppercase tracking-wide">
-                                            {event.type || 'Event'}
+                                            Event
                                         </span>
                                         {getStatusBadge()}
                                     </div>
