@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Button } from '../../../components/ui/button';
-import { Plus, Trash2, Calendar, MapPin, Search, Eye, Pencil } from 'lucide-react';
+import { Plus, Trash2, Calendar, MapPin, Eye, Pencil } from 'lucide-react';
 import { contentManagementService } from '../../../services/contentManagementService';
 import type { Event } from '../../../types';
-import { Link } from 'react-router-dom';
+import { Link, useOutletContext } from 'react-router-dom';
+import { DataTable } from '../../../components/ui/DataTable';
 
 export function AdminEvents() {
     const { setPageHeader } = useOutletContext<any>() || {};
