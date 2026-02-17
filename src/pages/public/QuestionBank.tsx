@@ -292,7 +292,7 @@ export function QuestionBankPage() {
 
 
     return (
-        <div className="max-w-screen-xl mx-auto px-4 py-8">
+        <div className="space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                 {!setPageHeader && (
                     <div>
