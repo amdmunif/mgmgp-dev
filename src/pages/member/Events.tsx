@@ -166,14 +166,20 @@ export function MemberEvents() {
                                                 {stripHtml(event.description)}
                                             </p>
                                         </div>
-                                        <div className="flex flex-col justify-center items-end min-w-[150px]">
+                                        <div className="flex flex-col justify-center items-end min-w-[150px] gap-2">
+                                            <Link to={`/events/${event.id}`} className="w-full md:w-auto">
+                                                <Button variant="outline" className="w-full">
+                                                    Lihat Detail
+                                                </Button>
+                                            </Link>
+
                                             {event.participation_status === 'registered' ? (
-                                                <div className="flex items-center gap-2 text-green-600 font-medium bg-green-50 px-4 py-2 rounded-lg">
+                                                <div className="flex items-center gap-2 text-green-600 font-medium bg-green-50 px-4 py-2 rounded-lg w-full justify-center">
                                                     <CheckCircle className="w-5 h-5" />
                                                     Terdaftar
                                                 </div>
                                             ) : event.participation_status === 'attended' ? (
-                                                <div className="flex items-center gap-2 text-blue-600 font-medium bg-blue-50 px-4 py-2 rounded-lg">
+                                                <div className="flex items-center gap-2 text-blue-600 font-medium bg-blue-50 px-4 py-2 rounded-lg w-full justify-center">
                                                     <CheckCircle className="w-5 h-5" />
                                                     Hadir
                                                 </div>
@@ -210,25 +216,55 @@ export function MemberEvents() {
                             <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-xl">Belum ada riwayat kegiatan.</div>
                         ) : (
                             history.map(item => (
-                                <div key={item.id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6 items-center">
+                                <div key={item.id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6 items-start md:items-center">
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2 text-gray-500 text-sm mb-1">
                                             <Clock className="w-4 h-4" />
                                             Daftar: {format(new Date(item.registered_at), 'dd MMM yyyy, HH:mm', { locale: id })}
                                         </div>
-                                        <h3 className="text-lg font-bold text-gray-900">{item.events?.title || 'Unknown Event'}</h3>
-                                        <p className="text-gray-500 text-sm">{format(new Date(item.events?.date || ''), 'dd MMMM yyyy', { locale: id })} • {item.events?.location}</p>
+                                        <h3 className="text-lg font-bold text-gray-900 mb-1">{item.events?.title || 'Unknown Event'}</h3>
+                                        <div className="flex flex-wrap gap-4 text-sm text-gray-500">
+                                            <span>{format(new Date(item.events?.date || ''), 'dd MMMM yyyy', { locale: id })}</span>
+                                            <span>•</span>
+                                            <span>{item.events?.location}</span>
+                                        </div>
                                     </div>
 
-                                    <div>
+                                    <div className="flex flex-col items-end gap-2 w-full md:w-auto">
+                                        {/* Attendance Status */}
                                         <span className={cn(
-                                            "px-3 py-1 rounded-full text-xs font-bold uppercase",
-                                            item.status === 'registered' ? "bg-green-100 text-green-800" :
-                                                item.status === 'attended' ? "bg-blue-100 text-blue-800" :
+                                            "px-3 py-1 rounded-full text-xs font-bold uppercase flex items-center gap-1",
+                                            item.status === 'registered' ? "bg-amber-100 text-amber-800" :
+                                                item.status === 'attended' ? "bg-green-100 text-green-800" :
                                                     "bg-red-100 text-red-800"
                                         )}>
-                                            {item.status}
+                                            {item.status === 'registered' ? 'Terdaftar' :
+                                                item.status === 'attended' ? 'Hadir' : 'Tidak Hadir'}
                                         </span>
+
+                                        {/* Certificate Download */}
+                                        {item.status === 'attended' && item.events?.certificate_url && (
+                                            <a
+                                                href={item.events.certificate_url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1"
+                                            >
+                                                <Crown className="w-4 h-4" /> Download Sertifikat
+                                            </a>
+                                        )}
+
+                                        {/* Task Link */}
+                                        {item.events?.tasks_url && (
+                                            <a
+                                                href={item.events.tasks_url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
+                                            >
+                                                <CheckCircle className="w-4 h-4" /> Link Tugas
+                                            </a>
+                                        )}
                                     </div>
                                 </div>
                             ))

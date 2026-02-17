@@ -29,6 +29,8 @@ export interface EventParticipant {
         title: string;
         date: string;
         location: string;
+        certificate_url?: string;
+        tasks_url?: string;
     };
 }
 

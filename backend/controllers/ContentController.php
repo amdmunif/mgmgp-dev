@@ -278,7 +278,7 @@ class ContentController
 
     public function getMyHistory($userId)
     {
-        $query = "SELECT ep.*, e.title, e.date, e.location 
+        $query = "SELECT ep.*, e.title, e.date, e.location, e.tasks_url as event_tasks_url, e.certificate_url 
                   FROM event_participants ep 
                   JOIN events e ON ep.event_id = e.id 
                   WHERE ep.user_id = :uid 
@@ -300,7 +300,9 @@ class ContentController
                 'events' => [
                     'title' => $row['title'],
                     'date' => $row['date'],
-                    'location' => $row['location']
+                    'location' => $row['location'],
+                    'certificate_url' => $row['certificate_url'] ?? null,
+                    'tasks_url' => $row['event_tasks_url'] ?? null
                 ]
             ];
         }
