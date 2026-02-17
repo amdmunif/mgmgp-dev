@@ -13,6 +13,7 @@ export interface Event {
     certificate_template?: string; // HTML Template
     is_registration_open: boolean;
     created_at: string;
+    is_premium: boolean | number;
 }
 
 export interface EventParticipant {
@@ -40,9 +41,19 @@ export const eventService = {
         return await api.get<Event[]>('/events');
     },
 
+    // Get single event
+    async getEventById(id: string) {
+        return await api.get<Event>(`/events/${id}`);
+    },
+
     // Get upcoming events with my participation status
     async getUpcomingEvents() {
         return await api.get<any[]>('/events/upcoming');
+    },
+
+    // Get participation status for an event
+    async getParticipation(id: string) {
+        return await api.get<any>(`/events/${id}/participation`);
     },
 
     // Get my event history

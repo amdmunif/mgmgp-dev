@@ -7,7 +7,6 @@ import { authService } from '../../services/authService';
 import type { Event as EventType } from '../../services/eventService';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
-import { cn } from '../../lib/utils';
 import { toast } from 'react-hot-toast';
 
 export function MemberEventDetail() {

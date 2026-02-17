@@ -58,7 +58,7 @@ import { TPManager } from './pages/admin/curriculum/TPManager';
 
 // Member Feature Pages
 import { CPTP } from './pages/member/CPTP';
-import { Events as MemberEvents } from './pages/member/Events';
+import { MemberEvents } from './pages/member/Events';
 import { MemberEventDetail } from './pages/member/EventDetail';
 import { EditProfile } from './pages/member/EditProfile';
 import { Games } from './pages/member/Games';
