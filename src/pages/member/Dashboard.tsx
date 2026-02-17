@@ -184,9 +184,16 @@ export function MemberDashboard() {
                                                 <span className="block text-lg font-bold">{new Date(event.date).getDate()}</span>
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <h3 className="font-bold text-gray-900 truncate">{event.title}</h3>
+                                                <h3 className="font-bold text-gray-900 truncate flex items-center gap-2">
+                                                    {event.title}
+                                                    {event.is_premium === 1 && (
+                                                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-yellow-100 text-yellow-700 border border-yellow-200">
+                                                            PRO
+                                                        </span>
+                                                    )}
+                                                </h3>
                                                 <p className="text-xs text-gray-500 mb-2 line-clamp-1">{event.location}</p>
-                                                <Link to={`/events/${event.id}`}>
+                                                <Link to={`/member/events/${event.id}`}>
                                                     <Button size="sm" variant="outline" className="w-full text-xs h-8">Lihat Detail</Button>
                                                 </Link>
                                             </div>

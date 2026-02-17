@@ -14,6 +14,8 @@ export function AdminPrompts() {
     const [loading, setLoading] = useState(true);
     const [viewingPrompt, setViewingPrompt] = useState<Prompt | null>(null);
     const [editingPrompt, setEditingPrompt] = useState<Prompt | null>(null);
+    const [filterCategory, setFilterCategory] = useState<string>('all');
+    const [filterType, setFilterType] = useState<string>('all');
 
     useEffect(() => {
         if (setPageHeader) {
@@ -68,6 +70,14 @@ export function AdminPrompts() {
             toast.error('Gagal mengupdate prompt');
         }
     };
+
+    const filteredPrompts = prompts.filter(prompt => {
+        const matchCategory = filterCategory === 'all' || prompt.category === filterCategory;
+        const matchType = filterType === 'all' ||
+            (filterType === 'premium' ? prompt.is_premium : !prompt.is_premium);
+
+        return matchCategory && matchType;
+    });
 
     const columns = [
         {
@@ -143,16 +153,38 @@ export function AdminPrompts() {
                     <div className="p-8 text-center text-gray-500">Loading...</div>
                 ) : (
                     <DataTable
-                        data={prompts}
+                        data={filteredPrompts}
                         columns={columns}
                         searchKeys={['title', 'description', 'category']}
                         pageSize={10}
                         filterContent={
-                            <Link to="/admin/prompts/create">
-                                <Button className="h-9">
-                                    <Plus className="w-4 h-4 mr-2" /> Tambah Prompt
-                                </Button>
-                            </Link>
+                            <div className="flex items-center gap-2">
+                                <select
+                                    className="border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 h-9"
+                                    value={filterCategory}
+                                    onChange={(e) => setFilterCategory(e.target.value)}
+                                >
+                                    <option value="all">Semua Kategori</option>
+                                    <option value="Teaching">Teaching</option>
+                                    <option value="Coding">Coding</option>
+                                    <option value="Writing">Writing</option>
+                                    <option value="Productivity">Productivity</option>
+                                </select>
+                                <select
+                                    className="border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 h-9"
+                                    value={filterType}
+                                    onChange={(e) => setFilterType(e.target.value)}
+                                >
+                                    <option value="all">Semua Tipe</option>
+                                    <option value="free">Gratis</option>
+                                    <option value="premium">Premium</option>
+                                </select>
+                                <Link to="/admin/prompts/create">
+                                    <Button className="h-9">
+                                        <Plus className="w-4 h-4 mr-2" /> Tambah Prompt
+                                    </Button>
+                                </Link>
+                            </div>
                         }
                     />
                 )}

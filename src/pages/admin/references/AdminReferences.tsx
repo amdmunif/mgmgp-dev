@@ -11,6 +11,7 @@ export function AdminReferences() {
     const { setPageHeader } = useOutletContext<any>() || {};
     const [refs, setRefs] = useState<Reference[]>([]);
     const [loading, setLoading] = useState(true);
+    const [filterType, setFilterType] = useState<string>('all');
 
     useEffect(() => {
         if (setPageHeader) {
@@ -55,6 +56,11 @@ export function AdminReferences() {
             default: return <Book className="w-5 h-5" />;
         }
     };
+
+    const filteredRefs = refs.filter(ref => {
+        if (filterType === 'all') return true;
+        return ref.type === filterType;
+    });
 
     const columns = [
         {
@@ -111,16 +117,29 @@ export function AdminReferences() {
                     <div className="p-8 text-center text-gray-500">Loading...</div>
                 ) : (
                     <DataTable
-                        data={refs}
+                        data={filteredRefs}
                         columns={columns}
                         searchKeys={['title', 'type']}
                         pageSize={10}
                         filterContent={
-                            <Link to="/admin/references/create">
-                                <Button className="h-9">
-                                    <Plus className="w-4 h-4 mr-2" /> Tambah Referensi
-                                </Button>
-                            </Link>
+                            <div className="flex items-center gap-2">
+                                <select
+                                    className="border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 h-9"
+                                    value={filterType}
+                                    onChange={(e) => setFilterType(e.target.value)}
+                                >
+                                    <option value="all">Semua Tipe</option>
+                                    <option value="Buku">Buku</option>
+                                    <option value="Simulator">Simulator</option>
+                                    <option value="Game">Game</option>
+                                    <option value="Lainnya">Lainnya</option>
+                                </select>
+                                <Link to="/admin/references/create">
+                                    <Button className="h-9">
+                                        <Plus className="w-4 h-4 mr-2" /> Tambah Referensi
+                                    </Button>
+                                </Link>
+                            </div>
                         }
                     />
                 )}

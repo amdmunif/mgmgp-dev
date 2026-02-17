@@ -53,10 +53,20 @@ export function AdminEvents() {
     // If we pass `data={filteredEvents}`, then DataTable just renders it.
     // Let's use controlled search to filter the data array passed to DataTable.
 
-    const filteredEvents = events.filter(e =>
-        e.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        e.location.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+
+    // Sort by date descending
+    const filteredEvents = events
+        .filter(e =>
+            e.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            e.location.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    const stripHtml = (html: string) => {
+        const tmp = document.createElement("DIV");
+        tmp.innerHTML = html;
+        return tmp.textContent || tmp.innerText || "";
+    };
 
     const columns = [
         {
@@ -65,7 +75,7 @@ export function AdminEvents() {
             cell: (item: Event) => (
                 <div>
                     <div className="font-bold text-gray-900 text-lg">{item.title}</div>
-                    <p className="text-xs text-gray-500 line-clamp-1">{item.description}</p>
+                    <p className="text-xs text-gray-500 line-clamp-1">{stripHtml(item.description)}</p>
                 </div>
             )
         },

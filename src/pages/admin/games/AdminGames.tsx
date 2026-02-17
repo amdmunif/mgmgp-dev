@@ -14,6 +14,7 @@ export function AdminGames() {
     const [loading, setLoading] = useState(true);
     const [viewingGame, setViewingGame] = useState<Game | null>(null);
     const [editingGame, setEditingGame] = useState<Game | null>(null);
+    const [filterType, setFilterType] = useState<string>('all');
 
     useEffect(() => {
         if (setPageHeader) {
@@ -70,6 +71,13 @@ export function AdminGames() {
             toast.error('Gagal mengupdate game');
         }
     };
+
+    const filteredGames = games.filter(game => {
+        if (filterType === 'all') return true;
+        if (filterType === 'premium') return game.is_premium;
+        if (filterType === 'free') return !game.is_premium;
+        return true;
+    });
 
     const columns = [
         {
@@ -155,16 +163,27 @@ export function AdminGames() {
                     <div className="p-8 text-center text-gray-500">Loading...</div>
                 ) : (
                     <DataTable
-                        data={games}
+                        data={filteredGames}
                         columns={columns}
                         searchKeys={['title', 'description']}
                         pageSize={10}
                         filterContent={
-                            <Link to="/admin/games/create">
-                                <Button className="h-9">
-                                    <Plus className="w-4 h-4 mr-2" /> Tambah Game
-                                </Button>
-                            </Link>
+                            <div className="flex items-center gap-2">
+                                <select
+                                    className="border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 h-9"
+                                    value={filterType}
+                                    onChange={(e) => setFilterType(e.target.value)}
+                                >
+                                    <option value="all">Semua Tipe</option>
+                                    <option value="free">Gratis</option>
+                                    <option value="premium">Premium</option>
+                                </select>
+                                <Link to="/admin/games/create">
+                                    <Button className="h-9">
+                                        <Plus className="w-4 h-4 mr-2" /> Tambah Game
+                                    </Button>
+                                </Link>
+                            </div>
                         }
                     />
                 )}
