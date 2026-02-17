@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Button } from '../../components/ui/button';
-import { Loader2, Calendar, MapPin, CheckCircle, Clock } from 'lucide-react';
+import { Loader2, Calendar, MapPin, CheckCircle, Crown, Lock, Clock } from 'lucide-react';
 import { eventService } from '../../services/eventService';
+import { authService } from '../../services/authService';
 import type { EventParticipant } from '../../services/eventService';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { cn } from '../../lib/utils';
+import { useNavigate } from 'react-router-dom';
 
 type EventWithStatus = {
     id: string;
@@ -13,15 +15,18 @@ type EventWithStatus = {
     description: string;
     date: string;
     location: string;
+    is_premium: boolean | number;
     participation_status?: string | null;
 }
 
 export function MemberEvents() {
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<'upcoming' | 'history'>('upcoming');
     const [loading, setLoading] = useState(true);
     const [upcomingEvents, setUpcomingEvents] = useState<EventWithStatus[]>([]);
     const [history, setHistory] = useState<EventParticipant[]>([]);
     const [processingId, setProcessingId] = useState<string | null>(null);
+    const [isPremium, setIsPremium] = useState(false);
 
     useEffect(() => {
         loadData();
@@ -30,6 +35,12 @@ export function MemberEvents() {
     async function loadData() {
         setLoading(true);
         try {
+            // Check premium status
+            const { profile } = await authService.getCurrentUser() || {};
+            if (profile?.premium_until && new Date(profile.premium_until) > new Date()) {
+                setIsPremium(true);
+            }
+
             if (activeTab === 'upcoming') {
                 const data = await eventService.getUpcomingEvents();
                 setUpcomingEvents(data || []);
@@ -118,45 +129,70 @@ export function MemberEvents() {
                         upcomingEvents.length === 0 ? (
                             <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-xl">Belum ada agenda kegiatan mendatang.</div>
                         ) : (
-                            upcomingEvents.map(event => (
-                                <div key={event.id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:border-primary-100 transition-colors flex flex-col md:flex-row gap-6">
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2 text-primary-600 text-sm font-medium mb-1">
-                                            <Calendar className="w-4 h-4" />
-                                            {format(new Date(event.date), 'EEEE, dd MMMM yyyy (HH:mm)', { locale: id })} WIB
-                                        </div>
-                                        <h3 className="text-xl font-bold text-gray-900 mb-2">{event.title}</h3>
-                                        <div className="flex items-center gap-2 text-gray-500 text-sm mb-4">
-                                            <MapPin className="w-4 h-4" />
-                                            {event.location}
-                                        </div>
-                                        <p className="text-gray-600 text-sm line-clamp-2 md:line-clamp-none">
-                                            {event.description}
-                                        </p>
-                                    </div>
-                                    <div className="flex flex-col justify-center items-end min-w-[150px]">
-                                        {event.participation_status === 'registered' ? (
-                                            <div className="flex items-center gap-2 text-green-600 font-medium bg-green-50 px-4 py-2 rounded-lg">
-                                                <CheckCircle className="w-5 h-5" />
-                                                Terdaftar
+                            upcomingEvents.map(event => {
+                                const isEventPremium = Number(event.is_premium) === 1;
+                                const canRegister = !isEventPremium || isPremium;
+
+                                return (
+                                    <div key={event.id} className={cn(
+                                        "bg-white p-6 rounded-xl shadow-sm border transition-all flex flex-col md:flex-row gap-6 relative overflow-hidden",
+                                        isEventPremium ? "border-amber-200" : "border-gray-100 hover:border-primary-100"
+                                    )}>
+                                        {isEventPremium && (
+                                            <div className="absolute top-0 right-0 bg-amber-100 text-amber-700 text-xs font-bold px-3 py-1 rounded-bl-xl flex items-center gap-1">
+                                                <Crown className="w-3 h-3" /> PREMIUM ONLY
                                             </div>
-                                        ) : event.participation_status === 'attended' ? (
-                                            <div className="flex items-center gap-2 text-blue-600 font-medium bg-blue-50 px-4 py-2 rounded-lg">
-                                                <CheckCircle className="w-5 h-5" />
-                                                Hadir
-                                            </div>
-                                        ) : (
-                                            <Button
-                                                onClick={() => handleRegister(event.id)}
-                                                disabled={!!processingId}
-                                                className="w-full md:w-auto"
-                                            >
-                                                {processingId === event.id ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Daftar Sekarang'}
-                                            </Button>
                                         )}
+
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-2 text-primary-600 text-sm font-medium mb-1">
+                                                <Calendar className="w-4 h-4" />
+                                                {format(new Date(event.date), 'EEEE, dd MMMM yyyy (HH:mm)', { locale: id })} WIB
+                                            </div>
+                                            <h3 className="text-xl font-bold text-gray-900 mb-2">{event.title}</h3>
+                                            <div className="flex items-center gap-2 text-gray-500 text-sm mb-4">
+                                                <MapPin className="w-4 h-4" />
+                                                {event.location}
+                                            </div>
+                                            <p className="text-gray-600 text-sm line-clamp-2 md:line-clamp-none">
+                                                {event.description}
+                                            </p>
+                                        </div>
+                                        <div className="flex flex-col justify-center items-end min-w-[150px]">
+                                            {event.participation_status === 'registered' ? (
+                                                <div className="flex items-center gap-2 text-green-600 font-medium bg-green-50 px-4 py-2 rounded-lg">
+                                                    <CheckCircle className="w-5 h-5" />
+                                                    Terdaftar
+                                                </div>
+                                            ) : event.participation_status === 'attended' ? (
+                                                <div className="flex items-center gap-2 text-blue-600 font-medium bg-blue-50 px-4 py-2 rounded-lg">
+                                                    <CheckCircle className="w-5 h-5" />
+                                                    Hadir
+                                                </div>
+                                            ) : (
+                                                canRegister ? (
+                                                    <Button
+                                                        onClick={() => handleRegister(event.id)}
+                                                        disabled={processingId === event.id}
+                                                        className="w-full md:w-auto"
+                                                    >
+                                                        {processingId === event.id ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                                                        Daftar Sekarang
+                                                    </Button>
+                                                ) : (
+                                                    <Button
+                                                        onClick={() => navigate('/member/upgrade')}
+                                                        className="bg-amber-500 hover:bg-amber-600 text-white w-full md:w-auto"
+                                                    >
+                                                        <Lock className="w-4 h-4 mr-2" />
+                                                        Upgrade Premium
+                                                    </Button>
+                                                )
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
-                            ))
+                                )
+                            })
                         )
                     )}
 

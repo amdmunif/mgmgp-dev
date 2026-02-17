@@ -16,6 +16,7 @@ interface EventForm {
     location: string;
     image_url: string;
     is_registration_open: boolean;
+    is_premium: boolean;
 }
 
 export function CreateEvent() {
@@ -55,6 +56,7 @@ export function CreateEvent() {
             setValue('location', data.location);
             setValue('image_url', data.image_url);
             setValue('is_registration_open', Number(data.is_registration_open) === 1);
+            setValue('is_premium', Number(data.is_premium) === 1);
             setDescription(data.description);
             setPreviewUrl(data.image_url);
         } catch (error) {
@@ -99,9 +101,10 @@ export function CreateEvent() {
 
             const eventData = {
                 ...data,
-                date: fullDate,
+                date: fullDate, // Send combined datetime
                 description,
-                // Ensure boolean is handled if backend expects it, or it will be sent as is
+                is_registration_open: data.is_registration_open ? 1 : 0,
+                is_premium: data.is_premium ? 1 : 0
             };
 
             if (id) {
@@ -260,15 +263,27 @@ export function CreateEvent() {
                     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                         <label className="block text-sm font-medium text-gray-700 mb-3">Pengaturan</label>
 
-                        <div className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer">
+                        <div className="flex items-center gap-2">
                             <input
                                 type="checkbox"
-                                id="reg"
+                                id="is_registration_open"
                                 {...register('is_registration_open')}
-                                className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                             />
-                            <label htmlFor="reg" className="flex-1 text-sm text-gray-700 cursor-pointer select-none">
-                                Buka Pendaftaran Peserta
+                            <label htmlFor="is_registration_open" className="text-sm font-medium text-gray-700">
+                                Buka Pendaftaran
+                            </label>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                id="is_premium"
+                                {...register('is_premium')}
+                                className="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                            />
+                            <label htmlFor="is_premium" className="text-sm font-medium text-gray-700 flex items-center gap-1">
+                                <span className="text-amber-600">★</span> Khusus Member Premium
                             </label>
                         </div>
                     </div>

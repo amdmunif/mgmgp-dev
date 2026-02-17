@@ -121,8 +121,8 @@ class ContentController
     public function createEvent($data, $userId, $userName)
     {
         $id = Helper::uuid();
-        $query = "INSERT INTO events (id, title, description, date, location, image_url, is_registration_open, created_at) 
-                  VALUES (:id, :title, :description, :date, :location, :image_url, :is_registration_open, NOW())";
+        $query = "INSERT INTO events (id, title, description, date, location, image_url, is_registration_open, is_premium, created_at) 
+                  VALUES (:id, :title, :description, :date, :location, :image_url, :is_registration_open, :is_premium, NOW())";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id', $id);
@@ -131,8 +131,11 @@ class ContentController
         $stmt->bindParam(':date', $data['date']);
         $stmt->bindParam(':location', $data['location']);
         $stmt->bindParam(':image_url', $data['image_url']);
+        $stmt->bindParam(':image_url', $data['image_url']);
         $isReg = $data['is_registration_open'] ?? 1;
         $stmt->bindParam(':is_registration_open', $isReg, PDO::PARAM_INT);
+        $isPremium = $data['is_premium'] ?? 0;
+        $stmt->bindParam(':is_premium', $isPremium, PDO::PARAM_INT);
 
         if ($stmt->execute()) {
             Helper::log($this->conn, $userId, $userName, 'CREATE_EVENT', $data['title']);
@@ -171,7 +174,8 @@ class ContentController
                     date = :date, 
                     location = :location, 
                     image_url = :image_url, 
-                    is_registration_open = :is_registration_open 
+                    is_registration_open = :is_registration_open,
+                    is_premium = :is_premium
                   WHERE id = :id";
 
         $stmt = $this->conn->prepare($query);
@@ -183,6 +187,8 @@ class ContentController
         $stmt->bindParam(':image_url', $data['image_url']);
         $isReg = $data['is_registration_open'] ?? 1;
         $stmt->bindParam(':is_registration_open', $isReg, PDO::PARAM_INT);
+        $isPremium = $data['is_premium'] ?? 0;
+        $stmt->bindParam(':is_premium', $isPremium, PDO::PARAM_INT);
 
         if ($stmt->execute()) {
             Helper::log($this->conn, $userId, $userName, 'UPDATE_EVENT', $data['title']);

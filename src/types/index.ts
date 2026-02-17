@@ -29,7 +29,8 @@ export interface Event {
     date: string;
     location: string;
     image_url: string;
-    is_registration_open: boolean;
+    is_registration_open: boolean | number;
+    is_premium: boolean | number;
     participants_count?: number;
 }
 
