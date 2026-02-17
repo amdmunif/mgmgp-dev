@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { cn } from '../../lib/utils';
-import {
-    FileText, Search, Filter, CheckSquare, Square, FileSpreadsheet, File as FileIcon, Eye, CheckCircle, FileQuestion
+FileText, CheckSquare, Square, FileSpreadsheet, File as FileIcon, Eye, CheckCircle, FileQuestion
 } from 'lucide-react';
 import { DataTable } from '../../components/ui/DataTable';
 import { curriculumService } from '../../services/curriculumService';
