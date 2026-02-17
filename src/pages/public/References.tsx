@@ -1,13 +1,25 @@
 import { useState, useEffect } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { Book, Globe, Gamepad2, ExternalLink, Search, Loader2 } from 'lucide-react';
 import { referenceService } from '../../services/resourcesService';
 import { getFileUrl } from '../../lib/api';
 import type { Reference } from '../../types';
 
 export function References() {
+    const { setPageHeader } = useOutletContext<any>() || {};
     const [refs, setRefs] = useState<Reference[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
+
+    useEffect(() => {
+        if (setPageHeader) {
+            setPageHeader({
+                title: 'Referensi Belajar',
+                description: 'Buku digital, simulator interaktif, dan game edukasi terkurasi.',
+                icon: <Book className="w-6 h-6 text-blue-600" />
+            });
+        }
+    }, [setPageHeader]);
 
     useEffect(() => {
         loadData();
@@ -40,10 +52,12 @@ export function References() {
 
     return (
         <div className="max-w-screen-xl mx-auto px-4 py-8 animate-in fade-in duration-500">
-            <div className="text-center mb-8">
-                <h1 className="text-3xl font-bold text-gray-900">Bank Referensi</h1>
-                <p className="text-gray-500 mt-2">Buku digital, simulator interaktif, dan game edukasi terkurasi.</p>
-            </div>
+            {!setPageHeader && (
+                <div className="text-center mb-8">
+                    <h1 className="text-3xl font-bold text-gray-900">Bank Referensi</h1>
+                    <p className="text-gray-500 mt-2">Buku digital, simulator interaktif, dan game edukasi terkurasi.</p>
+                </div>
+            )}
 
             <div className="max-w-md mx-auto mb-10 relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { cn } from '../../lib/utils';
 import {
-    FileText, Search, Filter, CheckSquare, Square, FileSpreadsheet, File as FileIcon, Eye, CheckCircle
+    FileText, Search, Filter, CheckSquare, Square, FileSpreadsheet, File as FileIcon, Eye, CheckCircle, FileQuestion
 } from 'lucide-react';
 import { DataTable } from '../../components/ui/DataTable';
 import { curriculumService } from '../../services/curriculumService';
@@ -17,6 +18,7 @@ import jsPDF from 'jspdf';
 import { format } from 'date-fns';
 
 export function QuestionBankPage() {
+    const { setPageHeader } = useOutletContext<any>() || {};
     const [viewingQuestion, setViewingQuestion] = useState<Question | null>(null);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [questions, setQuestions] = useState<Question[]>([]);
@@ -24,6 +26,16 @@ export function QuestionBankPage() {
     const [filters, setFilters] = useState({ mapel: '', kelas: '', level: '', search: '', tp: '', type: '' });
     const [tpList, setTpList] = useState<any[]>([]);
     const [user, setUser] = useState<any>(null);
+
+    useEffect(() => {
+        if (setPageHeader) {
+            setPageHeader({
+                title: 'Bank Soal',
+                description: 'Repository soal lengkap dengan filter mapel, kelas, dan topik (TP).',
+                icon: <FileQuestion className="w-6 h-6 text-primary-600" />
+            });
+        }
+    }, [setPageHeader]);
 
     useEffect(() => {
         authService.getCurrentUser().then(data => {
@@ -281,10 +293,12 @@ export function QuestionBankPage() {
     return (
         <div className="max-w-screen-xl mx-auto px-4 py-8">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Repository Soal</h1>
-                    <p className="text-gray-500 mt-2">Cari, filter, dan download soal sesuai kebutuhan Anda.</p>
-                </div>
+                {!setPageHeader && (
+                    <div>
+                        <h1 className="text-3xl font-bold text-gray-900">Repository Soal</h1>
+                        <p className="text-gray-500 mt-2">Cari, filter, dan download soal sesuai kebutuhan Anda.</p>
+                    </div>
+                )}
 
                 {/* Download Actions */}
                 {selectedIds.size > 0 && (

@@ -1,13 +1,25 @@
 import { useState, useEffect } from 'react';
+import { useOutletContext } from 'react-router-dom';
 // import { cn } from '../../lib/utils';
 import { Copy, Terminal, Check } from 'lucide-react';
 import { promptService } from '../../services/resourcesService';
 import type { Prompt } from '../../types';
 
 export function PromptLibrary() {
+    const { setPageHeader } = useOutletContext<any>() || {};
     const [prompts, setPrompts] = useState<Prompt[]>([]);
     const [loading, setLoading] = useState(true);
     const [copiedId, setCopiedId] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (setPageHeader) {
+            setPageHeader({
+                title: 'Prompt Library',
+                description: 'Kumpulan prompt ChatGPT/Gemini untuk membantu guru dalam pembelajaran.',
+                icon: <Terminal className="w-6 h-6 text-purple-600" />
+            });
+        }
+    }, [setPageHeader]);
 
     useEffect(() => {
         loadData();
@@ -32,10 +44,12 @@ export function PromptLibrary() {
 
     return (
         <div className="max-w-screen-xl mx-auto px-4 py-8">
-            <div className="text-center mb-12">
-                <h1 className="text-3xl font-bold text-gray-900">Kumpulan Prompt AI</h1>
-                <p className="text-gray-500 mt-2">Koleksi prompt ChatGPT/Gemini untuk membantu guru dalam pembelajaran.</p>
-            </div>
+            {!setPageHeader && (
+                <div className="text-center mb-12">
+                    <h1 className="text-3xl font-bold text-gray-900">Kumpulan Prompt AI</h1>
+                    <p className="text-gray-500 mt-2">Koleksi prompt ChatGPT/Gemini untuk membantu guru dalam pembelajaran.</p>
+                </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {loading ? (
