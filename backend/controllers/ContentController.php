@@ -246,15 +246,29 @@ class ContentController
 
     public function getUpcomingEvents($userId)
     {
-        $query = "SELECT e.*, ep.status as participation_status 
+        // Debug
+        // error_log("Fetching upcoming events for user: $userId");
+
+        // Use LEFT JOIN to get events even if user hasn't participated, but filtering by date.
+        // Also fetch is_premium explicitly just in case e.* misses it (unlikely but safe)
+        $query = "SELECT e.*, e.is_premium, ep.status as participation_status 
                   FROM events e 
                   LEFT JOIN event_participants ep ON e.id = ep.event_id AND ep.user_id = :uid 
                   WHERE e.date >= NOW() 
                   ORDER BY e.date ASC";
+
+        // Debug Query
+        // error_log($query);
+
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':uid', $userId);
         $stmt->execute();
-        return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Debug Results
+        // error_log("Events found: " . count($results));
+
+        return json_encode($results);
     }
 
     public function getMyHistory($userId)
