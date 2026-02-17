@@ -167,7 +167,7 @@ export function MemberEvents() {
                                             </p>
                                         </div>
                                         <div className="flex flex-col justify-center items-end min-w-[150px] gap-2">
-                                            <Link to={`/events/${event.id}`} className="w-full md:w-auto">
+                                            <Link to={`/member/events/${event.id}`} className="w-full md:w-auto">
                                                 <Button variant="outline" className="w-full">
                                                     Lihat Detail
                                                 </Button>

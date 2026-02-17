@@ -146,6 +146,13 @@ export function MemberLayout() {
     // Hardcode label for sub-pages or unknown paths
     // Page title logic removed as per user request (duplicates content page title)
 
+    // Page Header State
+    const [pageHeader, setPageHeader] = useState<{
+        title: string;
+        description?: string;
+        icon?: React.ReactNode;
+    } | null>(null);
+
     return (
         <div className="min-h-screen bg-gray-100 flex pb-16 md:pb-0">
             {/* Mobile Sidebar Overlay */}
@@ -161,7 +168,7 @@ export function MemberLayout() {
                 "fixed md:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transition-transform duration-200 ease-in-out transform flex flex-col",
                 isSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
             )}>
-                <div className="p-6 flex items-center gap-3 border-b border-gray-100 h-16">
+                <div className="p-6 flex items-center gap-3 border-b border-gray-100 h-20 md:h-24">
                     {/* Logo + Text */}
                     {logoUrl ? (
                         <img src={logoUrl} alt="Logo" className="h-8 w-8 object-contain" />
@@ -233,36 +240,49 @@ export function MemberLayout() {
             {/* Main Content */}
             <div className="flex-1 flex flex-col h-screen overflow-hidden">
                 {/* Header (Desktop & Mobile) */}
-                <header className="bg-white border-b border-gray-200 py-3 px-4 flex items-center justify-between shadow-sm z-30 h-16">
-                    <div className="flex items-center gap-2 md:gap-4">
+                <header className="bg-white border-b border-gray-200 py-3 px-4 flex items-center justify-between shadow-sm z-30 h-20 md:h-24">
+                    <div className="flex items-center gap-4 flex-1">
                         {/* Mobile Hamburger */}
-                        <button onClick={() => setIsSidebarOpen(true)} className="md:hidden p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-lg">
+                        <button onClick={() => setIsSidebarOpen(true)} className="md:hidden p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-lg shrink-0">
                             <Menu className="w-6 h-6" />
                         </button>
 
-                        {/* Mobile Branding (Logo + Text) */}
-                        <div className="md:hidden flex items-center gap-2 mr-2">
-                            {logoUrl ? (
-                                <img src={logoUrl} alt="Logo" className="w-8 h-8 object-contain" />
-                            ) : (
-                                <div className="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center text-white shrink-0">
-                                    <BookOpen className="w-5 h-5" />
+                        {/* Page Branding (Dynamic) */}
+                        {pageHeader ? (
+                            <div className="flex items-center gap-4 py-1">
+                                {pageHeader.icon && (
+                                    <div className="hidden md:flex p-2.5 bg-primary-50 rounded-xl shrink-0">
+                                        {pageHeader.icon}
+                                    </div>
+                                )}
+                                <div className="min-w-0">
+                                    <h1 className="text-lg md:text-2xl font-bold text-gray-900 truncate leading-tight">
+                                        {pageHeader.title}
+                                    </h1>
+                                    {pageHeader.description && (
+                                        <p className="text-xs md:text-sm text-gray-500 truncate hidden md:block mt-0.5">
+                                            {pageHeader.description}
+                                        </p>
+                                    )}
                                 </div>
-                            )}
-                            <span className="font-bold text-lg text-primary-900">MGMP Anggota</span>
-                        </div>
-
-                        {/* Page Title in Header (Hidden on mobile if user wants Branding, or maybe kept? User said "pastikan ada tulisan MGMP Anggota". Let's hide page title on mobile or show small?
-                           Let's hide Page Title on mobile to make room for Branding, or keep it if space allows. Safe bet: Show Branding on mobile as requested. Page Title can be in content or separate.
-                           Wait, usually mobile headers are "Hamburger | Logo + AppName". Page title is secondary.
-                           Existing code showed Page Title on mobile: `<h1 ...>{getPageTitle()}</h1>`.
-                           I will hide Page Title on mobile and show Branding instead.
-                        */}
-                        {/* Page Title removed to avoid duplication */}
+                            </div>
+                        ) : (
+                            /* Fallback Mobile Branding if no page header */
+                            <div className="md:hidden flex items-center gap-2">
+                                {logoUrl ? (
+                                    <img src={logoUrl} alt="Logo" className="w-8 h-8 object-contain" />
+                                ) : (
+                                    <div className="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center text-white shrink-0">
+                                        <BookOpen className="w-5 h-5" />
+                                    </div>
+                                )}
+                                <span className="font-bold text-lg text-primary-900">MGMP Anggota</span>
+                            </div>
+                        )}
                     </div>
 
                     {/* Desktop Right: User Dropdown */}
-                    <div className="hidden md:block relative" ref={profileRef}>
+                    <div className="hidden md:block relative shrink-0 ml-4" ref={profileRef}>
                         <button
                             onClick={() => setIsProfileOpen(!isProfileOpen)}
                             className="flex items-center gap-2 p-1 pl-3 pr-2 rounded-full hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200"
@@ -340,7 +360,7 @@ export function MemberLayout() {
                     )}
 
                     <div className="animate-in fade-in duration-500 max-w-[1600px] mx-auto">
-                        <Outlet />
+                        <Outlet context={{ setPageHeader }} />
                     </div>
                 </main>
             </div>

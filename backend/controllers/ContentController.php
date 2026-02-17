@@ -295,7 +295,10 @@ class ContentController
                 'id' => $row['event_id'] . '-' . $row['user_id'],
                 'event_id' => $row['event_id'],
                 'user_id' => $row['user_id'],
-                'status' => $row['status'] ?? 'registered',
+                // Synthesize status from is_hadir
+                'status' => ($row['is_hadir'] == 1) ? 'attended' : 'registered',
+                'tugas_submitted' => $row['tugas_submitted'] ?? 0,
+                'task_url' => $row['task_url'] ?? null,
                 'registered_at' => $row['registered_at'],
                 'events' => [
                     'title' => $row['title'],

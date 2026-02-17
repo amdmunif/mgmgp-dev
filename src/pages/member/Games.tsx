@@ -3,10 +3,20 @@ import { Gamepad2, Play } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { gameService } from '../../services/gameService';
 import type { Game } from '../../types';
+import { useOutletContext } from 'react-router-dom';
 
 export function Games() {
     const [games, setGames] = useState<Game[]>([]);
     const [loading, setLoading] = useState(true);
+    const { setPageHeader } = useOutletContext<any>();
+
+    useEffect(() => {
+        setPageHeader({
+            title: 'Bank Games Edukasi',
+            description: 'Belajar sambil bermain dengan koleksi game interaktif.',
+            icon: <Gamepad2 className="w-6 h-6 text-purple-600" />
+        });
+    }, []);
 
     useEffect(() => {
         const loadGames = async () => {
@@ -24,16 +34,6 @@ export function Games() {
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
-            <div className="flex items-center gap-3">
-                <div className="p-3 bg-purple-100 rounded-xl">
-                    <Gamepad2 className="w-8 h-8 text-purple-600" />
-                </div>
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Bank Games Edukasi</h1>
-                    <p className="text-gray-500">Belajar sambil bermain dengan koleksi game interaktif.</p>
-                </div>
-            </div>
-
             {loading ? (
                 <div className="text-center py-20 text-gray-500">Memuat games...</div>
             ) : games.length === 0 ? (

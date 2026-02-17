@@ -58,7 +58,8 @@ import { TPManager } from './pages/admin/curriculum/TPManager';
 
 // Member Feature Pages
 import { CPTP } from './pages/member/CPTP';
-import { MemberEvents } from './pages/member/Events';
+import { Events as MemberEvents } from './pages/member/Events';
+import { MemberEventDetail } from './pages/member/EventDetail';
 import { EditProfile } from './pages/member/EditProfile';
 import { Games } from './pages/member/Games';
 import { Modules } from './pages/member/Modules';
@@ -113,6 +114,7 @@ function App() {
           <Route path="upgrade" element={<UpgradePremium />} />
           <Route path="cptp" element={<CPTP />} />
           <Route path="events" element={<MemberEvents />} />
+          <Route path="events/:id" element={<MemberEventDetail />} />
           <Route path="contributor" element={<ContributorRegistration />} />
           {/* Contributor: Create & Edit Question */}
           <Route path="questions/create" element={<QuestionBuilder basePath="/member/contributor" />} />
