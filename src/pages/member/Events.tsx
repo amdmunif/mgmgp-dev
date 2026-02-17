@@ -6,8 +6,8 @@ import { authService } from '../../services/authService';
 import type { EventParticipant } from '../../services/eventService';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
-import { cn } from '../../lib/utils';
-import { useNavigate } from 'react-router-dom';
+import { cn, stripHtml } from '../../lib/utils';
+import { useNavigate, Link } from 'react-router-dom';
 
 type EventWithStatus = {
     id: string;
@@ -145,17 +145,25 @@ export function MemberEvents() {
                                         )}
 
                                         <div className="flex-1">
-                                            <div className="flex items-center gap-2 text-primary-600 text-sm font-medium mb-1">
-                                                <Calendar className="w-4 h-4" />
-                                                {format(new Date(event.date), 'EEEE, dd MMMM yyyy (HH:mm)', { locale: id })} WIB
+                                            <Link to={`/events/${event.id}`} className="block group">
+                                                <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-primary-600 transition-colors">
+                                                    {event.title}
+                                                </h3>
+                                            </Link>
+
+                                            <div className="flex flex-wrap gap-4 text-sm text-gray-500 mb-4">
+                                                <div className="flex items-center gap-1.5">
+                                                    <Calendar className="w-4 h-4" />
+                                                    <span>{format(new Date(event.date), 'EEEE, dd MMMM yyyy (HH:mm)', { locale: id })} WIB</span>
+                                                </div>
+                                                <div className="flex items-center gap-1.5">
+                                                    <MapPin className="w-4 h-4" />
+                                                    <span>{event.location}</span>
+                                                </div>
                                             </div>
-                                            <h3 className="text-xl font-bold text-gray-900 mb-2">{event.title}</h3>
-                                            <div className="flex items-center gap-2 text-gray-500 text-sm mb-4">
-                                                <MapPin className="w-4 h-4" />
-                                                {event.location}
-                                            </div>
-                                            <p className="text-gray-600 text-sm line-clamp-2 md:line-clamp-none">
-                                                {event.description}
+
+                                            <p className="text-gray-600 line-clamp-2 mb-4">
+                                                {stripHtml(event.description)}
                                             </p>
                                         </div>
                                         <div className="flex flex-col justify-center items-end min-w-[150px]">

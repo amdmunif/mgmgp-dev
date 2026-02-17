@@ -259,6 +259,7 @@ class ContentController
                   END as participation_status
                   FROM events e 
                   LEFT JOIN event_participants ep ON e.id = ep.event_id AND ep.user_id = :uid 
+                  WHERE e.date >= DATE_SUB(NOW(), INTERVAL 1 DAY)
                   ORDER BY e.date ASC";
 
         // Debug Query
