@@ -1,4 +1,17 @@
-import { useState, useEffect, useRef } from 'react';
+import { ErrorBoundary } from '../ui/ErrorBoundary';
+
+// ... existing imports
+
+<div className="animate-in fade-in duration-500 max-w-[1600px] mx-auto">
+    <ErrorBoundary>
+        <Outlet context={{ setPageHeader }} />
+    </ErrorBoundary>
+</div>
+                </main >
+            </div >
+        </div >
+    );
+}
 import type { ReactNode } from 'react';
 import { useNavigate, Link, Outlet, useLocation } from 'react-router-dom';
 import { authService } from '../../services/authService';
@@ -24,6 +37,7 @@ import {
 import { Button } from '../ui/button';
 import { cn } from '../../lib/utils';
 import { getFileUrl } from '../../lib/api';
+import { ErrorBoundary } from '../ui/ErrorBoundary';
 
 export function MemberLayout() {
     const navigate = useNavigate();
@@ -361,7 +375,9 @@ export function MemberLayout() {
                     )}
 
                     <div className="animate-in fade-in duration-500 max-w-[1600px] mx-auto">
-                        <Outlet context={{ setPageHeader }} />
+                        <ErrorBoundary>
+                            <Outlet context={{ setPageHeader }} />
+                        </ErrorBoundary>
                     </div>
                 </main>
             </div>
