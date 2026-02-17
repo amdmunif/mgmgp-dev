@@ -35,22 +35,24 @@ export const MOCK_NEWS: NewsArticle[] = [
 
 export const MOCK_EVENTS: Event[] = [
     {
-        id: 'e1',
-        title: 'Pelatihan Python untuk Data Science',
-        description: 'Belajar dasar-dasar Python dan penerapannya untuk analisis data sederhana.',
-        date: '2024-05-20T08:00:00Z',
-        location: 'SMP N 1 Wonosobo',
-        image_url: 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?q=80&w=2074',
+        id: '1',
+        title: 'Workshop Kurikulum Merdeka',
+        description: 'Bedah tuntas implementasi Kurikulum Merdeka pada mata pelajaran Informatika.',
+        date: '2024-03-15 08:00:00',
+        location: 'Aula SMAN 1 Kota',
+        image_url: 'https://images.unsplash.com/photo-1544531586-fde5298cdd40?q=80&w=2000&auto=format&fit=crop',
         is_registration_open: true,
+        is_premium: false
     },
     {
-        id: 'e2',
-        title: 'Seminar AI dalam Pembelajaran',
-        description: 'Eksplorasi penggunaan tools AI untuk membantu administrasi guru.',
-        date: '2024-06-15T09:00:00Z',
-        location: 'Aula Dinas Pendidikan',
-        image_url: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=1965',
+        id: '2',
+        title: 'Pelatihan Python Basics',
+        description: 'Pengenalan dasar pemrograman Python untuk guru.',
+        date: '2024-04-10 09:00:00',
+        location: 'Lab Komputer SMAN 3',
+        image_url: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=2000&auto=format&fit=crop',
         is_registration_open: false,
+        is_premium: true
     }
 ];
 
