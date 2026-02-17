@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Button } from '../../../components/ui/button';
 import { curriculumService } from '../../../services/curriculumService';
-import { Plus, Pencil, Trash2, ArrowLeft, Loader2, Save, Filter } from 'lucide-react';
+import { Plus, Pencil, Trash2, ArrowLeft, Loader2, Save, Filter, ListChecks } from 'lucide-react';
 import type { TPData } from '../../../types';
 import { DataTable } from '../../../components/ui/DataTable';
+import { useOutletContext } from 'react-router-dom';
 
 export function TPManager() {
+    const { setPageHeader } = useOutletContext<any>() || {};
     const [view, setView] = useState<'list' | 'form'>('list');
     const [tps, setTps] = useState<TPData[]>([]);
     const [loading, setLoading] = useState(false);
@@ -19,6 +21,16 @@ export function TPManager() {
     // Form State
     const [formData, setFormData] = useState<Partial<TPData>>({});
     const [editingId, setEditingId] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (setPageHeader) {
+            setPageHeader({
+                title: 'Tujuan Pembelajaran (TP)',
+                description: 'Kelola Tujuan Pembelajaran (TP) untuk Bank Soal dan Rapor.',
+                icon: <ListChecks className="w-6 h-6" />
+            });
+        }
+    }, [setPageHeader]);
 
     useEffect(() => {
         if (view === 'list') {
@@ -100,9 +112,6 @@ export function TPManager() {
                         <ArrowLeft className="w-4 h-4 mr-2" />
                         Kembali
                     </Button>
-                    <h1 className="text-2xl font-bold text-gray-900">
-                        {editingId ? 'Edit Tujuan Pembelajaran' : 'Tambah Tujuan Pembelajaran'}
-                    </h1>
                 </div>
 
                 <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden max-w-4xl mx-auto">
@@ -246,11 +255,7 @@ export function TPManager() {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Tujuan Pembelajaran (TP)</h1>
-                    <p className="text-gray-500">Kelola Tujuan Pembelajaran (TP) untuk Bank Soal dan Rapor.</p>
-                </div>
+            <div className="flex justify-end">
                 <Button onClick={handleCreate} className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/20">
                     <Plus className="w-4 h-4 mr-2" />
                     Tambah TP Baru
@@ -259,96 +264,94 @@ export function TPManager() {
 
             {/* Filters */}
             {/* List */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden p-6">
-                {loading ? (
-                    <div className="flex justify-center p-12">
-                        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-                    </div>
-                ) : (
-                    <DataTable
-                        data={tps}
-                        columns={[
-                            {
-                                header: 'Kode',
-                                accessorKey: 'code',
-                                className: 'w-32',
-                                cell: (tp: TPData) => <span className="font-mono text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">{tp.code || '-'}</span>
-                            },
-                            {
-                                header: 'Lingkup Materi',
-                                accessorKey: 'materi',
-                                className: 'w-1/4 font-medium text-gray-900'
-                            },
-                            {
-                                header: 'Tujuan Pembelajaran',
-                                accessorKey: 'tujuan',
-                                cell: (tp: TPData) => <div className="text-gray-600 line-clamp-2">{tp.tujuan}</div>
-                            },
-                            {
-                                header: 'Aksi',
-                                className: 'text-right w-32',
-                                cell: (tp: TPData) => (
-                                    <div className="flex justify-end gap-2">
-                                        <button
-                                            onClick={() => handleEdit(tp)}
-                                            className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
-                                            title="Edit"
-                                        >
-                                            <Pencil className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                            onClick={() => handleDelete(tp.id)}
-                                            className="p-2 text-gray-400 hover:text-red-600 transition-colors"
-                                            title="Hapus"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                )
-                            }
-                        ]}
-                        searchKeys={['code', 'materi', 'tujuan']}
-                        pageSize={10}
-                        filterContent={
-                            <div className="flex items-center gap-2">
-                                <Filter className="w-4 h-4 text-gray-500" />
-                                <span className="text-sm font-medium text-gray-700 mr-2">Filter:</span>
-
-                                <select
-                                    className="border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[150px]"
-                                    value={filterMapel}
-                                    onChange={e => setFilterMapel(e.target.value as any)}
-                                >
-                                    <option value="all">Semua Mapel</option>
-                                    <option value="Informatika">Informatika</option>
-                                    <option value="KKA">Koding & Kecerdasan Artifisial</option>
-                                </select>
-
-                                <select
-                                    className="border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[120px]"
-                                    value={filterKelas}
-                                    onChange={e => setFilterKelas(e.target.value)}
-                                >
-                                    <option value="all">Semua Kelas</option>
-                                    <option value="7">Kelas 7</option>
-                                    <option value="8">Kelas 8</option>
-                                    <option value="9">Kelas 9</option>
-                                </select>
-
-                                <select
-                                    className="border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[150px]"
-                                    value={filterSemester}
-                                    onChange={e => setFilterSemester(e.target.value)}
-                                >
-                                    <option value="all">Semua Semester</option>
-                                    <option value="Ganjil">Semester Ganjil</option>
-                                    <option value="Genap">Semester Genap</option>
-                                </select>
-                            </div>
+            {loading ? (
+                <div className="flex justify-center p-12">
+                    <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                </div>
+            ) : (
+                <DataTable
+                    data={tps}
+                    columns={[
+                        {
+                            header: 'Kode',
+                            accessorKey: 'code',
+                            className: 'w-32',
+                            cell: (tp: TPData) => <span className="font-mono text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">{tp.code || '-'}</span>
+                        },
+                        {
+                            header: 'Lingkup Materi',
+                            accessorKey: 'materi',
+                            className: 'w-1/4 font-medium text-gray-900'
+                        },
+                        {
+                            header: 'Tujuan Pembelajaran',
+                            accessorKey: 'tujuan',
+                            cell: (tp: TPData) => <div className="text-gray-600 line-clamp-2">{tp.tujuan}</div>
+                        },
+                        {
+                            header: 'Aksi',
+                            className: 'text-right w-32',
+                            cell: (tp: TPData) => (
+                                <div className="flex justify-end gap-2">
+                                    <button
+                                        onClick={() => handleEdit(tp)}
+                                        className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                                        title="Edit"
+                                    >
+                                        <Pencil className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(tp.id)}
+                                        className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                                        title="Hapus"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            )
                         }
-                    />
-                )}
-            </div>
+                    ]}
+                    searchKeys={['code', 'materi', 'tujuan']}
+                    pageSize={10}
+                    filterContent={
+                        <div className="flex items-center gap-2">
+                            <Filter className="w-4 h-4 text-gray-500" />
+                            <span className="text-sm font-medium text-gray-700 mr-2">Filter:</span>
+
+                            <select
+                                className="border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[150px]"
+                                value={filterMapel}
+                                onChange={e => setFilterMapel(e.target.value as any)}
+                            >
+                                <option value="all">Semua Mapel</option>
+                                <option value="Informatika">Informatika</option>
+                                <option value="KKA">Koding & Kecerdasan Artifisial</option>
+                            </select>
+
+                            <select
+                                className="border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[120px]"
+                                value={filterKelas}
+                                onChange={e => setFilterKelas(e.target.value)}
+                            >
+                                <option value="all">Semua Kelas</option>
+                                <option value="7">Kelas 7</option>
+                                <option value="8">Kelas 8</option>
+                                <option value="9">Kelas 9</option>
+                            </select>
+
+                            <select
+                                className="border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[150px]"
+                                value={filterSemester}
+                                onChange={e => setFilterSemester(e.target.value)}
+                            >
+                                <option value="all">Semua Semester</option>
+                                <option value="Ganjil">Semester Ganjil</option>
+                                <option value="Genap">Semester Genap</option>
+                            </select>
+                        </div>
+                    }
+                />
+            )}
         </div>
     );
 }

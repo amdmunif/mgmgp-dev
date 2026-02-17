@@ -2,15 +2,27 @@ import { useState, useEffect } from 'react';
 import { Button } from '../../../components/ui/button';
 import { RichTextEditor } from '../../../components/ui/RichTextEditor';
 import { curriculumService } from '../../../services/curriculumService';
-import { Loader2, Save } from 'lucide-react';
+import { Loader2, Save, Target } from 'lucide-react';
 import type { CPData } from '../../../types';
+import { useOutletContext } from 'react-router-dom';
 
 export function CPManager() {
+    const { setPageHeader } = useOutletContext<any>() || {};
     const [activeTab, setActiveTab] = useState<'Informatika' | 'KKA'>('Informatika');
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [content, setContent] = useState('');
     const [currentCP, setCurrentCP] = useState<CPData | null>(null);
+
+    useEffect(() => {
+        if (setPageHeader) {
+            setPageHeader({
+                title: 'Capaian Pembelajaran (CP)',
+                description: 'Kelola konten Capaian Pembelajaran untuk setiap mata pelajaran.',
+                icon: <Target className="w-6 h-6" />
+            });
+        }
+    }, [setPageHeader]);
 
     useEffect(() => {
         fetchCP();
@@ -61,13 +73,6 @@ export function CPManager() {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Capaian Pembelajaran (CP)</h1>
-                    <p className="text-gray-500">Kelola konten Capaian Pembelajaran untuk setiap mata pelajaran.</p>
-                </div>
-            </div>
-
             {/* Tabs */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-1 inline-flex">
                 <button
