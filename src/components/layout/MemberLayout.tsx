@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, ReactNode } from 'react';
 import { useNavigate, Link, Outlet, useLocation } from 'react-router-dom';
 import { authService } from '../../services/authService';
 import {
@@ -150,7 +150,7 @@ export function MemberLayout() {
     const [pageHeader, setPageHeader] = useState<{
         title: string;
         description?: string;
-        icon?: React.ReactNode;
+        icon?: ReactNode;
     } | null>(null);
 
     return (
