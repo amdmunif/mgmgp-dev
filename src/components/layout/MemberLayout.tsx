@@ -38,6 +38,7 @@ export function MemberLayout() {
         icon?: ReactNode;
     } | null>(null);
 
+    const [logoUrl, setLogoUrl] = useState<string>('');
     const sidebarRef = useRef<HTMLDivElement>(null);
     const profileRef = useRef<HTMLDivElement>(null);
 
