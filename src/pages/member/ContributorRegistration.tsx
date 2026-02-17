@@ -1,20 +1,29 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { contributorService, type ContributorStatus } from '../../services/contributorService';
 import { questionService, type Question } from '../../services/questionService';
 import { authService } from '../../services/authService';
 import { Button } from '../../components/ui/button';
 import { CheckCircle2, AlertCircle, Clock, Trophy, ChevronRight, PenTool, XCircle, Eye, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 
 export function ContributorRegistration() {
     const navigate = useNavigate();
+    const { setPageHeader } = useOutletContext<any>();
     const [status, setStatus] = useState<ContributorStatus | null>(null);
     const [loading, setLoading] = useState(true);
     const [applying, setApplying] = useState(false);
     const [myQuestions, setMyQuestions] = useState<Question[]>([]);
     const [viewingQuestion, setViewingQuestion] = useState<Question | null>(null);
     const [filterType, setFilterType] = useState<string>('');
+
+    useEffect(() => {
+        setPageHeader({
+            title: 'Program Kontributor MGMP',
+            description: 'Bergabunglah menjadi kontributor aktif dan dapatkan akses Premium gratis.',
+            icon: <PenTool className="w-6 h-6 text-blue-600" />
+        });
+    }, []);
 
     useEffect(() => {
         loadData();
@@ -78,14 +87,7 @@ export function ContributorRegistration() {
     const canApply = count >= 100 && !isContributor && !isPending;
 
     return (
-        <div className="max-w-4xl mx-auto p-6 md:p-8 space-y-8">
-            <div className="text-center space-y-4">
-                <h1 className="text-3xl font-bold text-gray-900">Program Kontributor MGMP</h1>
-                <p className="text-gray-600 max-w-2xl mx-auto">
-                    Bergabunglah menjadi kontributor aktif dan dapatkan akses Premium gratis selama 1 tahun.
-                    Tugas Anda hanya membuat minimal 100 soal berkualitas yang terverifikasi.
-                </p>
-            </div>
+        <div className="space-y-8 animate-in fade-in duration-500">
 
             {/* Status Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

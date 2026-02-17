@@ -3,7 +3,10 @@ import { BookOpen, Target, Loader2 } from 'lucide-react';
 import { curriculumService } from '../../services/curriculumService';
 import type { CPData, TPData } from '../../types';
 
+import { useOutletContext } from 'react-router-dom';
+
 export function CPTP() {
+    const { setPageHeader } = useOutletContext<any>();
     const [activeTab, setActiveTab] = useState<'CP' | 'TP'>('CP');
     const [loading, setLoading] = useState(false);
 
@@ -16,6 +19,14 @@ export function CPTP() {
     const [tpMapel, setTpMapel] = useState<'Informatika' | 'KKA'>('Informatika');
     const [tpKelas, setTpKelas] = useState<string>('7');
     const [tpSemester, setTpSemester] = useState<string>('Ganjil');
+
+    useEffect(() => {
+        setPageHeader({
+            title: 'Referensi Pembelajaran',
+            description: 'Capaian dan Tujuan Pembelajaran Informatika & KKA',
+            icon: <BookOpen className="w-6 h-6 text-blue-600" />
+        });
+    }, []);
 
     useEffect(() => {
         if (activeTab === 'CP') {
@@ -58,12 +69,7 @@ export function CPTP() {
     };
 
     return (
-        <div className="space-y-8 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            {/* Header */}
-            <div className="text-center space-y-2">
-                <h1 className="text-3xl font-bold text-gray-900">Referensi Pembelajaran</h1>
-                <p className="text-gray-500">Capaian dan Tujuan Pembelajaran Informatika & KKA</p>
-            </div>
+        <div className="space-y-8 animate-in fade-in duration-500">
 
             {/* Tabs */}
             <div className="flex justify-center">

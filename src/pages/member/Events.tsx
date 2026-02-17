@@ -7,7 +7,7 @@ import type { EventParticipant } from '../../services/eventService';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { cn, stripHtml } from '../../lib/utils';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useOutletContext } from 'react-router-dom';
 
 type EventWithStatus = {
     id: string;
@@ -21,12 +21,21 @@ type EventWithStatus = {
 
 export function MemberEvents() {
     const navigate = useNavigate();
+    const { setPageHeader } = useOutletContext<any>();
     const [activeTab, setActiveTab] = useState<'upcoming' | 'history'>('upcoming');
     const [loading, setLoading] = useState(true);
     const [upcomingEvents, setUpcomingEvents] = useState<EventWithStatus[]>([]);
     const [history, setHistory] = useState<EventParticipant[]>([]);
     const [processingId, setProcessingId] = useState<string | null>(null);
     const [isPremium, setIsPremium] = useState(false);
+
+    useEffect(() => {
+        setPageHeader({
+            title: 'Agenda & Event',
+            description: 'Informasi kegiatan dan pelatihan MGMP.',
+            icon: <Calendar className="w-6 h-6 text-primary-600" />
+        });
+    }, []);
 
     useEffect(() => {
         loadData();
@@ -85,16 +94,7 @@ export function MemberEvents() {
     // }
 
     return (
-        <div className="w-full p-4 md:p-8">
-            <div className="flex items-center gap-3 mb-8">
-                <div className="bg-primary-100 p-3 rounded-xl">
-                    <Calendar className="w-8 h-8 text-primary-600" />
-                </div>
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Agenda Kegiatan</h1>
-                    <p className="text-gray-500">Informasi kegiatan dan pelatihan MGMP.</p>
-                </div>
-            </div>
+        <div className="w-full space-y-6 animate-in fade-in duration-500">
 
             {/* Tabs */}
             <div className="flex border-b border-gray-200 mb-6">

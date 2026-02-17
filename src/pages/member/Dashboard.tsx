@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useOutletContext } from 'react-router-dom';
 import {
     BookOpen, Gamepad2, Terminal, Crown,
     ArrowRight, Lock, LayoutDashboard, Calendar
@@ -10,6 +10,7 @@ import { Button } from '../../components/ui/button';
 
 export function MemberDashboard() {
     const navigate = useNavigate();
+    const { setPageHeader } = useOutletContext<any>();
     const [profile, setProfile] = useState<any>(null);
     const [isPremium, setIsPremium] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -19,6 +20,14 @@ export function MemberDashboard() {
         events: 0,
         premium: 0
     });
+
+    useEffect(() => {
+        setPageHeader({
+            title: 'Dashboard Anggota',
+            description: `Selamat datang kembali, ${profile?.nama || 'Anggota'}!`,
+            icon: <LayoutDashboard className="w-6 h-6 text-blue-600" />
+        });
+    }, [profile]);
 
     useEffect(() => {
         const loadDashboard = async () => {
@@ -92,12 +101,8 @@ export function MemberDashboard() {
     ];
 
     return (
-        <div className="px-4 py-8 space-y-10">
-            {/* Header */}
-            <div>
-                <h1 className="text-3xl font-bold text-gray-900">Dashboard Anggota</h1>
-                <p className="text-gray-500">Selamat datang, <span className="font-semibold text-primary-600">{profile?.nama}</span>! Berikut ringkasan aktivitas Anda.</p>
-            </div>
+        <div className="space-y-10 animate-in fade-in duration-500">
+
 
             {/* Infographics Overview */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

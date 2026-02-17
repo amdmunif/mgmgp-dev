@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Camera, Save, User as UserIcon, Building2, GraduationCap, Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { api } from '../../lib/api';
@@ -6,8 +7,11 @@ import { getFileUrl } from '../../lib/api';
 import { settingsService } from '../../services/settingsService';
 import { Button } from '../../components/ui/button';
 
+import { useNavigate, useOutletContext } from 'react-router-dom';
+
 export function EditProfile() {
-    // const navigate = useNavigate(); // Unused
+    const navigate = useNavigate();
+    const { setPageHeader } = useOutletContext<any>();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [uploading, setUploading] = useState(false);
@@ -27,6 +31,14 @@ export function EditProfile() {
         ukuran_baju: '',
         email: '',
     });
+
+    useEffect(() => {
+        setPageHeader({
+            title: 'Edit Profil',
+            description: 'Kelola informasi pribadi dan data keanggotaan Anda.',
+            icon: <UserIcon className="w-6 h-6 text-primary-600" />
+        });
+    }, []);
 
     useEffect(() => {
         getProfile();
@@ -113,16 +125,7 @@ export function EditProfile() {
     if (loading) return <div className="p-8 text-center text-gray-500"><Loader2 className="animate-spin inline mr-2" /> Loading data...</div>;
 
     return (
-        <div className="max-w-5xl p-6 md:p-8">
-            <div className="flex items-center gap-3 mb-8">
-                <div className="bg-primary-100 p-3 rounded-xl">
-                    <UserIcon className="w-8 h-8 text-primary-600" />
-                </div>
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Profil Saya</h1>
-                    <p className="text-gray-500">Kelola informasi pribadi dan data keanggotaan Anda.</p>
-                </div>
-            </div>
+        <div className="max-w-5xl animate-in fade-in duration-500">
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-6">

@@ -5,7 +5,10 @@ import { settingsService, type AppSettings } from '../../services/settingsServic
 import { premiumService, type PremiumRequest } from '../../services/premiumService';
 import { cn } from '../../lib/utils';
 
+import { useNavigate, useOutletContext } from 'react-router-dom';
+
 export function UpgradePremium() {
+    const { setPageHeader } = useOutletContext<any>();
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [settings, setSettings] = useState<AppSettings | null>(null);
@@ -19,6 +22,14 @@ export function UpgradePremium() {
         account_number: '',
         account_holder: ''
     });
+
+    useEffect(() => {
+        setPageHeader({
+            title: 'Upgrade Premium',
+            description: 'Dapatkan akses penuh ke Bank Soal & Materi Eksklusif.',
+            icon: <Crown className="w-6 h-6 text-yellow-600" />
+        });
+    }, []);
 
     useEffect(() => {
         loadData();
@@ -100,13 +111,7 @@ export function UpgradePremium() {
     // Let's assume if approved they can extend, but show a badge.
 
     return (
-        <div className="max-w-5xl mx-auto p-4 md:p-8">
-            <div className="text-center mb-10">
-                <h1 className="text-3xl font-bold text-gray-900 mb-4">Upgrade ke Premium Member</h1>
-                <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                    Dapatkan akses penuh ke Bank Soal, Perangkat Ajar Lengkap, dan materi eksklusif lainnya untuk menunjang pembelajaran Informatika.
-                </p>
-            </div>
+        <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500">
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
 

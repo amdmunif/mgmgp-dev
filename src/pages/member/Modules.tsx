@@ -6,11 +6,22 @@ import { cn } from '../../lib/utils';
 import type { LearningMaterial } from '../../types';
 import { FileViewer } from '../../components/ui/FileViewer';
 
+import { useOutletContext } from 'react-router-dom';
+
 export function Modules() {
+    const { setPageHeader } = useOutletContext<any>();
     const [materials, setMaterials] = useState<LearningMaterial[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'modul' | 'slide'>('modul');
     const [viewingMaterial, setViewingMaterial] = useState<LearningMaterial | null>(null);
+
+    useEffect(() => {
+        setPageHeader({
+            title: 'Modul Ajar & Slide Premium',
+            description: 'Akses koleksi perangkat ajar lengkap siap pakai.',
+            icon: <Book className="w-6 h-6 text-yellow-600" />
+        });
+    }, []);
 
     useEffect(() => {
         const loadData = async () => {
@@ -42,15 +53,6 @@ export function Modules() {
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
-            <div className="flex items-center gap-3">
-                <div className="p-3 bg-yellow-100 rounded-xl">
-                    <Book className="w-8 h-8 text-yellow-600" />
-                </div>
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Modul Ajar & Slide Premium</h1>
-                    <p className="text-gray-500">Akses koleksi perangkat ajar lengkap siap pakai.</p>
-                </div>
-            </div>
 
             {/* Tabs */}
             <div className="border-b border-gray-200">
