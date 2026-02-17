@@ -250,11 +250,12 @@ class ContentController
         // error_log("Fetching upcoming events for user: $userId");
 
         // Use LEFT JOIN to get events even if user hasn't participated, but filtering by date.
-        // Also fetch is_premium explicitly just in case e.* misses it (unlikely but safe)
-        $query = "SELECT e.*, e.is_premium, ep.status as participation_status 
+        // REMOVED explicit e.is_premium to prevent SQL error if migration hasn't run on production yet.
+        // e.* will include is_premium IF it exists.
+        $query = "SELECT e.*, ep.status as participation_status 
                   FROM events e 
                   LEFT JOIN event_participants ep ON e.id = ep.event_id AND ep.user_id = :uid 
-                  WHERE e.date >= NOW() 
+                  WHERE e.date >= DATE_SUB(NOW(), INTERVAL 1 DAY) 
                   ORDER BY e.date ASC";
 
         // Debug Query
