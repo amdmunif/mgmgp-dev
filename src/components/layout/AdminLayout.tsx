@@ -92,6 +92,12 @@ export function AdminLayout() {
         return initialStates;
     });
 
+    const [pageHeader, setPageHeader] = useState<{
+        title: string;
+        description?: string;
+        icon?: React.ReactNode;
+    } | null>(null);
+
     useEffect(() => {
         // Initial check
         authService.getCurrentUser().then((data) => {
@@ -332,31 +338,52 @@ export function AdminLayout() {
             <main className="flex-1 flex flex-col h-screen overflow-hidden bg-gray-50/30 relative">
                 {/* Top Desktop Header */}
                 <header className="h-20 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center justify-between px-8 shadow-sm z-40">
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-4 flex-1">
                         <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors">
                             <Menu className="w-6 h-6" />
                         </button>
 
-                        <div className="flex items-center">
-                            {/* Mobile Branding (Logo + Text) */}
-                            <div className="lg:hidden flex items-center gap-2.5 ml-1">
-                                {logoUrl ? (
-                                    <img src={logoUrl} alt="Logo" className="w-9 h-9 object-contain" />
-                                ) : (
-                                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white shrink-0 shadow-lg shadow-blue-500/20">
-                                        <Crown className="w-5 h-5" />
+                        {/* Page Branding (Dynamic) */}
+                        {pageHeader ? (
+                            <div className="flex items-center gap-4 py-1">
+                                {pageHeader.icon && (
+                                    <div className="hidden md:flex p-2.5 bg-blue-50 rounded-xl shrink-0 text-blue-600">
+                                        {pageHeader.icon}
                                     </div>
                                 )}
-                                <span className="font-extrabold text-xl tracking-tight text-slate-900">MGMP Admin</span>
+                                <div className="min-w-0">
+                                    <h1 className="text-lg md:text-xl font-bold text-gray-900 truncate leading-tight">
+                                        {pageHeader.title}
+                                    </h1>
+                                    {pageHeader.description && (
+                                        <p className="text-xs md:text-sm text-gray-500 truncate hidden md:block mt-0.5">
+                                            {pageHeader.description}
+                                        </p>
+                                    )}
+                                </div>
                             </div>
-
-                            <div className="hidden lg:block">
-                                {/* Page title removed to avoid duplication with page content */}
+                        ) : (
+                            <div className="flex items-center">
+                                {/* Mobile Branding (Logo + Text) */}
+                                <div className="lg:hidden flex items-center gap-2.5 ml-1">
+                                    {logoUrl ? (
+                                        <img src={logoUrl} alt="Logo" className="w-9 h-9 object-contain" />
+                                    ) : (
+                                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white shrink-0 shadow-lg shadow-blue-500/20">
+                                            <Crown className="w-5 h-5" />
+                                        </div>
+                                    )}
+                                    <span className="font-extrabold text-xl tracking-tight text-slate-900">MGMP Admin</span>
+                                </div>
+                                <div className="hidden lg:block ml-2 text-xl font-bold text-gray-400">
+                                    MGMP Admin
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </div>
 
                     <div className="flex items-center gap-5">
+                        {/* Date removed to make space, or keep? keeping content minimal as per user request to match Member */}
                         <div className="hidden xl:flex items-center gap-3 bg-gray-50 px-4 py-2 rounded-2xl border border-gray-100">
                             <div className="w-8 h-8 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-blue-600 shadow-sm">
                                 <Calendar className="w-4 h-4" />
@@ -442,7 +469,7 @@ export function AdminLayout() {
                     <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:32px_32px]" />
 
                     <div className="relative z-10 max-w-[1600px] mx-auto">
-                        <Outlet />
+                        <Outlet context={{ setPageHeader }} />
                     </div>
                 </div>
             </main>
