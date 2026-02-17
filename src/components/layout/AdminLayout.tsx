@@ -39,7 +39,7 @@ const menuGroups = [
     {
         title: "Pengguna",
         items: [
-            { icon: Users, label: 'Data Anggota', path: '/admin/members' },
+            { icon: Users, label: 'Data Anggota', path: '/admin/users' },
             { icon: UserCheck, label: 'Kontributor', path: '/admin/contributors' },
             { icon: Crown, label: 'Langganan Premium', path: '/admin/premium' },
         ]
