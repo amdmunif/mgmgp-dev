@@ -249,9 +249,14 @@ class ContentController
         // Debug
         // error_log("Fetching upcoming events for user: $userId");
 
-        // Use LEFT JOIN to get events even if user hasn't participated, but filtering by date.
         // e.* will include is_premium IF it exists.
-        $query = "SELECT e.*, ep.status as participation_status 
+        // Synthesize participation_status from is_hadir since 'status' column does not exist
+        $query = "SELECT e.*, 
+                  CASE 
+                    WHEN ep.is_hadir = 1 THEN 'attended'
+                    WHEN ep.user_id IS NOT NULL THEN 'registered'
+                    ELSE NULL 
+                  END as participation_status
                   FROM events e 
                   LEFT JOIN event_participants ep ON e.id = ep.event_id AND ep.user_id = :uid 
                   ORDER BY e.date ASC";
