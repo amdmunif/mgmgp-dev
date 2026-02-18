@@ -66,9 +66,9 @@ export function AdminWebSettings() {
             const data = await settingsService.getBankAccounts();
             setBankAccounts(data);
             setEditingAccount(null);
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            alert('Gagal menyimpan rekening bank');
+            alert('Gagal menyimpan rekening bank: ' + (error.message || 'Unknown error'));
         } finally {
             setSavingAccount(false);
         }
