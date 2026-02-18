@@ -65,6 +65,11 @@ if (isset($uri_parts[0]) && $uri_parts[0] === 'migrate-cleanup') {
     exit();
 }
 
+if (isset($uri_parts[0]) && $uri_parts[0] === 'migrate-v2') {
+    include_once 'migrate_v2_browser.php';
+    exit();
+}
+
 include_once './controllers/AuthController.php';
 include_once './controllers/ResourceController.php';
 include_once './controllers/LearningController.php';
