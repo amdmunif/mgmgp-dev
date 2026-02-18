@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
-import { Loader2, Save, Globe, Building2, UserPen, Upload, Trash2, Image as ImageIcon, CreditCard, Pencil, X } from 'lucide-react';
+import { Loader2, Save, Globe, Building2, UserPen, Upload, Trash2, Image as ImageIcon, CreditCard, Pencil, X, PenTool } from 'lucide-react';
 import { settingsService, type AppSettings, type BankAccount } from '../../services/settingsService';
 import { RichTextEditor } from '../../components/ui/RichTextEditor';
-// Using simple state might be easier for this large form without complex validation logic yet.
 
 export function AdminWebSettings() {
     const { setPageHeader } = useOutletContext<any>() || {};
@@ -28,6 +27,7 @@ export function AdminWebSettings() {
         { id: 'general', label: 'Umum', icon: Globe },
         { id: 'home', label: 'Konten Beranda', icon: ImageIcon },
         { id: 'profile', label: 'Profil & Organisasi', icon: UserPen },
+        { id: 'officials', label: 'Pejabat & Tanda Tangan', icon: PenTool },
         { id: 'contact', label: 'Kontak', icon: Building2 },
         { id: 'payment', label: 'Pembayaran & Premium', icon: CreditCard },
     ];
@@ -129,10 +129,6 @@ export function AdminWebSettings() {
             delete newPreviews[fieldName];
             return newPreviews;
         });
-        // If there was an existing setting, we might want to clear it too?
-        // For now, removing the file just removes the pending upload.
-        // If user wants to remove existing image, maybe we need explicit clear?
-        // But usually file input is for *new* uploads.
     };
 
     const handleSubmit = async () => {
@@ -332,129 +328,130 @@ export function AdminWebSettings() {
 
                 {/* Profile Tab */}
                 {activeTab === 'profile' && (
-                    <div className="space-y-6 animate-in fade-in duration-300">
-                        <div className="bg-white rounded-b-xl rounded-tr-xl shadow-sm border border-gray-100 overflow-hidden">
-                            <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center gap-2">
-                                <UserPen className="w-4 h-4 text-purple-600" />
-                                <h2 className="font-semibold text-gray-900">Konten Profil</h2>
+                    <div className="bg-white rounded-b-xl rounded-tr-xl shadow-sm border border-gray-100 overflow-hidden animate-in fade-in duration-300">
+                        <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center gap-2">
+                            <UserPen className="w-4 h-4 text-purple-600" />
+                            <h2 className="font-semibold text-gray-900">Konten Profil</h2>
+                        </div>
+                        <div className="p-6 space-y-6">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Visi</label>
+                                <RichTextEditor
+                                    value={settings.profile_visi || ''}
+                                    onChange={(val) => handleEditorChange('profile_visi', val)}
+                                    height={200}
+                                />
                             </div>
-                            <div className="p-6 space-y-6">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Visi</label>
-                                    <RichTextEditor
-                                        value={settings.profile_visi || ''}
-                                        onChange={(val) => handleEditorChange('profile_visi', val)}
-                                        height={200}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Misi</label>
-                                    <RichTextEditor
-                                        value={settings.profile_misi || ''}
-                                        onChange={(val) => handleEditorChange('profile_misi', val)}
-                                        height={250}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Sejarah Singkat</label>
-                                    <RichTextEditor
-                                        value={settings.profile_sejarah || ''}
-                                        onChange={(val) => handleEditorChange('profile_sejarah', val)}
-                                        height={300}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Struktur Organisasi (HTML/Table)</label>
-                                    <RichTextEditor
-                                        value={settings.profile_struktur || ''}
-                                        onChange={(val) => handleEditorChange('profile_struktur', val)}
-                                        height={400}
-                                    />
-                                </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Misi</label>
+                                <RichTextEditor
+                                    value={settings.profile_misi || ''}
+                                    onChange={(val) => handleEditorChange('profile_misi', val)}
+                                    height={250}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Sejarah Singkat</label>
+                                <RichTextEditor
+                                    value={settings.profile_sejarah || ''}
+                                    onChange={(val) => handleEditorChange('profile_sejarah', val)}
+                                    height={300}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Struktur Organisasi (HTML/Table)</label>
+                                <RichTextEditor
+                                    value={settings.profile_struktur || ''}
+                                    onChange={(val) => handleEditorChange('profile_struktur', val)}
+                                    height={400}
+                                />
                             </div>
                         </div>
+                    </div>
+                )}
 
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                            <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center gap-2">
-                                <UserPen className="w-4 h-4 text-blue-600" />
-                                <h2 className="font-semibold text-gray-900">Pejabat & Tanda Tangan</h2>
+                {/* Officials Tab */}
+                {activeTab === 'officials' && (
+                    <div className="bg-white rounded-b-xl rounded-tr-xl shadow-sm border border-gray-100 overflow-hidden animate-in fade-in duration-300">
+                        <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center gap-2">
+                            <PenTool className="w-4 h-4 text-blue-600" />
+                            <h2 className="font-semibold text-gray-900">Pejabat & Tanda Tangan</h2>
+                        </div>
+                        <div className="p-6 space-y-8">
+                            {/* Ketua */}
+                            <div className="space-y-3">
+                                <h3 className="font-medium text-gray-900 border-b border-gray-100 pb-2">Ketua MGMP</h3>
+                                <input
+                                    type="text"
+                                    name="ketua_nama"
+                                    value={settings.ketua_nama || ''}
+                                    onChange={handleChange}
+                                    placeholder="Nama Lengkap & Gelar"
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                                />
+                                <input
+                                    type="text"
+                                    name="ketua_nip"
+                                    value={settings.ketua_nip || ''}
+                                    onChange={handleChange}
+                                    placeholder="NIP"
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                                />
+                                <ImageUploader
+                                    label="Tanda Tangan Ketua"
+                                    fieldName="ketua_signature_url"
+                                    currentUrl={settings.ketua_signature_url}
+                                />
                             </div>
-                            <div className="p-6 space-y-8">
-                                {/* Ketua */}
-                                <div className="space-y-3">
-                                    <h3 className="font-medium text-gray-900 border-b border-gray-100 pb-2">Ketua MGMP</h3>
-                                    <input
-                                        type="text"
-                                        name="ketua_nama"
-                                        value={settings.ketua_nama || ''}
-                                        onChange={handleChange}
-                                        placeholder="Nama Lengkap & Gelar"
-                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-                                    />
-                                    <input
-                                        type="text"
-                                        name="ketua_nip"
-                                        value={settings.ketua_nip || ''}
-                                        onChange={handleChange}
-                                        placeholder="NIP"
-                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-                                    />
-                                    <ImageUploader
-                                        label="Tanda Tangan Ketua"
-                                        fieldName="ketua_signature_url"
-                                        currentUrl={settings.ketua_signature_url}
-                                    />
-                                </div>
-                                {/* Sekretaris */}
-                                <div className="space-y-3">
-                                    <h3 className="font-medium text-gray-900 border-b border-gray-100 pb-2">Sekretaris</h3>
-                                    <input
-                                        type="text"
-                                        name="sekretaris_nama"
-                                        value={settings.sekretaris_nama || ''}
-                                        onChange={handleChange}
-                                        placeholder="Nama Lengkap & Gelar"
-                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-                                    />
-                                    <input
-                                        type="text"
-                                        name="sekretaris_nip"
-                                        value={settings.sekretaris_nip || ''}
-                                        onChange={handleChange}
-                                        placeholder="NIP"
-                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-                                    />
-                                    <ImageUploader
-                                        label="Tanda Tangan Sekretaris"
-                                        fieldName="sekretaris_signature_url"
-                                        currentUrl={settings.sekretaris_signature_url}
-                                    />
-                                </div>
-                                {/* MKKS */}
-                                <div className="space-y-3">
-                                    <h3 className="font-medium text-gray-900 border-b border-gray-100 pb-2">Ketua MKKS</h3>
-                                    <input
-                                        type="text"
-                                        name="mkks_nama"
-                                        value={settings.mkks_nama || ''}
-                                        onChange={handleChange}
-                                        placeholder="Nama Lengkap & Gelar"
-                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-                                    />
-                                    <input
-                                        type="text"
-                                        name="mkks_nip"
-                                        value={settings.mkks_nip || ''}
-                                        onChange={handleChange}
-                                        placeholder="NIP"
-                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-                                    />
-                                    <ImageUploader
-                                        label="Tanda Tangan Ketua MKKS"
-                                        fieldName="mkks_signature_url"
-                                        currentUrl={settings.mkks_signature_url}
-                                    />
-                                </div>
+                            {/* Sekretaris */}
+                            <div className="space-y-3">
+                                <h3 className="font-medium text-gray-900 border-b border-gray-100 pb-2">Sekretaris</h3>
+                                <input
+                                    type="text"
+                                    name="sekretaris_nama"
+                                    value={settings.sekretaris_nama || ''}
+                                    onChange={handleChange}
+                                    placeholder="Nama Lengkap & Gelar"
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                                />
+                                <input
+                                    type="text"
+                                    name="sekretaris_nip"
+                                    value={settings.sekretaris_nip || ''}
+                                    onChange={handleChange}
+                                    placeholder="NIP"
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                                />
+                                <ImageUploader
+                                    label="Tanda Tangan Sekretaris"
+                                    fieldName="sekretaris_signature_url"
+                                    currentUrl={settings.sekretaris_signature_url}
+                                />
+                            </div>
+                            {/* MKKS */}
+                            <div className="space-y-3">
+                                <h3 className="font-medium text-gray-900 border-b border-gray-100 pb-2">Ketua MKKS</h3>
+                                <input
+                                    type="text"
+                                    name="mkks_nama"
+                                    value={settings.mkks_nama || ''}
+                                    onChange={handleChange}
+                                    placeholder="Nama Lengkap & Gelar"
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                                />
+                                <input
+                                    type="text"
+                                    name="mkks_nip"
+                                    value={settings.mkks_nip || ''}
+                                    onChange={handleChange}
+                                    placeholder="NIP"
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                                />
+                                <ImageUploader
+                                    label="Tanda Tangan Ketua MKKS"
+                                    fieldName="mkks_signature_url"
+                                    currentUrl={settings.mkks_signature_url}
+                                />
                             </div>
                         </div>
                     </div>
