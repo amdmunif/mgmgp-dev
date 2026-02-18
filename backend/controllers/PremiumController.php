@@ -245,5 +245,61 @@ class PremiumController
         http_response_code(500);
         return json_encode(["message" => "Failed to revoke"]);
     }
+
+    public function deleteRequest($id)
+    {
+        $query = "DELETE FROM premium_requests WHERE id = :id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':id', $id);
+
+        if ($stmt->execute()) {
+            return json_encode(["message" => "Request deleted successfully"]);
+        }
+
+        http_response_code(500);
+        return json_encode(["message" => "Failed to delete request"]);
+    }
+
+    public function updateRequest($id, $data)
+    {
+        $updates = [];
+        if (isset($data['bank_name']))
+            $updates[] = "bank_name = :bank_name";
+        if (isset($data['account_number']))
+            $updates[] = "account_number = :account_number";
+        if (isset($data['account_holder']))
+            $updates[] = "account_holder = :account_holder";
+        if (isset($data['status']))
+            $updates[] = "status = :status";
+        if (isset($data['notes']))
+            $updates[] = "notes = :notes";
+
+        if (empty($updates)) {
+            http_response_code(400);
+            return json_encode(["message" => "No fields to update"]);
+        }
+
+        $query = "UPDATE premium_requests SET " . implode(", ", $updates) . ", updated_at = NOW() WHERE id = :id";
+        $stmt = $this->conn->prepare($query);
+
+        if (isset($data['bank_name']))
+            $stmt->bindValue(':bank_name', $data['bank_name']);
+        if (isset($data['account_number']))
+            $stmt->bindValue(':account_number', $data['account_number']);
+        if (isset($data['account_holder']))
+            $stmt->bindValue(':account_holder', $data['account_holder']);
+        if (isset($data['status']))
+            $stmt->bindValue(':status', $data['status']);
+        if (isset($data['notes']))
+            $stmt->bindValue(':notes', $data['notes']);
+        $stmt->bindValue(':id', $id);
+
+        if ($stmt->execute()) {
+            return json_encode(["message" => "Request updated successfully"]);
+        }
+
+        http_response_code(500);
+        return json_encode(["message" => "Failed to update request"]);
+    }
 }
 ?>

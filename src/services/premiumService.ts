@@ -73,7 +73,18 @@ export const premiumService = {
     },
 
     // Admin: Revoke subscription
+    // Admin: Revoke subscription
     async revokeSubscription(userId: string) {
         return await api.post('/premium/revoke', { user_id: userId });
+    },
+
+    // Admin: Delete Request
+    async deleteRequest(id: string) {
+        return await api.delete(`/premium/${id}`);
+    },
+
+    // Admin: Update Request
+    async updateRequest(id: string, data: Partial<PremiumRequest>) {
+        return await api.put(`/premium/${id}`, data);
     }
 };
