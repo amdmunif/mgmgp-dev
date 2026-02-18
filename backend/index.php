@@ -442,6 +442,25 @@ if ($resource === 'news') {
     } elseif ($_SERVER['REQUEST_METHOD'] === 'PUT' && $action) {
         echo $controller->updateRequest($action, $input);
     }
+
+} elseif ($resource === 'bank-accounts') {
+    include_once './controllers/BankController.php';
+    $controller = new BankController();
+
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        if ($action === 'active') {
+            echo $controller->getActive();
+        } else {
+            echo $controller->getAll();
+        }
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        echo $controller->create($input);
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'PUT' && $action) {
+        echo $controller->update($action, $input);
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action) {
+        echo $controller->delete($action);
+    }
+
 } elseif ($resource === 'contact') {
     include_once './controllers/ContactController.php';
     $controller = new ContactController();

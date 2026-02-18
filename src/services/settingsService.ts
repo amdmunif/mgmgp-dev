@@ -52,32 +52,46 @@ export const settingsService = {
     },
 
     async uploadLogo(file: File) {
+        // ... (existing upload logic) ...
         const formData = new FormData();
         formData.append('file', file);
-
-        // Custom upload call since api wrapper handles JSON by default
-        // We need to bypass content-type header for FormData
-        // Can extend api wrapper or use raw fetch for upload
-
-        // Using existing api helper, if it supports FormData:
-        // Checking src/lib/api.ts... It uses JSON.stringify.
-        // Let's use raw fetch but use the baseUrl from somewhere or duplicate logic?
-        // Let's assume api client needs enhancement for FormData. 
-        // For now, I'll use standard fetch with the same base URL logic.
-
+        // ...
+        // Simplified for brevity in replacement, keeping existing logic
         const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
         const token = localStorage.getItem('access_token');
-
         const response = await fetch(`${API_BASE_URL}/settings/logo`, {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            },
+            headers: { 'Authorization': `Bearer ${token}` },
             body: formData
         });
-
         if (!response.ok) throw new Error('Upload failed');
         const data = await response.json();
         return data.url;
+    },
+
+    // Bank Account Management
+    async getBankAccounts(activeOnly = false) {
+        return await api.get<BankAccount[]>(activeOnly ? '/bank-accounts/active' : '/bank-accounts');
+    },
+
+    async createBankAccount(data: Partial<BankAccount>) {
+        return await api.post('/bank-accounts', data);
+    },
+
+    async updateBankAccount(id: string, data: Partial<BankAccount>) {
+        return await api.put(`/bank-accounts/${id}`, data);
+    },
+
+    async deleteBankAccount(id: string) {
+        return await api.delete(`/bank-accounts/${id}`);
     }
 };
+
+export interface BankAccount {
+    id: string;
+    bank_name: string;
+    account_number: string;
+    account_holder: string;
+    is_active: boolean;
+    created_at?: string;
+}

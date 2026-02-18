@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '../../components/ui/button';
 import { Loader2, Upload, CheckCircle, Clock, XCircle, CreditCard, ShieldCheck, Crown } from 'lucide-react';
-import { settingsService, type AppSettings } from '../../services/settingsService';
+import { settingsService, type AppSettings, type BankAccount } from '../../services/settingsService';
 import { premiumService, type PremiumRequest } from '../../services/premiumService';
 import { cn } from '../../lib/utils';
 
@@ -12,6 +12,7 @@ export function UpgradePremium() {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [settings, setSettings] = useState<AppSettings | null>(null);
+    const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
     const [latestRequest, setLatestRequest] = useState<PremiumRequest | null>(null);
     const [proofFile, setProofFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -37,12 +38,14 @@ export function UpgradePremium() {
 
     async function loadData() {
         try {
-            const [settingsData, requestData] = await Promise.all([
+            const [settingsData, requestData, bankData] = await Promise.all([
                 settingsService.getSettings(),
-                premiumService.getMyLatestRequest()
+                premiumService.getMyLatestRequest(),
+                settingsService.getBankAccounts(true)
             ]);
             setSettings(settingsData);
             setLatestRequest(requestData);
+            setBankAccounts(bankData);
         } catch (error) {
             console.error('Failed to load data', error);
         } finally {
@@ -138,18 +141,27 @@ export function UpgradePremium() {
                         </div>
 
                         <div className="pt-6 border-t border-primary-700/50">
-                            <p className="text-primary-200 text-sm mb-3">Silakan transfer ke rekening resmi:</p>
-                            <div className="bg-white/10 p-4 rounded-xl backdrop-blur-sm">
-                                <div className="flex items-center gap-3 mb-2">
-                                    <CreditCard className="w-5 h-5 text-yellow-400" />
-                                    <span className="font-bold text-lg">{settings?.bank_name}</span>
-                                </div>
-                                <p className="font-mono text-2xl tracking-wider mb-1 selection:bg-yellow-400 selection:text-black">
-                                    {settings?.bank_number}
-                                </p>
-                                <p className="text-sm text-primary-200 uppercase tracking-wide">
-                                    a.n. {settings?.bank_holder}
-                                </p>
+                            <p className="text-primary-200 text-sm mb-3">Silakan transfer ke salah satu rekening resmi:</p>
+                            <div className="space-y-3">
+                                {bankAccounts.length > 0 ? bankAccounts.map(account => (
+                                    <div key={account.id} className="bg-white/10 p-4 rounded-xl backdrop-blur-sm">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <CreditCard className="w-5 h-5 text-yellow-400" />
+                                            <span className="font-bold text-lg">{account.bank_name}</span>
+                                        </div>
+                                        <p className="font-mono text-2xl tracking-wider mb-1 selection:bg-yellow-400 selection:text-black">
+                                            {account.account_number}
+                                        </p>
+                                        <p className="text-sm text-primary-200 uppercase tracking-wide">
+                                            a.n. {account.account_holder}
+                                        </p>
+                                    </div>
+                                )) : (
+                                    // Fallback if no specific bank accounts, try legacy settings (or show nothing/alert)
+                                    <div className="bg-white/10 p-4 rounded-xl backdrop-blur-sm">
+                                        <p className="text-primary-200">Belum ada rekening pembayaran yang tersedia.</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
