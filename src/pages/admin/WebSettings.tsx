@@ -43,7 +43,186 @@ export function AdminWebSettings() {
         loadSettings();
     }, [setPageHeader]);
 
-    // ... (keep loadSettings and handlers)
+    async function loadSettings() {
+        setLoading(true);
+        try {
+            const [settingsData, accountsData] = await Promise.all([
+                settingsService.getSettings(),
+                settingsService.getBankAccounts()
+            ]);
+            setSettings(settingsData);
+            setBankAccounts(accountsData);
+        } catch (error) {
+            console.error('Failed to load settings:', error);
+            // toast.error('Gagal memuat pengaturan');
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    async function handleSaveAccount(e: React.FormEvent) {
+        e.preventDefault();
+        if (!editingAccount) return;
+
+        setSavingAccount(true);
+        try {
+            if (editingAccount.id) {
+                await settingsService.updateBankAccount(editingAccount.id, editingAccount);
+            } else {
+                await settingsService.createBankAccount(editingAccount);
+            }
+            const accounts = await settingsService.getBankAccounts();
+            setBankAccounts(accounts);
+            setEditingAccount(null);
+        } catch (error) {
+            console.error('Failed to save bank account:', error);
+            alert('Gagal menyimpan rekening bank');
+        } finally {
+            setSavingAccount(false);
+        }
+    }
+
+    async function handleDeleteAccount(id: string) {
+        if (!confirm('Apakah Anda yakin ingin menghapus rekening ini?')) return;
+
+        try {
+            await settingsService.deleteBankAccount(id);
+            const accounts = await settingsService.getBankAccounts();
+            setBankAccounts(accounts);
+        } catch (error) {
+            console.error('Failed to delete bank account:', error);
+            alert('Gagal menghapus rekening bank');
+        }
+    }
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const { name, value } = e.target;
+        setSettings(prev => prev ? { ...prev, [name]: value } : null);
+    };
+
+    const handleEditorChange = (name: string, value: string) => {
+        setSettings(prev => prev ? { ...prev, [name]: value } : null);
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            setFiles(prev => ({ ...prev, [fieldName]: file }));
+
+            // Create preview
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setPreviews(prev => ({ ...prev, [fieldName]: reader.result as string }));
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const removeFile = (fieldName: string) => {
+        setFiles(prev => {
+            const newFiles = { ...prev };
+            delete newFiles[fieldName];
+            return newFiles;
+        });
+        setPreviews(prev => {
+            const newPreviews = { ...prev };
+            delete newPreviews[fieldName];
+            return newPreviews;
+        });
+        // If there was an existing setting, we might want to clear it too?
+        // For now, removing the file just removes the pending upload.
+        // If user wants to remove existing image, maybe we need explicit clear?
+        // But usually file input is for *new* uploads.
+    };
+
+    const handleSubmit = async () => {
+        if (!settings) return;
+        setSaving(true);
+        try {
+            const updates = { ...settings };
+
+            // Upload files if any
+            for (const [fieldName, file] of Object.entries(files)) {
+                if (file) {
+                    try {
+                        const url = await settingsService.uploadLogo(file);
+                        // @ts-ignore - dynamic key access
+                        updates[fieldName] = url;
+                    } catch (uploadError) {
+                        console.error(`Failed to upload ${fieldName}:`, uploadError);
+                    }
+                }
+            }
+
+            await settingsService.updateSettings(updates);
+
+            // Refresh settings to get clean state
+            await loadSettings();
+            setFiles({});
+            setPreviews({});
+
+            alert('Pengaturan berhasil disimpan');
+        } catch (error) {
+            console.error('Failed to save settings:', error);
+            alert('Gagal menyimpan pengaturan');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const ImageUploader = ({ label, fieldName, currentUrl }: { label: string, fieldName: string, currentUrl?: string }) => (
+        <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">{label}</label>
+            <div className="flex items-start gap-4">
+                <div className="w-24 h-24 rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0 relative group">
+                    {(previews[fieldName] || currentUrl) ? (
+                        <img
+                            src={previews[fieldName] || currentUrl}
+                            alt={label}
+                            className="w-full h-full object-contain p-1"
+                        />
+                    ) : (
+                        <ImageIcon className="w-8 h-8 text-gray-300" />
+                    )}
+                </div>
+                <div className="flex-1 space-y-2">
+                    <div className="flex items-center gap-2">
+                        <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                            <Upload className="w-3.5 h-3.5" />
+                            Upload
+                            <input
+                                type="file"
+                                className="hidden"
+                                accept="image/*"
+                                onChange={(e) => handleFileChange(e, fieldName)}
+                            />
+                        </label>
+                        {(previews[fieldName] || currentUrl) && (
+                            <button
+                                type="button"
+                                onClick={() => removeFile(fieldName)}
+                                className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 border border-red-100 rounded-lg hover:bg-red-100 transition-colors"
+                            >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                Hapus
+                            </button>
+                        )}
+                    </div>
+                    <p className="text-[10px] text-gray-500">Format: PNG, JPG. Max 2MB.</p>
+                </div>
+            </div>
+        </div>
+    );
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+            </div>
+        );
+    }
+
+    if (!settings) return null;
 
     return (
         <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
