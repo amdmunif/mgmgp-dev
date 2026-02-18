@@ -66,8 +66,16 @@ export const api = {
             }
 
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.message || `Request failed with status ${response.status}`);
+                let errorMessage;
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.message;
+                } catch (e) {
+                    // If JSON parse fails, try to get text text
+                    const errorText = await response.text();
+                    errorMessage = errorText || `Request failed with status ${response.status}`;
+                }
+                throw new Error(errorMessage || `Request failed with status ${response.status}`);
             }
 
             return response.json() as Promise<T>;

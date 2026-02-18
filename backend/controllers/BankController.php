@@ -13,8 +13,18 @@ class BankController
         $this->conn = $database->getConnection();
     }
 
+    private function checkConnection()
+    {
+        if ($this->conn === null) {
+            http_response_code(500);
+            echo json_encode(["message" => "Database connection failed"]);
+            exit;
+        }
+    }
+
     public function getAll()
     {
+        $this->checkConnection();
         $query = "SELECT * FROM premium_bank_accounts ORDER BY created_at DESC";
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
@@ -30,6 +40,7 @@ class BankController
 
     public function getActive()
     {
+        $this->checkConnection();
         $query = "SELECT * FROM premium_bank_accounts WHERE is_active = 1 ORDER BY created_at DESC";
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
@@ -39,6 +50,7 @@ class BankController
 
     public function create($data)
     {
+        $this->checkConnection();
         if (empty($data['bank_name']) || empty($data['account_number']) || empty($data['account_holder'])) {
             http_response_code(400);
             return json_encode(["message" => "Incomplete data"]);
@@ -72,6 +84,7 @@ class BankController
 
     public function update($id, $data)
     {
+        $this->checkConnection();
         $fields = [];
         if (isset($data['bank_name']))
             $fields[] = "bank_name = :bank_name";
@@ -115,6 +128,7 @@ class BankController
 
     public function delete($id)
     {
+        $this->checkConnection();
         $query = "DELETE FROM premium_bank_accounts WHERE id = :id";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id', $id);
