@@ -371,37 +371,129 @@ export function AdminMembers() {
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
-                        <div className="p-6 space-y-4">
+                        <div className="p-6 space-y-6 overflow-y-auto max-h-[80vh]">
                             <div className="flex items-center gap-4">
-                                <div className="w-16 h-16 rounded-full bg-gray-100 overflow-hidden border border-gray-200 shrink-0">
+                                <div className="w-20 h-20 rounded-full bg-gray-100 overflow-hidden border border-gray-200 shrink-0">
                                     {viewingMember.foto_profile ? (
                                         <img src={getFileUrl(viewingMember.foto_profile)} alt={viewingMember.nama} className="w-full h-full object-cover" />
                                     ) : (
-                                        <div className="w-full h-full flex items-center justify-center bg-blue-100 text-blue-600 font-bold text-xl">
+                                        <div className="w-full h-full flex items-center justify-center bg-blue-100 text-blue-600 font-bold text-2xl">
                                             {viewingMember.nama ? viewingMember.nama.charAt(0).toUpperCase() : <User className="w-8 h-8" />}
                                         </div>
                                     )}
                                 </div>
                                 <div>
-                                    <h3 className="text-lg font-bold text-gray-900">{viewingMember.nama}</h3>
-                                    <p className="text-sm text-gray-500">{viewingMember.email}</p>
+                                    <h3 className="text-xl font-bold text-gray-900">{viewingMember.nama}</h3>
+                                    <p className="text-gray-500">{viewingMember.email}</p>
+                                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border mt-2 ${Number(viewingMember.is_active) === 1
+                                        ? 'bg-green-50 text-green-700 border-green-200'
+                                        : 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                                        }`}>
+                                        {Number(viewingMember.is_active) === 1 ? 'Aktif' : 'Pending'}
+                                    </span>
                                 </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-4 text-sm">
-                                <div>
-                                    <p className="text-gray-500 mb-1">Role</p>
-                                    <p className="font-medium text-gray-900">{viewingMember.role}</p>
-                                </div>
-                                <div>
-                                    <p className="text-gray-500 mb-1">Status</p>
-                                    <p className="font-medium text-gray-900">{Number(viewingMember.is_active) ? 'Aktif' : 'Non-Aktif'}</p>
-                                </div>
-                                <div>
-                                    <p className="text-gray-500 mb-1">Bergabung</p>
-                                    <p className="font-medium text-gray-900">{viewingMember.created_at ? new Date(viewingMember.created_at).toLocaleDateString() : '-'}</p>
+
+                            <div className="space-y-4">
+                                <h4 className="font-semibold text-gray-900 border-b border-gray-100 pb-2">Informasi Pribadi & Pekerjaan</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                        <p className="text-gray-500 mb-1">Asal Sekolah</p>
+                                        <p className="font-medium text-gray-900">{viewingMember.asal_sekolah || '-'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-500 mb-1">Pendidikan Terakhir</p>
+                                        <p className="font-medium text-gray-900">{viewingMember.pendidikan_terakhir || '-'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-500 mb-1">Jurusan</p>
+                                        <p className="font-medium text-gray-900">{viewingMember.jurusan || '-'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-500 mb-1">Status Kepegawaian</p>
+                                        <p className="font-medium text-gray-900">{viewingMember.status_kepegawaian || '-'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-500 mb-1">No. HP / WhatsApp</p>
+                                        <p className="font-medium text-gray-900">{viewingMember.no_hp || '-'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-500 mb-1">Ukuran Baju</p>
+                                        <p className="font-medium text-gray-900">{viewingMember.ukuran_baju || '-'}</p>
+                                    </div>
                                 </div>
                             </div>
-                            <div className="pt-4 flex justify-end">
+
+                            <div className="space-y-4">
+                                <h4 className="font-semibold text-gray-900 border-b border-gray-100 pb-2">Informasi Mengajar</h4>
+                                <div className="grid grid-cols-1 gap-4 text-sm">
+                                    <div>
+                                        <p className="text-gray-500 mb-1">Mata Pelajaran Ampu</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {(() => {
+                                                try {
+                                                    const mapel = viewingMember.mapel
+                                                        ? (typeof viewingMember.mapel === 'string' ? JSON.parse(viewingMember.mapel) : viewingMember.mapel)
+                                                        : [];
+                                                    return Array.isArray(mapel) && mapel.length > 0
+                                                        ? mapel.map((m: string, idx: number) => (
+                                                            <span key={idx} className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs">{m}</span>
+                                                        ))
+                                                        : <span className="text-gray-400">-</span>;
+                                                } catch (e) { return <span className="text-gray-400">-</span> }
+                                            })()}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-500 mb-1">Kelas Ampu</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {(() => {
+                                                try {
+                                                    const kelas = viewingMember.kelas
+                                                        ? (typeof viewingMember.kelas === 'string' ? JSON.parse(viewingMember.kelas) : viewingMember.kelas)
+                                                        : [];
+                                                    return Array.isArray(kelas) && kelas.length > 0
+                                                        ? kelas.map((k: string, idx: number) => (
+                                                            <span key={idx} className="px-2 py-1 bg-purple-50 text-purple-700 rounded text-xs">{k}</span>
+                                                        ))
+                                                        : <span className="text-gray-400">-</span>;
+                                                } catch (e) { return <span className="text-gray-400">-</span> }
+                                            })()}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                <h4 className="font-semibold text-gray-900 border-b border-gray-100 pb-2">Informasi Akun</h4>
+                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                        <p className="text-gray-500 mb-1">Role / Hak Akses</p>
+                                        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-medium border ${viewingMember.role === 'Admin'
+                                            ? 'bg-purple-50 text-purple-700 border-purple-200'
+                                            : 'bg-gray-50 text-gray-600 border-gray-200'
+                                            }`}>
+                                            {viewingMember.role || 'Anggota'}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-500 mb-1">Status Langganan</p>
+                                        {(viewingMember.premium_until && new Date(viewingMember.premium_until) > new Date()) ? (
+                                            <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                                                <Crown className="w-3 h-3 fill-amber-600" /> Premium
+                                            </span>
+                                        ) : (
+                                            <span className="text-gray-500 font-medium">Reguler</span>
+                                        )}
+                                    </div>
+                                    <div className="col-span-2">
+                                        <p className="text-gray-500 mb-1">Bergabung Sejak</p>
+                                        <p className="font-medium text-gray-900">{viewingMember.created_at ? format(new Date(viewingMember.created_at), 'd MMMM yyyy HH:mm', { locale: id }) : '-'}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="pt-4 flex justify-end border-t border-gray-100">
                                 <Button onClick={() => setViewingMember(null)}>Tutup</Button>
                             </div>
                         </div>

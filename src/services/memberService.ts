@@ -10,6 +10,14 @@ export interface Profile {
     created_at?: string;
     is_active?: number | boolean; // 1 or 0 usually from PHP
     foto_profile?: string;
+    asal_sekolah?: string;
+    pendidikan_terakhir?: string;
+    jurusan?: string;
+    status_kepegawaian?: string;
+    ukuran_baju?: string;
+    no_hp?: string;
+    mapel?: string | string[]; // JSON string or parsed array
+    kelas?: string | string[]; // JSON string or parsed array
 }
 
 export const memberService = {
