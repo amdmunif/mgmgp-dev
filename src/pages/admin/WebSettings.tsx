@@ -34,14 +34,19 @@ export function AdminWebSettings() {
 
     async function loadSettings() {
         try {
-            const [settingsData, bankData] = await Promise.all([
-                settingsService.getSettings(),
-                settingsService.getBankAccounts()
-            ]);
+            const settingsData = await settingsService.getSettings();
             setSettings(settingsData);
-            setBankAccounts(bankData);
         } catch (error) {
             console.error('Failed to load settings', error);
+            // If main settings fail, we probably can't do much
+        }
+
+        try {
+            const bankData = await settingsService.getBankAccounts();
+            setBankAccounts(bankData);
+        } catch (error) {
+            console.error('Failed to load bank accounts', error);
+            // Bank accounts might fail if table missing, but we shouldn't block settings
         } finally {
             setLoading(false);
         }
