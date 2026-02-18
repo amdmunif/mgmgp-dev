@@ -56,9 +56,14 @@ class BankController
         $stmt->bindParam(':account_holder', $data['account_holder']);
         $stmt->bindParam(':is_active', $isActive);
 
-        if ($stmt->execute()) {
-            http_response_code(201);
-            return json_encode(["message" => "Bank account created", "id" => $id]);
+        try {
+            if ($stmt->execute()) {
+                http_response_code(201);
+                return json_encode(["message" => "Bank account created", "id" => $id]);
+            }
+        } catch (PDOException $e) {
+            http_response_code(500);
+            return json_encode(["message" => "Database error: " . $e->getMessage()]);
         }
 
         http_response_code(500);
@@ -95,8 +100,13 @@ class BankController
             $stmt->bindValue(':is_active', (int) $data['is_active']);
         $stmt->bindValue(':id', $id);
 
-        if ($stmt->execute()) {
-            return json_encode(["message" => "Bank account updated"]);
+        try {
+            if ($stmt->execute()) {
+                return json_encode(["message" => "Bank account updated"]);
+            }
+        } catch (PDOException $e) {
+            http_response_code(500);
+            return json_encode(["message" => "Database error: " . $e->getMessage()]);
         }
 
         http_response_code(500);
@@ -109,8 +119,13 @@ class BankController
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id', $id);
 
-        if ($stmt->execute()) {
-            return json_encode(["message" => "Bank account deleted"]);
+        try {
+            if ($stmt->execute()) {
+                return json_encode(["message" => "Bank account deleted"]);
+            }
+        } catch (PDOException $e) {
+            http_response_code(500);
+            return json_encode(["message" => "Database error: " . $e->getMessage()]);
         }
 
         http_response_code(500);
