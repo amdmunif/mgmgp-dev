@@ -102,7 +102,7 @@ class ContentController
     // --- EVENTS ---
     public function getEvents()
     {
-        $query = "SELECT * FROM events ORDER BY date ASC";
+        $query = "SELECT * FROM events ORDER BY date DESC";
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
         return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
