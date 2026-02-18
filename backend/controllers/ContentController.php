@@ -201,6 +201,33 @@ class ContentController
     // --- EVENT PARTICIPATION ---
     public function joinEvent($eventId, $userId)
     {
+        // 0. Check Premium Status
+        $stmtEvent = $this->conn->prepare("SELECT is_premium FROM events WHERE id = :eid");
+        $stmtEvent->bindParam(':eid', $eventId);
+        $stmtEvent->execute();
+        $event = $stmtEvent->fetch(PDO::FETCH_ASSOC);
+
+        if ($event && $event['is_premium'] == 1) {
+            $stmtUser = $this->conn->prepare("SELECT premium_until FROM profiles WHERE id = :uid");
+            $stmtUser->bindParam(':uid', $userId);
+            $stmtUser->execute();
+            $userProfile = $stmtUser->fetch(PDO::FETCH_ASSOC);
+
+            $isPremium = false;
+            if ($userProfile && $userProfile['premium_until']) {
+                $premiumUntil = new DateTime($userProfile['premium_until']);
+                $now = new DateTime();
+                if ($premiumUntil > $now) {
+                    $isPremium = true;
+                }
+            }
+
+            if (!$isPremium) {
+                http_response_code(403);
+                return json_encode(["message" => "This event is for Premium members only"]);
+            }
+        }
+
         $check = $this->conn->prepare("SELECT * FROM event_participants WHERE event_id = :eid AND user_id = :uid");
         $check->bindParam(':eid', $eventId);
         $check->bindParam(':uid', $userId);

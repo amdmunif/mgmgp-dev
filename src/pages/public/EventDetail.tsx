@@ -147,18 +147,46 @@ export function EventDetail() {
                                 Pendaftaran Telah Ditutup
                             </div>
                         ) : isAuthenticated ? (
-                            <div className="space-y-3">
-                                <Button
-                                    className="w-full text-lg h-12 shadow-primary-500/20 hover:shadow-primary-500/40"
-                                    onClick={handleJoin}
-                                    disabled={isJoining}
-                                >
-                                    {isJoining ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Daftar Sekarang'}
-                                </Button>
-                                <p className="text-xs text-center text-gray-500">
-                                    Kuota terbatas. Pendaftaran ditutup H-1 kegiatan.
-                                </p>
-                            </div>
+                            (() => {
+                                const isPremiumEvent = event.is_premium === 1;
+                                const userStr = localStorage.getItem('user_data');
+                                const user = userStr ? JSON.parse(userStr) : {};
+                                const isPremiumUser = user.premium_until && new Date(user.premium_until) > new Date();
+
+                                if (isPremiumEvent && !isPremiumUser) {
+                                    return (
+                                        <div className="space-y-3">
+                                            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-center">
+                                                <Lock className="w-8 h-8 text-amber-500 mx-auto mb-2" />
+                                                <h4 className="font-bold text-amber-800">Konten Premium</h4>
+                                                <p className="text-sm text-amber-700 mb-3">
+                                                    Event ini khusus untuk anggota Premium. Upgrade akun Anda untuk mendaftar.
+                                                </p>
+                                                <Link to="/member/upgrade">
+                                                    <Button className="w-full bg-amber-600 hover:bg-amber-700 text-white">
+                                                        Upgrade ke Premium
+                                                    </Button>
+                                                </Link>
+                                            </div>
+                                        </div>
+                                    );
+                                }
+
+                                return (
+                                    <div className="space-y-3">
+                                        <Button
+                                            className="w-full text-lg h-12 shadow-primary-500/20 hover:shadow-primary-500/40"
+                                            onClick={handleJoin}
+                                            disabled={isJoining}
+                                        >
+                                            {isJoining ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Daftar Sekarang'}
+                                        </Button>
+                                        <p className="text-xs text-center text-gray-500">
+                                            Kuota terbatas. Pendaftaran ditutup H-1 kegiatan.
+                                        </p>
+                                    </div>
+                                );
+                            })()
                         ) : (
                             <div className="space-y-3">
                                 <Link to="/login">
