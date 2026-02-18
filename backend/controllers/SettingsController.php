@@ -16,52 +16,60 @@ class SettingsController
 
     public function getSettings()
     {
-        // Fetch Site Content
-        $queryContent = "SELECT * FROM site_content WHERE id = 1 LIMIT 1";
-        $stmtContent = $this->conn->prepare($queryContent);
-        $stmtContent->execute();
-        $siteContent = $stmtContent->fetch(PDO::FETCH_ASSOC);
+        try {
+            // Fetch Site Content
+            $queryContent = "SELECT * FROM site_content WHERE id = 1 LIMIT 1";
+            $stmtContent = $this->conn->prepare($queryContent);
+            $stmtContent->execute();
+            $siteContent = $stmtContent->fetch(PDO::FETCH_ASSOC);
 
-        if (!$siteContent) {
-            // Create default site content
-            $defaultContent = "INSERT INTO site_content (id, home_hero_title) VALUES (1, 'MGMP Informatika')";
-            $this->conn->exec($defaultContent);
-            $siteContent = ["id" => 1, "home_hero_title" => "MGMP Informatika"];
+            if (!$siteContent) {
+                // Create default site content
+                $defaultContent = "INSERT INTO site_content (id, home_hero_title) VALUES (1, 'MGMP Informatika')";
+                $this->conn->exec($defaultContent);
+                $siteContent = ["id" => 1, "home_hero_title" => "MGMP Informatika"];
+            }
+
+            // Fetch Premium Settings (for price)
+            // Check if table exists first/handle gracefully? No, let's catch exception
+            $queryPremium = "SELECT registration_fee FROM premium_settings WHERE id = 1 LIMIT 1";
+            $stmtPremium = $this->conn->prepare($queryPremium);
+            $stmtPremium->execute();
+            $premiumSettings = $stmtPremium->fetch(PDO::FETCH_ASSOC);
+
+            if (!$premiumSettings) {
+                // Determine if table exists or just empty?
+                // If we are here, query succeeded.
+                $this->conn->exec("INSERT INTO premium_settings (id, registration_fee) VALUES (1, 50000)");
+                $premiumSettings = ['registration_fee' => 50000];
+            }
+
+            // Map to legacy keys for frontend compatibility
+            $mappedSettings = [
+                'id' => 1,
+                'site_title' => $siteContent['home_hero_title'] ?? 'MGMP Informatika',
+                'site_description' => $siteContent['home_hero_subtitle'] ?? '',
+                'logo_url' => $siteContent['app_logo'] ?? '',
+                'email' => $siteContent['contact_email'] ?? '',
+                'phone' => $siteContent['contact_phone'] ?? '',
+                'address' => $siteContent['contact_address'] ?? '',
+                'map_url' => $siteContent['contact_map_url'] ?? '',
+
+                // Premium/Bank (Legacy support, though bank_accounts table is preferred)
+                'premium_price' => $premiumSettings['registration_fee'] ?? 0,
+                'bank_name' => $siteContent['bank_name'] ?? '',
+                'bank_number' => $siteContent['bank_number'] ?? '',
+                'bank_holder' => $siteContent['bank_holder'] ?? '',
+
+                // Merge full site_content for specific fields
+                ...$siteContent
+            ];
+
+            return json_encode($mappedSettings);
+        } catch (Exception $e) {
+            http_response_code(500);
+            return json_encode(["message" => "Error loading settings: " . $e->getMessage()]);
         }
-
-        // Fetch Premium Settings (for price)
-        $queryPremium = "SELECT registration_fee FROM premium_settings WHERE id = 1 LIMIT 1";
-        $stmtPremium = $this->conn->prepare($queryPremium);
-        $stmtPremium->execute();
-        $premiumSettings = $stmtPremium->fetch(PDO::FETCH_ASSOC);
-
-        if (!$premiumSettings) {
-            $this->conn->exec("INSERT INTO premium_settings (id, registration_fee) VALUES (1, 50000)");
-            $premiumSettings = ['registration_fee' => 50000];
-        }
-
-        // Map to legacy keys for frontend compatibility
-        $mappedSettings = [
-            'id' => 1,
-            'site_title' => $siteContent['home_hero_title'] ?? 'MGMP Informatika',
-            'site_description' => $siteContent['home_hero_subtitle'] ?? '',
-            'logo_url' => $siteContent['app_logo'] ?? '',
-            'email' => $siteContent['contact_email'] ?? '',
-            'phone' => $siteContent['contact_phone'] ?? '',
-            'address' => $siteContent['contact_address'] ?? '',
-            'map_url' => $siteContent['contact_map_url'] ?? '',
-
-            // Premium/Bank (Legacy support, though bank_accounts table is preferred)
-            'premium_price' => $premiumSettings['registration_fee'] ?? 0,
-            'bank_name' => $siteContent['bank_name'] ?? '',
-            'bank_number' => $siteContent['bank_number'] ?? '',
-            'bank_holder' => $siteContent['bank_holder'] ?? '',
-
-            // Merge full site_content for specific fields
-            ...$siteContent
-        ];
-
-        return json_encode($mappedSettings);
     }
 
     public function updateSettings($data, $userId, $userName)

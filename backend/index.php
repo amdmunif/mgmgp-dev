@@ -70,6 +70,11 @@ if (isset($uri_parts[0]) && $uri_parts[0] === 'migrate-v2') {
     exit();
 }
 
+if (isset($uri_parts[0]) && $uri_parts[0] === 'diagnose') {
+    include_once 'diagnose_db.php';
+    exit();
+}
+
 include_once './controllers/AuthController.php';
 include_once './controllers/ResourceController.php';
 include_once './controllers/LearningController.php';
