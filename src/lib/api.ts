@@ -66,16 +66,21 @@ export const api = {
             }
 
             if (!response.ok) {
-                let errorMessage;
+                let errorMessage = `Request failed with status ${response.status}`;
                 try {
-                    const errorData = await response.json();
-                    errorMessage = errorData.message;
+                    const text = await response.text();
+                    try {
+                        const json = JSON.parse(text);
+                        errorMessage = json.message || text;
+                    } catch {
+                        // Not JSON, use text if available
+                        if (text) errorMessage = text;
+                    }
                 } catch (e) {
-                    // If JSON parse fails, try to get text text
-                    const errorText = await response.text();
-                    errorMessage = errorText || `Request failed with status ${response.status}`;
+                    // Failed to read text (network error during read?)
+                    console.error('Failed to read error response', e);
                 }
-                throw new Error(errorMessage || `Request failed with status ${response.status}`);
+                throw new Error(errorMessage);
             }
 
             return response.json() as Promise<T>;
