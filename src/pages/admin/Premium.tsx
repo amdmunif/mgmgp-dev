@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { premiumService, type PremiumRequest } from '../../services/premiumService';
 import { Button } from '../../components/ui/button';
-import { Check, X, Loader2, Image as ImageIcon, Crown } from 'lucide-react';
+import { Check, X, Loader2, Image as ImageIcon, Crown, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { cn } from '../../lib/utils';
 import { DataTable } from '../../components/ui/DataTable';
@@ -147,24 +147,27 @@ export function AdminPremium() {
             className: 'text-right',
             cell: (req: PremiumRequest) => (
                 <div className="flex justify-end gap-2">
-                    {req.status === 'pending' && (
+                    {req.status === 'pending' ? (
                         <>
-                            <Button size="sm" variant="outline" className="bg-green-50 text-green-600 hover:bg-green-100 border-green-200" onClick={() => handleApprove(req.id, req.profiles?.nama || 'User')} disabled={processingId === req.id}>
+                            <Button size="sm" variant="outline" className="bg-green-50 text-green-600 hover:bg-green-100 border-green-200" onClick={() => handleApprove(req.id, req.profiles?.nama || 'User')} disabled={processingId === req.id} title="Setujui">
                                 {processingId === req.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                             </Button>
-                            <Button size="sm" variant="outline" className="bg-red-50 text-red-600 hover:bg-red-100 border-red-200" onClick={() => handleReject(req.id)} disabled={processingId === req.id}>
+                            <Button size="sm" variant="outline" className="bg-red-50 text-red-600 hover:bg-red-100 border-red-200" onClick={() => handleReject(req.id)} disabled={processingId === req.id} title="Tolak">
                                 {processingId === req.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
                             </Button>
                         </>
-                    )}
-                    <div className="relative group">
-                        <Button size="sm" variant="outline">...</Button>
-                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 hidden group-hover:block hover:block border border-gray-100">
-                            <button onClick={() => setViewData(req)} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Lihat Detail</button>
-                            <button onClick={() => setEditData(req)} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Edit Data</button>
-                            <button onClick={() => handleDelete(req.id)} className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">Hapus</button>
-                        </div>
-                    </div>
+                    ) : null}
+
+                    <Button size="sm" variant="outline" className="text-blue-600 hover:bg-blue-50" onClick={() => setViewData(req)} title="Lihat Detail">
+                        <ImageIcon className="w-4 h-4" />
+                    </Button>
+                    {/* Pencil icon for Edit - ensure Lucide import */}
+                    <Button size="sm" variant="outline" className="text-amber-600 hover:bg-amber-50" onClick={() => setEditData(req)} title="Edit Data">
+                        <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button size="sm" variant="outline" className="text-red-600 hover:bg-red-50" onClick={() => handleDelete(req.id)} title="Hapus">
+                        <Trash2 className="w-4 h-4" />
+                    </Button>
                 </div>
             )
         }
