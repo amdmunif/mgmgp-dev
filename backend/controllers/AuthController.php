@@ -216,12 +216,13 @@ class AuthController
         }
 
         $token = bin2hex(random_bytes(32));
-        $expiry = date('Y-m-d H:i:s', strtotime('+1 hour'));
+        // Use database time for expiry to match NOW() used in verification
+        // $expiry = date('Y-m-d H:i:s', strtotime('+1 hour')); 
 
-        $update = "UPDATE users SET reset_token = :token, reset_token_expiry = :expiry WHERE email = :email";
+        $update = "UPDATE users SET reset_token = :token, reset_token_expiry = DATE_ADD(NOW(), INTERVAL 1 HOUR) WHERE email = :email";
         $stmtUpd = $this->conn->prepare($update);
         $stmtUpd->bindParam(':token', $token);
-        $stmtUpd->bindParam(':expiry', $expiry);
+        // $stmtUpd->bindParam(':expiry', $expiry); // Removed as we use SQL DATE_ADD
         $stmtUpd->bindParam(':email', $email);
 
         if ($stmtUpd->execute()) {
