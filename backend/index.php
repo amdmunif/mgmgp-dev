@@ -200,8 +200,20 @@ if ($resource === 'news') {
             echo $controller->updateEvent($action, $input, $userId, $userName);
         }
     }
-    if ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action)
-        echo $controller->deleteEvent($action, $userId, $userName);
+    if ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action) {
+        if ($subAction === 'participants') {
+            // DELETE /events/:id/participants/:userId
+            $targetUserId = isset($uri_parts[3]) ? $uri_parts[3] : null;
+            if ($targetUserId) {
+                echo $controller->deleteParticipant($action, $targetUserId);
+            } else {
+                http_response_code(400);
+                echo json_encode(["message" => "User ID required"]);
+            }
+        } else {
+            echo $controller->deleteEvent($action, $userId, $userName);
+        }
+    }
 
 } elseif ($resource === 'questions') {
     $controller = new QuestionController();

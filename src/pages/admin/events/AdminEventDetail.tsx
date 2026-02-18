@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { contentManagementService } from '../../../services/contentManagementService';
-import { ArrowLeft, Calendar, MapPin, Users, CheckCircle, XCircle } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, CheckCircle, XCircle, Trash2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { getFileUrl } from '../../../lib/api';
 import { DataTable } from '../../../components/ui/DataTable';
@@ -96,6 +96,20 @@ export function AdminEventDetail() {
         } catch (error) {
             console.error('Bulk update failed:', error);
             toast.error('Gagal memperbarui status peserta');
+        }
+    };
+
+    const handleDeleteParticipant = async (userId: string, userName: string) => {
+        if (!id) return;
+        if (!confirm(`Apakah Anda yakin ingin menghapus peserta "${userName}" dari event ini?`)) return;
+
+        try {
+            await contentManagementService.deleteParticipant(id, userId);
+            setParticipants(current => current.filter(p => p.user_id !== userId));
+            toast.success('Peserta berhasil dihapus');
+        } catch (error) {
+            console.error('Failed to delete participant:', error);
+            toast.error('Gagal menghapus peserta');
         }
     };
 
@@ -222,6 +236,14 @@ export function AdminEventDetail() {
                         >
                             {isPresent ? <XCircle className="w-3 h-3" /> : <CheckCircle className="w-3 h-3" />}
                             {isPresent ? 'Batal' : 'Absen'}
+                        </button>
+                        <button
+                            onClick={() => handleDeleteParticipant(item.user_id, item.nama)}
+                            className="inline-flex items-center gap-1 px-3 py-1 rounded-md text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100 ml-2"
+                            title="Hapus Peserta"
+                        >
+                            <Trash2 className="w-3 h-3" />
+                            Hapus
                         </button>
                     </div>
                 );

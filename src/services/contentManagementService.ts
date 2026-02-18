@@ -44,5 +44,9 @@ export const contentManagementService = {
 
     async updateParticipantsBulk(eventId: string, userIds: string[], status: string) {
         return await api.post(`/events/${eventId}/participants/bulk`, { user_ids: userIds, status });
+    },
+
+    async deleteParticipant(eventId: string, userId: string) {
+        return await api.delete(`/events/${eventId}/participants/${userId}`);
     }
 };

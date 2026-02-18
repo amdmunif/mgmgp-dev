@@ -429,5 +429,20 @@ class ContentController
         http_response_code(500);
         return json_encode(["message" => "Failed to update participants"]);
     }
+
+    public function deleteParticipant($eventId, $userId)
+    {
+        $query = "DELETE FROM event_participants WHERE event_id = :eid AND user_id = :uid";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':eid', $eventId);
+        $stmt->bindParam(':uid', $userId);
+
+        if ($stmt->execute()) {
+            return json_encode(["message" => "Participant removed successfully"]);
+        }
+
+        http_response_code(500);
+        return json_encode(["message" => "Failed to remove participant"]);
+    }
 }
 ?>
