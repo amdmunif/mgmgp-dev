@@ -9,6 +9,7 @@ export function AdminWebSettings() {
     const { setPageHeader } = useOutletContext<any>() || {};
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [settings, setSettings] = useState<AppSettings | null>(null);
 
     // Bank Accounts State
@@ -52,9 +53,10 @@ export function AdminWebSettings() {
             ]);
             setSettings(settingsData);
             setBankAccounts(accountsData);
-        } catch (error) {
+            setError(null);
+        } catch (error: any) {
             console.error('Failed to load settings:', error);
-            // toast.error('Gagal memuat pengaturan');
+            setError(error.message || 'Gagal memuat pengaturan. Periksa koneksi atau database.');
         } finally {
             setLoading(false);
         }
@@ -214,6 +216,20 @@ export function AdminWebSettings() {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
                 <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-8">
+                <div className="bg-red-50 text-red-600 p-4 rounded-lg max-w-md">
+                    <h3 className="font-bold mb-2">Terjadi Kesalahan</h3>
+                    <p>{error}</p>
+                    <Button onClick={() => loadSettings()} className="mt-4 bg-red-600 hover:bg-red-700">
+                        Coba Lagi
+                    </Button>
+                </div>
             </div>
         );
     }
