@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { api } from '../../lib/api';
 import { Button } from '../../components/ui/button';
-import { AlertCircle, CheckCircle, ArrowLeft, Loader2, KeyRound } from 'lucide-react';
+import { AlertCircle, CheckCircle, ArrowLeft, Loader2, KeyRound, Eye, EyeOff } from 'lucide-react';
 
 export default function ResetPassword() {
     const [searchParams] = useSearchParams();
@@ -12,6 +12,8 @@ export default function ResetPassword() {
 
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
@@ -47,9 +49,10 @@ export default function ResetPassword() {
             }, 3000);
 
         } catch (error: any) {
+            console.error("Reset Password Error:", error);
             setMessage({
                 type: 'error',
-                text: error.response?.data?.message || 'Gagal mereset password.'
+                text: error.response?.data?.message || 'Gagal mereset password. Silakan coba lagi.'
             });
         } finally {
             setIsLoading(false);
@@ -95,28 +98,46 @@ export default function ResetPassword() {
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="space-y-1.5">
                         <label className="block text-sm font-semibold text-gray-700" htmlFor="password">Password Baru</label>
-                        <input
-                            id="password"
-                            type="password"
-                            required
-                            className="block w-full rounded-lg border-gray-300 bg-white shadow-sm focus:border-primary-500 focus:ring-primary-500 py-3 px-4 text-sm transition-all hover:border-gray-400 placeholder-gray-400"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="Minimal 6 karakter"
-                            minLength={6}
-                        />
+                        <div className="relative">
+                            <input
+                                id="password"
+                                type={showPassword ? "text" : "password"}
+                                required
+                                className="block w-full rounded-lg border-gray-300 bg-white shadow-sm focus:border-primary-500 focus:ring-primary-500 py-3 pl-4 pr-10 text-sm transition-all hover:border-gray-400 placeholder-gray-400"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="Minimal 6 karakter"
+                                minLength={6}
+                            />
+                            <button
+                                type="button"
+                                className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 focus:outline-none"
+                                onClick={() => setShowPassword(!showPassword)}
+                            >
+                                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                            </button>
+                        </div>
                     </div>
                     <div className="space-y-1.5">
                         <label className="block text-sm font-semibold text-gray-700" htmlFor="confirmPassword">Konfirmasi Password</label>
-                        <input
-                            id="confirmPassword"
-                            type="password"
-                            required
-                            className="block w-full rounded-lg border-gray-300 bg-white shadow-sm focus:border-primary-500 focus:ring-primary-500 py-3 px-4 text-sm transition-all hover:border-gray-400 placeholder-gray-400"
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            placeholder="Ulangi password baru"
-                        />
+                        <div className="relative">
+                            <input
+                                id="confirmPassword"
+                                type={showConfirmPassword ? "text" : "password"}
+                                required
+                                className="block w-full rounded-lg border-gray-300 bg-white shadow-sm focus:border-primary-500 focus:ring-primary-500 py-3 pl-4 pr-10 text-sm transition-all hover:border-gray-400 placeholder-gray-400"
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                placeholder="Ulangi password baru"
+                            />
+                            <button
+                                type="button"
+                                className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 focus:outline-none"
+                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            >
+                                {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                            </button>
+                        </div>
                     </div>
 
                     <Button type="submit" className="w-full h-11 text-base shadow-lg shadow-primary-500/20 hover:shadow-primary-500/30 transition-all" disabled={isLoading}>

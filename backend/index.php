@@ -55,6 +55,16 @@ if (isset($uri_parts[0]) && $uri_parts[0] === 'migrate-db') {
     exit();
 }
 
+if (isset($uri_parts[0]) && $uri_parts[0] === 'migrate-reset') {
+    include_once 'migrate_reset_password_browser.php';
+    exit();
+}
+
+if (isset($uri_parts[0]) && $uri_parts[0] === 'migrate-cleanup') {
+    include_once 'migrate_cleanup_browser.php';
+    exit();
+}
+
 include_once './controllers/AuthController.php';
 include_once './controllers/ResourceController.php';
 include_once './controllers/LearningController.php';
