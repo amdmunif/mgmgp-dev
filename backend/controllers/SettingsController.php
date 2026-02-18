@@ -45,7 +45,7 @@ class SettingsController
             }
 
             // Map to legacy keys for frontend compatibility
-            $mappedSettings = [
+            $baseSettings = [
                 'id' => 1,
                 'site_title' => $siteContent['home_hero_title'] ?? 'MGMP Informatika',
                 'site_description' => $siteContent['home_hero_subtitle'] ?? '',
@@ -55,15 +55,15 @@ class SettingsController
                 'address' => $siteContent['contact_address'] ?? '',
                 'map_url' => $siteContent['contact_map_url'] ?? '',
 
-                // Premium/Bank (Legacy support, though bank_accounts table is preferred)
+                // Premium/Bank
                 'premium_price' => $premiumSettings['registration_fee'] ?? 0,
                 'bank_name' => $siteContent['bank_name'] ?? '',
                 'bank_number' => $siteContent['bank_number'] ?? '',
-                'bank_holder' => $siteContent['bank_holder'] ?? '',
-
-                // Merge full site_content for specific fields
-                ...$siteContent
+                'bank_holder' => $siteContent['bank_holder'] ?? ''
             ];
+
+            // Merge full site_content safely (compatible with PHP < 8.1)
+            $mappedSettings = array_merge($baseSettings, $siteContent);
 
             return json_encode($mappedSettings);
         } catch (Exception $e) {
