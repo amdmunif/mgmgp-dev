@@ -437,6 +437,10 @@ if ($resource === 'news') {
             http_response_code(400);
             echo json_encode(["message" => "User ID required"]);
         }
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action) {
+        echo $controller->deleteRequest($action);
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'PUT' && $action) {
+        echo $controller->updateRequest($action, $input);
     }
 } elseif ($resource === 'contact') {
     include_once './controllers/ContactController.php';
