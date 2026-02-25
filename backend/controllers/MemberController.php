@@ -17,7 +17,9 @@ class MemberController
     public function getAll()
     {
         // Join profiles with users to get email
-        $query = "SELECT p.*, u.email FROM profiles p 
+        $query = "SELECT p.*, u.email, 
+                  (SELECT COUNT(*) FROM event_participants ep WHERE ep.user_id = p.id AND ep.is_hadir = 1) as attendance_count 
+                  FROM profiles p 
                   LEFT JOIN users u ON p.id = u.id 
                   ORDER BY p.created_at DESC";
         $stmt = $this->conn->prepare($query);

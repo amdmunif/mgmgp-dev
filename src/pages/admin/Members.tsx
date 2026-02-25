@@ -17,7 +17,7 @@ import { toast } from 'react-hot-toast';
 import { getFileUrl } from '../../lib/api';
 import { Button } from '../../components/ui/button';
 import { format } from 'date-fns';
-import { id } from 'date-fns/locale';
+
 import { DataTable } from '../../components/ui/DataTable';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
@@ -149,7 +149,7 @@ export function AdminMembers() {
             'Role': m.role,
             'Status': Number(m.is_active) === 1 ? 'Aktif' : 'Pending',
             'Tipe Akun': (m.premium_until && new Date(m.premium_until) > new Date()) ? 'Premium' : 'Reguler',
-            'Tanggal Bergabung': m.created_at ? format(new Date(m.created_at), 'yyyy-MM-dd') : '-'
+            'Hadir (Event)': m.attendance_count || 0
         }));
 
         const worksheet = XLSX.utils.json_to_sheet(dataToExport);
@@ -235,11 +235,11 @@ export function AdminMembers() {
             )
         },
         {
-            header: 'Bergabung',
-            accessorKey: 'created_at' as keyof Profile,
+            header: 'Hadir',
+            accessorKey: 'attendance_count' as keyof Profile,
             cell: (member: Profile) => (
-                <span className="text-sm text-gray-500">
-                    {member.created_at ? format(new Date(member.created_at), 'd MMM yyyy', { locale: id }) : '-'}
+                <span className="text-sm font-medium text-gray-700">
+                    {member.attendance_count || 0} Event
                 </span>
             )
         },
@@ -487,8 +487,8 @@ export function AdminMembers() {
                                         )}
                                     </div>
                                     <div className="col-span-2">
-                                        <p className="text-gray-500 mb-1">Bergabung Sejak</p>
-                                        <p className="font-medium text-gray-900">{viewingMember.created_at ? format(new Date(viewingMember.created_at), 'd MMMM yyyy HH:mm', { locale: id }) : '-'}</p>
+                                        <p className="text-gray-500 mb-1">Jumlah Kehadiran Event</p>
+                                        <p className="font-medium text-gray-900">{viewingMember.attendance_count || 0} Event</p>
                                     </div>
                                 </div>
                             </div>

@@ -18,6 +18,7 @@ export interface Profile {
     no_hp?: string;
     mapel?: string | string[]; // JSON string or parsed array
     kelas?: string | string[]; // JSON string or parsed array
+    attendance_count?: number;
 }
 
 export const memberService = {
