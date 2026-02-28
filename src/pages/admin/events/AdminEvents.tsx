@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Button } from '../../../components/ui/button';
-import { Plus, Trash2, Calendar, MapPin, Eye, Pencil } from 'lucide-react';
+import { Plus, Trash2, Calendar, MapPin, Eye, Pencil, Copy } from 'lucide-react';
 import { contentManagementService } from '../../../services/contentManagementService';
+import { toast } from 'react-hot-toast';
 import type { Event } from '../../../types';
 import { Link, useOutletContext } from 'react-router-dom';
 import { DataTable } from '../../../components/ui/DataTable';
@@ -41,6 +42,28 @@ export function AdminEvents() {
             loadData();
         } catch (error) {
             alert('Gagal menghapus');
+        }
+    };
+
+    const handleDuplicate = async (id: string) => {
+        if (!confirm('Duplikat agenda ini?')) return;
+        try {
+            const eventToDuplicate = await contentManagementService.getEventById(id);
+            const duplicatedEventData = {
+                title: `${eventToDuplicate.title} (Copy)`,
+                description: eventToDuplicate.description,
+                date: eventToDuplicate.date,
+                location: eventToDuplicate.location,
+                image_url: eventToDuplicate.image_url,
+                is_registration_open: eventToDuplicate.is_registration_open,
+                is_premium: eventToDuplicate.is_premium
+            };
+            await contentManagementService.createEvent(duplicatedEventData);
+            loadData();
+            toast.success('Agenda berhasil diduplikasi');
+        } catch (error) {
+            console.error(error);
+            toast.error('Gagal menduplikasi agenda');
         }
     };
 
@@ -113,6 +136,13 @@ export function AdminEvents() {
                     >
                         <Pencil className="w-4 h-4" />
                     </Link>
+                    <button
+                        onClick={() => handleDuplicate(item.id)}
+                        className="p-2 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-colors"
+                        title="Duplikat Agenda"
+                    >
+                        <Copy className="w-4 h-4" />
+                    </button>
                     <button
                         onClick={() => handleDelete(item.id)}
                         className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"

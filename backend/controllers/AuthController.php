@@ -2,6 +2,7 @@
 // backend/controllers/AuthController.php
 include_once './config/database.php';
 include_once './utils/Helper.php';
+include_once './utils/Mailer.php';
 
 class AuthController
 {
@@ -63,6 +64,9 @@ class AuthController
                     'exp' => time() + (60 * 60 * 24) // 24 hours
                 ];
                 $token = Helper::generateJWT($tokenPayload);
+
+                // Send Registration Success Email
+                Mailer::sendRegistrationSuccess($email, $nama);
 
                 return json_encode([
                     "message" => "Registration successful.",
@@ -226,19 +230,8 @@ class AuthController
         $stmtUpd->bindParam(':email', $email);
 
         if ($stmtUpd->execute()) {
-            // Send Email
-            $resetLink = "https://" . $_SERVER['HTTP_HOST'] . "/reset-password?token=" . $token . "&email=" . urlencode($email);
-            // NOTE: Replace hardcoded domain if needed or rely on HTTP_HOST
-
-            $subject = "Reset Password - MGMP Informatika";
-            $message = "Klik link berikut untuk mereset password Anda: " . $resetLink;
-            $headers = "From: noreply@mgmpinformatika.com";
-
-            // Simple mail() function - Ensure server is configured!
-            // If mail fails, we return generic success to avoid leaking/erroring to user in a way that blocks flow?
-            // Ideally we check bool result of mail()
-
-            if (mail($email, $subject, $message, $headers)) {
+            // Send Email Template via Mailer
+            if (Mailer::sendResetPassword($email, $token)) {
                 return json_encode(["message" => "Reset link sent to your email."]);
             } else {
                 return json_encode(["message" => "Failed to send email. Contact admin. Token generated though."]);

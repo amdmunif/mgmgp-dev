@@ -2,6 +2,7 @@
 // backend/controllers/PremiumController.php
 include_once './config/database.php';
 include_once './utils/Helper.php';
+include_once './utils/Mailer.php';
 
 class PremiumController
 {
@@ -112,6 +113,16 @@ class PremiumController
             $sProfUp->execute();
 
             $this->conn->commit();
+
+            // Fetch user info for email
+            $stmtUser = $this->conn->prepare("SELECT p.nama, u.email FROM profiles p JOIN users u ON p.id = u.id WHERE p.id = :id");
+            $stmtUser->bindParam(':id', $userId);
+            $stmtUser->execute();
+            $userRow = $stmtUser->fetch(PDO::FETCH_ASSOC);
+            if ($userRow && $userRow['email']) {
+                Mailer::sendPremiumVerified($userRow['email'], $userRow['nama'], $newExpiryStr);
+            }
+
             return json_encode(["message" => "Approved successfully", "new_expiry" => $newExpiryStr]);
 
         } catch (Exception $e) {
@@ -158,6 +169,15 @@ class PremiumController
         $stmt->bindParam(':account_holder', $accountHolder);
 
         if ($stmt->execute()) {
+            // Get user info to send email
+            $stmtUser = $this->conn->prepare("SELECT p.nama, u.email FROM profiles p JOIN users u ON p.id = u.id WHERE p.id = :id");
+            $stmtUser->bindParam(':id', $userId);
+            $stmtUser->execute();
+            $userRow = $stmtUser->fetch(PDO::FETCH_ASSOC);
+            if ($userRow && $userRow['email']) {
+                Mailer::sendPremiumUpgradeRequest($userRow['email'], $userRow['nama']);
+            }
+
             return json_encode(["message" => "Request submitted successfully"]);
         }
 

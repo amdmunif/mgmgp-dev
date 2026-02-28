@@ -2,6 +2,7 @@
 // backend/controllers/MemberController.php
 include_once './config/database.php';
 include_once './utils/Helper.php';
+include_once './utils/Mailer.php';
 
 class MemberController
 {
@@ -50,6 +51,23 @@ class MemberController
             return json_encode(["message" => "No fields to update"]);
         }
 
+        $isActivating = false;
+        $userEmail = '';
+        $userNama = '';
+
+        if (isset($data['is_active']) && $data['is_active'] == 1) {
+            $stmtCheck = $this->conn->prepare("SELECT p.is_active, p.nama, u.email FROM profiles p JOIN users u ON p.id = u.id WHERE p.id = :id");
+            $stmtCheck->bindParam(':id', $id);
+            $stmtCheck->execute();
+            $rowCheck = $stmtCheck->fetch(PDO::FETCH_ASSOC);
+
+            if ($rowCheck && $rowCheck['is_active'] == 0) {
+                $isActivating = true;
+                $userEmail = $rowCheck['email'];
+                $userNama = isset($data['nama']) ? $data['nama'] : $rowCheck['nama'];
+            }
+        }
+
         try {
             $this->conn->beginTransaction();
 
@@ -76,6 +94,11 @@ class MemberController
             }
 
             $this->conn->commit();
+
+            if ($isActivating && $userEmail) {
+                Mailer::sendMemberVerified($userEmail, $userNama);
+            }
+
             return json_encode(["message" => "Data Anggota berhasil diperbarui"]);
         } catch (Exception $e) {
             $this->conn->rollBack();
