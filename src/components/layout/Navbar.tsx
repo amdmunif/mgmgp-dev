@@ -22,7 +22,7 @@ export function Navbar() {
 
     useEffect(() => {
         authService.getCurrentUser().then(data => {
-            if (data?.profile) setUser(data.profile);
+            if (data?.user) setUser(data.user);
         });
 
         // Load Settings
@@ -37,8 +37,9 @@ export function Navbar() {
         // Listen for auth changes
         const { data: { subscription } } = authService.onAuthStateChange(async (userSession) => {
             if (userSession) {
-                const { profile } = await authService.getCurrentUser() || {};
-                setUser(profile);
+                const currentData = await authService.getCurrentUser();
+                if (currentData?.user) setUser(currentData.user);
+                else setUser(userSession);
             } else {
                 setUser(null);
             }
@@ -48,7 +49,8 @@ export function Navbar() {
     }, []);
 
     const isActive = (path: string) => location.pathname === path;
-    const isAdminOrPengurus = user?.role === 'Admin' || user?.role === 'Pengurus';
+    const userRole = (user?.role || '').toString().toLowerCase().trim();
+    const isAdminOrPengurus = ['admin', 'pengurus', 'administrator'].includes(userRole);
 
     return (
         <nav className="fixed w-full z-50 top-0 start-0 border-b border-gray-200 bg-white/80 backdrop-blur-md">
