@@ -48,6 +48,7 @@ export function Navbar() {
     }, []);
 
     const isActive = (path: string) => location.pathname === path;
+    const isAdminOrPengurus = user?.role === 'Admin' || user?.role === 'Pengurus';
 
     return (
         <nav className="fixed w-full z-50 top-0 start-0 border-b border-gray-200 bg-white/80 backdrop-blur-md">
@@ -60,16 +61,16 @@ export function Navbar() {
                     <div className="hidden md:flex space-x-3">
                         {user ? (
                             <div className="flex gap-3">
-                                <Link to={user.role === 'Admin' ? "/admin" : "/member"}>
+                                <Link to={isAdminOrPengurus ? "/admin" : "/member"}>
                                     <Button variant="default" size="sm" className="bg-primary-900 hover:bg-primary-800">
                                         <LayoutDashboard className="w-4 h-4 mr-2" />
-                                        {user.role === 'Admin' ? 'Area Admin' : 'Area Anggota'}
+                                        {isAdminOrPengurus ? 'Area Admin' : 'Area Anggota'}
                                     </Button>
                                 </Link>
-                                <Link to={user.role === 'Admin' ? "/admin/settings" : "/member/profile"}>
+                                <Link to={isAdminOrPengurus ? "/admin" : "/member/profile"}>
                                     <Button variant="outline" size="sm">
                                         <User className="w-4 h-4 mr-2" />
-                                        {user.nama?.split(' ')[0] || (user.role === 'Admin' ? 'Administrator' : 'User')}
+                                        {user.nama?.split(' ')[0] || (isAdminOrPengurus ? 'Administrator' : 'User')}
                                     </Button>
                                 </Link>
                             </div>
