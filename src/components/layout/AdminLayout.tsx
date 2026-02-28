@@ -455,7 +455,7 @@ export function AdminLayout() {
                                             <div className="w-8 h-8 rounded-lg bg-red-100/50 group-hover:bg-white flex items-center justify-center transition-colors">
                                                 <LogOut className="w-4 h-4" />
                                             </div>
-                                            LOGOUT KELUAR
+                                            LOGOUT
                                         </button>
                                     </div>
                                 </div>
