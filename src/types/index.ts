@@ -111,7 +111,7 @@ export interface Game {
 export interface Reference {
     id: string;
     title: string;
-    type: 'Buku' | 'Simulator' | 'Game';
+    type: 'Buku' | 'Simulator' | 'Game' | 'Video' | 'Lainnya';
     link_url: string;
     cover_image?: string;
     description?: string;

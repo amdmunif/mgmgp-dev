@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { Book, Globe, Gamepad2, ExternalLink, Search, Loader2 } from 'lucide-react';
+import { Book, Globe, Gamepad2, ExternalLink, Search, Loader2, Video, File } from 'lucide-react';
 import { referenceService } from '../../services/resourcesService';
 import { getFileUrl } from '../../lib/api';
 import type { Reference } from '../../types';
@@ -41,6 +41,8 @@ export function References() {
             case 'Buku': return <Book className="w-6 h-6 text-blue-500" />;
             case 'Simulator': return <Globe className="w-6 h-6 text-green-500" />;
             case 'Game': return <Gamepad2 className="w-6 h-6 text-purple-500" />;
+            case 'Video': return <Video className="w-6 h-6 text-red-500" />;
+            case 'Lainnya': return <File className="w-6 h-6 text-gray-500" />;
             default: return <Book className="w-6 h-6" />;
         }
     };
@@ -81,7 +83,7 @@ export function References() {
                         <p className="text-gray-500">Belum ada referensi tersedia.</p>
                     </div>
                 ) : (
-                    refs.map((item) => (
+                    refs.filter(r => filteredRefs.some(fr => fr.id === r.id)).map((item) => (
                         <a
                             key={item.id}
                             href={item.link_url}

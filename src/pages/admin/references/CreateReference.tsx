@@ -8,7 +8,7 @@ import { referenceService } from '../../../services/resourcesService';
 interface RefForm {
     title: string;
     description: string;
-    type: 'Buku' | 'Simulator' | 'Game';
+    type: 'Buku' | 'Simulator' | 'Game' | 'Video' | 'Lainnya';
     link_url: string;
     is_premium: boolean;
 }
@@ -71,6 +71,8 @@ export function CreateReference() {
                             <option value="Buku">Buku Digital (E-Book)</option>
                             <option value="Simulator">Simulator / web interaktif</option>
                             <option value="Game">Game Edukasi</option>
+                            <option value="Video">Video Pembelajaran</option>
+                            <option value="Lainnya">Lainnya</option>
                         </select>
                         {errors.type && <p className="text-red-500 text-xs mt-1">{errors.type.message}</p>}
                     </div>
