@@ -355,16 +355,10 @@ class ContentController
 
     public function updateParticipantStatus($eventId, $userId, $status)
     {
-        // Update both status and is_hadir for compatibility
         $isHadir = ($status === 'attended') ? 1 : 0;
 
-        // Check if status column exists in schema by try-catch or just update is_hadir if status fails?
-        // Safest approach: Update what we know exists first.
-        // Assuming status column exists based on getUpcomingEvents query.
-
-        $query = "UPDATE event_participants SET status = :status, is_hadir = :is_hadir WHERE event_id = :eid AND user_id = :uid";
+        $query = "UPDATE event_participants SET is_hadir = :is_hadir WHERE event_id = :eid AND user_id = :uid";
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':status', $status);
         $stmt->bindParam(':is_hadir', $isHadir, PDO::PARAM_INT);
         $stmt->bindParam(':eid', $eventId);
         $stmt->bindParam(':uid', $userId);
@@ -391,7 +385,7 @@ class ContentController
         }
 
         // 2. Mark as attended
-        $updateQuery = "UPDATE event_participants SET status = 'attended', is_hadir = 1 WHERE event_id = :eid AND user_id = :uid";
+        $updateQuery = "UPDATE event_participants SET is_hadir = 1 WHERE event_id = :eid AND user_id = :uid";
         $updateStmt = $this->conn->prepare($updateQuery);
         $updateStmt->bindParam(':eid', $eventId);
         $updateStmt->bindParam(':uid', $userId);
@@ -416,11 +410,11 @@ class ContentController
         // Construct placeholders for IN clause
         $placeholders = implode(',', array_fill(0, count($userIds), '?'));
 
-        $query = "UPDATE event_participants SET status = ?, is_hadir = ? WHERE event_id = ? AND user_id IN ($placeholders)";
+        $query = "UPDATE event_participants SET is_hadir = ? WHERE event_id = ? AND user_id IN ($placeholders)";
         $stmt = $this->conn->prepare($query);
 
-        // Bind parameters: status, is_hadir, eventId, ...userIds
-        $params = array_merge([$status, $isHadir, $eventId], $userIds);
+        // Bind parameters: is_hadir, eventId, ...userIds
+        $params = array_merge([$isHadir, $eventId], $userIds);
 
         if ($stmt->execute($params)) {
             return json_encode(["message" => "Bulk update successful"]);
