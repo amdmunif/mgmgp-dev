@@ -27,16 +27,33 @@ jobs:
           VITE_API_URL: "/api"
           VITE_TINYMCE_API_KEY: ${{ secrets.VITE_TINYMCE_API_KEY }}
 
-      - name: Deploy via LFTP
-        env:
-          FTP_SERVER: ${{ secrets.FTP_SERVER }}
-          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
-          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
-        run: |
-          sudo apt-get update && sudo apt-get install -y lftp
-          
-          # Deploy Frontend
-          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" -e "set ssl:verify-certificate no; set ftp:ssl-allow yes; set net:timeout 10; set net:reconnect-interval-base 2; set net:max-retries 3; mirror -R -v -c --parallel=4 --exclude-glob .git* --exclude-glob node_modules/ ./dist/ ./; quit" "$FTP_SERVER"
-          
-          # Deploy Backend
-          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" -e "set ssl:verify-certificate no; set ftp:ssl-allow yes; set net:timeout 10; set net:reconnect-interval-base 2; set net:max-retries 3; mirror -R -v -c --parallel=4 --exclude-glob .git* --exclude-glob node_modules/ --exclude-glob .env --exclude-glob database.php --exclude-glob uploads/ ./backend/ ./api/; quit" "$FTP_SERVER"
+      - name: Sync Frontend Files
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./dist/
+          server-dir: ./
+          timeout: 120000
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+
+      - name: Sync Backend Files
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./backend/
+          server-dir: ./api/
+          timeout: 120000
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            .env
+            config/database.php
+            uploads/
