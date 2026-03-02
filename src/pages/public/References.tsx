@@ -95,10 +95,17 @@ export function References() {
         }
     ], []);
 
+    const [filterType, setFilterType] = useState('all');
+
+    const filteredRefs = useMemo(() => {
+        if (filterType === 'all') return refs;
+        return refs.filter(r => r.type === filterType);
+    }, [refs, filterType]);
+
     return (
-        <div className="max-w-screen-xl mx-auto px-4 py-8 animate-in fade-in duration-500">
+        <div className="space-y-6 animate-in fade-in duration-500">
             {!setPageHeader && (
-                <div className="text-center mb-8">
+                <div className="text-center mb-8 pt-8">
                     <h1 className="text-3xl font-bold text-gray-900">Bank Referensi</h1>
                     <p className="text-gray-500 mt-2">Buku digital, simulator interaktif, dan game edukasi terkurasi.</p>
                 </div>
@@ -109,10 +116,24 @@ export function References() {
                     <div className="p-8 text-center text-gray-500">Memuat data referensi...</div>
                 ) : (
                     <DataTable
-                        data={refs}
+                        data={filteredRefs}
                         columns={columns}
                         searchKeys={['title', 'type', 'description']}
                         pageSize={15}
+                        filterContent={
+                            <select
+                                className="border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 h-[38px]"
+                                value={filterType}
+                                onChange={(e) => setFilterType(e.target.value)}
+                            >
+                                <option value="all">Semua Tipe</option>
+                                <option value="Buku">Buku</option>
+                                <option value="Simulator">Simulator</option>
+                                <option value="Game">Game</option>
+                                <option value="Video">Video</option>
+                                <option value="Lainnya">Lainnya</option>
+                            </select>
+                        }
                     />
                 )}
             </div>

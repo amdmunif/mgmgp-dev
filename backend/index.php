@@ -307,10 +307,16 @@ if ($resource === 'news') {
         echo $controller->getAll();
 } elseif ($resource === 'references') {
     $controller = new ResourceController();
-    if ($_SERVER['REQUEST_METHOD'] === 'GET')
-        echo $controller->getReferences();
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        if ($action)
+            echo $controller->getReferenceById($action);
+        else
+            echo $controller->getReferences();
+    }
     if ($_SERVER['REQUEST_METHOD'] === 'POST')
         echo $controller->createReference($input);
+    if ($_SERVER['REQUEST_METHOD'] === 'PUT' && $action)
+        echo $controller->updateReference($action, $input);
     if ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action)
         echo $controller->deleteReference($action);
 } elseif ($resource === 'learning') {

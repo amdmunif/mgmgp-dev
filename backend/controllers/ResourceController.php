@@ -137,6 +137,43 @@ class ResourceController
         return json_encode(["message" => "Failed to create reference"]);
     }
 
+    public function getReferenceById($id)
+    {
+        $query = "SELECT * FROM learning_references WHERE id = :id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':id', $id);
+        $stmt->execute();
+
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($row) {
+            return json_encode($row);
+        } else {
+            http_response_code(404);
+            return json_encode(["message" => "Reference not found"]);
+        }
+    }
+
+    public function updateReference($id, $data)
+    {
+        $query = "UPDATE learning_references SET title = :title, type = :type, link_url = :link_url, description = :description, is_premium = :is_premium WHERE id = :id";
+        $stmt = $this->conn->prepare($query);
+
+        $is_premium = isset($data['is_premium']) ? $data['is_premium'] : 0;
+
+        $stmt->bindParam(':id', $id);
+        $stmt->bindParam(':title', $data['title']);
+        $stmt->bindParam(':type', $data['type']);
+        $stmt->bindParam(':link_url', $data['link_url']);
+        $stmt->bindParam(':description', $data['description']);
+        $stmt->bindParam(':is_premium', $is_premium);
+
+        if ($stmt->execute()) {
+            return json_encode(["message" => "Reference updated", "id" => $id]);
+        }
+        http_response_code(500);
+        return json_encode(["message" => "Failed to update reference"]);
+    }
+
     public function deleteReference($id)
     {
         return $this->delete('learning_references', $id);
