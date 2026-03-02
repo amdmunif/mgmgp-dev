@@ -28,8 +28,16 @@ export const referenceService = {
         return api.get<Reference[]>('/references');
     },
 
+    async getById(id: string) {
+        return api.get<Reference>(`/references/${id}`);
+    },
+
     async create(ref: Omit<Reference, 'id' | 'created_at'>) {
         return api.post<Reference>('/references', ref);
+    },
+
+    async update(id: string, updates: Partial<Reference>) {
+        return api.put<Reference>(`/references/${id}`, updates);
     },
 
     async delete(id: string) {

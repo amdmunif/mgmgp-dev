@@ -85,21 +85,12 @@ export function AdminEvents() {
         )
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-    const stripHtml = (html: string) => {
-        const tmp = document.createElement("DIV");
-        tmp.innerHTML = html;
-        return tmp.textContent || tmp.innerText || "";
-    };
-
     const columns = [
         {
             header: "Nama Kegiatan",
             accessorKey: "title" as keyof Event,
             cell: (item: Event) => (
-                <div>
-                    <div className="font-bold text-gray-900 text-lg">{item.title}</div>
-                    <p className="text-xs text-gray-500 line-clamp-1">{stripHtml(item.description)}</p>
-                </div>
+                <div className="font-bold text-gray-900 text-lg py-2">{item.title}</div>
             )
         },
         {

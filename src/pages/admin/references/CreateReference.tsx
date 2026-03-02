@@ -1,9 +1,10 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { Button } from '../../../components/ui/button';
 import { ArrowLeft, Loader2, Book } from 'lucide-react';
 import { referenceService } from '../../../services/resourcesService';
+import { toast } from 'react-hot-toast';
 
 interface RefForm {
     title: string;
@@ -15,26 +16,69 @@ interface RefForm {
 
 export function CreateReference() {
     const navigate = useNavigate();
-    const { register, handleSubmit, formState: { errors } } = useForm<RefForm>({
+    const { id } = useParams<{ id: string }>();
+    const isEditing = !!id;
+
+    const { register, handleSubmit, reset, formState: { errors } } = useForm<RefForm>({
         defaultValues: {
             is_premium: true
         }
     });
 
     const [submitting, setSubmitting] = useState(false);
+    const [loadingData, setLoadingData] = useState(isEditing);
+
+    useEffect(() => {
+        if (isEditing && id) {
+            const loadReference = async () => {
+                try {
+                    const data = await referenceService.getById(id);
+                    // Pre-fill form
+                    reset({
+                        title: data.title,
+                        description: data.description || '',
+                        type: data.type as RefForm['type'],
+                        link_url: data.link_url,
+                        is_premium: data.is_premium
+                    });
+                } catch (error) {
+                    console.error('Error loading reference:', error);
+                    toast.error('Gagal memuat data referensi');
+                    navigate('/admin/references');
+                } finally {
+                    setLoadingData(false);
+                }
+            };
+            loadReference();
+        }
+    }, [isEditing, id, reset, navigate]);
 
     const onSubmit = async (data: RefForm) => {
         setSubmitting(true);
         try {
-            await referenceService.create(data);
+            if (isEditing && id) {
+                await referenceService.update(id, data);
+                toast.success('Referensi berhasil diperbarui');
+            } else {
+                await referenceService.create(data);
+                toast.success('Referensi berhasil ditambahkan');
+            }
             navigate('/admin/references');
         } catch (error) {
             console.error(error);
-            alert('Gagal menyimpan referensi');
+            toast.error(isEditing ? 'Gagal memperbarui referensi' : 'Gagal menyimpan referensi');
         } finally {
             setSubmitting(false);
         }
     };
+
+    if (loadingData) {
+        return (
+            <div className="flex justify-center py-20">
+                <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -47,7 +91,9 @@ export function CreateReference() {
                     <div className="p-3 bg-blue-100 rounded-xl text-blue-600">
                         <Book className="w-6 h-6" />
                     </div>
-                    <h1 className="text-2xl font-bold text-gray-900">Tambah Referensi Baru</h1>
+                    <h1 className="text-2xl font-bold text-gray-900">
+                        {isEditing ? 'Edit Referensi' : 'Tambah Referensi Baru'}
+                    </h1>
                 </div>
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -97,12 +143,10 @@ export function CreateReference() {
                         />
                     </div>
 
-
-
                     <div className="pt-4 flex justify-end gap-3">
                         <Button type="button" variant="outline" onClick={() => navigate(-1)}>Batal</Button>
                         <Button type="submit" disabled={submitting} className="bg-blue-600 hover:bg-blue-700">
-                            {submitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Menyimpan...</> : 'Simpan Referensi'}
+                            {submitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Menyimpan...</> : (isEditing ? 'Simpan Perubahan' : 'Simpan Referensi')}
                         </Button>
                     </div>
                 </form>

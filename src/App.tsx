@@ -190,6 +190,7 @@ function App() {
           <Route path="prompts/create" element={<CreatePrompt />} />
           <Route path="references" element={<AdminReferences />} />
           <Route path="references/create" element={<CreateReference />} />
+          <Route path="references/edit/:id" element={<CreateReference />} />
           <Route path="gallery" element={<AdminGallery />} />
           <Route path="messages" element={<AdminMessages />} />
           <Route path="contributors" element={<VerificationList />} />

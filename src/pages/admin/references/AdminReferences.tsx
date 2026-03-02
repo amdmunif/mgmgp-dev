@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
 import { Button } from '../../../components/ui/button';
-import { Plus, Trash2, Book, Globe, Gamepad2, ExternalLink, Library } from 'lucide-react';
+import { Plus, Trash2, Book, Globe, Gamepad2, ExternalLink, Library, Pencil } from 'lucide-react';
 import { referenceService } from '../../../services/resourcesService';
 import type { Reference } from '../../../types';
 import { DataTable } from '../../../components/ui/DataTable';
@@ -95,11 +95,27 @@ export function AdminReferences() {
             header: 'Aksi',
             className: 'text-right',
             cell: (item: Reference) => (
-                <div className="flex justify-end">
+                <div className="flex justify-end gap-2 pr-2">
+                    <a
+                        href={item.link_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 p-2 rounded-lg transition-colors"
+                        title="Lihat Referensi"
+                    >
+                        <ExternalLink className="w-4 h-4" />
+                    </a>
+                    <Link
+                        to={`/admin/references/edit/${item.id}`}
+                        className="text-amber-500 hover:text-amber-700 bg-amber-50 hover:bg-amber-100 p-2 rounded-lg transition-colors"
+                        title="Edit Referensi"
+                    >
+                        <Pencil className="w-4 h-4" />
+                    </Link>
                     <button
                         onClick={() => handleDelete(item.id)}
                         className="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-2 rounded-lg transition-colors"
-                        title="Hapus"
+                        title="Hapus Referensi"
                     >
                         <Trash2 className="w-4 h-4" />
                     </button>
