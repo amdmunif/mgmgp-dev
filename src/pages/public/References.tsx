@@ -1,15 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { Book, Globe, Gamepad2, ExternalLink, Search, Loader2, Video, File } from 'lucide-react';
+import { Book, Globe, Gamepad2, ExternalLink, Video, File } from 'lucide-react';
 import { referenceService } from '../../services/resourcesService';
 import { getFileUrl } from '../../lib/api';
 import type { Reference } from '../../types';
+import { DataTable } from '../../components/ui/DataTable';
 
 export function References() {
     const { setPageHeader } = useOutletContext<any>() || {};
     const [refs, setRefs] = useState<Reference[]>([]);
     const [loading, setLoading] = useState(true);
-    const [search, setSearch] = useState('');
 
     useEffect(() => {
         if (setPageHeader) {
@@ -38,19 +38,62 @@ export function References() {
 
     const getIcon = (type: string) => {
         switch (type) {
-            case 'Buku': return <Book className="w-6 h-6 text-blue-500" />;
-            case 'Simulator': return <Globe className="w-6 h-6 text-green-500" />;
-            case 'Game': return <Gamepad2 className="w-6 h-6 text-purple-500" />;
-            case 'Video': return <Video className="w-6 h-6 text-red-500" />;
-            case 'Lainnya': return <File className="w-6 h-6 text-gray-500" />;
-            default: return <Book className="w-6 h-6" />;
+            case 'Buku': return <Book className="w-5 h-5 text-blue-500" />;
+            case 'Simulator': return <Globe className="w-5 h-5 text-green-500" />;
+            case 'Game': return <Gamepad2 className="w-5 h-5 text-purple-500" />;
+            case 'Video': return <Video className="w-5 h-5 text-red-500" />;
+            case 'Lainnya': return <File className="w-5 h-5 text-gray-500" />;
+            default: return <Book className="w-5 h-5" />;
         }
     };
 
-    const filteredRefs = refs.filter(r =>
-        r.title.toLowerCase().includes(search.toLowerCase()) ||
-        r.type.toLowerCase().includes(search.toLowerCase())
-    );
+    const columns = useMemo(() => [
+        {
+            header: "Referensi",
+            accessorKey: "title" as keyof Reference,
+            cell: (item: Reference) => (
+                <div className="flex items-start gap-3 py-1">
+                    <div className="flex-shrink-0 w-12 h-12 bg-gray-50 rounded-lg border border-gray-100 flex items-center justify-center overflow-hidden">
+                        {item.cover_image ? (
+                            <img src={getFileUrl(item.cover_image)} alt={item.title} className="w-full h-full object-cover" />
+                        ) : (
+                            getIcon(item.type)
+                        )}
+                    </div>
+                    <div>
+                        <div className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{item.title}</div>
+                        {item.description && <div className="text-sm text-gray-500 line-clamp-2 mt-0.5">{item.description}</div>}
+                    </div>
+                </div>
+            )
+        },
+        {
+            header: "Tipe",
+            accessorKey: "type" as keyof Reference,
+            cell: (item: Reference) => (
+                <span className="bg-gray-100 text-gray-700 px-2.5 py-1 rounded-md text-xs font-semibold border border-gray-200">
+                    {item.type}
+                </span>
+            ),
+            className: "w-32"
+        },
+        {
+            header: "Aksi",
+            cell: (item: Reference) => (
+                <div className="flex justify-end pr-2">
+                    <a
+                        href={item.link_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors border border-blue-100"
+                    >
+                        <ExternalLink className="w-4 h-4" /> Buka
+                    </a>
+                </div>
+            ),
+            className: "w-32 text-right"
+        }
+    ], []);
 
     return (
         <div className="max-w-screen-xl mx-auto px-4 py-8 animate-in fade-in duration-500">
@@ -61,55 +104,16 @@ export function References() {
                 </div>
             )}
 
-            <div className="max-w-md mx-auto mb-10 relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                    type="text"
-                    placeholder="Cari referensi (Buku, Simulator)..."
-                    className="pl-12 w-full rounded-full border border-gray-200 py-3 shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 {loading ? (
-                    <div className="col-span-full flex justify-center py-20">
-                        <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
-                    </div>
-                ) : filteredRefs.length === 0 ? (
-                    <div className="col-span-full text-center py-20 bg-gray-50 rounded-xl">
-                        <Book className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                        <p className="text-gray-500">Belum ada referensi tersedia.</p>
-                    </div>
+                    <div className="p-8 text-center text-gray-500">Memuat data referensi...</div>
                 ) : (
-                    refs.filter(r => filteredRefs.some(fr => fr.id === r.id)).map((item) => (
-                        <a
-                            key={item.id}
-                            href={item.link_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all group block"
-                        >
-                            <div className="aspect-video bg-gray-100 relative overflow-hidden flex items-center justify-center">
-                                {item.cover_image ? (
-                                    <img src={getFileUrl(item.cover_image)} alt={item.title} className="w-full h-full object-cover" />
-                                ) : (
-                                    getIcon(item.type)
-                                )}
-                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                                    <ExternalLink className="w-8 h-8 text-white drop-shadow-md" />
-                                </div>
-                            </div>
-                            <div className="p-4">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-2 py-1 rounded uppercase">{item.type}</span>
-                                </div>
-                                <h3 className="font-bold text-gray-900 line-clamp-2 mb-1 group-hover:text-primary-600 transition-colors">{item.title}</h3>
-                                {item.description && <p className="text-xs text-gray-500 line-clamp-2">{item.description}</p>}
-                            </div>
-                        </a>
-                    ))
+                    <DataTable
+                        data={refs}
+                        columns={columns}
+                        searchKeys={['title', 'type', 'description']}
+                        pageSize={15}
+                    />
                 )}
             </div>
         </div>
