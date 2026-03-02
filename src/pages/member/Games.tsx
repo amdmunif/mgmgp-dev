@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Gamepad2, Play } from 'lucide-react';
+import { Gamepad2, Play, Copy } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { Button } from '../../components/ui/button';
 import { gameService } from '../../services/gameService';
 import type { Game } from '../../types';
@@ -54,48 +55,43 @@ export function Games() {
                         )}
                     </div>
                     <div>
-                        <div className="font-bold text-gray-900 group-hover:text-purple-600 transition-colors">{item.title}</div>
+                        <div className="font-bold text-gray-900 group-hover:text-purple-600 transition-colors">
+                            {item.title}
+                            {item.is_premium && (
+                                <span className="ml-2 inline-block bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border border-yellow-200 align-middle">
+                                    Premium
+                                </span>
+                            )}
+                        </div>
                         {item.description && <div className="text-sm text-gray-500 line-clamp-2 mt-0.5">{item.description}</div>}
                     </div>
                 </div>
             )
         },
         {
-            header: "Akses",
-            accessorKey: "is_premium" as keyof Game,
-            cell: (item: Game) => (
-                item.is_premium ? (
-                    <span className="bg-yellow-100 text-yellow-800 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border border-yellow-200">
-                        Premium
-                    </span>
-                ) : (
-                    <span className="bg-green-100 text-green-800 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border border-green-200">
-                        Publik
-                    </span>
-                )
-            ),
-            className: "w-32"
-        },
-        {
-            header: "Dimainkan",
-            accessorKey: "plays_count" as keyof Game,
-            cell: (item: Game) => (
-                <span className="text-sm font-medium text-gray-500">{item.plays_count || 0} kali</span>
-            ),
-            className: "w-32"
-        },
-        {
             header: "Aksi",
             cell: (item: Game) => (
-                <div className="flex justify-end pr-2">
+                <div className="flex justify-end pr-2 gap-2">
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        className="bg-white hover:bg-gray-50 text-gray-600 h-8"
+                        onClick={() => {
+                            navigator.clipboard.writeText(item.link_url);
+                            toast.success('Link disalin ke clipboard');
+                        }}
+                        title="Copy Link"
+                    >
+                        <Copy className="w-4 h-4" />
+                    </Button>
                     <a href={item.link_url} target="_blank" rel="noopener noreferrer">
-                        <Button size="sm" className="bg-purple-600 hover:bg-purple-700 h-8">
+                        <Button size="sm" className="bg-purple-600 hover:bg-purple-700 h-8 w-24">
                             <Play className="w-4 h-4 mr-1.5" /> Mainkan
                         </Button>
                     </a>
                 </div>
             ),
-            className: "w-32 text-right"
+            className: "w-40 text-right"
         }
     ], []);
 
