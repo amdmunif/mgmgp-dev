@@ -1,18 +1,17 @@
-import { useState, useEffect } from 'react';
-import { Book, Download, Presentation, FileText, X } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Book, Download, Presentation, FileText, X, Eye } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { learningService } from '../../services/learningService';
-import { cn } from '../../lib/utils';
 import type { LearningMaterial } from '../../types';
 import { FileViewer } from '../../components/ui/FileViewer';
-
 import { useOutletContext } from 'react-router-dom';
+import { DataTable } from '../../components/ui/DataTable';
 
 export function Modules() {
     const { setPageHeader } = useOutletContext<any>();
     const [materials, setMaterials] = useState<LearningMaterial[]>([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'modul' | 'slide'>('modul');
+    const [filterType, setFilterType] = useState('modul');
     const [viewingMaterial, setViewingMaterial] = useState<LearningMaterial | null>(null);
 
     useEffect(() => {
@@ -21,7 +20,7 @@ export function Modules() {
             description: 'Akses koleksi perangkat ajar lengkap siap pakai.',
             icon: <Book className="w-6 h-6 text-yellow-600" />
         });
-    }, []);
+    }, [setPageHeader]);
 
     useEffect(() => {
         const loadData = async () => {
@@ -37,11 +36,13 @@ export function Modules() {
         loadData();
     }, []);
 
-    const filteredMaterials = materials.filter(m => {
-        if (activeTab === 'modul') return m.type === 'modul' || m.type === 'rpp';
-        if (activeTab === 'slide') return m.type === 'slide';
-        return false;
-    });
+    const filteredMaterials = useMemo(() => {
+        return materials.filter(m => {
+            if (filterType === 'modul') return m.type === 'modul' || m.type === 'rpp';
+            if (filterType === 'slide') return m.type === 'slide';
+            return true;
+        });
+    }, [materials, filterType]);
 
     const getPhase = (kelas?: string) => {
         if (!kelas) return 'Umum';
@@ -51,40 +52,64 @@ export function Modules() {
         return 'Umum';
     };
 
+    const columns = useMemo(() => [
+        {
+            header: "Perangkat Ajar",
+            accessorKey: "title" as keyof LearningMaterial,
+            cell: (item: LearningMaterial) => (
+                <div className="flex items-start gap-3 py-1">
+                    <div className="flex-shrink-0 w-12 h-12 bg-yellow-50 rounded-lg border border-yellow-100 flex items-center justify-center">
+                        {item.type === 'slide' ? <Presentation className="w-5 h-5 text-yellow-600" /> : <FileText className="w-5 h-5 text-blue-600" />}
+                    </div>
+                    <div>
+                        <div className="font-bold text-gray-900 group-hover:text-yellow-600 transition-colors uppercase text-xs mb-0.5 tracking-wider">{item.type}</div>
+                        <div className="font-semibold text-sm line-clamp-2">{item.title}</div>
+                        {item.mapel && <div className="text-xs text-gray-500 mt-1">{item.mapel}</div>}
+                    </div>
+                </div>
+            )
+        },
+        {
+            header: "Target/Kelas",
+            accessorKey: "kelas" as keyof LearningMaterial,
+            cell: (item: LearningMaterial) => (
+                <div className="flex flex-wrap gap-1.5">
+                    <span className={`text-[10px] font-bold px-2 py-1 rounded-md border ${getPhase(item.kelas) === 'Fase D' ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-green-50 text-green-700 border-green-100'}`}>
+                        {getPhase(item.kelas)}
+                    </span>
+                    {item.kelas && <span className="text-[10px] font-bold px-2 py-1 rounded-md bg-gray-50 text-gray-700 border border-gray-200">Kls {item.kelas}</span>}
+                    {item.semester && <span className="text-[10px] font-bold px-2 py-1 rounded-md bg-gray-50 text-gray-700 border border-gray-200">Smt {item.semester}</span>}
+                </div>
+            ),
+            className: "w-48"
+        },
+        {
+            header: "Aksi",
+            cell: (item: LearningMaterial) => (
+                <div className="flex items-center justify-end gap-2 pr-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="bg-white border-gray-200 text-gray-700 hover:bg-gray-50 h-8"
+                        onClick={() => setViewingMaterial(item)}
+                        title="Lihat Pratinjau"
+                    >
+                        <Eye className="w-4 h-4" />
+                    </Button>
+                    <a href={item.file_url} target="_blank" rel="noopener noreferrer">
+                        <Button size="sm" className="bg-white border text-yellow-700 border-yellow-300 hover:bg-yellow-50 h-8" title="Download File">
+                            <Download className="w-4 h-4" />
+                        </Button>
+                    </a>
+                </div>
+            ),
+            className: "w-32 text-right"
+        }
+    ], []);
+
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
-
-            {/* Tabs */}
-            <div className="border-b border-gray-200">
-                <div className="flex space-x-8">
-                    <button
-                        onClick={() => setActiveTab('modul')}
-                        className={cn(
-                            "py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors",
-                            activeTab === 'modul'
-                                ? "border-yellow-500 text-yellow-600"
-                                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                        )}
-                    >
-                        <Book className="w-4 h-4" />
-                        Modul Ajar
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('slide')}
-                        className={cn(
-                            "py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors",
-                            activeTab === 'slide'
-                                ? "border-yellow-500 text-yellow-600"
-                                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                        )}
-                    >
-                        <Presentation className="w-4 h-4" />
-                        Slide Presentasi
-                    </button>
-                </div>
-            </div>
-
-            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-100 rounded-xl p-6 mb-8">
+            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl p-6 shadow-sm">
                 <h3 className="text-lg font-bold text-yellow-800 mb-2">Benefit Konten Premium</h3>
                 <ul className="list-disc list-inside text-yellow-700 space-y-1 text-sm">
                     <li>Materi sudah terintegrasi dengan CP/TP terbaru.</li>
@@ -93,50 +118,29 @@ export function Modules() {
                 </ul>
             </div>
 
-            {loading ? (
-                <div className="text-center py-20 text-gray-500">Memuat materi...</div>
-            ) : filteredMaterials.length === 0 ? (
-                <div className="text-center py-20 bg-white rounded-xl border border-gray-100">
-                    <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                    <p className="text-gray-500">Belum ada materi di kategori ini.</p>
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {filteredMaterials.map((mod) => (
-                        <div key={mod.id} className="bg-white p-5 rounded-xl border border-gray-200 hover:border-yellow-400 hover:shadow-md transition-all flex flex-col justify-between h-full">
-                            <div>
-                                <div className="flex justify-between items-start mb-2">
-                                    <div className="flex gap-2">
-                                        <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${getPhase(mod.kelas) === 'Fase D' ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'}`}>
-                                            {getPhase(mod.kelas)}
-                                        </span>
-                                        {mod.kelas && <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-gray-100 text-gray-600">Kelas {mod.kelas}</span>}
-                                        {mod.semester && <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-gray-100 text-gray-600">Smt {mod.semester}</span>}
-                                    </div>
-                                    <span className="text-xs font-bold text-gray-400 uppercase">{mod.type}</span>
-                                </div>
-                                <h3 className="font-bold text-gray-900 text-lg leading-snug mb-2">{mod.title}</h3>
-                                {mod.mapel && <p className="text-sm text-gray-500 mb-1">{mod.mapel}</p>}
-                                <div className="text-xs text-gray-400 mb-4 line-clamp-2" dangerouslySetInnerHTML={{ __html: mod.content || '' }} />
-                            </div>
-                            <div className="mt-4 pt-4 border-t border-gray-50 flex gap-2">
-                                <Button
-                                    variant="outline"
-                                    className="flex-1 bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
-                                    onClick={() => setViewingMaterial(mod)}
-                                >
-                                    <Book className="w-4 h-4 mr-2" /> Lihat
-                                </Button>
-                                <a href={mod.file_url} target="_blank" rel="noopener noreferrer" className="flex-1">
-                                    <Button className="w-full bg-white border-2 border-yellow-400 text-yellow-600 hover:bg-yellow-50">
-                                        <Download className="w-4 h-4 mr-2" /> Download
-                                    </Button>
-                                </a>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                {loading ? (
+                    <div className="p-8 text-center text-gray-500">Memuat data modul...</div>
+                ) : (
+                    <DataTable
+                        data={filteredMaterials}
+                        columns={columns}
+                        searchKeys={['title', 'mapel', 'type', 'content']}
+                        pageSize={15}
+                        filterContent={
+                            <select
+                                className="border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-yellow-500 h-[38px]"
+                                value={filterType}
+                                onChange={(e) => setFilterType(e.target.value)}
+                            >
+                                <option value="all">Semua Tipe</option>
+                                <option value="modul">Modul Ajar (RPP / Modul)</option>
+                                <option value="slide">Slide Presentasi (PPT)</option>
+                            </select>
+                        }
+                    />
+                )}
+            </div>
 
             {/* View Modal */}
             {viewingMaterial && (
