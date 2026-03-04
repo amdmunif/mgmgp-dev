@@ -160,6 +160,23 @@ export function AdminLayout() {
         }));
     };
 
+    // Handle click outside to close profile dropdown
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+                setIsProfileOpen(false);
+            }
+        };
+
+        if (isProfileOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isProfileOpen]);
+
     const handleLogout = async () => {
         await authService.logout();
         navigate('/login');

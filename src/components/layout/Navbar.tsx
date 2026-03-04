@@ -63,16 +63,18 @@ export function Navbar() {
                     <div className="hidden md:flex space-x-3">
                         {user ? (
                             <div className="flex gap-3">
+                                {isAdminOrPengurus && (
+                                    <Link to="/member">
+                                        <Button variant="outline" size="sm">
+                                            <User className="w-4 h-4 mr-2" />
+                                            Area Anggota
+                                        </Button>
+                                    </Link>
+                                )}
                                 <Link to={isAdminOrPengurus ? "/admin" : "/member"}>
                                     <Button variant="default" size="sm" className="bg-primary-900 hover:bg-primary-800">
                                         <LayoutDashboard className="w-4 h-4 mr-2" />
                                         {isAdminOrPengurus ? 'Area Admin' : 'Area Anggota'}
-                                    </Button>
-                                </Link>
-                                <Link to={isAdminOrPengurus ? "/admin" : "/member/profile"}>
-                                    <Button variant="outline" size="sm">
-                                        <User className="w-4 h-4 mr-2" />
-                                        {user.nama?.split(' ')[0] || (isAdminOrPengurus ? 'Administrator' : 'User')}
                                     </Button>
                                 </Link>
                             </div>
@@ -129,19 +131,40 @@ export function Navbar() {
                                 </Link>
                             </li>
                         ))}
-                        {/* Mobile Only Login/Register */}
+                        {/* Mobile Only Login/Register/UserMenu */}
                         <li className="mt-4 pt-4 border-t border-gray-200 md:hidden flex flex-col gap-3">
-                            <Link to="/login" className="w-full" onClick={() => setIsOpen(false)}>
-                                <Button variant="default" size="sm" className="w-full justify-start">
-                                    <User className="w-4 h-4 mr-2" />
-                                    Login Anggota
-                                </Button>
-                            </Link>
-                            <Link to="/register" className="w-full" onClick={() => setIsOpen(false)}>
-                                <Button variant="outline" size="sm" className="w-full justify-start">
-                                    Daftar Sekarang
-                                </Button>
-                            </Link>
+                            {user ? (
+                                <>
+                                    {isAdminOrPengurus && (
+                                        <Link to="/member" className="w-full" onClick={() => setIsOpen(false)}>
+                                            <Button variant="outline" size="sm" className="w-full justify-start">
+                                                <User className="w-4 h-4 mr-2" />
+                                                Area Anggota
+                                            </Button>
+                                        </Link>
+                                    )}
+                                    <Link to={isAdminOrPengurus ? "/admin" : "/member"} className="w-full" onClick={() => setIsOpen(false)}>
+                                        <Button variant="default" size="sm" className="w-full justify-start bg-primary-900 hover:bg-primary-800">
+                                            <LayoutDashboard className="w-4 h-4 mr-2" />
+                                            {isAdminOrPengurus ? 'Area Admin' : 'Area Anggota'}
+                                        </Button>
+                                    </Link>
+                                </>
+                            ) : (
+                                <>
+                                    <Link to="/login" className="w-full" onClick={() => setIsOpen(false)}>
+                                        <Button variant="default" size="sm" className="w-full justify-start">
+                                            <User className="w-4 h-4 mr-2" />
+                                            Login Anggota
+                                        </Button>
+                                    </Link>
+                                    <Link to="/register" className="w-full" onClick={() => setIsOpen(false)}>
+                                        <Button variant="outline" size="sm" className="w-full justify-start">
+                                            Daftar Sekarang
+                                        </Button>
+                                    </Link>
+                                </>
+                            )}
                         </li>
                     </ul>
                 </div>
