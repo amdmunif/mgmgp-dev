@@ -100,14 +100,14 @@ export function PromptLibrary() {
             accessorKey: 'prompt_content' as keyof Prompt,
             className: 'align-top',
             cell: (item: Prompt) => (
-                <div className="bg-gray-50 border border-gray-100 rounded-lg p-3 text-left font-mono text-xs text-gray-700 whitespace-pre-wrap max-w-md max-h-32 overflow-y-auto">
+                <div className="bg-gray-50 border border-gray-100 rounded-lg p-3 text-left font-mono text-xs text-gray-700 whitespace-pre-wrap max-h-32 overflow-y-auto">
                     {item.prompt_content}
                 </div>
             )
         },
         {
             header: 'Aksi',
-            className: 'align-top text-right w-32 shrink-0',
+            className: 'align-top text-right w-40 shrink-0',
             cell: (item: Prompt) => (
                 <div className="flex flex-wrap justify-end gap-1">
                     <button
@@ -144,7 +144,7 @@ export function PromptLibrary() {
     ];
 
     return (
-        <div className="max-w-screen-xl mx-auto px-4 py-8 animate-in fade-in duration-500">
+        <div className="space-y-6 animate-in fade-in duration-500">
             {!setPageHeader && (
                 <div className="text-center mb-12">
                     <h1 className="text-3xl font-bold text-gray-900">Kumpulan Prompt AI</h1>
