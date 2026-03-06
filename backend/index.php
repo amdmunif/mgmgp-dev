@@ -298,6 +298,8 @@ if ($resource === 'news') {
         echo $controller->getPrompts();
     if ($_SERVER['REQUEST_METHOD'] === 'POST')
         echo $controller->createPrompt($input);
+    if ($_SERVER['REQUEST_METHOD'] === 'PUT' && $action)
+        echo $controller->updatePrompt($action, $input);
     if ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action)
         echo $controller->deletePrompt($action);
 } elseif ($resource === 'logs') {

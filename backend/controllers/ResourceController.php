@@ -82,19 +82,23 @@ class ResourceController
     public function createPrompt($data)
     {
         $id = Helper::uuid();
-        $query = "INSERT INTO prompt_library (id, title, prompt_content, description, example_result, example_type, tags, is_premium) VALUES (:id, :title, :prompt_content, :description, :example_result, :example_type, :tags, :is_premium)";
+        $query = "INSERT INTO prompt_library (id, title, prompt_content, description, example_result, example_type, tags, category, is_premium) VALUES (:id, :title, :prompt_content, :description, :example_result, :example_type, :tags, :category, :is_premium)";
         $stmt = $this->conn->prepare($query);
 
         $tags = isset($data['tags']) ? json_encode($data['tags']) : '[]';
+        $category = isset($data['category']) ? $data['category'] : 'General';
+        $example_type = isset($data['example_type']) ? $data['example_type'] : 'text';
+        $example_result = isset($data['example_result']) ? $data['example_result'] : null;
         $is_premium = isset($data['is_premium']) ? $data['is_premium'] : 1;
 
         $stmt->bindParam(':id', $id);
         $stmt->bindParam(':title', $data['title']);
         $stmt->bindParam(':prompt_content', $data['prompt_content']);
         $stmt->bindParam(':description', $data['description']);
-        $stmt->bindParam(':example_result', $data['example_result']);
-        $stmt->bindParam(':example_type', $data['example_type']);
+        $stmt->bindParam(':example_result', $example_result);
+        $stmt->bindParam(':example_type', $example_type);
         $stmt->bindParam(':tags', $tags);
+        $stmt->bindParam(':category', $category);
         $stmt->bindParam(':is_premium', $is_premium);
 
         if ($stmt->execute()) {
@@ -102,6 +106,32 @@ class ResourceController
         }
         http_response_code(500);
         return json_encode(["message" => "Failed to create prompt"]);
+    }
+
+    public function updatePrompt($id, $data)
+    {
+        $query = "UPDATE prompt_library SET title = :title, prompt_content = :prompt_content, description = :description, example_result = :example_result, example_type = :example_type, category = :category, is_premium = :is_premium WHERE id = :id";
+        $stmt = $this->conn->prepare($query);
+
+        $category = isset($data['category']) ? $data['category'] : 'General';
+        $example_type = isset($data['example_type']) ? $data['example_type'] : 'text';
+        $example_result = isset($data['example_result']) ? $data['example_result'] : null;
+        $is_premium = isset($data['is_premium']) ? $data['is_premium'] : 1;
+
+        $stmt->bindParam(':id', $id);
+        $stmt->bindParam(':title', $data['title']);
+        $stmt->bindParam(':prompt_content', $data['prompt_content']);
+        $stmt->bindParam(':description', $data['description']);
+        $stmt->bindParam(':example_result', $example_result);
+        $stmt->bindParam(':example_type', $example_type);
+        $stmt->bindParam(':category', $category);
+        $stmt->bindParam(':is_premium', $is_premium);
+
+        if ($stmt->execute()) {
+            return json_encode(["message" => "Prompt updated", "id" => $id]);
+        }
+        http_response_code(500);
+        return json_encode(["message" => "Failed to update prompt"]);
     }
 
     public function deletePrompt($id)
