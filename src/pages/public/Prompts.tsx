@@ -81,7 +81,7 @@ export function PromptLibrary() {
         {
             header: 'Judul & Kategori',
             accessorKey: 'title' as keyof Prompt,
-            className: 'align-top',
+            className: 'align-top w-48',
             cell: (item: Prompt) => (
                 <div className="flex flex-col gap-1 items-start text-left">
                     <span className="font-bold text-gray-900 leading-tight block">{item.title}</span>
@@ -92,22 +92,22 @@ export function PromptLibrary() {
         {
             header: 'Deskripsi',
             accessorKey: 'description' as keyof Prompt,
-            className: 'align-top',
-            cell: (item: Prompt) => <div className="text-gray-600 text-left min-w-[200px] whitespace-pre-wrap">{item.description}</div>
+            className: 'align-top w-64',
+            cell: (item: Prompt) => <div className="text-gray-600 text-left whitespace-pre-wrap">{item.description}</div>
         },
         {
             header: 'Isi Prompt',
             accessorKey: 'prompt_content' as keyof Prompt,
             className: 'align-top',
             cell: (item: Prompt) => (
-                <div className="bg-gray-50 border border-gray-100 rounded-lg p-3 text-left font-mono text-xs text-gray-700 whitespace-pre-wrap max-w-sm max-h-32 overflow-y-auto">
+                <div className="bg-gray-50 border border-gray-100 rounded-lg p-3 text-left font-mono text-xs text-gray-700 whitespace-pre-wrap max-w-md max-h-32 overflow-y-auto">
                     {item.prompt_content}
                 </div>
             )
         },
         {
             header: 'Aksi',
-            className: 'align-top text-right w-36',
+            className: 'align-top text-right w-32 shrink-0',
             cell: (item: Prompt) => (
                 <div className="flex flex-wrap justify-end gap-1">
                     <button
