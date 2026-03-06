@@ -109,7 +109,7 @@ export function PromptLibrary() {
             header: 'Aksi',
             className: 'align-top text-right w-40 shrink-0',
             cell: (item: Prompt) => (
-                <div className="flex flex-wrap justify-end gap-1">
+                <div className="flex flex-nowrap justify-end gap-1">
                     <button
                         onClick={() => handleCopy(item.prompt_content, item.id)}
                         className="p-1.5 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded transition-colors"
