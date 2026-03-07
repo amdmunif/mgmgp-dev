@@ -93,15 +93,24 @@ class ContributorController
     // Admin: List Applications
     public function getAllApplications()
     {
-        $query = "SELECT ca.*, p.nama, p.email, 
-                  (SELECT COUNT(*) FROM questions q WHERE q.creator_id = ca.user_id) as question_count
-                  FROM contributor_applications ca
-                  JOIN profiles p ON ca.user_id = p.id
-                  ORDER BY ca.applied_at DESC";
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
-        $apps = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        return json_encode($apps);
+        try {
+            $query = "SELECT ca.*, p.nama, u.email, 
+                      (SELECT COUNT(*) FROM questions q WHERE q.creator_id = ca.user_id) as question_count
+                      FROM contributor_applications ca
+                      LEFT JOIN profiles p ON ca.user_id = p.id
+                      LEFT JOIN users u ON ca.user_id = u.id
+                      ORDER BY ca.applied_at DESC";
+            $stmt = $this->conn->prepare($query);
+            $stmt->execute();
+            $apps = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return json_encode($apps);
+        } catch (\PDOException $e) {
+            http_response_code(500);
+            return json_encode(["status" => "error", "message" => "Database error: " . $e->getMessage()]);
+        } catch (\Exception $e) {
+            http_response_code(500);
+            return json_encode(["status" => "error", "message" => "General error: " . $e->getMessage()]);
+        }
     }
 
     // Admin: Verify
