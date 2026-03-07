@@ -103,7 +103,15 @@ class ContributorController
             $stmt = $this->conn->prepare($query);
             $stmt->execute();
             $apps = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            return json_encode($apps, JSON_INVALID_UTF8_SUBSTITUTE);
+
+            // Fix invalid UTF-8 strings before JSON encoding
+            array_walk_recursive($apps, function (&$item, $key) {
+                if (is_string($item)) {
+                    $item = mb_convert_encoding($item, 'UTF-8', 'UTF-8');
+                }
+            });
+
+            return json_encode($apps);
         } catch (\PDOException $e) {
             http_response_code(500);
             return json_encode(["status" => "error", "message" => "Database error: " . $e->getMessage()]);
