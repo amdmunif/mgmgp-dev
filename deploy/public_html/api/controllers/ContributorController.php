@@ -103,7 +103,7 @@ class ContributorController
             $stmt = $this->conn->prepare($query);
             $stmt->execute();
             $apps = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            return json_encode($apps);
+            return json_encode($apps, JSON_INVALID_UTF8_SUBSTITUTE);
         } catch (\PDOException $e) {
             http_response_code(500);
             return json_encode(["status" => "error", "message" => "Database error: " . $e->getMessage()]);
