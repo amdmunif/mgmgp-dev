@@ -344,8 +344,8 @@ class ContentController
         // Fetch participants with user details
         $query = "SELECT ep.*, p.nama, u.email, p.foto_profile 
                   FROM event_participants ep
-                  JOIN profiles p ON ep.user_id = p.id
-                  JOIN users u ON ep.user_id = u.id
+                  LEFT JOIN profiles p ON ep.user_id = p.id
+                  LEFT JOIN users u ON ep.user_id = u.id
                   WHERE ep.event_id = :eid
                   ORDER BY ep.registered_at DESC";
         $stmt = $this->conn->prepare($query);
