@@ -104,10 +104,16 @@ class ContributorController
             $stmt->execute();
             $apps = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            // Fix invalid UTF-8 strings before JSON encoding
+            // Highly compatible UTF-8 sanitizer (fallback for old PHP without mbstring/JSON_INVALID_UTF8_SUBSTITUTE)
             array_walk_recursive($apps, function (&$item, $key) {
                 if (is_string($item)) {
-                    $item = mb_convert_encoding($item, 'UTF-8', 'UTF-8');
+                    if (function_exists('mb_convert_encoding')) {
+                        $item = mb_convert_encoding($item, 'UTF-8', 'UTF-8');
+                    } elseif (function_exists('iconv')) {
+                        $item = iconv('UTF-8', 'UTF-8//IGNORE', $item);
+                    } else {
+                        $item = preg_replace('/[\x00-\x1F\x7F]/', '', $item);
+                    }
                 }
             });
 
