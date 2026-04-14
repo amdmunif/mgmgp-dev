@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { contentManagementService } from '../../../services/contentManagementService';
-import { ArrowLeft, Calendar, MapPin, Users, CheckCircle, XCircle, Trash2 } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, CheckCircle, XCircle, Trash2, Printer, QrCode, X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { getFileUrl } from '../../../lib/api';
 import { DataTable } from '../../../components/ui/DataTable';
@@ -15,6 +15,7 @@ interface Participant {
     status: string;
     registered_at: string;
     is_hadir: number;
+    asal_sekolah?: string;
 }
 
 interface EventDetail {
@@ -35,6 +36,7 @@ export function AdminEventDetail() {
     const [loading, setLoading] = useState(true);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [filterStatus, setFilterStatus] = useState<'all' | 'attended' | 'not_attended'>('all');
+    const [showQR, setShowQR] = useState(false);
 
     useEffect(() => {
         if (id) {
@@ -193,6 +195,7 @@ export function AdminEventDetail() {
                     <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900">{item.nama}</div>
                         <div className="text-xs text-gray-500">{item.email}</div>
+                        {item.asal_sekolah && <div className="text-xs text-blue-600 mt-0.5">{item.asal_sekolah}</div>}
                     </div>
                 </div>
             )
@@ -300,6 +303,25 @@ export function AdminEventDetail() {
                 </div>
             </div>
 
+            <div className="flex flex-wrap gap-3">
+                <Button 
+                    onClick={() => navigate(`/admin/events/${id}/print-attendance`)}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                >
+                    <Printer className="w-4 h-4 mr-2" />
+                    Cetak Daftar Hadir
+                </Button>
+                <Button 
+                    onClick={() => setShowQR(true)}
+                    variant="outline"
+                    className="border-indigo-600 text-indigo-600 hover:bg-indigo-50"
+                >
+                    <QrCode className="w-4 h-4 mr-2" />
+                    Buka QR Absensi
+                </Button>
+            </div>
+
+
             {/* Participants List */}
             <div className="space-y-4">
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
@@ -346,11 +368,42 @@ export function AdminEventDetail() {
                     <DataTable
                         columns={columns}
                         data={processedParticipants}
-                        searchKeys={['nama', 'email']}
+                        searchKeys={['nama', 'email', 'asal_sekolah']}
                         pageSize={10}
                     />
                 </div>
             </div>
+
+            {/* QR Code Modal */}
+            {showQR && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+                    <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 relative">
+                        <button 
+                            onClick={() => setShowQR(false)}
+                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                        >
+                            <X className="w-6 h-6" />
+                        </button>
+                        
+                        <div className="text-center mt-2">
+                            <h3 className="text-xl font-bold text-gray-900">QR Code Absensi</h3>
+                            <p className="text-sm text-gray-500 mt-1 mb-6">Scan QR Code ini untuk melakukan absensi otomatis.</p>
+                            
+                            <div className="bg-gray-50 p-4 rounded-xl inline-block border border-gray-200">
+                                <img 
+                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(window.location.origin + '/events/' + id + '/attend')}`}
+                                    alt="QR Code Absensi"
+                                    className="w-48 h-48 object-contain"
+                                />
+                            </div>
+                            
+                            <p className="text-xs text-blue-600 font-medium mt-6 break-all">
+                                {window.location.origin}/events/{id}/attend
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

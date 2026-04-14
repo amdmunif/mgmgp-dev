@@ -10,6 +10,7 @@ import { ForgotPassword } from './pages/auth/ForgotPassword';
 import ResetPassword from './pages/auth/ResetPassword';
 import { Events } from './pages/public/Events';
 import { EventDetail } from './pages/public/EventDetail';
+import { EventAttend } from './pages/public/EventAttend';
 import { Gallery } from './pages/public/Gallery';
 import { Profile } from './pages/public/Profile';
 import { Learning } from './pages/public/Learning';
@@ -38,6 +39,7 @@ import { CreateNews } from './pages/admin/news/CreateNews';
 import { AdminEvents } from './pages/admin/events/AdminEvents';
 import { AdminEventDetail } from './pages/admin/events/AdminEventDetail';
 import { CreateEvent } from './pages/admin/events/CreateEvent';
+import { AdminEventAttendancePrint } from './pages/admin/events/AdminEventAttendancePrint';
 import { AdminMembers } from './pages/admin/Members';
 import { AdminGames } from './pages/admin/games/AdminGames';
 import { CreateGame } from './pages/admin/games/CreateGame';
@@ -95,6 +97,7 @@ function App() {
         <Route path="/news/:id" element={<Layout><NewsDetail /></Layout>} />
         <Route path="/events" element={<Layout><Events /></Layout>} />
         <Route path="/events/:id" element={<Layout><EventDetail /></Layout>} />
+        <Route path="/events/:id/attend" element={<Layout><EventAttend /></Layout>} />
         <Route path="/gallery" element={<Layout><Gallery /></Layout>} />
         <Route path="/profile" element={<Layout><Profile /></Layout>} />
         <Route path="/learning" element={<Layout><Learning /></Layout>} />
@@ -176,6 +179,7 @@ function App() {
           <Route path="events/create" element={<CreateEvent />} />
           <Route path="events/:id" element={<AdminEventDetail />} />
           <Route path="events/edit/:id" element={<CreateEvent />} />
+          <Route path="events/:id/print-attendance" element={<AdminEventAttendancePrint />} />
 
           <Route path="letters" element={<AdminLetters />} />
           <Route path="letters/create" element={<CreateLetter />} />

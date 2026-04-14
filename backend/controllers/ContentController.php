@@ -342,7 +342,7 @@ class ContentController
     public function getEventParticipants($eventId)
     {
         // Fetch participants with user details
-        $query = "SELECT ep.*, p.nama, u.email, p.foto_profile 
+        $query = "SELECT ep.*, p.nama, u.email, p.foto_profile, p.asal_sekolah 
                   FROM event_participants ep
                   LEFT JOIN profiles p ON ep.user_id = p.id
                   LEFT JOIN users u ON ep.user_id = u.id

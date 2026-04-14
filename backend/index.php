@@ -176,6 +176,13 @@ if ($resource === 'news') {
                 http_response_code(401);
                 echo json_encode(["message" => "Unauthorized"]);
             }
+        } elseif ($action && $subAction === 'attend') {
+            if ($userId)
+                echo $controller->markSelfAttendance($action, $userId);
+            else {
+                http_response_code(401);
+                echo json_encode(["message" => "Unauthorized"]);
+            }
         } elseif ($action && $subAction === 'submit-task') {
             $taskUrl = $input['task_url'] ?? '';
             if ($userId)

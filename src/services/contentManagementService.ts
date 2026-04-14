@@ -46,6 +46,10 @@ export const contentManagementService = {
         return await api.post(`/events/${eventId}/participants/bulk`, { user_ids: userIds, status });
     },
 
+    async markSelfAttendance(eventId: string) {
+        return await api.post(`/events/${eventId}/attend`, {});
+    },
+
     async deleteParticipant(eventId: string, userId: string) {
         return await api.delete(`/events/${eventId}/participants/${userId}`);
     }
