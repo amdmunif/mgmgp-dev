@@ -33,7 +33,7 @@ class ContentController
         return json_encode($news ?: null);
     }
 
-    public function createNews($data)
+    public function createNews($data, $userId, $userName)
     {
         $id = Helper::uuid();
         $query = "INSERT INTO news_articles (id, title, content, author_id, image_url, created_at) 
@@ -47,28 +47,62 @@ class ContentController
         $stmt->bindParam(':image_url', $data['image_url']);
 
         if ($stmt->execute()) {
+            Helper::log($this->conn, $userId, $userName, 'CREATE_NEWS', $data['title']);
             return json_encode(["message" => "News created", "id" => $id]);
         }
         http_response_code(500);
         return json_encode(["message" => "Failed to create news"]);
     }
 
-    public function deleteNews($id)
+    public function deleteNews($id, $userId, $userName)
     {
+        // Get title for logging
+        $title = "Unknown News";
+        $stmtTitle = $this->conn->prepare("SELECT title FROM news_articles WHERE id = :id");
+        $stmtTitle->bindParam(':id', $id);
+        $stmtTitle->execute();
+        if ($res = $stmtTitle->fetch(PDO::FETCH_ASSOC))
+            $title = $res['title'];
+
         $query = "DELETE FROM news_articles WHERE id = :id";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id', $id);
         if ($stmt->execute()) {
+            Helper::log($this->conn, $userId, $userName, 'DELETE_NEWS', $title);
             return json_encode(["message" => "News deleted"]);
         }
         http_response_code(500);
         return json_encode(["message" => "Failed to delete news"]);
     }
 
+    public function updateNews($id, $data, $userId, $userName)
+    {
+        $query = "UPDATE news_articles SET 
+                    title = :title, 
+                    content = :content, 
+                    category = :category, 
+                    image_url = :image_url 
+                  WHERE id = :id";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':id', $id);
+        $stmt->bindParam(':title', $data['title']);
+        $stmt->bindParam(':content', $data['content']);
+        $stmt->bindParam(':category', $data['category']);
+        $stmt->bindParam(':image_url', $data['image_url']);
+
+        if ($stmt->execute()) {
+            Helper::log($this->conn, $userId, $userName, 'UPDATE_NEWS', $data['title']);
+            return json_encode(["message" => "News updated"]);
+        }
+        http_response_code(500);
+        return json_encode(["message" => "Failed to update news"]);
+    }
+
     // --- EVENTS ---
     public function getEvents()
     {
-        $query = "SELECT * FROM events ORDER BY date ASC";
+        $query = "SELECT * FROM events ORDER BY date DESC";
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
         return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
@@ -84,11 +118,65 @@ class ContentController
         return json_encode($event ?: null);
     }
 
-    public function createEvent($data)
+    public function createEvent($data, $userId, $userName)
     {
         $id = Helper::uuid();
-        $query = "INSERT INTO events (id, title, description, date, location, image_url, is_registration_open, created_at) 
-                  VALUES (:id, :title, :description, :date, :location, :image_url, :is_registration_open, NOW())";
+        $query = "INSERT INTO events (id, title, description, date, location, image_url, is_registration_open, is_premium, created_at) 
+                  VALUES (:id, :title, :description, :date, :location, :image_url, :is_registration_open, :is_premium, NOW())";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':id', $id);
+        $stmt->bindParam(':title', $data['title']);
+        $stmt->bindParam(':description', $data['description']);
+        $stmt->bindParam(':date', $data['date']);
+        $stmt->bindParam(':location', $data['location']);
+        $stmt->bindParam(':image_url', $data['image_url']);
+        $stmt->bindParam(':image_url', $data['image_url']);
+        $isReg = $data['is_registration_open'] ?? 1;
+        $stmt->bindParam(':is_registration_open', $isReg, PDO::PARAM_INT);
+        $isPremium = $data['is_premium'] ?? 0;
+        $stmt->bindParam(':is_premium', $isPremium, PDO::PARAM_INT);
+
+        if ($stmt->execute()) {
+            Helper::log($this->conn, $userId, $userName, 'CREATE_EVENT', $data['title']);
+            return json_encode(["message" => "Event created", "id" => $id]);
+        }
+        http_response_code(500);
+        return json_encode(["message" => "Failed to create event"]);
+    }
+
+    public function deleteEvent($id, $userId, $userName)
+    {
+        // Get title for logging
+        $title = "Unknown Event";
+        $stmtTitle = $this->conn->prepare("SELECT title FROM events WHERE id = :id");
+        $stmtTitle->bindParam(':id', $id);
+        $stmtTitle->execute();
+        if ($res = $stmtTitle->fetch(PDO::FETCH_ASSOC))
+            $title = $res['title'];
+
+        $query = "DELETE FROM events WHERE id = :id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':id', $id);
+        if ($stmt->execute()) {
+            Helper::log($this->conn, $userId, $userName, 'DELETE_EVENT', $title);
+            return json_encode(["message" => "Event deleted"]);
+        }
+        http_response_code(500);
+        return json_encode(["message" => "Failed to delete event"]);
+    }
+
+    public function updateEvent($id, $data, $userId, $userName)
+    {
+        $query = "UPDATE events SET 
+                    title = :title, 
+                    description = :description, 
+                    date = :date, 
+                    location = :location, 
+                    image_url = :image_url, 
+                    is_registration_open = :is_registration_open,
+                    is_premium = :is_premium
+                  WHERE id = :id";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id', $id);
@@ -99,29 +187,47 @@ class ContentController
         $stmt->bindParam(':image_url', $data['image_url']);
         $isReg = $data['is_registration_open'] ?? 1;
         $stmt->bindParam(':is_registration_open', $isReg, PDO::PARAM_INT);
+        $isPremium = $data['is_premium'] ?? 0;
+        $stmt->bindParam(':is_premium', $isPremium, PDO::PARAM_INT);
 
         if ($stmt->execute()) {
-            return json_encode(["message" => "Event created", "id" => $id]);
+            Helper::log($this->conn, $userId, $userName, 'UPDATE_EVENT', $data['title']);
+            return json_encode(["message" => "Event updated"]);
         }
         http_response_code(500);
-        return json_encode(["message" => "Failed to create event"]);
-    }
-
-    public function deleteEvent($id)
-    {
-        $query = "DELETE FROM events WHERE id = :id";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':id', $id);
-        if ($stmt->execute()) {
-            return json_encode(["message" => "Event deleted"]);
-        }
-        http_response_code(500);
-        return json_encode(["message" => "Failed to delete event"]);
+        return json_encode(["message" => "Failed to update event"]);
     }
 
     // --- EVENT PARTICIPATION ---
     public function joinEvent($eventId, $userId)
     {
+        // 0. Check Premium Status
+        $stmtEvent = $this->conn->prepare("SELECT is_premium FROM events WHERE id = :eid");
+        $stmtEvent->bindParam(':eid', $eventId);
+        $stmtEvent->execute();
+        $event = $stmtEvent->fetch(PDO::FETCH_ASSOC);
+
+        if ($event && $event['is_premium'] == 1) {
+            $stmtUser = $this->conn->prepare("SELECT premium_until FROM profiles WHERE id = :uid");
+            $stmtUser->bindParam(':uid', $userId);
+            $stmtUser->execute();
+            $userProfile = $stmtUser->fetch(PDO::FETCH_ASSOC);
+
+            $isPremium = false;
+            if ($userProfile && $userProfile['premium_until']) {
+                $premiumUntil = new DateTime($userProfile['premium_until']);
+                $now = new DateTime();
+                if ($premiumUntil > $now) {
+                    $isPremium = true;
+                }
+            }
+
+            if (!$isPremium) {
+                http_response_code(403);
+                return json_encode(["message" => "This event is for Premium members only"]);
+            }
+        }
+
         $check = $this->conn->prepare("SELECT * FROM event_participants WHERE event_id = :eid AND user_id = :uid");
         $check->bindParam(':eid', $eventId);
         $check->bindParam(':uid', $userId);
@@ -167,20 +273,39 @@ class ContentController
 
     public function getUpcomingEvents($userId)
     {
-        $query = "SELECT e.*, ep.status as participation_status 
+        // Debug
+        // error_log("Fetching upcoming events for user: $userId");
+
+        // e.* will include is_premium IF it exists.
+        // Synthesize participation_status from is_hadir since 'status' column does not exist
+        $query = "SELECT e.*, 
+                  CASE 
+                    WHEN ep.is_hadir = 1 THEN 'attended'
+                    WHEN ep.user_id IS NOT NULL THEN 'registered'
+                    ELSE NULL 
+                  END as participation_status
                   FROM events e 
                   LEFT JOIN event_participants ep ON e.id = ep.event_id AND ep.user_id = :uid 
-                  WHERE e.date >= NOW() 
+                  WHERE e.date >= DATE_SUB(NOW(), INTERVAL 1 DAY)
                   ORDER BY e.date ASC";
+
+        // Debug Query
+        // error_log($query);
+
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':uid', $userId);
         $stmt->execute();
-        return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Debug Results
+        // error_log("Events found: " . count($results));
+
+        return json_encode($results);
     }
 
     public function getMyHistory($userId)
     {
-        $query = "SELECT ep.*, e.title, e.date, e.location 
+        $query = "SELECT ep.*, e.title, e.date, e.location, e.tasks_url as event_tasks_url, e.certificate_url 
                   FROM event_participants ep 
                   JOIN events e ON ep.event_id = e.id 
                   WHERE ep.user_id = :uid 
@@ -197,16 +322,122 @@ class ContentController
                 'id' => $row['event_id'] . '-' . $row['user_id'],
                 'event_id' => $row['event_id'],
                 'user_id' => $row['user_id'],
-                'status' => $row['status'] ?? 'registered',
+                // Synthesize status from is_hadir
+                'status' => ($row['is_hadir'] == 1) ? 'attended' : 'registered',
+                'tugas_submitted' => $row['tugas_submitted'] ?? 0,
+                'task_url' => $row['task_url'] ?? null,
                 'registered_at' => $row['registered_at'],
                 'events' => [
                     'title' => $row['title'],
                     'date' => $row['date'],
-                    'location' => $row['location']
+                    'location' => $row['location'],
+                    'certificate_url' => $row['certificate_url'] ?? null,
+                    'tasks_url' => $row['event_tasks_url'] ?? null
                 ]
             ];
         }
         return json_encode($formatted);
+    }
+
+    public function getEventParticipants($eventId)
+    {
+        // Fetch participants with user details
+        $query = "SELECT ep.*, p.nama, u.email, p.foto_profile 
+                  FROM event_participants ep
+                  LEFT JOIN profiles p ON ep.user_id = p.id
+                  LEFT JOIN users u ON ep.user_id = u.id
+                  WHERE ep.event_id = :eid
+                  ORDER BY ep.registered_at DESC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':eid', $eventId);
+        $stmt->execute();
+        return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+    }
+
+    public function updateParticipantStatus($eventId, $userId, $status)
+    {
+        $isHadir = ($status === 'attended') ? 1 : 0;
+
+        $query = "UPDATE event_participants SET is_hadir = :is_hadir WHERE event_id = :eid AND user_id = :uid";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':is_hadir', $isHadir, PDO::PARAM_INT);
+        $stmt->bindParam(':eid', $eventId);
+        $stmt->bindParam(':uid', $userId);
+
+        if ($stmt->execute()) {
+            return json_encode(["message" => "Status updated"]);
+        }
+        http_response_code(500);
+        return json_encode(["message" => "Failed to update status"]);
+    }
+
+    public function markSelfAttendance($eventId, $userId)
+    {
+        // 1. Verify user is registered
+        $checkQuery = "SELECT * FROM event_participants WHERE event_id = :eid AND user_id = :uid";
+        $checkStmt = $this->conn->prepare($checkQuery);
+        $checkStmt->bindParam(':eid', $eventId);
+        $checkStmt->bindParam(':uid', $userId);
+        $checkStmt->execute();
+
+        if ($checkStmt->rowCount() === 0) {
+            http_response_code(400);
+            return json_encode(["message" => "User not registered for this event"]);
+        }
+
+        // 2. Mark as attended
+        $updateQuery = "UPDATE event_participants SET is_hadir = 1 WHERE event_id = :eid AND user_id = :uid";
+        $updateStmt = $this->conn->prepare($updateQuery);
+        $updateStmt->bindParam(':eid', $eventId);
+        $updateStmt->bindParam(':uid', $userId);
+
+        if ($updateStmt->execute()) {
+            return json_encode(["message" => "Attendance marked successfully"]);
+        }
+
+        http_response_code(500);
+        return json_encode(["message" => "Failed to mark attendance"]);
+    }
+
+    public function updateParticipantsBulk($eventId, $userIds, $status)
+    {
+        if (!is_array($userIds) || empty($userIds)) {
+            http_response_code(400);
+            return json_encode(["message" => "Invalid user IDs"]);
+        }
+
+        $isHadir = ($status === 'attended') ? 1 : 0;
+
+        // Construct placeholders for IN clause
+        $placeholders = implode(',', array_fill(0, count($userIds), '?'));
+
+        $query = "UPDATE event_participants SET is_hadir = ? WHERE event_id = ? AND user_id IN ($placeholders)";
+        $stmt = $this->conn->prepare($query);
+
+        // Bind parameters: is_hadir, eventId, ...userIds
+        $params = array_merge([$isHadir, $eventId], $userIds);
+
+        if ($stmt->execute($params)) {
+            return json_encode(["message" => "Bulk update successful"]);
+        }
+
+        http_response_code(500);
+        return json_encode(["message" => "Failed to update participants"]);
+    }
+
+    public function deleteParticipant($eventId, $userId)
+    {
+        $query = "DELETE FROM event_participants WHERE event_id = :eid AND user_id = :uid";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':eid', $eventId);
+        $stmt->bindParam(':uid', $userId);
+
+        if ($stmt->execute()) {
+            return json_encode(["message" => "Participant removed successfully"]);
+        }
+
+        http_response_code(500);
+        return json_encode(["message" => "Failed to remove participant"]);
     }
 }
 ?>

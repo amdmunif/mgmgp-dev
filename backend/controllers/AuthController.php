@@ -67,6 +67,8 @@ class AuthController
 
                 // Send Registration Success Email
                 Mailer::sendRegistrationSuccess($email, $nama);
+                // Notify admin
+                Mailer::sendAdminNewMemberNotification($nama, $email);
 
                 return json_encode([
                     "message" => "Registration successful.",
@@ -175,6 +177,8 @@ class AuthController
             ukuran_baju = :ukuran_baju,
             no_hp = :no_hp,
             foto_profile = :foto_profile,
+            mapel = :mapel,
+            kelas = :kelas,
             updated_at = NOW()
             WHERE id = :id";
 
@@ -190,6 +194,11 @@ class AuthController
 
         $foto_profile = isset($data['foto_profile']) ? $data['foto_profile'] : null;
         $stmt->bindParam(':foto_profile', $foto_profile);
+
+        $mapel = isset($data['mapel']) ? json_encode($data['mapel']) : '[]';
+        $kelas = isset($data['kelas']) ? json_encode($data['kelas']) : '[]';
+        $stmt->bindParam(':mapel', $mapel);
+        $stmt->bindParam(':kelas', $kelas);
 
         if ($stmt->execute()) {
             return $this->getProfile($id);

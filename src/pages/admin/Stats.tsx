@@ -6,7 +6,9 @@ import {
     Award,
     Home,
     Activity,
-    CheckCircle2
+    CheckCircle2,
+    GraduationCap,
+    Building2
 } from 'lucide-react';
 
 export function AdminStats() {
@@ -144,9 +146,64 @@ export function AdminStats() {
                 </div>
             </div>
 
-            {/* Engagement Table/List? Or more charts. 
-                Let's add a "Ratio" section.
-            */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Education Distribution */}
+                <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                    <div className="flex items-center gap-2 mb-8">
+                        <GraduationCap className="w-5 h-5 text-gray-400" />
+                        <h2 className="text-lg font-bold text-gray-900">Distribusi Pendidikan Terakhir</h2>
+                    </div>
+
+                    <div className="space-y-4">
+                        {stats.education?.length > 0 ? stats.education.map((item, idx) => {
+                            const percentage = totalTeachers > 0 ? (item.count / totalTeachers) * 100 : 0;
+                            return (
+                                <div key={idx} className="space-y-1">
+                                    <div className="flex justify-between items-center text-sm font-medium">
+                                        <span className="text-gray-700">{item.pendidikan_terakhir}</span>
+                                        <span className="text-gray-900">{item.count} Guru</span>
+                                    </div>
+                                    <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-blue-500 transition-all duration-1000"
+                                            style={{ width: `${percentage}%` }}
+                                        />
+                                    </div>
+                                </div>
+                            );
+                        }) : <p className="text-sm text-gray-500 text-center">Data pendidikan belum tersedia.</p>}
+                    </div>
+                </div>
+
+                {/* Top Schools */}
+                <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                    <div className="flex items-center gap-2 mb-6">
+                        <Building2 className="w-5 h-5 text-gray-400" />
+                        <h2 className="text-lg font-bold text-gray-900">Asal Sekolah Terbanyak</h2>
+                    </div>
+
+                    <div className="space-y-3">
+                        {stats.topSchools?.length > 0 ? stats.topSchools.map((school, idx) => (
+                            <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-sm">
+                                        #{idx + 1}
+                                    </div>
+                                    <span className="font-semibold text-gray-900 text-sm truncate max-w-[200px] sm:max-w-[300px]">
+                                        {school.asal_sekolah}
+                                    </span>
+                                </div>
+                                <div className="text-right">
+                                    <span className="text-lg font-bold text-gray-900">{school.count}</span>
+                                    <span className="text-xs text-gray-500 ml-1">Guru</span>
+                                </div>
+                            </div>
+                        )) : <p className="text-sm text-gray-500 text-center">Data sekolah belum tersedia.</p>}
+                    </div>
+                </div>
+            </div>
+
+            {/* Engagement Section */}
             <div className="bg-gradient-to-br from-primary-600 to-indigo-700 p-8 rounded-3xl shadow-xl text-white overflow-hidden relative">
                 <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
                     <div className="md:w-1/3">

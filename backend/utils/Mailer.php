@@ -139,5 +139,85 @@ class Mailer
         $html = self::getBaseTemplate($title, $body);
         return self::sendHtmlEmail($email, "Selamat! Akun Premium Anda Sudah Aktif", $html);
     }
+
+    public static function sendAdminNewMemberNotification($namaMember, $emailMember)
+    {
+        $adminEmail = 'admin@mgmpinformatika.com';
+        $loginLink = "https://" . (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'mgmpinformatika.com') . "/admin/users";
+        $title = "Pendaftar Baru Menunggu Verifikasi";
+        $body = "
+            <h2 style='color: #1e293b; margin-top: 0;'>Ada Anggota Baru! 📋</h2>
+            <p>Seorang guru baru telah mendaftar dan menunggu verifikasi akun:</p>
+            <table style='width:100%; border-collapse:collapse; margin:16px 0; font-size:15px;'>
+                <tr><td style='padding:8px; background:#f8fafc; font-weight:600; width:140px;'>Nama</td><td style='padding:8px; border-bottom:1px solid #e2e8f0;'>{$namaMember}</td></tr>
+                <tr><td style='padding:8px; background:#f8fafc; font-weight:600;'>Email</td><td style='padding:8px;'>{$emailMember}</td></tr>
+            </table>
+            <div style='text-align: center; margin: 30px 0;'>
+                <a href='{$loginLink}' class='button'>Verifikasi Sekarang</a>
+            </div>
+            <p style='font-size:13px; color:#64748b;'>Akun akan tetap dalam status pending hingga admin melakukan verifikasi.</p>
+        ";
+        $html = self::getBaseTemplate($title, $body);
+        return self::sendHtmlEmail($adminEmail, "Pendaftar Baru: {$namaMember} - MGMP Informatika", $html);
+    }
+
+    public static function sendMemberActivated($email, $nama)
+    {
+        $loginLink = "https://" . (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'mgmpinformatika.com') . "/login";
+        $title = "Akun Anda Telah Diaktifkan";
+        $body = "
+            <h2 style='color: #1e293b; margin-top: 0;'>Halo, <span class='highlight'>{$nama}</span>!</h2>
+            <p>Kabar gembira! Akun Anda di MGMP Informatika telah <strong>berhasil diaktifkan</strong> oleh Administrator.</p>
+            <p>Sekarang Anda dapat login dan mengakses berbagai materi, agenda kegiatan, dan fitur lainnya sebagai anggota komunitas.</p>
+            <div style='text-align: center; margin: 30px 0;'>
+                <a href='{$loginLink}' class='button'>Login Sekarang</a>
+            </div>
+            <p>Salam hangat,<br><strong>Tim Admin MGMP Informatika</strong></p>
+        ";
+        $html = self::getBaseTemplate($title, $body);
+        return self::sendHtmlEmail($email, "Akun Anda Telah Aktif - MGMP Informatika", $html);
+    }
+
+    public static function sendTrainingInvoice($email, $nama, $code, $price, $eventName)
+    {
+        $title = "Pendaftaran Berhasil - Menunggu Pembayaran";
+        $body = "
+            <h2 style='color: #1e293b; margin-top: 0;'>Halo, {$nama}!</h2>
+            <p>Terima kasih telah mendaftar di acara <strong>{$eventName}</strong>. Pendaftaran Anda telah kami catat dengan rincian sebagai berikut:</p>
+            
+            <div style='background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin: 20px 0;'>
+                <p style='margin: 0 0 5px 0; color: #64748b; font-size: 13px; text-transform: uppercase;'>Kode Registrasi</p>
+                <p style='margin: 0 0 15px 0; font-size: 24px; font-weight: bold; color: #0f172a; letter-spacing: 1px;'>{$code}</p>
+                
+                <p style='margin: 0 0 5px 0; color: #64748b; font-size: 13px; text-transform: uppercase;'>Total Tagihan</p>
+                <p style='margin: 0; font-size: 20px; font-weight: bold; color: #2563eb;'>Rp " . number_format($price, 0, ',', '.') . "</p>
+            </div>
+            
+            <h3 style='color: #1e293b; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;'>Instruksi Pembayaran</h3>
+            <p>Silakan lakukan pembayaran melalui transfer bank ke rekening berikut:</p>
+            <table style='width: 100%; border-collapse: collapse; margin-bottom: 20px;'>
+                <tr>
+                    <td style='padding: 8px 0; font-weight: bold; width: 120px;'>Bank</td>
+                    <td style='padding: 8px 0;'>Bank Syariah Indonesia (BSI)</td>
+                </tr>
+                <tr>
+                    <td style='padding: 8px 0; font-weight: bold;'>No. Rekening</td>
+                    <td style='padding: 8px 0; font-size: 18px; font-family: monospace;'>7123456789</td>
+                </tr>
+                <tr>
+                    <td style='padding: 8px 0; font-weight: bold;'>Atas Nama</td>
+                    <td style='padding: 8px 0;'>MGMP Informatika</td>
+                </tr>
+            </table>
+            
+            <div style='background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px; color: #92400e; font-size: 14px;'>
+                <strong>Penting:</strong> Setelah melakukan transfer, mohon konfirmasi melalui WhatsApp Admin dengan melampirkan bukti transfer dan menyebutkan kode registrasi Anda.
+            </div>
+            
+            <p style='margin-top: 30px;'>Salam sukses,<br><strong>Panitia Pelaksana MGMP Informatika</strong></p>
+        ";
+        $html = self::getBaseTemplate($title, $body);
+        return self::sendHtmlEmail($email, "Invoice Pendaftaran [{$code}] - {$eventName}", $html);
+    }
 }
 ?>

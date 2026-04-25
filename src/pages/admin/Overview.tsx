@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, Link } from 'react-router-dom';
 import { statsService } from '../../services/statsService';
 import { auditService, type AuditLog } from '../../services/auditService';
 import { formatDate } from '../../lib/utils';
@@ -8,13 +8,12 @@ import {
     FileText,
     Calendar,
     TrendingUp,
-    Activity,
-    ArrowUpRight,
-    ArrowDownRight,
     Clock,
     ShieldAlert,
     LayoutDashboard,
-    Mail
+    Mail,
+    CheckCircle2,
+    AlertCircle
 } from 'lucide-react';
 import { AdminStats } from './Stats';
 import { AdminMessages } from './AdminMessages';
@@ -72,32 +71,28 @@ export function DashboardOverview() {
             value: stats.members,
             icon: Users,
             color: 'bg-blue-500',
-            trend: '+12%',
-            trendUp: true
+            desc: 'Anggota terdaftar'
         },
         {
             label: 'Perangkat Ajar',
             value: stats.materials,
             icon: FileText,
             color: 'bg-green-500',
-            trend: '+5%',
-            trendUp: true
+            desc: 'Materi tersedia'
         },
         {
             label: 'Agenda Kegiatan',
             value: stats.events,
             icon: Calendar,
             color: 'bg-purple-500',
-            trend: '+2',
-            trendUp: true
+            desc: 'Total kegiatan'
         },
         {
             label: 'Anggota Premium',
             value: stats.premium,
             icon: TrendingUp,
             color: 'bg-orange-500',
-            trend: '+8%',
-            trendUp: true
+            desc: 'Aktif berlangganan'
         }
     ];
 
@@ -143,8 +138,8 @@ export function DashboardOverview() {
                         {(stats.pendingMembers > 0 || stats.pendingPremium > 0) && (
                             <div className="bg-orange-50 border border-orange-200 rounded-2xl p-6">
                                 <h2 className="text-lg font-bold text-orange-900 mb-4 flex items-center gap-2">
-                                    <Activity className="w-5 h-5" />
-                                    Perlu Tindakan
+                                    <AlertCircle className="w-5 h-5" />
+                                    Perlu Tindakan Segera
                                 </h2>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {stats.pendingMembers > 0 && (
@@ -158,9 +153,13 @@ export function DashboardOverview() {
                                                     <p className="text-xs text-gray-500">Menunggu konfirmasi aktivasi akun</p>
                                                 </div>
                                             </div>
-                                            <a href="/admin/members?status=pending" className="text-sm font-semibold text-blue-600 hover:text-blue-700 px-4 py-2 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
-                                                Review
-                                            </a>
+                                            <Link
+                                                to="/admin/users"
+                                                state={{ tab: 'inactive' }}
+                                                className="text-sm font-semibold text-blue-600 hover:text-blue-700 px-4 py-2 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                                            >
+                                                Verifikasi →
+                                            </Link>
                                         </div>
                                     )}
                                     {stats.pendingPremium > 0 && (
@@ -174,9 +173,12 @@ export function DashboardOverview() {
                                                     <p className="text-xs text-gray-500">Menunggu verifikasi pembayaran</p>
                                                 </div>
                                             </div>
-                                            <a href="/admin/premium" className="text-sm font-semibold text-yellow-600 hover:text-yellow-700 px-4 py-2 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors">
-                                                Cek Request
-                                            </a>
+                                            <Link
+                                                to="/admin/premium"
+                                                className="text-sm font-semibold text-yellow-600 hover:text-yellow-700 px-4 py-2 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors"
+                                            >
+                                                Cek Request →
+                                            </Link>
                                         </div>
                                     )}
                                 </div>
@@ -188,16 +190,14 @@ export function DashboardOverview() {
                             {statCards.map((stat, i) => (
                                 <div key={i} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
                                     <div className="flex items-start justify-between mb-4">
-                                        <div className={`p-3 rounded-xl ${stat.color} bg-opacity-10 text-${stat.color.replace('bg-', '')}-600`}>
-                                            <stat.icon className={`w-6 h-6`} />
+                                        <div className={`p-3 rounded-xl ${stat.color} bg-opacity-10`}>
+                                            <stat.icon className="w-6 h-6 text-gray-600" />
                                         </div>
-                                        <span className={`flex items-center text-xs font-bold ${stat.trendUp ? 'text-green-600' : 'text-red-600'} bg-gray-50 px-2 py-1 rounded-full`}>
-                                            {stat.trendUp ? <ArrowUpRight className="w-3 h-3 mr-1" /> : <ArrowDownRight className="w-3 h-3 mr-1" />}
-                                            {stat.trend}
-                                        </span>
+                                        <CheckCircle2 className="w-4 h-4 text-gray-300" />
                                     </div>
                                     <h3 className="text-3xl font-bold text-gray-900 mb-1">{stat.value}</h3>
-                                    <p className="text-sm text-gray-500 font-medium">{stat.label}</p>
+                                    <p className="text-sm font-semibold text-gray-700">{stat.label}</p>
+                                    <p className="text-xs text-gray-400 mt-0.5">{stat.desc}</p>
                                 </div>
                             ))}
                         </div>

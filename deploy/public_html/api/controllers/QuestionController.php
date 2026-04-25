@@ -63,6 +63,13 @@ class QuestionController
             $params[':creator_id'] = $creatorId;
         }
 
+        // Add Type Filter
+        $type = $_GET['type'] ?? null;
+        if ($type && $type !== 'all') {
+            $query .= " AND q.type = :type";
+            $params[':type'] = $type;
+        }
+
         if ($status) {
             $query .= " AND q.status = :status";
             $params[':status'] = $status;
@@ -83,6 +90,27 @@ class QuestionController
         if ($search) {
             $query .= " AND (q.content LIKE :search OR q.mapel LIKE :search)";
             $params[':search'] = "%$search%";
+        }
+
+        // Add TP Filter (Smart Lookup via learning_tp)
+        // Resolves the filter input (which could be an ID or Code) to the actual Code used in questions table
+        $tp = $_GET['tp'] ?? null;
+        if ($tp) {
+            // 1. Try to find the code from learning_tp assuming input is an ID
+            $stmtTp = $this->conn->prepare("SELECT code FROM learning_tp WHERE id = :tp OR code = :tp LIMIT 1");
+            $stmtTp->bindParam(':tp', $tp);
+            $stmtTp->execute();
+            $foundTp = $stmtTp->fetch(PDO::FETCH_ASSOC);
+
+            if ($foundTp && $foundTp['code']) {
+                // If found, filter questions by this authoritative code
+                $query .= " AND q.tp_code = :resolvedData";
+                $params[':resolvedData'] = $foundTp['code'];
+            } else {
+                // If not found (or no code), fall back to direct match (legacy behavior)
+                $query .= " AND q.tp_code = :tp";
+                $params[':tp'] = $tp;
+            }
         }
 
         $query .= " ORDER BY q.created_at DESC";
@@ -117,8 +145,9 @@ class QuestionController
         $status = in_array($role, ['Admin', 'Pengurus']) ? 'verified' : 'pending';
 
         $id = Helper::uuid();
-        $query = "INSERT INTO questions (id, content, type, options, answer_key, explanation, level, mapel, kelas, creator_id, status, created_at) 
-                  VALUES (:id, :content, :type, :options, :answer_key, :explanation, :level, :mapel, :kelas, :creator_id, :status, NOW())";
+        // Removed tp_id column usage to match existing schema
+        $query = "INSERT INTO questions (id, content, type, options, answer_key, explanation, level, mapel, kelas, creator_id, status, tp_code, created_at) 
+                  VALUES (:id, :content, :type, :options, :answer_key, :explanation, :level, :mapel, :kelas, :creator_id, :status, :tp_code, NOW())";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id', $id);
@@ -135,6 +164,7 @@ class QuestionController
         $stmt->bindParam(':kelas', $data['kelas']);
         $stmt->bindParam(':creator_id', $userId);
         $stmt->bindParam(':status', $status);
+        $stmt->bindParam(':tp_code', $data['tp_code']);
 
         if ($stmt->execute()) {
             return json_encode([
@@ -198,7 +228,8 @@ class QuestionController
                   explanation = :explanation, 
                   level = :level, 
                   mapel = :mapel, 
-                  kelas = :kelas 
+                  kelas = :kelas,
+                  tp_code = :tp_code
                   WHERE id = :id";
 
         $stmt = $this->conn->prepare($query);
@@ -212,6 +243,7 @@ class QuestionController
         $stmt->bindParam(':level', $data['level']);
         $stmt->bindParam(':mapel', $data['mapel']);
         $stmt->bindParam(':kelas', $data['kelas']);
+        $stmt->bindParam(':tp_code', $data['tp_code']);
 
         if ($stmt->execute()) {
             return json_encode(["message" => "Question updated"]);

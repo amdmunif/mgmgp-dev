@@ -50,5 +50,59 @@ class StatsController
 
         return json_encode($stats);
     }
+
+    public function getTeacherStats()
+    {
+        $stats = [
+            'employment' => [],
+            'schoolTypes' => [
+                'Negeri' => 0,
+                'Swasta' => 0
+            ],
+            'engagement' => [
+                'totalAttendance' => 0,
+                'uniqueActiveTeachers' => 0
+            ]
+        ];
+
+        // 1. Employment Counts
+        $q1 = $this->conn->query("SELECT status_kepegawaian, COUNT(*) as count FROM profiles GROUP BY status_kepegawaian");
+        $stats['employment'] = $q1->fetchAll(PDO::FETCH_ASSOC);
+
+        // 2. School Types (Negeri vs Swasta)
+        $q2 = $this->conn->query("SELECT asal_sekolah FROM profiles WHERE asal_sekolah IS NOT NULL");
+        $schools = $q2->fetchAll(PDO::FETCH_COLUMN);
+
+        foreach ($schools as $school) {
+            $schoolUpper = strtoupper($school);
+            // Keywords for Negeri: SMPN, SMAN, SMKN, MTSN, MAN, Negeri
+            if (
+                strpos($schoolUpper, 'SMPN') !== false ||
+                strpos($schoolUpper, 'SMAN') !== false ||
+                strpos($schoolUpper, 'SMKN') !== false ||
+                strpos($schoolUpper, 'MTSN') !== false ||
+                strpos($schoolUpper, 'MAN') !== false ||
+                strpos($schoolUpper, 'NEGERI') !== false
+            ) {
+                $stats['schoolTypes']['Negeri']++;
+            } else {
+                $stats['schoolTypes']['Swasta']++;
+            }
+        }
+
+        // 3. Engagement (Attendance)
+        try {
+            // Using 'attended' from event_participants table
+            $q3 = $this->conn->query("SELECT COUNT(*) FROM event_participants WHERE status = 'attended'");
+            $stats['engagement']['totalAttendance'] = (int) $q3->fetchColumn();
+
+            $q4 = $this->conn->query("SELECT COUNT(DISTINCT user_id) FROM event_participants WHERE status = 'attended'");
+            $stats['engagement']['uniqueActiveTeachers'] = (int) $q4->fetchColumn();
+        } catch (Exception $e) {
+            // Fallback if table doesn't exist or column differs
+        }
+
+        return json_encode($stats);
+    }
 }
 ?>

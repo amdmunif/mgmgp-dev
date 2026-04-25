@@ -68,13 +68,34 @@ class ResourceController
     }
 
     // --- Prompts ---
-    public function getPrompts()
+    public function getPrompts($userId = null)
     {
-        $data = json_decode($this->getAll('prompt_library'), true);
-        // Decode JSON fields if needed
+        // Return published prompts, plus unpublished ones by this user
+        if ($userId) {
+            $query = "SELECT * FROM prompt_library WHERE is_published = 1 OR created_by = :uid ORDER BY created_at DESC";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':uid', $userId);
+        } else {
+            $query = "SELECT * FROM prompt_library WHERE is_published = 1 OR is_published IS NULL ORDER BY created_at DESC";
+            $stmt = $this->conn->prepare($query);
+        }
+        $stmt->execute();
+        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
         foreach ($data as &$item) {
-            if (isset($item['tags']))
-                $item['tags'] = json_decode($item['tags']);
+            if (isset($item['tags'])) $item['tags'] = json_decode($item['tags']);
+        }
+        return json_encode($data);
+    }
+
+    public function getMyPrompts($userId)
+    {
+        $query = "SELECT * FROM prompt_library WHERE created_by = :uid ORDER BY created_at DESC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':uid', $userId);
+        $stmt->execute();
+        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($data as &$item) {
+            if (isset($item['tags'])) $item['tags'] = json_decode($item['tags']);
         }
         return json_encode($data);
     }
@@ -82,14 +103,19 @@ class ResourceController
     public function createPrompt($data)
     {
         $id = Helper::uuid();
-        $query = "INSERT INTO prompt_library (id, title, prompt_content, description, example_result, example_type, tags, category, is_premium) VALUES (:id, :title, :prompt_content, :description, :example_result, :example_type, :tags, :category, :is_premium)";
+        $query = "INSERT INTO prompt_library (id, title, prompt_content, description, example_result, example_type, tags, category, is_premium, is_published, created_by, source_type, generator_meta) 
+                  VALUES (:id, :title, :prompt_content, :description, :example_result, :example_type, :tags, :category, :is_premium, :is_published, :created_by, :source_type, :generator_meta)";
         $stmt = $this->conn->prepare($query);
 
         $tags = isset($data['tags']) ? json_encode($data['tags']) : '[]';
-        $category = isset($data['category']) ? $data['category'] : 'General';
+        $category = isset($data['category']) ? $data['category'] : 'Teaching';
         $example_type = isset($data['example_type']) ? $data['example_type'] : 'text';
         $example_result = isset($data['example_result']) ? $data['example_result'] : null;
-        $is_premium = isset($data['is_premium']) ? $data['is_premium'] : 1;
+        $is_premium = isset($data['is_premium']) ? (int)$data['is_premium'] : 1;
+        $is_published = isset($data['is_published']) ? (int)$data['is_published'] : 1;
+        $created_by = isset($data['created_by']) ? $data['created_by'] : null;
+        $source_type = isset($data['source_type']) ? $data['source_type'] : 'manual';
+        $generator_meta = isset($data['generator_meta']) ? $data['generator_meta'] : null;
 
         $stmt->bindParam(':id', $id);
         $stmt->bindParam(':title', $data['title']);
@@ -100,6 +126,10 @@ class ResourceController
         $stmt->bindParam(':tags', $tags);
         $stmt->bindParam(':category', $category);
         $stmt->bindParam(':is_premium', $is_premium);
+        $stmt->bindParam(':is_published', $is_published);
+        $stmt->bindParam(':created_by', $created_by);
+        $stmt->bindParam(':source_type', $source_type);
+        $stmt->bindParam(':generator_meta', $generator_meta);
 
         if ($stmt->execute()) {
             return json_encode(["message" => "Prompt created", "id" => $id]);

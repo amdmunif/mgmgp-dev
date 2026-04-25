@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { memberService, type Profile } from '../../services/memberService';
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, useLocation } from 'react-router-dom';
 import {
     ShieldCheck,
     Crown,
@@ -11,7 +11,9 @@ import {
     X,
     Eye,
     Filter,
-    Users
+    Users,
+    CheckCircle2,
+    AlertCircle
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { getFileUrl } from '../../lib/api';
@@ -24,6 +26,7 @@ import { saveAs } from 'file-saver';
 
 export function AdminMembers() {
     const { setPageHeader } = useOutletContext<any>() || {};
+    const location = useLocation();
     const [members, setMembers] = useState<Profile[]>([]);
     const [loading, setLoading] = useState(true);
     const [filterRole, setFilterRole] = useState('All');
@@ -34,6 +37,11 @@ export function AdminMembers() {
     const [viewingMember, setViewingMember] = useState<Profile | null>(null);
     const [editForm, setEditForm] = useState({ nama: '', email: '', role: 'Anggota', is_active: 0 });
     const [isSaving, setIsSaving] = useState(false);
+
+    // Tab: default dari location state jika ada
+    const [activeTab, setActiveTab] = useState<'active' | 'inactive'>(
+        location.state?.tab === 'inactive' ? 'inactive' : 'active'
+    );
 
     useEffect(() => {
         if (setPageHeader) {
@@ -58,10 +66,24 @@ export function AdminMembers() {
         }
     };
 
-    const [activeTab, setActiveTab] = useState<'active' | 'inactive'>('active');
-
     // Derived state for counts
     const inactiveCount = members.filter(m => Number(m.is_active) === 0).length;
+
+    // Helper: cek kelengkapan data anggota
+    const isDataComplete = (m: Profile): boolean => {
+        return !!(m.nama && m.asal_sekolah && m.no_hp && m.pendidikan_terakhir && m.jurusan && m.status_kepegawaian);
+    };
+
+    const getMissingFields = (m: Profile): string[] => {
+        const missing: string[] = [];
+        if (!m.nama) missing.push('Nama');
+        if (!m.asal_sekolah) missing.push('Asal Sekolah');
+        if (!m.no_hp) missing.push('No. HP');
+        if (!m.pendidikan_terakhir) missing.push('Pendidikan');
+        if (!m.jurusan) missing.push('Jurusan');
+        if (!m.status_kepegawaian) missing.push('Status Kepegawaian');
+        return missing;
+    };
 
     const filteredMembers = members
         .filter(m => {
@@ -242,6 +264,31 @@ export function AdminMembers() {
                     {member.attendance_count || 0} Event
                 </span>
             )
+        },
+        {
+            header: 'Data Lengkap',
+            accessorKey: 'asal_sekolah' as keyof Profile,
+            className: 'w-32 text-center',
+            cell: (member: Profile) => {
+                const complete = isDataComplete(member);
+                const missing = getMissingFields(member);
+                return (
+                    <div className="flex justify-center">
+                        {complete ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-green-50 text-green-700 border border-green-200">
+                                <CheckCircle2 className="w-3 h-3" /> Lengkap
+                            </span>
+                        ) : (
+                            <span
+                                className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-red-50 text-red-600 border border-red-200 cursor-help"
+                                title={`Belum lengkap: ${missing.join(', ')}`}
+                            >
+                                <AlertCircle className="w-3 h-3" /> Belum ({missing.length})
+                            </span>
+                        )}
+                    </div>
+                );
+            }
         },
         {
             header: 'Aksi',

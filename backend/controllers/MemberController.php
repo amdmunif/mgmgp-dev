@@ -96,7 +96,7 @@ class MemberController
             $this->conn->commit();
 
             if ($isActivating && $userEmail) {
-                Mailer::sendMemberVerified($userEmail, $userNama);
+                Mailer::sendMemberActivated($userEmail, $userNama);
             }
 
             return json_encode(["message" => "Data Anggota berhasil diperbarui"]);

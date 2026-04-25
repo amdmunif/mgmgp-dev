@@ -19,7 +19,8 @@ import {
     FileQuestion,
     Book,
     Clock,
-    PenTool
+    PenTool,
+    Wand2
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { cn } from '../../lib/utils';
@@ -103,6 +104,7 @@ export function MemberLayout() {
         { icon: Gamepad2, label: 'Bank Games', path: '/member/games', premium: true },
         { icon: Book, label: 'Modul Ajar', path: '/member/modules', premium: true },
         { icon: Terminal, label: 'Prompt Library', path: '/member/prompts', premium: true },
+        { icon: Wand2, label: 'Prompt Generator', path: '/member/prompt-generator', premium: true },
         { icon: BookOpen, label: 'Referensi Belajar', path: '/member/references', premium: true },
         { icon: PenTool, label: 'Program Kontributor', path: '/member/contributor' },
         // Mobile Only Items

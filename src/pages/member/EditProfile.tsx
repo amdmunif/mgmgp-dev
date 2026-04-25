@@ -27,6 +27,8 @@ export function EditProfile() {
         status_kepegawaian: '',
         ukuran_baju: '',
         email: '',
+        mapel: [] as string[],
+        kelas: [] as string[],
     });
 
     useEffect(() => {
@@ -55,6 +57,8 @@ export function EditProfile() {
                     status_kepegawaian: user.status_kepegawaian || '',
                     ukuran_baju: user.ukuran_baju || '',
                     email: user.email || '',
+                    mapel: Array.isArray(user.mapel) ? user.mapel : [],
+                    kelas: Array.isArray(user.kelas) ? user.kelas : [],
                 });
                 setAvatarUrl(user.foto_profile);
             }
@@ -68,6 +72,17 @@ export function EditProfile() {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    const handleCheckboxChange = (name: 'mapel' | 'kelas', value: string) => {
+        setFormData(prev => {
+            const currentList = prev[name];
+            if (currentList.includes(value)) {
+                return { ...prev, [name]: currentList.filter(item => item !== value) };
+            } else {
+                return { ...prev, [name]: [...currentList, value] };
+            }
+        });
     };
 
     const uploadAvatar = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -164,6 +179,16 @@ export function EditProfile() {
                             </h3>
                         </div>
 
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Email (Read-Only)</label>
+                            <input
+                                type="email"
+                                value={formData.email}
+                                readOnly
+                                disabled
+                                className="w-full px-4 py-2 border border-gray-200 bg-gray-50 text-gray-500 rounded-lg cursor-not-allowed"
+                            />
+                        </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap (dengan Gelar)</label>
                             <input
@@ -268,6 +293,49 @@ export function EditProfile() {
                                 <option value="XXL">XXL</option>
                                 <option value="XXXL">XXXL</option>
                             </select>
+                        </div>
+                        
+                        {/* Mengajar Info */}
+                        <div className="md:col-span-2 mt-4 pt-4 border-t border-gray-100">
+                            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                <GraduationCap className="w-5 h-5 text-gray-400" /> Profil Mengajar
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-3">Mata Pelajaran yang Diampu</label>
+                                    <div className="space-y-2 max-h-48 overflow-y-auto p-4 border border-gray-200 rounded-lg bg-gray-50">
+                                        {['Informatika', 'TIK', 'Prakarya', 'Matematika', 'Bimbingan TIK', 'Muatan Lokal'].map(item => (
+                                            <label key={item} className="flex items-center gap-3 cursor-pointer p-1">
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={formData.mapel.includes(item)}
+                                                    onChange={() => handleCheckboxChange('mapel', item)}
+                                                    className="w-4 h-4 text-primary-600 rounded border-gray-300 focus:ring-primary-500" 
+                                                />
+                                                <span className="text-sm text-gray-700">{item}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-2">Bisa pilih lebih dari satu.</p>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-3">Kelas yang Diajar</label>
+                                    <div className="space-y-2 max-h-48 overflow-y-auto p-4 border border-gray-200 rounded-lg bg-gray-50">
+                                        {['Kelas 7', 'Kelas 8', 'Kelas 9'].map(item => (
+                                            <label key={item} className="flex items-center gap-3 cursor-pointer p-1">
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={formData.kelas.includes(item)}
+                                                    onChange={() => handleCheckboxChange('kelas', item)}
+                                                    className="w-4 h-4 text-primary-600 rounded border-gray-300 focus:ring-primary-500" 
+                                                />
+                                                <span className="text-sm text-gray-700">{item}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-2">Bisa pilih lebih dari satu kelas.</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
 

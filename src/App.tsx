@@ -32,6 +32,7 @@ import { QuestionBuilder } from './pages/admin/questions/QuestionBuilder';
 import { QuestionBankPage } from './pages/public/QuestionBank';
 import { PromptLibrary } from './pages/public/Prompts';
 import { References } from './pages/public/References';
+import { TrainingRegistration } from './pages/public/TrainingRegistration';
 import { MemberDashboard } from './pages/member/Dashboard';
 import { UpgradePremium } from './pages/member/UpgradePremium';
 import { AdminNews } from './pages/admin/news/AdminNews';
@@ -44,6 +45,7 @@ import { AdminMembers } from './pages/admin/Members';
 import { AdminGames } from './pages/admin/games/AdminGames';
 import { CreateGame } from './pages/admin/games/CreateGame';
 import { AdminPrompts } from './pages/admin/prompts/AdminPrompts';
+import { AdminTraining } from './pages/admin/AdminTraining';
 import { CreatePrompt } from './pages/admin/prompts/CreatePrompt';
 import { AdminReferences } from './pages/admin/references/AdminReferences';
 // Imports
@@ -63,6 +65,7 @@ import { EditProfile } from './pages/member/EditProfile';
 import { Games } from './pages/member/Games';
 import { Modules } from './pages/member/Modules';
 import { ContributorRegistration } from './pages/member/ContributorRegistration';
+import { PromptGenerator } from './pages/member/PromptGenerator';
 import { PremiumGuard } from './components/auth/PremiumGuard';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
 
@@ -101,6 +104,7 @@ function App() {
         <Route path="/gallery" element={<Layout><Gallery /></Layout>} />
         <Route path="/profile" element={<Layout><Profile /></Layout>} />
         <Route path="/learning" element={<Layout><Learning /></Layout>} />
+        <Route path="/pelatihan" element={<Layout><TrainingRegistration /></Layout>} />
 
         {/* Auth Routes - Wrapped in Layout */}
         <Route path="/login" element={<Layout><Login /></Layout>} />
@@ -144,6 +148,11 @@ function App() {
           <Route path="prompts" element={
             <PremiumGuard>
               <PromptLibrary />
+            </PremiumGuard>
+          } />
+          <Route path="prompt-generator" element={
+            <PremiumGuard>
+              <PromptGenerator />
             </PremiumGuard>
           } />
           <Route path="references" element={
@@ -196,6 +205,7 @@ function App() {
           <Route path="references/create" element={<CreateReference />} />
           <Route path="references/edit/:id" element={<CreateReference />} />
           <Route path="gallery" element={<AdminGallery />} />
+          <Route path="training" element={<AdminTraining />} />
           <Route path="messages" element={<AdminMessages />} />
           <Route path="contributors" element={<VerificationList />} />
           <Route path="logs" element={<AuditLogs />} />

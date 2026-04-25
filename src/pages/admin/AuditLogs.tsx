@@ -9,6 +9,7 @@ export function AuditLogs() {
     const { setPageHeader } = useOutletContext<any>() || {};
     const [logs, setLogs] = useState<AuditLog[]>([]);
     const [loading, setLoading] = useState(true);
+    const [actionFilter, setActionFilter] = useState<string>('ALL');
 
     useEffect(() => {
         if (setPageHeader) {
@@ -96,14 +97,39 @@ export function AuditLogs() {
         }
     ];
 
+    const filteredLogs = actionFilter === 'ALL' 
+        ? logs 
+        : logs.filter(log => log.action.startsWith(actionFilter));
+
     return (
         <div className="space-y-6">
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden p-6">
+                <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <h2 className="text-lg font-bold text-gray-900">Riwayat Sistem</h2>
+                        <p className="text-sm text-gray-500">Daftar semua tindakan administratif yang terekam.</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <label className="text-sm font-medium text-gray-700">Filter Aksi:</label>
+                        <select 
+                            value={actionFilter} 
+                            onChange={(e) => setActionFilter(e.target.value)}
+                            className="text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none"
+                        >
+                            <option value="ALL">Semua Aksi</option>
+                            <option value="CREATE">CREATE (Tambah)</option>
+                            <option value="UPDATE">UPDATE (Ubah)</option>
+                            <option value="DELETE">DELETE (Hapus)</option>
+                            <option value="LOGIN">LOGIN</option>
+                        </select>
+                    </div>
+                </div>
+
                 {loading ? (
-                    <div className="p-8 text-center text-gray-500">Loading...</div>
+                    <div className="p-8 text-center text-gray-500">Memuat log aktivitas...</div>
                 ) : (
                     <DataTable
-                        data={logs}
+                        data={filteredLogs}
                         columns={columns}
                         searchKeys={['user_name', 'action', 'target']}
                         pageSize={15}

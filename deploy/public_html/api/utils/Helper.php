@@ -51,5 +51,21 @@ class Helper
         }
         return false;
     }
+
+    public static function log($conn, $userId, $userName, $action, $target = null)
+    {
+        try {
+            $query = "INSERT INTO audit_logs (user_id, user_name, action, target) VALUES (:user_id, :user_name, :action, :target)";
+            $stmt = $conn->prepare($query);
+            $stmt->bindParam(':user_id', $userId);
+            $stmt->bindParam(':user_name', $userName);
+            $stmt->bindParam(':action', $action);
+            $stmt->bindParam(':target', $target);
+            $stmt->execute();
+        } catch (Exception $e) {
+            // Silently fail for logging errors to avoid breaking the main flow
+            error_log("Audit log failed: " . $e->getMessage());
+        }
+    }
 }
 ?>

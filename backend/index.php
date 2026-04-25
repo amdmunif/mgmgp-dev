@@ -107,6 +107,7 @@ include_once './controllers/ContentController.php';
 include_once './controllers/QuestionController.php';
 include_once './controllers/LetterController.php';
 include_once './controllers/StatsController.php';
+include_once './controllers/TrainingController.php';
 
 // ... includes
 
@@ -607,6 +608,27 @@ if ($resource === 'news') {
     } else {
         http_response_code(404);
         echo json_encode(["message" => "Endpoint not found"]);
+    }
+} elseif ($resource === 'training') {
+    $training = new TrainingController();
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        if ($action === 'settings') {
+            echo $training->getSettings();
+        } elseif ($action === 'registrations' && $userRole === 'Admin') {
+            echo $training->getRegistrations();
+        } else {
+            http_response_code(401);
+            echo json_encode(["message" => "Unauthorized"]);
+        }
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if ($action === 'register') {
+            echo $training->register($input);
+        } elseif ($action === 'settings' && $userRole === 'Admin') {
+            echo $training->updateSettings($input);
+        } else {
+            http_response_code(404);
+            echo json_encode(["message" => "Endpoint not found"]);
+        }
     }
 } else {
     echo json_encode([

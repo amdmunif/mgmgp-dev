@@ -60,6 +60,7 @@ const menuGroups = [
         title: "Konten Publik",
         items: [
             { icon: Calendar, label: 'Acara & Kegiatan', path: '/admin/events' },
+            { icon: Users, label: 'Pelatihan Publik', path: '/admin/training' },
             { icon: FileText, label: 'Berita & Artikel', path: '/admin/news' },
             { icon: ImageIcon, label: 'Galeri Foto', path: '/admin/gallery' },
         ]

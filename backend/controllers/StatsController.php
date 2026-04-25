@@ -102,6 +102,14 @@ class StatsController
             // Fallback if table doesn't exist or column differs
         }
 
+        // 4. Education Distribution (Pendidikan Terakhir)
+        $q5 = $this->conn->query("SELECT pendidikan_terakhir, COUNT(*) as count FROM profiles WHERE pendidikan_terakhir IS NOT NULL AND pendidikan_terakhir != '' GROUP BY pendidikan_terakhir ORDER BY count DESC");
+        $stats['education'] = $q5->fetchAll(PDO::FETCH_ASSOC);
+
+        // 5. Top Schools (Asal Sekolah terbanyak)
+        $q6 = $this->conn->query("SELECT asal_sekolah, COUNT(*) as count FROM profiles WHERE asal_sekolah IS NOT NULL AND asal_sekolah != '' GROUP BY asal_sekolah ORDER BY count DESC LIMIT 5");
+        $stats['topSchools'] = $q6->fetchAll(PDO::FETCH_ASSOC);
+
         return json_encode($stats);
     }
 }

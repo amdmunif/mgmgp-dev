@@ -43,6 +43,38 @@ if (isset($uri_parts[0]) && $uri_parts[0] === 'uploads') {
     }
 }
 
+// Temporary Debug Route
+if (isset($uri_parts[0]) && $uri_parts[0] === 'debug-db') {
+    include_once 'check_db_browser.php';
+    exit();
+}
+
+// Temporary Migration Route
+if (isset($uri_parts[0]) && $uri_parts[0] === 'migrate-db') {
+    include_once 'migrate_premium_browser.php';
+    exit();
+}
+
+if (isset($uri_parts[0]) && $uri_parts[0] === 'migrate-reset') {
+    include_once 'migrate_reset_password_browser.php';
+    exit();
+}
+
+if (isset($uri_parts[0]) && $uri_parts[0] === 'migrate-cleanup') {
+    include_once 'migrate_cleanup_browser.php';
+    exit();
+}
+
+if (isset($uri_parts[0]) && $uri_parts[0] === 'migrate-v2') {
+    include_once 'migrate_v2_browser.php';
+    exit();
+}
+
+if (isset($uri_parts[0]) && $uri_parts[0] === 'diagnose') {
+    include_once 'diagnose_db.php';
+    exit();
+}
+
 include_once './controllers/AuthController.php';
 include_once './controllers/ResourceController.php';
 include_once './controllers/LearningController.php';
@@ -52,6 +84,24 @@ $action = isset($uri_parts[1]) ? $uri_parts[1] : null;
 
 // Get JSON input
 $input = json_decode(file_get_contents("php://input"), true);
+
+// Auth Check (Global)
+$headers = getallheaders();
+$authHeader = isset($headers['Authorization']) ? $headers['Authorization'] : (isset($headers['authorization']) ? $headers['authorization'] : '');
+$token = str_replace('Bearer ', '', $authHeader);
+$userId = null;
+$userName = 'System'; // Fallback
+$userRole = null;
+
+if ($token) {
+    include_once './utils/Helper.php';
+    $payload = Helper::verifyJWT($token);
+    if ($payload && isset($payload['sub'])) {
+        $userId = $payload['sub'];
+        $userName = $payload['nama'] ?? 'User'; // Assuming 'nama' is in JWT payload or we might need to fetch it
+        $userRole = $payload['role'] ?? 'Anggota';
+    }
+}
 
 include_once './controllers/ContentController.php';
 include_once './controllers/QuestionController.php';
@@ -70,9 +120,11 @@ if ($resource === 'news') {
             echo $controller->getNews();
     }
     if ($_SERVER['REQUEST_METHOD'] === 'POST')
-        echo $controller->createNews($input);
+        echo $controller->createNews($input, $userId, $userName);
+    if ($_SERVER['REQUEST_METHOD'] === 'PUT' && $action)
+        echo $controller->updateNews($action, $input, $userId, $userName);
     if ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action)
-        echo $controller->deleteNews($action);
+        echo $controller->deleteNews($action, $userId, $userName);
 
 } elseif ($resource === 'events') {
     $controller = new ContentController();
@@ -107,6 +159,9 @@ if ($resource === 'news') {
                 http_response_code(401);
                 echo json_encode(["message" => "Unauthorized"]);
             }
+        } elseif ($action && $subAction === 'participants') {
+            // GET /events/:id/participants
+            echo $controller->getEventParticipants($action);
         } elseif ($action) {
             echo $controller->getEventDetail($action);
         } else {
@@ -129,12 +184,56 @@ if ($resource === 'news') {
                 http_response_code(401);
                 echo json_encode(["message" => "Unauthorized"]);
             }
+        } elseif ($action && $subAction === 'participants' && isset($uri_parts[3]) && $uri_parts[3] === 'bulk') {
+            // POST /events/:id/participants/bulk
+            $userIds = $input['user_ids'] ?? [];
+            $status = $input['status'] ?? 'registered';
+
+            // Check admin role
+            if ($currUser && $currUser['role'] === 'Admin')
+                echo $controller->updateParticipantsBulk($action, $userIds, $status);
+            else {
+                http_response_code(403);
+                echo json_encode(["message" => "Forbidden"]);
+            }
         } else {
-            echo $controller->createEvent($input);
+            echo $controller->createEvent($input, $userId, $userName);
         }
     }
-    if ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action)
-        echo $controller->deleteEvent($action);
+    if ($_SERVER['REQUEST_METHOD'] === 'PUT' && $action) {
+        if ($subAction === 'participants') {
+            // PUT /events/:id/participants/:userId
+            // URL structure: /events/ID/participants/USERID
+            // $uri_parts[0]=events, [1]=ID (action), [2]=participants (subAction), [3]=USERID
+
+            // We need to parse URI parts again or grab from parts in index.php context
+            // $uri_parts is available globally in this file scope
+            $targetUserId = isset($uri_parts[3]) ? $uri_parts[3] : null;
+
+            if ($targetUserId) {
+                echo $controller->updateParticipantStatus($action, $targetUserId, $input['status']);
+            } else {
+                http_response_code(400);
+                echo json_encode(["message" => "User ID required"]);
+            }
+        } else {
+            echo $controller->updateEvent($action, $input, $userId, $userName);
+        }
+    }
+    if ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action) {
+        if ($subAction === 'participants') {
+            // DELETE /events/:id/participants/:userId
+            $targetUserId = isset($uri_parts[3]) ? $uri_parts[3] : null;
+            if ($targetUserId) {
+                echo $controller->deleteParticipant($action, $targetUserId);
+            } else {
+                http_response_code(400);
+                echo json_encode(["message" => "User ID required"]);
+            }
+        } else {
+            echo $controller->deleteEvent($action, $userId, $userName);
+        }
+    }
 
 } elseif ($resource === 'questions') {
     $controller = new QuestionController();
@@ -162,17 +261,28 @@ if ($resource === 'news') {
 
 } elseif ($resource === 'letters') {
     $controller = new LetterController();
-    if ($_SERVER['REQUEST_METHOD'] === 'GET')
-        echo $controller->getAll();
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        if ($action)
+            echo $controller->getById($action);
+        else
+            echo $controller->getAll();
+    }
     if ($_SERVER['REQUEST_METHOD'] === 'POST')
         echo $controller->create($input);
+    if ($_SERVER['REQUEST_METHOD'] === 'PUT' && $action)
+        echo $controller->update($action, $input, $userId, $userName);
     if ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action)
         echo $controller->delete($action);
 
 } elseif ($resource === 'stats') {
     $controller = new StatsController();
-    if ($_SERVER['REQUEST_METHOD'] === 'GET')
-        echo $controller->getOverview();
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        if ($action === 'teachers') {
+            echo $controller->getTeacherStats();
+        } else {
+            echo $controller->getOverview();
+        }
+    }
 
 } elseif ($resource === 'games') {
     $controller = new ResourceController();
@@ -188,24 +298,72 @@ if ($resource === 'news') {
         echo $controller->getPrompts();
     if ($_SERVER['REQUEST_METHOD'] === 'POST')
         echo $controller->createPrompt($input);
+    if ($_SERVER['REQUEST_METHOD'] === 'PUT' && $action)
+        echo $controller->updatePrompt($action, $input);
     if ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action)
         echo $controller->deletePrompt($action);
+} elseif ($resource === 'logs') {
+    include_once './controllers/AuditController.php';
+    $controller = new AuditController();
+    if ($_SERVER['REQUEST_METHOD'] === 'GET')
+        echo $controller->getAll();
 } elseif ($resource === 'references') {
     $controller = new ResourceController();
-    if ($_SERVER['REQUEST_METHOD'] === 'GET')
-        echo $controller->getReferences();
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        if ($action)
+            echo $controller->getReferenceById($action);
+        else
+            echo $controller->getReferences();
+    }
     if ($_SERVER['REQUEST_METHOD'] === 'POST')
         echo $controller->createReference($input);
+    if ($_SERVER['REQUEST_METHOD'] === 'PUT' && $action)
+        echo $controller->updateReference($action, $input);
     if ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action)
         echo $controller->deleteReference($action);
 } elseif ($resource === 'learning') {
     $controller = new LearningController();
-    if ($_SERVER['REQUEST_METHOD'] === 'GET')
-        echo $controller->getAll();
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        if ($action)
+            echo $controller->getById($action);
+        else
+            echo $controller->getAll();
+    }
     if ($_SERVER['REQUEST_METHOD'] === 'POST')
-        echo $controller->create();
+        echo $controller->create($userId, $userName);
+    if ($_SERVER['REQUEST_METHOD'] === 'PUT' && $action)
+        echo $controller->update($action, $input, $userId, $userName);
     if ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action)
-        echo $controller->delete($action);
+        echo $controller->delete($action, $userId, $userName);
+} elseif ($resource === 'cp') {
+    include_once './controllers/CurriculumController.php';
+    $controller = new CurriculumController();
+
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        $mapel = $_GET['mapel'] ?? 'Informatika';
+        echo $controller->getCP($mapel);
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        echo $controller->saveCP($input, $userId, $userName);
+    }
+} elseif ($resource === 'tp') {
+    include_once './controllers/CurriculumController.php';
+    $controller = new CurriculumController();
+
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        // Filters from query params
+        $filters = [
+            'mapel' => $_GET['mapel'] ?? null,
+            'kelas' => $_GET['kelas'] ?? null,
+            'semester' => $_GET['semester'] ?? null
+        ];
+        echo $controller->getTPs($filters);
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        echo $controller->createTP($input, $userId, $userName);
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'PUT' && $action) {
+        echo $controller->updateTP($action, $input, $userId, $userName);
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action) {
+        echo $controller->deleteTP($action, $userId, $userName);
+    }
 } elseif ($resource === 'upload') {
     include_once './controllers/UploadController.php';
     $controller = new UploadController();
@@ -217,9 +375,19 @@ if ($resource === 'news') {
     if ($action === 'logo' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         echo $controller->uploadLogo();
     } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        echo $controller->updateSettings($input);
+        echo $controller->updateSettings($input, $userId, $userName);
     } else {
         echo $controller->getSettings();
+    }
+} elseif ($resource === 'gallery') {
+    include_once './controllers/GalleryController.php';
+    $controller = new GalleryController();
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        echo $controller->getImages();
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        echo $controller->createImage($input);
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action) {
+        echo $controller->deleteImage($action);
     }
 } elseif ($resource === 'members') {
     include_once './controllers/MemberController.php';
@@ -289,15 +457,6 @@ if ($resource === 'news') {
     } elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'active') {
         echo $controller->getActiveSubscribers();
 
-    } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'extend') {
-        $id = $input['user_id'] ?? null;
-        if ($id)
-            echo $controller->extend($id);
-        else {
-            http_response_code(400);
-            echo json_encode(["message" => "User ID required"]);
-        }
-
     } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'revoke') {
         $id = $input['user_id'] ?? null;
         if ($id)
@@ -306,8 +465,40 @@ if ($resource === 'news') {
             http_response_code(400);
             echo json_encode(["message" => "User ID required"]);
         }
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action) {
+        echo $controller->deleteRequest($action);
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'PUT' && $action) {
+        echo $controller->updateRequest($action, $input);
     }
 
+} elseif ($resource === 'bank-accounts') {
+    include_once './controllers/BankController.php';
+    $controller = new BankController();
+
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        if ($action === 'active') {
+            echo $controller->getActive();
+        } else {
+            echo $controller->getAll();
+        }
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        echo $controller->create($input);
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'PUT' && $action) {
+        echo $controller->update($action, $input);
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action) {
+        echo $controller->delete($action);
+    }
+
+} elseif ($resource === 'contact') {
+    include_once './controllers/ContactController.php';
+    $controller = new ContactController();
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        echo $controller->saveMessage($input);
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        echo $controller->getMessages();
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action) {
+        echo $controller->deleteMessage($action);
+    }
 } elseif ($resource === 'contributor') {
     include_once './controllers/ContributorController.php';
     $controller = new ContributorController();
