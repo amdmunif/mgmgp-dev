@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, MapPin, Users, Mail, Phone, Building, ArrowRight, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { Calendar, MapPin, Users, Mail, Phone, Building, ArrowRight, CheckCircle2, AlertCircle, Loader2, FileText } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { api } from '../../lib/api';
 import { authService } from '../../services/authService';

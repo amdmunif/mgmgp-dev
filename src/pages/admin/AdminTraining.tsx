@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { Calendar, Users, DollarSign, Search, CheckCircle2, Clock, XCircle, FileText, Settings, Save, Loader2 } from 'lucide-react';
+import { Calendar, Users, DollarSign, Search, CheckCircle2, Clock, XCircle, Settings, Save, Loader2 } from 'lucide-react';
 import { api } from '../../lib/api';
 import { toast } from 'react-hot-toast';
 import { Button } from '../../components/ui/button';
@@ -49,11 +49,11 @@ export function AdminTraining() {
     const fetchData = async () => {
         try {
             const [regData, settsData] = await Promise.all([
-                api.get('/training/registrations'),
-                api.get('/training/settings')
+                api.get<Registration[]>('/training/registrations'),
+                api.get<any>('/training/settings')
             ]);
-            setRegistrations(regData || []);
-            if(settsData && !settsData.message) {
+            setRegistrations(Array.isArray(regData) ? regData : []);
+            if(settsData && !(settsData as any).message) {
                 setSettings(settsData);
             }
         } catch (e: any) {
@@ -65,6 +65,7 @@ export function AdminTraining() {
 
     const handleUpdateStatus = async (id: string, status: string) => {
         // Todo: Connect to backend to update status
+        console.log(`Updating status for ${id}`);
         toast.success(`Status diubah menjadi ${status}`);
     };
 
