@@ -69,10 +69,17 @@ export function AdminStats() {
                     <div className="p-4 bg-purple-50 text-purple-600 rounded-xl">
                         <CheckCircle2 className="w-8 h-8" />
                     </div>
-                    <div>
-                        <p className="text-sm text-gray-500 font-medium">Total Kehadiran</p>
-                        <h3 className="text-2xl font-bold text-gray-900">{stats.engagement.totalAttendance}</h3>
-                        <p className="text-xs text-purple-600 font-medium mt-1">Akumulasi presensi</p>
+                    <div className="flex-1">
+                        <p className="text-sm text-gray-500 font-medium">Engagement Rate</p>
+                        <h3 className="text-2xl font-bold text-gray-900">
+                            {totalTeachers > 0 ? ((stats.engagement.uniqueActiveTeachers / totalTeachers) * 100).toFixed(1) : 0}%
+                        </h3>
+                        <div className="w-full h-1.5 bg-gray-100 rounded-full mt-2 overflow-hidden">
+                            <div 
+                                className="h-full bg-purple-500 rounded-full" 
+                                style={{ width: `${totalTeachers > 0 ? (stats.engagement.uniqueActiveTeachers / totalTeachers) * 100 : 0}%` }}
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -127,13 +134,13 @@ export function AdminStats() {
                         <h2 className="text-lg font-bold text-gray-900">Status Kepegawaian</h2>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                         {stats.employment.sort((a, b) => b.count - a.count).map((item, idx) => (
-                            <div key={idx} className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-                                <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">{item.status_kepegawaian || 'LAINNYA'}</p>
-                                <div className="flex items-end gap-2">
-                                    <span className="text-2xl font-bold text-gray-900">{item.count}</span>
-                                    <span className="text-xs text-gray-400 mb-1 font-medium">Guru</span>
+                            <div key={idx} className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">{item.status_kepegawaian || 'LAINNYA'}</p>
+                                <div className="flex items-baseline gap-1">
+                                    <span className="text-xl font-bold text-gray-900">{item.count}</span>
+                                    <span className="text-[10px] text-gray-400 font-medium">Guru</span>
                                 </div>
                             </div>
                         ))}
@@ -175,31 +182,6 @@ export function AdminStats() {
                     </div>
                 </div>
 
-                {/* Top Schools */}
-                <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-                    <div className="flex items-center gap-2 mb-6">
-                        <Building2 className="w-5 h-5 text-gray-400" />
-                        <h2 className="text-lg font-bold text-gray-900">Asal Sekolah Terbanyak</h2>
-                    </div>
-
-                    <div className="space-y-3">
-                        {stats.topSchools?.length > 0 ? stats.topSchools.map((school, idx) => (
-                            <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-sm">
-                                        #{idx + 1}
-                                    </div>
-                                    <span className="font-semibold text-gray-900 text-sm truncate max-w-[200px] sm:max-w-[300px]">
-                                        {school.asal_sekolah}
-                                    </span>
-                                </div>
-                                <div className="text-right">
-                                    <span className="text-lg font-bold text-gray-900">{school.count}</span>
-                                    <span className="text-xs text-gray-500 ml-1">Guru</span>
-                                </div>
-                            </div>
-                        )) : <p className="text-sm text-gray-500 text-center">Data sekolah belum tersedia.</p>}
-                    </div>
                 </div>
             </div>
 

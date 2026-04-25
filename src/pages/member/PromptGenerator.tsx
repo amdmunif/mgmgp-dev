@@ -6,11 +6,11 @@ import { Button } from '../../components/ui/button';
 import { api } from '../../lib/api';
 import { authService } from '../../services/authService';
 
-const MAPEL_LIST = ['Informatika', 'Matematika', 'IPA', 'IPS', 'Bahasa Indonesia', 'Bahasa Inggris', 'PPKN', 'Seni Budaya', 'PJOK', 'Lainnya'];
-const KELAS_LIST = ['7', '8', '9', '10', '11', '12'];
+const MAPEL_LIST = ['Informatika', 'KKA', 'Lainnya'];
+const KELAS_LIST = ['7', '8', '9'];
 const JENIS_SOAL_LIST = [
     { value: 'pilihan_ganda', label: 'Pilihan Ganda' },
-    { value: 'pgk', label: 'Pilihan Ganda Kompleks' },
+    { value: 'pgk', label: 'PG Kompleks' },
     { value: 'isian_singkat', label: 'Isian Singkat' },
     { value: 'menjodohkan', label: 'Menjodohkan' },
     { value: 'essay', label: 'Essay / Uraian' },
@@ -20,8 +20,9 @@ interface FormData {
     mapel: string;
     mapel_custom: string;
     kelas: string;
+    tp_mode: 'manual' | 'database';
     tujuan_pembelajaran: string[];
-    jenis_soal: string;
+    jenis_soal: string[]; // Changed to array
     essay_tipe: string;
     jumlah_soal: number;
     persen_mudah: number;
@@ -38,8 +39,9 @@ const defaultForm: FormData = {
     mapel: 'Informatika',
     mapel_custom: '',
     kelas: '8',
+    tp_mode: 'manual',
     tujuan_pembelajaran: [''],
-    jenis_soal: 'pilihan_ganda',
+    jenis_soal: ['pilihan_ganda'],
     essay_tipe: 'terbuka',
     jumlah_soal: 20,
     persen_mudah: 50,
@@ -55,9 +57,9 @@ const defaultForm: FormData = {
 function generatePromptText(form: FormData): string {
     const mapel = form.mapel === 'Lainnya' ? form.mapel_custom : form.mapel;
     const tp = form.tujuan_pembelajaran.filter(t => t.trim()).map((t, i) => `${i + 1}. ${t}`).join('\n');
-    const jenisSoalLabel = JENIS_SOAL_LIST.find(j => j.value === form.jenis_soal)?.label || form.jenis_soal;
+    const selectedJenisLabels = JENIS_SOAL_LIST.filter(j => form.jenis_soal.includes(j.value)).map(j => j.label).join(', ');
 
-    let prompt = `Saya adalah Guru ${mapel} kelas ${form.kelas}, tolong buatkan ${form.jumlah_soal} soal ${jenisSoalLabel}`;
+    let prompt = `Saya adalah Guru ${mapel} kelas ${form.kelas}, tolong buatkan ${form.jumlah_soal} soal dengan variasi jenis: ${selectedJenisLabels}`;
 
     if (form.tujuan_pembelajaran.filter(t => t.trim()).length > 0) {
         prompt += ` dengan tujuan pembelajaran:\n${tp}`;
@@ -71,15 +73,15 @@ function generatePromptText(form: FormData): string {
         prompt += ` Untuk setiap soal, buatkan stimulus yang relevan.`;
     }
 
-    if (form.jenis_soal === 'pilihan_ganda' || form.jenis_soal === 'pgk') {
+    if (form.jenis_soal.includes('pilihan_ganda') || form.jenis_soal.includes('pgk')) {
         const pilihanLabels: Record<number, string> = { 4: '(A, B, C, dan D)', 5: '(A, B, C, D, dan E)' };
-        prompt += `\n\nJawaban terdiri dari ${form.jumlah_pilihan} pilihan ${pilihanLabels[form.jumlah_pilihan] || ''}. Kunci jawaban secara acak dari pilihan yang ada.`;
+        prompt += `\n\nUntuk soal Pilihan Ganda/PGK, jawaban terdiri dari ${form.jumlah_pilihan} pilihan ${pilihanLabels[form.jumlah_pilihan] || ''}. Kunci jawaban secara acak dari pilihan yang ada.`;
         prompt += ` Pada pilihan jawaban, pastikan jumlah karakternya hampir sama, jangan sampai ada yang berbeda sehingga terlihat kalau itu jawaban.`;
     }
 
-    if (form.jenis_soal === 'essay') {
+    if (form.jenis_soal.includes('essay')) {
         const tipeLabel = form.essay_tipe === 'terbuka' ? 'soal terbuka (tidak ada satu jawaban benar)' : 'soal terstruktur (ada jawaban yang diharapkan)';
-        prompt += `\n\nJenis uraian: ${tipeLabel}.`;
+        prompt += `\n\nUntuk soal Uraian (Essay), gunakan tipe: ${tipeLabel}.`;
     }
 
     if (form.format_excel) {
@@ -107,7 +109,11 @@ export function PromptGenerator() {
     const [saveTitle, setSaveTitle] = useState('');
     const [savePublish, setSavePublish] = useState(false);
 
-    useState(() => {
+    // DB TP State
+    const [dbTps, setDbTps] = useState<any[]>([]);
+    const [loadingTps, setLoadingTps] = useState(false);
+
+    useEffect(() => {
         if (setPageHeader) {
             setPageHeader({
                 title: 'Prompt Generator',
@@ -115,7 +121,36 @@ export function PromptGenerator() {
                 icon: <Wand2 className="w-6 h-6 text-purple-600" />
             });
         }
-    });
+    }, [setPageHeader]);
+
+    useEffect(() => {
+        if (form.tp_mode === 'database') {
+            loadTps();
+        }
+    }, [form.tp_mode, form.mapel, form.kelas]);
+
+    const loadTps = async () => {
+        setLoadingTps(true);
+        try {
+            const data = await api.get<any[]>(`/tp?mapel=${form.mapel}&kelas=${form.kelas}`);
+            setDbTps(data || []);
+        } catch (e) {
+            console.error('Gagal load TP:', e);
+        } finally {
+            setLoadingTps(false);
+        }
+    };
+
+    const toggleTPSelection = (tujuan: string) => {
+        setForm(prev => {
+            const current = prev.tujuan_pembelajaran;
+            if (current.includes(tujuan)) {
+                return { ...prev, tujuan_pembelajaran: current.filter(t => t !== tujuan) };
+            } else {
+                return { ...prev, tujuan_pembelajaran: [...current, tujuan] };
+            }
+        });
+    };
 
     const updateTP = (index: number, value: string) => {
         const newTP = [...form.tujuan_pembelajaran];
@@ -134,7 +169,8 @@ export function PromptGenerator() {
         setGeneratedPrompt(prompt);
         setStep(4);
         const mapel = form.mapel === 'Lainnya' ? form.mapel_custom : form.mapel;
-        setSaveTitle(`Soal ${JENIS_SOAL_LIST.find(j => j.value === form.jenis_soal)?.label} ${mapel} Kelas ${form.kelas}`);
+        const jenisLabel = JENIS_SOAL_LIST.filter(j => form.jenis_soal.includes(j.value)).map(j => j.label).join(', ');
+        setSaveTitle(`Soal ${jenisLabel} ${mapel} Kelas ${form.kelas}`);
     };
 
     const handleCopy = () => {
@@ -218,27 +254,67 @@ export function PromptGenerator() {
                             </div>
                         </div>
                         <div>
-                            <label className={labelClass}>Tujuan Pembelajaran</label>
-                            <p className="text-xs text-gray-500 mb-2">Bisa lebih dari satu. Tulis setiap tujuan pembelajaran secara spesifik.</p>
-                            <div className="space-y-2">
-                                {form.tujuan_pembelajaran.map((tp, i) => (
-                                    <div key={i} className="flex gap-2">
-                                        <input className={inputClass} placeholder={`Tujuan pembelajaran ${i + 1}...`}
-                                            value={tp} onChange={e => updateTP(i, e.target.value)} />
-                                        {form.tujuan_pembelajaran.length > 1 && (
-                                            <button onClick={() => removeTP(i)} className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                                                <X className="w-4 h-4" />
-                                            </button>
+                            <div className="flex items-center justify-between mb-2">
+                                <label className={labelClass}>Tujuan Pembelajaran</label>
+                                <div className="flex bg-gray-100 p-0.5 rounded-lg">
+                                    <button 
+                                        onClick={() => setForm(p => ({ ...p, tp_mode: 'manual', tujuan_pembelajaran: [''] }))}
+                                        className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${form.tp_mode === 'manual' ? 'bg-white shadow-sm' : 'text-gray-500'}`}
+                                    >
+                                        Manual
+                                    </button>
+                                    <button 
+                                        onClick={() => setForm(p => ({ ...p, tp_mode: 'database', tujuan_pembelajaran: [] }))}
+                                        className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${form.tp_mode === 'database' ? 'bg-white shadow-sm' : 'text-gray-500'}`}
+                                    >
+                                        Database
+                                    </button>
+                                </div>
+                            </div>
+
+                            {form.tp_mode === 'manual' ? (
+                                <div className="space-y-2">
+                                    {form.tujuan_pembelajaran.map((tp, i) => (
+                                        <div key={i} className="flex gap-2">
+                                            <input className={inputClass} placeholder={`Tujuan pembelajaran ${i + 1}...`}
+                                                value={tp} onChange={e => updateTP(i, e.target.value)} />
+                                            {form.tujuan_pembelajaran.length > 1 && (
+                                                <button onClick={() => removeTP(i)} className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                                    <X className="w-4 h-4" />
+                                                </button>
+                                            )}
+                                        </div>
+                                    ))}
+                                    <button onClick={addTP} className="mt-2 text-sm text-purple-600 hover:text-purple-700 font-semibold flex items-center gap-1">
+                                        + Tambah TP Manual
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="border border-gray-200 rounded-xl overflow-hidden">
+                                    <div className="max-h-64 overflow-y-auto p-4 space-y-2 bg-gray-50">
+                                        {loadingTps ? (
+                                            <div className="py-8 text-center text-gray-500"><Loader2 className="w-4 h-4 animate-spin inline mr-2" /> Memuat TP...</div>
+                                        ) : dbTps.length === 0 ? (
+                                            <div className="py-8 text-center text-gray-500 text-xs italic">Tidak ada TP ditemukan untuk filter ini.</div>
+                                        ) : (
+                                            dbTps.map((tp, i) => (
+                                                <label key={i} className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${form.tujuan_pembelajaran.includes(tp.tujuan) ? 'bg-purple-50 border-purple-200' : 'bg-white border-gray-200 hover:border-purple-100'}`}>
+                                                    <input 
+                                                        type="checkbox" 
+                                                        checked={form.tujuan_pembelajaran.includes(tp.tujuan)}
+                                                        onChange={() => toggleTPSelection(tp.tujuan)}
+                                                        className="mt-1 w-4 h-4 text-purple-600 rounded"
+                                                    />
+                                                    <span className="text-xs text-gray-700 leading-relaxed">{tp.tujuan}</span>
+                                                </label>
+                                            ))
                                         )}
                                     </div>
-                                ))}
-                            </div>
-                            <button onClick={addTP} className="mt-2 text-sm text-purple-600 hover:text-purple-700 font-semibold flex items-center gap-1">
-                                + Tambah Tujuan Pembelajaran
-                            </button>
+                                </div>
+                            )}
                         </div>
                         <div className="flex justify-end pt-2">
-                            <Button onClick={() => setStep(2)} className="bg-purple-600 hover:bg-purple-700 gap-2">
+                            <Button onClick={() => setStep(2)} className="bg-purple-600 hover:bg-purple-700 gap-2 h-9 text-xs">
                                 Lanjut <ChevronRight className="w-4 h-4" />
                             </Button>
                         </div>
@@ -252,15 +328,34 @@ export function PromptGenerator() {
                             <span className="w-7 h-7 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center text-sm font-black">2</span>
                             Konfigurasi Soal
                         </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div className="grid grid-cols-1 gap-5">
                             <div>
-                                <label className={labelClass}>Jenis Soal</label>
-                                <select className={inputClass} value={form.jenis_soal} onChange={e => setForm(p => ({ ...p, jenis_soal: e.target.value }))}>
-                                    {JENIS_SOAL_LIST.map(j => <option key={j.value} value={j.value}>{j.label}</option>)}
-                                </select>
+                                <label className={labelClass}>Pilih Jenis Soal (Boleh lebih dari 1)</label>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                    {JENIS_SOAL_LIST.map(j => (
+                                        <label key={j.value} className={`flex items-center gap-2 p-3 border rounded-xl cursor-pointer transition-all ${form.jenis_soal.includes(j.value) ? 'bg-purple-50 border-purple-500 text-purple-700' : 'bg-white border-gray-200'}`}>
+                                            <input 
+                                                type="checkbox" 
+                                                checked={form.jenis_soal.includes(j.value)}
+                                                onChange={() => {
+                                                    setForm(p => {
+                                                        const current = p.jenis_soal;
+                                                        if (current.includes(j.value)) {
+                                                            if (current.length === 1) return p; // Must have at least one
+                                                            return { ...p, jenis_soal: current.filter(val => val !== j.value) };
+                                                        }
+                                                        return { ...p, jenis_soal: [...current, j.value] };
+                                                    });
+                                                }}
+                                                className="w-4 h-4 text-purple-600 rounded"
+                                            />
+                                            <span className="text-xs font-semibold">{j.label}</span>
+                                        </label>
+                                    ))}
+                                </div>
                             </div>
                             <div>
-                                <label className={labelClass}>Jumlah Soal</label>
+                                <label className={labelClass}>Jumlah Soal Keseluruhan</label>
                                 <input type="number" min={1} max={100} className={inputClass} value={form.jumlah_soal}
                                     onChange={e => setForm(p => ({ ...p, jumlah_soal: Number(e.target.value) }))} />
                             </div>

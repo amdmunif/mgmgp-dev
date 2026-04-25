@@ -92,11 +92,11 @@ class StatsController
 
         // 3. Engagement (Attendance)
         try {
-            // Using 'attended' from event_participants table
-            $q3 = $this->conn->query("SELECT COUNT(*) FROM event_participants WHERE status = 'attended'");
+            // Using 'is_hadir' from event_participants table
+            $q3 = $this->conn->query("SELECT COUNT(*) FROM event_participants WHERE is_hadir = 1");
             $stats['engagement']['totalAttendance'] = (int) $q3->fetchColumn();
 
-            $q4 = $this->conn->query("SELECT COUNT(DISTINCT user_id) FROM event_participants WHERE status = 'attended'");
+            $q4 = $this->conn->query("SELECT COUNT(DISTINCT user_id) FROM event_participants WHERE is_hadir = 1");
             $stats['engagement']['uniqueActiveTeachers'] = (int) $q4->fetchColumn();
         } catch (Exception $e) {
             // Fallback if table doesn't exist or column differs

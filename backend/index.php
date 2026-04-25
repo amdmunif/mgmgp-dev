@@ -99,7 +99,7 @@ if ($token) {
     if ($payload && isset($payload['sub'])) {
         $userId = $payload['sub'];
         $userName = $payload['nama'] ?? 'User'; // Assuming 'nama' is in JWT payload or we might need to fetch it
-        $userRole = $payload['role'] ?? 'Anggota';
+        $userRole = ucfirst(strtolower($payload['role'] ?? 'Anggota'));
     }
 }
 
@@ -522,7 +522,7 @@ if ($resource === 'news') {
         $payload = Helper::verifyJWT($token);
         if ($payload && isset($payload['sub'])) {
             $userId = $payload['sub'];
-            $userRole = $payload['role'] ?? 'Anggota';
+            $userRole = ucfirst(strtolower($payload['role'] ?? 'Anggota'));
         }
     }
 

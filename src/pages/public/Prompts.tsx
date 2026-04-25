@@ -5,6 +5,7 @@ import { promptService } from '../../services/resourcesService';
 import type { Prompt } from '../../types';
 import { DataTable } from '../../components/ui/DataTable';
 import { toast } from 'react-hot-toast';
+import { authService } from '../../services/authService';
 
 export function PromptLibrary() {
     const { setPageHeader } = useOutletContext<any>() || {};
@@ -28,7 +29,8 @@ export function PromptLibrary() {
 
     const loadData = async () => {
         try {
-            const data = await promptService.getAll();
+            const { profile } = await authService.getCurrentUser() || {};
+            const data = await promptService.getAll(profile?.id);
             setPrompts(data);
         } catch (error) {
             console.error(error);

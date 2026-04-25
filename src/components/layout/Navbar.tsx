@@ -14,6 +14,7 @@ export function Navbar() {
         { name: 'Tentang', href: '/profile' },
         { name: 'Berita', href: '/news' },
         { name: 'Agenda', href: '/events' },
+        { name: 'Pelatihan', href: '/training' },
         { name: 'Galeri', href: '/gallery' },
     ];
 

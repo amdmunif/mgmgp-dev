@@ -28,6 +28,7 @@ export function EditProfile() {
         ukuran_baju: '',
         email: '',
         mapel: [] as string[],
+        mapel_custom: '',
         kelas: [] as string[],
     });
 
@@ -48,6 +49,16 @@ export function EditProfile() {
             const user = await api.get<any>('/auth/profile');
 
             if (user) {
+                const mapelData = Array.isArray(user.mapel) ? [...user.mapel] : [];
+                // Check if there are values other than Informatika and KKA
+                const knownMapels = ['Informatika', 'KKA'];
+                const hasCustom = mapelData.some(m => !knownMapels.includes(m));
+                const customVal = mapelData.find(m => !knownMapels.includes(m)) || '';
+
+                if (hasCustom && !mapelData.includes('Lainnya')) {
+                    mapelData.push('Lainnya');
+                }
+
                 setFormData({
                     nama: user.nama || '',
                     asal_sekolah: user.asal_sekolah || '',
@@ -57,7 +68,8 @@ export function EditProfile() {
                     status_kepegawaian: user.status_kepegawaian || '',
                     ukuran_baju: user.ukuran_baju || '',
                     email: user.email || '',
-                    mapel: Array.isArray(user.mapel) ? user.mapel : [],
+                    mapel: mapelData,
+                    mapel_custom: customVal,
                     kelas: Array.isArray(user.kelas) ? user.kelas : [],
                 });
                 setAvatarUrl(user.foto_profile);
@@ -115,8 +127,15 @@ export function EditProfile() {
             // If I use `POST /auth/profile`, it might conflict if that's GET.
             // Let's assume `POST /auth/profile` updates it.
 
+            // Filter out 'Lainnya' placeholder if it exists and use custom value instead
+            const finalMapel = formData.mapel.filter(m => m !== 'Lainnya');
+            if (formData.mapel.includes('Lainnya') && formData.mapel_custom) {
+                finalMapel.push(formData.mapel_custom);
+            }
+
             await api.post('/auth/profile', {
                 ...formData,
+                mapel: finalMapel,
                 foto_profile: avatarUrl
             });
 
@@ -303,20 +322,29 @@ export function EditProfile() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-3">Mata Pelajaran yang Diampu</label>
-                                    <div className="space-y-2 max-h-48 overflow-y-auto p-4 border border-gray-200 rounded-lg bg-gray-50">
-                                        {['Informatika', 'TIK', 'Prakarya', 'Matematika', 'Bimbingan TIK', 'Muatan Lokal'].map(item => (
+                                    <div className="space-y-2 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                                        {['Informatika', 'KKA', 'Lainnya'].map(item => (
                                             <label key={item} className="flex items-center gap-3 cursor-pointer p-1">
                                                 <input 
                                                     type="checkbox" 
-                                                    checked={formData.mapel.includes(item)}
+                                                    checked={item === 'Lainnya' ? formData.mapel.includes('Lainnya') : formData.mapel.includes(item)}
                                                     onChange={() => handleCheckboxChange('mapel', item)}
                                                     className="w-4 h-4 text-primary-600 rounded border-gray-300 focus:ring-primary-500" 
                                                 />
                                                 <span className="text-sm text-gray-700">{item}</span>
                                             </label>
                                         ))}
+                                        {formData.mapel.includes('Lainnya') && (
+                                            <input
+                                                type="text"
+                                                placeholder="Tulis mata pelajaran lainnya..."
+                                                value={formData.mapel_custom}
+                                                onChange={(e) => setFormData(p => ({ ...p, mapel_custom: e.target.value }))}
+                                                className="w-full mt-2 px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-primary-500 outline-none"
+                                            />
+                                        )}
                                     </div>
-                                    <p className="text-xs text-gray-500 mt-2">Bisa pilih lebih dari satu.</p>
+                                    <p className="text-xs text-gray-500 mt-2">Pilih Informatika, KKA, atau tulis manual di opsi Lainnya.</p>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-3">Kelas yang Diajar</label>

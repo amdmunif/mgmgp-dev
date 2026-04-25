@@ -240,8 +240,14 @@ class ContentController
         $stmt->bindParam(':eid', $eventId);
         $stmt->bindParam(':uid', $userId);
 
-        if ($stmt->execute())
+        if ($stmt->execute()) {
+            $stmtTitle = $this->conn->prepare("SELECT title FROM events WHERE id = :eid");
+            $stmtTitle->bindParam(':eid', $eventId);
+            $stmtTitle->execute();
+            $eventTitle = $stmtTitle->fetchColumn();
+            Helper::log($this->conn, $userId, 'Member', 'JOIN_EVENT', $eventTitle || $eventId);
             return json_encode(["message" => "Joined successfully"]);
+        }
         http_response_code(500);
         return json_encode(["message" => "Failed to join"]);
     }
@@ -392,6 +398,11 @@ class ContentController
         $updateStmt->bindParam(':uid', $userId);
 
         if ($updateStmt->execute()) {
+            $stmtTitle = $this->conn->prepare("SELECT title FROM events WHERE id = :eid");
+            $stmtTitle->bindParam(':eid', $eventId);
+            $stmtTitle->execute();
+            $eventTitle = $stmtTitle->fetchColumn();
+            Helper::log($this->conn, $userId, 'Member', 'SELF_ATTENDANCE', $eventTitle || $eventId);
             return json_encode(["message" => "Attendance marked successfully"]);
         }
 
@@ -418,6 +429,7 @@ class ContentController
         $params = array_merge([$isHadir, $eventId], $userIds);
 
         if ($stmt->execute($params)) {
+            Helper::log($this->conn, 0, 'Admin', 'BULK_ATTENDANCE_UPDATE', "Event ID: $eventId, Count: " . count($userIds));
             return json_encode(["message" => "Bulk update successful"]);
         }
 

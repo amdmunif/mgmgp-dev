@@ -2,8 +2,8 @@ import { api } from '../lib/api';
 import type { Prompt, Reference } from '../types';
 
 export const promptService = {
-    async getAll() {
-        return api.get<Prompt[]>('/prompts');
+    async getAll(userId?: string) {
+        return api.get<Prompt[]>(`/prompts${userId ? `?userId=${userId}` : ''}`);
     },
 
     async getById(id: string) {

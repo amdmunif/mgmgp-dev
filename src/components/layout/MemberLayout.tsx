@@ -111,6 +111,7 @@ export function MemberLayout() {
         { icon: UserCircle, label: 'Edit Profil', path: '/member/profile', className: 'md:hidden' },
         ...(user?.role === 'Admin' || user?.role === 'Pengurus' ? [{ icon: LayoutDashboard, label: 'Admin Dashboard', path: '/admin', className: 'md:hidden text-primary-600' }] : []),
 
+        { icon: Clock, label: 'Arsip File', path: '/member/archive', premium: true },
         // Upgrade needs to be at the bottom
         { icon: Crown, label: 'Upgrade Premium', path: '/member/upgrade' },
     ].filter(item => {

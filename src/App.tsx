@@ -35,6 +35,7 @@ import { References } from './pages/public/References';
 import { TrainingRegistration } from './pages/public/TrainingRegistration';
 import { MemberDashboard } from './pages/member/Dashboard';
 import { UpgradePremium } from './pages/member/UpgradePremium';
+import { MemberArchive } from './pages/member/Archive';
 import { AdminNews } from './pages/admin/news/AdminNews';
 import { CreateNews } from './pages/admin/news/CreateNews';
 import { AdminEvents } from './pages/admin/events/AdminEvents';
@@ -104,6 +105,8 @@ function App() {
         <Route path="/gallery" element={<Layout><Gallery /></Layout>} />
         <Route path="/profile" element={<Layout><Profile /></Layout>} />
         <Route path="/learning" element={<Layout><Learning /></Layout>} />
+        <Route path="/training" element={<Layout><TrainingRegistration /></Layout>} />
+        <Route path="/admin/events/:id/print-attendance" element={<AdminEventAttendancePrint />} />
         <Route path="/pelatihan" element={<Layout><TrainingRegistration /></Layout>} />
 
         {/* Auth Routes - Wrapped in Layout */}
@@ -160,6 +163,11 @@ function App() {
               <References />
             </PremiumGuard>
           } />
+          <Route path="archive" element={
+            <PremiumGuard>
+              <MemberArchive />
+            </PremiumGuard>
+          } />
         </Route>
 
         {/* Admin Routes - Nested Layout */}
@@ -188,7 +196,6 @@ function App() {
           <Route path="events/create" element={<CreateEvent />} />
           <Route path="events/:id" element={<AdminEventDetail />} />
           <Route path="events/edit/:id" element={<CreateEvent />} />
-          <Route path="events/:id/print-attendance" element={<AdminEventAttendancePrint />} />
 
           <Route path="letters" element={<AdminLetters />} />
           <Route path="letters/create" element={<CreateLetter />} />
