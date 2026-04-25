@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Wand2, Copy, Check, Save, Globe, X, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
@@ -361,7 +361,7 @@ export function PromptGenerator() {
                             </div>
                         </div>
 
-                        {form.jenis_soal === 'essay' && (
+                        {form.jenis_soal.includes('essay') && (
                             <div>
                                 <label className={labelClass}>Tipe Uraian</label>
                                 <div className="flex gap-3">
@@ -377,7 +377,7 @@ export function PromptGenerator() {
                             </div>
                         )}
 
-                        {(form.jenis_soal === 'pilihan_ganda' || form.jenis_soal === 'pgk') && (
+                        {(form.jenis_soal.includes('pilihan_ganda') || form.jenis_soal.includes('pgk')) && (
                             <div>
                                 <label className={labelClass}>Jumlah Pilihan Jawaban</label>
                                 <div className="flex gap-3">

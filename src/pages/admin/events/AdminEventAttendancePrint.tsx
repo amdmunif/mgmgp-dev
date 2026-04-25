@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { contentManagementService } from '../../../services/contentManagementService';
 import { settingsService } from '../../../services/settingsService';
+import { Clock } from 'lucide-react';
 
 interface Participant {
     user_id: string;
@@ -38,9 +39,7 @@ export function AdminEventAttendancePrint() {
         }
     }, [id]);
 
-    if (!event || !settings) return <div className="p-8">Memuat Data...</div>;
-
-    const attendedParticipants = participants;
+    if (!event || !settings) return <div className="p-8 text-center">Memuat...</div>;
 
     return (
         <div className="bg-white min-h-screen text-black font-serif p-0 sm:p-8">

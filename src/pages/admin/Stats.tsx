@@ -7,8 +7,7 @@ import {
     Home,
     Activity,
     CheckCircle2,
-    GraduationCap,
-    Building2
+    GraduationCap
 } from 'lucide-react';
 
 export function AdminStats() {
