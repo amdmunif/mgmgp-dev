@@ -209,5 +209,6 @@ export function AdminStats() {
                 <div className="absolute bottom-0 left-0 w-32 h-32 bg-primary-400/10 rounded-full -ml-16 -mb-16 blur-2xl"></div>
             </div>
         </div>
+    </div>
     );
 }
