@@ -182,9 +182,6 @@ export function AdminStats() {
                     </div>
                 </div>
 
-                </div>
-            </div>
-
             {/* Engagement Section */}
             <div className="bg-gradient-to-br from-primary-600 to-indigo-700 p-8 rounded-3xl shadow-xl text-white overflow-hidden relative">
                 <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
