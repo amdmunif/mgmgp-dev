@@ -167,6 +167,8 @@ class QuestionController
         $stmt->bindParam(':tp_code', $data['tp_code']);
 
         if ($stmt->execute()) {
+            $userName = $user['nama'] ?? 'User';
+            Helper::log($this->conn, $userId, $userName, 'CREATE_QUESTION', $data['content']);
             return json_encode([
                 "message" => "Question created",
                 "id" => $id,
@@ -246,6 +248,8 @@ class QuestionController
         $stmt->bindParam(':tp_code', $data['tp_code']);
 
         if ($stmt->execute()) {
+            $userName = $user['nama'] ?? 'User';
+            Helper::log($this->conn, $user['sub'], $userName, 'UPDATE_QUESTION', $data['content']);
             return json_encode(["message" => "Question updated"]);
         }
         http_response_code(500);
@@ -282,6 +286,10 @@ class QuestionController
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id', $id);
         if ($stmt->execute()) {
+            $userName = $user['nama'] ?? 'User';
+            // Get content for log if possible, but existing already fetched creator_id. 
+            // We can just use the ID or title if we had it.
+            Helper::log($this->conn, $user['sub'], $userName, 'DELETE_QUESTION', $id);
             return json_encode(["message" => "Question deleted"]);
         }
         http_response_code(500);
@@ -333,6 +341,8 @@ class QuestionController
         $stmt->bindParam(':status', $status);
 
         if ($stmt->execute()) {
+            $userName = $user['nama'] ?? 'User';
+            Helper::log($this->conn, $userId, $userName, 'CREATE_QUESTION_BANK', $data['title']);
             return json_encode(["message" => "Question bank created", "id" => $id, "status" => $status]);
         }
         http_response_code(500);

@@ -40,7 +40,7 @@ class ResourceController
         return $this->getAll('games');
     }
 
-    public function createGame($data)
+    public function createGame($data, $userId = null, $userName = 'System')
     {
         $id = Helper::uuid();
         $query = "INSERT INTO games (id, title, description, link_url, image_url, is_premium) VALUES (:id, :title, :description, :link_url, :image_url, :is_premium)";
@@ -56,22 +56,29 @@ class ResourceController
         $stmt->bindParam(':is_premium', $is_premium);
 
         if ($stmt->execute()) {
+            Helper::log($this->conn, $userId, $userName, 'CREATE_GAME', $data['title']);
             return json_encode(["message" => "Game created", "id" => $id]);
         }
         http_response_code(500);
         return json_encode(["message" => "Failed to create game"]);
     }
 
-    public function deleteGame($id)
+    public function deleteGame($id, $userId, $userName)
     {
+        Helper::log($this->conn, $userId, $userName, 'DELETE_GAME', $id);
         return $this->delete('games', $id);
     }
 
     // --- Prompts ---
-    public function getPrompts($userId = null)
+    public function getPrompts($userId = null, $userRole = null)
     {
+        // Admin sees EVERYTHING
+        if ($userRole === 'Admin') {
+            $query = "SELECT * FROM prompt_library ORDER BY created_at DESC";
+            $stmt = $this->conn->prepare($query);
+        }
         // Return published prompts, plus unpublished ones by this user
-        if ($userId) {
+        else if ($userId) {
             $query = "SELECT * FROM prompt_library WHERE is_published = 1 OR created_by = :uid ORDER BY created_at DESC";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':uid', $userId);
@@ -100,7 +107,7 @@ class ResourceController
         return json_encode($data);
     }
 
-    public function createPrompt($data)
+    public function createPrompt($data, $userId = null, $userName = 'System')
     {
         $id = Helper::uuid();
         $query = "INSERT INTO prompt_library (id, title, prompt_content, description, example_result, example_type, tags, category, is_premium, is_published, created_by, source_type, generator_meta) 
@@ -132,13 +139,14 @@ class ResourceController
         $stmt->bindParam(':generator_meta', $generator_meta);
 
         if ($stmt->execute()) {
+            Helper::log($this->conn, $userId, $userName, 'CREATE_PROMPT', $data['title']);
             return json_encode(["message" => "Prompt created", "id" => $id]);
         }
         http_response_code(500);
         return json_encode(["message" => "Failed to create prompt"]);
     }
 
-    public function updatePrompt($id, $data)
+    public function updatePrompt($id, $data, $userId = null, $userName = 'System')
     {
         $query = "UPDATE prompt_library SET title = :title, prompt_content = :prompt_content, description = :description, example_result = :example_result, example_type = :example_type, category = :category, is_premium = :is_premium WHERE id = :id";
         $stmt = $this->conn->prepare($query);
@@ -158,14 +166,16 @@ class ResourceController
         $stmt->bindParam(':is_premium', $is_premium);
 
         if ($stmt->execute()) {
+            Helper::log($this->conn, $userId, $userName, 'UPDATE_PROMPT', $data['title']);
             return json_encode(["message" => "Prompt updated", "id" => $id]);
         }
         http_response_code(500);
         return json_encode(["message" => "Failed to update prompt"]);
     }
 
-    public function deletePrompt($id)
+    public function deletePrompt($id, $userId = null, $userName = 'System')
     {
+        Helper::log($this->conn, $userId, $userName, 'DELETE_PROMPT', $id);
         return $this->delete('prompt_library', $id);
     }
 

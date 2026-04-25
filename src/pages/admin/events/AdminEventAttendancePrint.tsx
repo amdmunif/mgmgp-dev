@@ -46,15 +46,16 @@ export function AdminEventAttendancePrint() {
             <style>
                 {`
                     @media print {
-                        @page { margin: 15mm; size: A4 portrait; }
+                        @page { margin: 8mm 10mm; size: A4 portrait; }
                         body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background: white; }
                         .no-print { display: none !important; }
-                        .print-only { display: block !important; }
-                        table { border-collapse: collapse; width: 100%; }
-                        th, td { border: 1px solid #000 !important; padding: 8px 12px !important; }
+                        table { border-collapse: collapse; width: 100%; font-size: 11px; }
+                        th, td { border: 1px solid #000 !important; padding: 4px 6px !important; }
+                        tr.signature-row { height: 40px; vertical-align: bottom; }
                     }
-                    th, td { border: 1px solid #000; padding: 10px; text-align: left; }
-                    th { font-weight: bold; text-align: center; background-color: #f8f9fa !important; -webkit-print-color-adjust: exact; }
+                    th, td { border: 1px solid #000; padding: 6px 8px; text-align: left; font-size: 12px; }
+                    th { font-weight: bold; text-align: center; background-color: #f8f9fa !important; }
+                    tr.signature-row td { vertical-align: bottom; height: 44px; }
                 `}
             </style>
             
@@ -116,71 +117,72 @@ export function AdminEventAttendancePrint() {
                     <p className="text-lg font-bold mt-1 uppercase">{event.title}</p>
                 </div>
 
-                <div className="mb-8 text-sm">
-                    <table className="border-none w-full mb-0">
+                <div className="mb-4 text-sm">
+                    <table className="border-none w-full mb-0" style={{borderCollapse:'separate', borderSpacing:0}}>
                         <tbody className="border-none">
                             <tr className="border-none">
-                                <td className="border-none py-1 w-40 font-bold">Hari, Tanggal</td>
-                                <td className="border-none py-1">: {new Date(event.date).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</td>
+                                <td className="border-none py-0.5 w-36 font-bold text-xs">Hari, Tanggal</td>
+                                <td className="border-none py-0.5 text-xs">: {new Date(event.date).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</td>
                             </tr>
                             <tr className="border-none">
-                                <td className="border-none py-1 font-bold">Waktu</td>
-                                <td className="border-none py-1">: {event.time || "08.00 WIB - Selesai"}</td>
+                                <td className="border-none py-0.5 font-bold text-xs">Waktu</td>
+                                <td className="border-none py-0.5 text-xs">: {event.time || "08.00 WIB - Selesai"}</td>
                             </tr>
                             <tr className="border-none">
-                                <td className="border-none py-1 font-bold">Tempat</td>
-                                <td className="border-none py-1">: {event.location}</td>
+                                <td className="border-none py-0.5 font-bold text-xs">Tempat</td>
+                                <td className="border-none py-0.5 text-xs">: {event.location}</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
 
-                <table className="w-full border-collapse text-sm mb-12">
+                <table className="w-full border-collapse text-xs mb-6">
                     <thead>
-                        <tr className="bg-gray-50">
-                            <th className="w-12 text-center py-3">No</th>
-                            <th className="py-3 px-4">Nama Lengkap</th>
-                            <th className="py-3 px-4">Asal Instansi / Sekolah</th>
-                            <th className="w-56 text-center py-3" colSpan={2}>Tanda Tangan</th>
+                        <tr>
+                            <th className="w-8 text-center py-2">No</th>
+                            <th className="py-2 px-3">Nama Lengkap</th>
+                            <th className="py-2 px-3">Asal Instansi / Sekolah</th>
+                            <th className="w-48 text-center py-2" colSpan={2}>Tanda Tangan</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {participants.length > 0 ? participants.map((p, index) => (
-                            <tr key={p.user_id} className="h-14">
-                                <td className="text-center font-mono">{index + 1}.</td>
-                                <td className="px-4 font-bold">{p.nama}</td>
-                                <td className="px-4">{p.asal_sekolah || "-"}</td>
-                                <td className="w-28 text-left border-r-0 pl-2 align-top pt-2">
-                                    {index % 2 === 0 ? <span className="text-[10px] text-gray-400 font-mono">{index + 1}. .........</span> : ""}
+                        {[...participants].sort((a, b) => (a.nama || '').localeCompare(b.nama || '', 'id')).length > 0
+                            ? [...participants].sort((a, b) => (a.nama || '').localeCompare(b.nama || '', 'id')).map((p, index) => (
+                            <tr key={p.user_id} className="signature-row">
+                                <td className="text-center">{index + 1}.</td>
+                                <td className="px-3 font-semibold">{p.nama}</td>
+                                <td className="px-3">{p.asal_sekolah || "-"}</td>
+                                <td className="w-24 border-r-0" style={{verticalAlign:'bottom', paddingBottom:'4px'}}>
+                                    <span className="text-[9px] text-gray-400">{index % 2 === 0 ? `${index + 1}.` : ""}</span>
                                 </td>
-                                <td className="w-28 text-left border-l-0 pl-2 align-top pt-2">
-                                    {index % 2 !== 0 ? <span className="text-[10px] text-gray-400 font-mono">{index + 1}. .........</span> : ""}
+                                <td className="w-24 border-l-0" style={{verticalAlign:'bottom', paddingBottom:'4px'}}>
+                                    <span className="text-[9px] text-gray-400">{index % 2 !== 0 ? `${index + 1}.` : ""}</span>
                                 </td>
                             </tr>
-                        )) : (
-                            [...Array(15)].map((_, i) => (
-                                <tr key={i} className="h-14">
-                                    <td className="text-center font-mono">{i + 1}.</td>
+                        ))
+                            : [...Array(20)].map((_, i) => (
+                                <tr key={i} className="signature-row">
+                                    <td className="text-center">{i + 1}.</td>
                                     <td></td>
                                     <td></td>
-                                    <td className="w-28 text-left border-r-0 pl-2 align-top pt-2">
-                                        {i % 2 === 0 ? <span className="text-[10px] text-gray-400 font-mono">{i + 1}. .........</span> : ""}
+                                    <td className="w-24 border-r-0" style={{verticalAlign:'bottom', paddingBottom:'4px'}}>
+                                        <span className="text-[9px] text-gray-400">{i % 2 === 0 ? `${i + 1}.` : ""}</span>
                                     </td>
-                                    <td className="w-28 text-left border-l-0 pl-2 align-top pt-2">
-                                        {i % 2 !== 0 ? <span className="text-[10px] text-gray-400 font-mono">{i + 1}. .........</span> : ""}
+                                    <td className="w-24 border-l-0" style={{verticalAlign:'bottom', paddingBottom:'4px'}}>
+                                        <span className="text-[9px] text-gray-400">{i % 2 !== 0 ? `${i + 1}.` : ""}</span>
                                     </td>
                                 </tr>
                             ))
-                        )}
+                        }
                     </tbody>
                 </table>
 
-                <div className="flex justify-end pr-8 text-sm mt-16">
-                    <div className="text-center w-64">
-                        <p className="mb-1">Wonosobo, {new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                        <p className="mb-20 font-bold uppercase">Ketua MGMP,</p>
-                        <p className="font-bold underline text-lg">{settings.ketua_nama || "NAMA KETUA MGMP"}</p>
-                        {settings.ketua_nip && <p className="font-mono">NIP. {settings.ketua_nip}</p>}
+                <div className="flex justify-end pr-4 text-xs mt-8">
+                    <div className="text-center w-56">
+                        <p className="mb-0.5">Wonosobo, {new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                        <p className="mb-16 font-bold uppercase">Ketua MGMP,</p>
+                        <p className="font-bold underline">{settings.ketua_nama || "NAMA KETUA MGMP"}</p>
+                        {settings.ketua_nip && <p className="font-mono text-[10px]">NIP. {settings.ketua_nip}</p>}
                     </div>
                 </div>
             </div>

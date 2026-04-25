@@ -63,10 +63,10 @@ export function EditProfile() {
                     nama: user.nama || '',
                     asal_sekolah: user.asal_sekolah || '',
                     no_hp: user.no_hp || '',
-                    pendidikan_terakhir: user.pendidikan_terakhir || '',
+                    pendidikan_terakhir: user.pendidikan_terakhir?.toUpperCase() || '',
                     jurusan: user.jurusan || '',
-                    status_kepegawaian: user.status_kepegawaian || '',
-                    ukuran_baju: user.ukuran_baju || '',
+                    status_kepegawaian: user.status_kepegawaian?.toUpperCase() || '',
+                    ukuran_baju: user.ukuran_baju?.toUpperCase() || '',
                     email: user.email || '',
                     mapel: mapelData,
                     mapel_custom: customVal,
@@ -105,7 +105,7 @@ export function EditProfile() {
         setUploading(true);
 
         try {
-            const url = await settingsService.uploadLogo(file); // Reusing uploadLogo
+            const url = await settingsService.uploadLogo(file);
             setAvatarUrl(url);
             toast.success('Foto berhasil diupload! Jangan lupa simpan perubahan.');
         } catch (error: any) {
@@ -156,10 +156,10 @@ export function EditProfile() {
     if (loading) return <div className="p-8 text-center text-gray-500"><Loader2 className="animate-spin inline mr-2" /> Loading data...</div>;
 
     return (
-        <div className="max-w-5xl animate-in fade-in duration-500">
+        <div className="w-full animate-in fade-in duration-500 pb-10">
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-6">
+            <div className="bg-white shadow-sm border-b border-gray-200">
+                <form onSubmit={handleSubmit} className="p-6 md:p-10 space-y-10">
 
                     {/* Profile Photo Section */}
                     <div className="flex flex-col items-center justify-center mb-6">
@@ -349,7 +349,7 @@ export function EditProfile() {
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-3">Kelas yang Diajar</label>
                                     <div className="space-y-2 max-h-48 overflow-y-auto p-4 border border-gray-200 rounded-lg bg-gray-50">
-                                        {['Kelas 7', 'Kelas 8', 'Kelas 9'].map(item => (
+                                        {['7', '8', '9'].map(item => (
                                             <label key={item} className="flex items-center gap-3 cursor-pointer p-1">
                                                 <input 
                                                     type="checkbox" 
@@ -357,7 +357,7 @@ export function EditProfile() {
                                                     onChange={() => handleCheckboxChange('kelas', item)}
                                                     className="w-4 h-4 text-primary-600 rounded border-gray-300 focus:ring-primary-500" 
                                                 />
-                                                <span className="text-sm text-gray-700">{item}</span>
+                                                <span className="text-sm text-gray-700">Kelas {item}</span>
                                             </label>
                                         ))}
                                     </div>

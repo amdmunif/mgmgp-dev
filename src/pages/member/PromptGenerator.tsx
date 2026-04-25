@@ -73,10 +73,16 @@ function generatePromptText(form: FormData): string {
         prompt += ` Untuk setiap soal, buatkan stimulus yang relevan.`;
     }
 
+    if (form.jenis_soal.includes('pilihan_ganda')) {
+        prompt += `\n\nKhusus untuk soal Pilihan Ganda (PG), setiap soal wajib memiliki 4 pilihan jawaban (A, B, C, D) dengan hanya 1 jawaban benar.`;
+    }
+
+    if (form.jenis_soal.includes('pgk')) {
+        prompt += `\n\nKhusus untuk soal Pilihan Ganda Kompleks (PGK), setiap soal wajib memiliki 5 pilihan jawaban (A, B, C, D, E) dengan tepat 2 jawaban benar. Berikan instruksi yang jelas kepada siswa untuk memilih 2 jawaban.`;
+    }
+
     if (form.jenis_soal.includes('pilihan_ganda') || form.jenis_soal.includes('pgk')) {
-        const pilihanLabels: Record<number, string> = { 4: '(A, B, C, dan D)', 5: '(A, B, C, D, dan E)' };
-        prompt += `\n\nUntuk soal Pilihan Ganda/PGK, jawaban terdiri dari ${form.jumlah_pilihan} pilihan ${pilihanLabels[form.jumlah_pilihan] || ''}. Kunci jawaban secara acak dari pilihan yang ada.`;
-        prompt += ` Pada pilihan jawaban, pastikan jumlah karakternya hampir sama, jangan sampai ada yang berbeda sehingga terlihat kalau itu jawaban.`;
+        prompt += `\n\nPada semua pilihan jawaban, pastikan panjang karakter dan gaya bahasanya homogen agar tidak memberikan petunjuk jawaban yang benar.`;
     }
 
     if (form.jenis_soal.includes('essay')) {
@@ -182,10 +188,16 @@ export function PromptGenerator() {
 
     const handleSave = async () => {
         if (!saveTitle.trim()) return toast.error('Judul tidak boleh kosong');
+        
+        const { profile } = await authService.getCurrentUser() || {};
+        const userId = profile?.id;
+        if (!userId) {
+            toast.error('Sesi berakhir. Silakan login kembali.');
+            return;
+        }
+
         setSaving(true);
         try {
-            const { profile } = await authService.getCurrentUser() || {};
-            const userId = profile?.id;
             await api.post('/prompts', {
                 title: saveTitle,
                 description: `Dibuat via Prompt Generator — ${form.mapel} Kelas ${form.kelas}`,
@@ -210,7 +222,7 @@ export function PromptGenerator() {
     const labelClass = 'block text-sm font-semibold text-gray-700 mb-1.5';
 
     return (
-        <div className="max-w-3xl mx-auto space-y-6 animate-in fade-in duration-500">
+        <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in duration-500 pb-10">
             {/* Step Indicator */}
             <div className="flex items-center gap-2">
                 {['Dasar', 'Konfigurasi Soal', 'Stimulus & Extra', 'Hasil Prompt'].map((label, i) => (
@@ -291,22 +303,19 @@ export function PromptGenerator() {
                                 </div>
                             ) : (
                                 <div className="border border-gray-200 rounded-xl overflow-hidden">
-                                    <div className="max-h-64 overflow-y-auto p-4 space-y-2 bg-gray-50">
+                                    <div className="max-h-64 overflow-y-auto p-0 bg-gray-50">
                                         {loadingTps ? (
                                             <div className="py-8 text-center text-gray-500"><Loader2 className="w-4 h-4 animate-spin inline mr-2" /> Memuat TP...</div>
                                         ) : dbTps.length === 0 ? (
                                             <div className="py-8 text-center text-gray-500 text-xs italic">Tidak ada TP ditemukan untuk filter ini.</div>
                                         ) : (
                                             dbTps.map((tp, i) => (
-                                                <label key={i} className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${form.tujuan_pembelajaran.includes(tp.tujuan) ? 'bg-purple-50 border-purple-200' : 'bg-white border-gray-200 hover:border-purple-100'}`}>
-                                                    <input 
-                                                        type="checkbox" 
-                                                        checked={form.tujuan_pembelajaran.includes(tp.tujuan)}
-                                                        onChange={() => toggleTPSelection(tp.tujuan)}
-                                                        className="mt-1 w-4 h-4 text-purple-600 rounded"
-                                                    />
+                                                <div key={i} className={`flex items-start gap-3 p-3 cursor-pointer hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0 ${form.tujuan_pembelajaran.includes(tp.tujuan) ? 'bg-purple-50/50' : 'bg-white'}`} onClick={() => toggleTPSelection(tp.tujuan)}>
+                                                    <div className={`mt-0.5 w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-all ${form.tujuan_pembelajaran.includes(tp.tujuan) ? 'bg-purple-600 border-purple-600' : 'border-gray-300'}`}>
+                                                        {form.tujuan_pembelajaran.includes(tp.tujuan) && <Check className="w-3 h-3 text-white" />}
+                                                    </div>
                                                     <span className="text-xs text-gray-700 leading-relaxed">{tp.tujuan}</span>
-                                                </label>
+                                                </div>
                                             ))
                                         )}
                                     </div>
@@ -341,7 +350,7 @@ export function PromptGenerator() {
                                                     setForm(p => {
                                                         const current = p.jenis_soal;
                                                         if (current.includes(j.value)) {
-                                                            if (current.length === 1) return p; // Must have at least one
+                                                            if (current.length === 1) return p;
                                                             return { ...p, jenis_soal: current.filter(val => val !== j.value) };
                                                         }
                                                         return { ...p, jenis_soal: [...current, j.value] };
@@ -377,21 +386,6 @@ export function PromptGenerator() {
                             </div>
                         )}
 
-                        {(form.jenis_soal.includes('pilihan_ganda') || form.jenis_soal.includes('pgk')) && (
-                            <div>
-                                <label className={labelClass}>Jumlah Pilihan Jawaban</label>
-                                <div className="flex gap-3">
-                                    {[4, 5].map(n => (
-                                        <label key={n} className={`flex items-center gap-2 px-4 py-2.5 border-2 rounded-xl cursor-pointer transition-all ${form.jumlah_pilihan === n ? 'border-purple-500 bg-purple-50' : 'border-gray-200'}`}>
-                                            <input type="radio" className="sr-only" checked={form.jumlah_pilihan === n} onChange={() => setForm(p => ({ ...p, jumlah_pilihan: n }))} />
-                                            <span className="font-bold text-sm">{n} Pilihan</span>
-                                            <span className="text-xs text-gray-400">{n === 4 ? '(A–D)' : '(A–E)'}</span>
-                                        </label>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
                         <div>
                             <label className={labelClass}>Distribusi Tingkat Kesulitan (%)</label>
                             <div className="grid grid-cols-3 gap-3">
@@ -415,10 +409,10 @@ export function PromptGenerator() {
                         </div>
 
                         <div className="flex justify-between pt-2">
-                            <Button variant="outline" onClick={() => setStep(1)} className="gap-2">
+                            <Button variant="outline" onClick={() => setStep(1)} className="gap-2 h-9 text-xs">
                                 <ChevronLeft className="w-4 h-4" /> Kembali
                             </Button>
-                            <Button onClick={() => setStep(3)} className="bg-purple-600 hover:bg-purple-700 gap-2"
+                            <Button onClick={() => setStep(3)} className="bg-purple-600 hover:bg-purple-700 gap-2 h-9 text-xs"
                                 disabled={form.persen_mudah + form.persen_menengah + form.persen_sukar !== 100}>
                                 Lanjut <ChevronRight className="w-4 h-4" />
                             </Button>

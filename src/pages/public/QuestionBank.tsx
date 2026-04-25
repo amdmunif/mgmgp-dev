@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { DataTable } from '../../components/ui/DataTable';
 import { curriculumService } from '../../services/curriculumService';
-import { questionService, type Question } from '../../services/questionService';
+import { questionService, type Question, type QuestionBank } from '../../services/questionService';
 import { authService } from '../../services/authService';
 import { getFileUrl } from '../../lib/api';
 import { Button } from '../../components/ui/button';
@@ -20,10 +20,13 @@ import { format } from 'date-fns';
 
 export function QuestionBankPage() {
     const { setPageHeader } = useOutletContext<any>() || {};
+    const [activeTab, setActiveTab] = useState<'repository' | 'arsip'>('repository');
     const [viewingQuestion, setViewingQuestion] = useState<Question | null>(null);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [questions, setQuestions] = useState<Question[]>([]);
+    const [banks, setBanks] = useState<QuestionBank[]>([]);
     const [loading, setLoading] = useState(true);
+    const [arsipLoading, setArsipLoading] = useState(false);
     const [filters, setFilters] = useState({ mapel: '', kelas: '', level: '', search: '', tp: '', type: '' });
     const [tpList, setTpList] = useState<any[]>([]);
     const [user, setUser] = useState<any>(null);
@@ -67,6 +70,22 @@ export function QuestionBankPage() {
             setLoading(false);
         }
     };
+
+    const loadArsip = async () => {
+        setArsipLoading(true);
+        try {
+            const data = await questionService.getBanks();
+            setBanks(data);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setArsipLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (activeTab === 'arsip') loadArsip();
+    }, [activeTab]);
 
     const getFilename = (ext: string) => {
         const name = user?.nama ? user.nama.replace(/\s+/g, '_') : 'Guest';
@@ -293,6 +312,91 @@ export function QuestionBankPage() {
 
     return (
         <div className="space-y-6">
+            {/* Tab Navigation */}
+            <div className="flex border-b border-gray-200">
+                <button
+                    onClick={() => setActiveTab('repository')}
+                    className={cn(
+                        "px-6 py-3 text-sm font-semibold border-b-2 transition-colors",
+                        activeTab === 'repository' ? "border-primary-600 text-primary-600" : "border-transparent text-gray-500 hover:text-gray-700"
+                    )}
+                >
+                    Bank Soal
+                </button>
+                <button
+                    onClick={() => setActiveTab('arsip')}
+                    className={cn(
+                        "px-6 py-3 text-sm font-semibold border-b-2 transition-colors",
+                        activeTab === 'arsip' ? "border-primary-600 text-primary-600" : "border-transparent text-gray-500 hover:text-gray-700"
+                    )}
+                >
+                    Arsip File & Games
+                </button>
+            </div>
+
+            {/* Arsip Tab */}
+            {activeTab === 'arsip' && (
+                <div className="animate-in fade-in duration-300">
+                    {arsipLoading ? (
+                        <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" /></div>
+                    ) : (
+                        <DataTable
+                            data={banks}
+                            columns={[
+                                {
+                                    header: 'Judul',
+                                    accessorKey: 'title' as keyof QuestionBank,
+                                    cell: (item: QuestionBank) => (
+                                        <div>
+                                            <p className="font-semibold text-gray-900 text-sm">{item.title}</p>
+                                            <p className="text-[10px] text-gray-400 uppercase font-mono mt-0.5">{item.mapel}</p>
+                                        </div>
+                                    )
+                                },
+                                {
+                                    header: 'Kategori',
+                                    accessorKey: 'category' as keyof QuestionBank,
+                                    cell: (item: QuestionBank) => (
+                                        <span className={cn(
+                                            "inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase",
+                                            item.category === 'TTS' || item.category === 'Wordsearch' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
+                                        )}>{item.category}</span>
+                                    )
+                                },
+                                {
+                                    header: 'Akses',
+                                    accessorKey: 'is_premium' as keyof QuestionBank,
+                                    cell: (item: QuestionBank) => (
+                                        item.is_premium
+                                            ? <span className="text-[10px] bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full font-bold">Premium</span>
+                                            : <span className="text-[10px] bg-green-100 text-green-800 px-2 py-0.5 rounded-full font-bold">Free</span>
+                                    ),
+                                    className: 'w-28'
+                                },
+                                {
+                                    header: 'Unduh',
+                                    className: 'text-right w-40',
+                                    cell: (item: QuestionBank) => (
+                                        <a
+                                            href={item.file_url}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary-50 text-primary-700 hover:bg-primary-100 rounded-lg text-xs font-bold transition-all"
+                                        >
+                                            <Eye className="w-3.5 h-3.5" /> Buka / Download
+                                        </a>
+                                    )
+                                }
+                            ]}
+                            searchKeys={['title', 'mapel', 'category']}
+                            pageSize={12}
+                        />
+                    )}
+                </div>
+            )}
+
+            {/* Repository Tab */}
+            {activeTab === 'repository' && (
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                 {!setPageHeader && (
                     <div>
@@ -533,6 +637,8 @@ export function QuestionBankPage() {
                     </div >
                 </div >
             )}
+            </div>
+            )} {/* end repository tab */}
         </div >
     );
 }

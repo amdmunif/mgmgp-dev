@@ -58,11 +58,21 @@ export const api = {
         try {
             const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
 
-            // Handle 401 Unauthorized (Token Expired)
+            // Handle 401 Unauthorized (Token Expired vs Role Denied)
             if (response.status === 401) {
-                localStorage.removeItem('access_token');
-                window.location.href = '/login';
-                throw new Error('Session expired');
+                // Only redirect to login if the token is actually invalid/expired
+                // Check response body to distinguish between "no token" and "role denied"
+                let errBody: any = {};
+                try { errBody = await response.clone().json(); } catch {}
+                const isTokenExpired = !errBody.message || 
+                    errBody.message === 'Session expired' || 
+                    errBody.message === 'No token provided' ||
+                    errBody.message === 'Invalid token';
+                if (isTokenExpired) {
+                    localStorage.removeItem('access_token');
+                    window.location.href = '/login';
+                }
+                throw new Error(errBody.message || 'Unauthorized');
             }
 
             if (!response.ok) {

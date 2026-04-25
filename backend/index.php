@@ -297,19 +297,19 @@ if ($resource === 'news') {
     if ($_SERVER['REQUEST_METHOD'] === 'GET')
         echo $controller->getGames();
     if ($_SERVER['REQUEST_METHOD'] === 'POST')
-        echo $controller->createGame($input);
+        echo $controller->createGame($input, $userId, $userName);
     if ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action)
-        echo $controller->deleteGame($action);
+        echo $controller->deleteGame($action, $userId, $userName);
 } elseif ($resource === 'prompts') {
     $controller = new ResourceController();
     if ($_SERVER['REQUEST_METHOD'] === 'GET')
-        echo $controller->getPrompts();
+        echo $controller->getPrompts($userId, $userRole);
     if ($_SERVER['REQUEST_METHOD'] === 'POST')
-        echo $controller->createPrompt($input);
+        echo $controller->createPrompt($input, $userId, $userName);
     if ($_SERVER['REQUEST_METHOD'] === 'PUT' && $action)
-        echo $controller->updatePrompt($action, $input);
+        echo $controller->updatePrompt($action, $input, $userId, $userName);
     if ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action)
-        echo $controller->deletePrompt($action);
+        echo $controller->deletePrompt($action, $userId, $userName);
 } elseif ($resource === 'logs') {
     include_once './controllers/AuditController.php';
     $controller = new AuditController();
@@ -617,8 +617,8 @@ if ($resource === 'news') {
         } elseif ($action === 'registrations' && $userRole === 'Admin') {
             echo $training->getRegistrations();
         } else {
-            http_response_code(401);
-            echo json_encode(["message" => "Unauthorized"]);
+            http_response_code(403);
+            echo json_encode(["message" => "Forbidden: Admin access required"]);
         }
     } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($action === 'register') {

@@ -35,7 +35,6 @@ import { References } from './pages/public/References';
 import { TrainingRegistration } from './pages/public/TrainingRegistration';
 import { MemberDashboard } from './pages/member/Dashboard';
 import { UpgradePremium } from './pages/member/UpgradePremium';
-import { MemberArchive } from './pages/member/Archive';
 import { AdminNews } from './pages/admin/news/AdminNews';
 import { CreateNews } from './pages/admin/news/CreateNews';
 import { AdminEvents } from './pages/admin/events/AdminEvents';
@@ -163,9 +162,9 @@ function App() {
               <References />
             </PremiumGuard>
           } />
-          <Route path="archive" element={
+          <Route path="references" element={
             <PremiumGuard>
-              <MemberArchive />
+              <References />
             </PremiumGuard>
           } />
         </Route>

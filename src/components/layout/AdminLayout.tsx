@@ -70,7 +70,7 @@ const menuGroups = [
         items: [
             { icon: FileText, label: 'Generator Surat', path: '/admin/letters' },
             { icon: Globe, label: 'Pengaturan Web', path: '/admin/web-settings' },
-            { icon: Settings, label: 'Keamanan Akun', path: '/admin/settings' },
+            { icon: Settings, label: 'Pengaturan Akun', path: '/admin/settings' },
         ]
     }
 ];

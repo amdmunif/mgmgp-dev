@@ -111,7 +111,6 @@ export function MemberLayout() {
         { icon: UserCircle, label: 'Edit Profil', path: '/member/profile', className: 'md:hidden' },
         ...(user?.role === 'Admin' || user?.role === 'Pengurus' ? [{ icon: LayoutDashboard, label: 'Admin Dashboard', path: '/admin', className: 'md:hidden text-primary-600' }] : []),
 
-        { icon: Clock, label: 'Arsip File', path: '/member/archive', premium: true },
         // Upgrade needs to be at the bottom
         { icon: Crown, label: 'Upgrade Premium', path: '/member/upgrade' },
     ].filter(item => {
@@ -141,25 +140,17 @@ export function MemberLayout() {
 
             <div className={cn("flex-1 min-w-0", mobile ? "block" : "hidden md:block")}>
                 <p className="text-sm font-bold text-gray-900 truncate">{user?.nama || 'Anggota'}</p>
-                {/* Show status on both mobile and desktop (in dropdown trigger) now? No, user asked for it IN dropdown content */}
                 {mobile && <p className="text-xs text-gray-500">{isPremium ? 'Anggota Premium' : 'Anggota Reguler'}</p>}
             </div>
 
-            {/* Dropdown Trigger for Desktop */}
             {!mobile && (
                 <ChevronDown className={cn("w-4 h-4 text-gray-500 transition-transform duration-200", isProfileOpen ? "transform rotate-180" : "")} />
             )}
         </div>
     );
 
-
-
-    // Hardcode label for sub-pages or unknown paths
-    // Page title logic removed as per user request (duplicates content page title)
-
     return (
         <div className="min-h-screen bg-gray-100 flex pb-16 md:pb-0">
-            {/* Mobile Sidebar Overlay */}
             {isSidebarOpen && (
                 <div
                     className="fixed inset-0 bg-black/50 z-40 md:hidden"
@@ -167,13 +158,11 @@ export function MemberLayout() {
                 />
             )}
 
-            {/* Sidebar */}
             <aside ref={sidebarRef} className={cn(
                 "fixed md:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transition-transform duration-200 ease-in-out transform flex flex-col",
                 isSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
             )}>
                 <div className="p-6 flex items-center gap-3 border-b border-gray-100 h-20 md:h-24">
-                    {/* Logo + Text */}
                     {logoUrl ? (
                         <img src={logoUrl} alt="Logo" className="h-8 w-8 object-contain" />
                     ) : (
@@ -189,15 +178,12 @@ export function MemberLayout() {
                 </div>
 
                 <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
-                    {/* Mobile Only: User Profile inside Menu */}
                     <div className="md:hidden mb-6">
                         <UserProfileSection mobile={true} />
                     </div>
 
                     {menuItems.map((item) => {
                         const isLocked = item.premium && !isPremium;
-                        // Handle hidden items (for responsive)
-                        // @ts-ignore
                         const extraClass = item.className || "";
 
                         return (
@@ -221,7 +207,6 @@ export function MemberLayout() {
                         );
                     })}
 
-                    {/* Mobile Only Logout (at bottom of nav) */}
                     <button
                         onClick={handleLogout}
                         className="md:hidden flex items-center gap-3 px-4 py-3 w-full text-red-600 hover:bg-red-50 rounded-lg text-sm font-medium mt-2"
@@ -235,23 +220,18 @@ export function MemberLayout() {
                     <p className="text-[10px] text-center text-gray-300">v2.0.0 MGMP App</p>
                 </div>
 
-                {/* Desktop Only: Footer credits */}
                 <div className="hidden md:block p-4 border-t border-gray-100">
                     <p className="text-[10px] text-center text-gray-300">v2.0.0 MGMP App</p>
                 </div>
             </aside>
 
-            {/* Main Content */}
             <div className="flex-1 flex flex-col h-screen overflow-hidden">
-                {/* Header (Desktop & Mobile) */}
                 <header className="bg-white border-b border-gray-200 py-3 px-4 flex items-center justify-between shadow-sm z-30 h-20 md:h-24">
                     <div className="flex items-center gap-4 flex-1">
-                        {/* Mobile Hamburger */}
                         <button onClick={() => setIsSidebarOpen(true)} className="md:hidden p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-lg shrink-0">
                             <Menu className="w-6 h-6" />
                         </button>
 
-                        {/* Page Branding (Dynamic) */}
                         {pageHeader ? (
                             <div className="flex items-center gap-4 py-1">
                                 {pageHeader.icon && (
@@ -271,7 +251,6 @@ export function MemberLayout() {
                                 </div>
                             </div>
                         ) : (
-                            /* Fallback Mobile Branding if no page header */
                             <div className="md:hidden flex items-center gap-2">
                                 {logoUrl ? (
                                     <img src={logoUrl} alt="Logo" className="w-8 h-8 object-contain" />

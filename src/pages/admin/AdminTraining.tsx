@@ -57,7 +57,12 @@ export function AdminTraining() {
                 setSettings(settsData);
             }
         } catch (e: any) {
-            toast.error('Gagal mengambil data pelatihan');
+            // Don't trigger global logout on 401 — just show error
+            if (e?.status === 401 || e?.message?.includes('401') || e?.message?.includes('Unauthorized')) {
+                toast.error('Sesi tidak valid atau akses ditolak. Coba login ulang.');
+            } else {
+                toast.error('Gagal mengambil data pelatihan: ' + (e?.message || 'Server error'));
+            }
         } finally {
             setLoading(false);
         }
