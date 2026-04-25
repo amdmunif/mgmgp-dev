@@ -397,7 +397,8 @@ export function QuestionBankPage() {
 
             {/* Repository Tab */}
             {activeTab === 'repository' && (
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                <div className="animate-in fade-in duration-300">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                 {!setPageHeader && (
                     <div>
                         <h1 className="text-3xl font-bold text-gray-900">Repository Soal</h1>
@@ -637,8 +638,8 @@ export function QuestionBankPage() {
                     </div >
                 </div >
             )}
-            </div>
+                </div>
             )} {/* end repository tab */}
-        </div >
+        </div>
     );
 }
