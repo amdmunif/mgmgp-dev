@@ -109,6 +109,16 @@ class ResourceController
 
     public function createPrompt($data, $userId = null, $userName = 'System')
     {
+        // Ensure new columns exist (auto-migration)
+        try {
+            $this->conn->exec("ALTER TABLE prompt_library ADD COLUMN created_by VARCHAR(36) DEFAULT NULL");
+            $this->conn->exec("ALTER TABLE prompt_library ADD COLUMN is_published TINYINT(1) NOT NULL DEFAULT 1");
+            $this->conn->exec("ALTER TABLE prompt_library ADD COLUMN source_type VARCHAR(20) NOT NULL DEFAULT 'manual'");
+            $this->conn->exec("ALTER TABLE prompt_library ADD COLUMN generator_meta TEXT DEFAULT NULL");
+        } catch (Exception $e) {
+            // Columns likely already exist, ignore
+        }
+
         $id = Helper::uuid();
         $query = "INSERT INTO prompt_library (id, title, prompt_content, description, example_result, example_type, tags, category, is_premium, is_published, created_by, source_type, generator_meta) 
                   VALUES (:id, :title, :prompt_content, :description, :example_result, :example_type, :tags, :category, :is_premium, :is_published, :created_by, :source_type, :generator_meta)";

@@ -103,8 +103,8 @@ class CurriculumController
             $params[':semester'] = $filters['semester'];
         }
 
-        // Order by Code if available, then by Created At
-        $query .= " ORDER BY code ASC, created_at ASC";
+        // Order by Created At ASC to show by insertion order
+        $query .= " ORDER BY created_at ASC";
 
         $stmt = $this->conn->prepare($query);
         foreach ($params as $key => $val) {

@@ -55,13 +55,14 @@ const defaultForm: FormData = {
 };
 
 function generatePromptText(form: FormData): string {
-    const mapel = form.mapel === 'Lainnya' ? form.mapel_custom : form.mapel;
-    const tp = form.tujuan_pembelajaran.filter(t => t.trim()).map((t, i) => `${i + 1}. ${t}`).join('\n');
+    const mapel = form.mapel === 'Lainnya' ? (form.mapel_custom || 'Mata Pelajaran') : form.mapel;
+    const tpList = form.tujuan_pembelajaran.filter(t => t && typeof t === 'string' && t.trim());
+    const tp = tpList.map((t, i) => `${i + 1}. ${t}`).join('\n');
     const selectedJenisLabels = JENIS_SOAL_LIST.filter(j => form.jenis_soal.includes(j.value)).map(j => j.label).join(', ');
 
     let prompt = `Saya adalah Guru ${mapel} kelas ${form.kelas}, tolong buatkan ${form.jumlah_soal} soal dengan variasi jenis: ${selectedJenisLabels}`;
 
-    if (form.tujuan_pembelajaran.filter(t => t.trim()).length > 0) {
+    if (tpList.length > 0) {
         prompt += ` dengan tujuan pembelajaran:\n${tp}`;
     }
 
@@ -132,6 +133,7 @@ export function PromptGenerator() {
     useEffect(() => {
         if (form.tp_mode === 'database') {
             loadTps();
+            setForm(prev => ({ ...prev, tujuan_pembelajaran: [] }));
         }
     }, [form.tp_mode, form.mapel, form.kelas]);
 
