@@ -39,6 +39,7 @@ export function AdminMembers() {
     const [editingMember, setEditingMember] = useState<Profile | null>(null);
     const [viewingMember, setViewingMember] = useState<Profile | null>(null);
     const [editForm, setEditForm] = useState({ nama: '', email: '', role: 'Anggota', is_active: 0 });
+    const [primarySelections, setPrimarySelections] = useState<Record<number, 'id1' | 'id2'>>({});
     const [isSaving, setIsSaving] = useState(false);
 
     // Tab: default dari location state jika ada
@@ -489,78 +490,97 @@ export function AdminMembers() {
                         </div>
                     ) : (
                         <div className="space-y-4">
-                            {duplicates.map((dup, index) => (
-                                <div key={index} className="flex flex-col xl:flex-row items-center gap-4 p-4 border border-gray-200 rounded-xl bg-white shadow-sm hover:border-orange-300 transition-colors">
-                                    {/* Data 1 (Primary) */}
-                                    <div className="flex-1 w-full bg-blue-50/50 p-4 rounded-lg border border-blue-100 relative">
-                                        <div className="absolute top-0 right-0 bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-1 rounded-bl-lg rounded-tr-lg">DATA UTAMA</div>
-                                        <div className="flex items-start gap-3">
-                                            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
-                                                <User className="w-5 h-5 text-blue-600" />
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <h4 className="font-bold text-gray-900 truncate">{dup.nama1 || '-'}</h4>
-                                                <p className="text-sm text-gray-600 truncate">{dup.sekolah1 || '-'}</p>
-                                                <div className="mt-2 space-y-1 text-xs text-gray-500">
-                                                    <p className="flex items-center gap-1.5"><Mail className="w-3.5 h-3.5" /> {dup.email1}</p>
-                                                    <p className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5" /> {dup.attendance1} Kehadiran (Event)</p>
+                            {duplicates.map((dup, index) => {
+                                const selectedPrimary = primarySelections[index] || 'id1';
+                                const isPrimary1 = selectedPrimary === 'id1';
+                                
+                                return (
+                                <div key={index} className="flex flex-col p-5 border border-gray-200 rounded-xl bg-white shadow-sm hover:border-blue-300 transition-colors">
+                                    <div className="flex justify-between items-center mb-4 border-b border-gray-100 pb-3">
+                                        <h4 className="font-semibold text-gray-900">Pilih Akun Utama</h4>
+                                        <p className="text-xs text-gray-500">Akun yang tidak dipilih akan dihapus dan datanya digabungkan ke akun utama.</p>
+                                    </div>
+                                    <div className="flex flex-col xl:flex-row items-center gap-6">
+                                        
+                                        {/* Data 1 */}
+                                        <label className={`flex-1 w-full p-4 rounded-lg border-2 cursor-pointer transition-all ${isPrimary1 ? 'border-blue-500 bg-blue-50/50' : 'border-gray-200 bg-gray-50 opacity-70 hover:opacity-100'}`}>
+                                            <div className="flex items-center justify-between mb-3">
+                                                <div className="flex items-center gap-2">
+                                                    <input 
+                                                        type="radio" 
+                                                        name={`primary_${index}`} 
+                                                        checked={isPrimary1}
+                                                        onChange={() => setPrimarySelections(prev => ({ ...prev, [index]: 'id1' }))}
+                                                        className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                                    />
+                                                    <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${isPrimary1 ? 'bg-blue-100 text-blue-700' : 'bg-gray-200 text-gray-600'}`}>
+                                                        {isPrimary1 ? 'AKUN UTAMA' : 'AKAN DIHAPUS'}
+                                                    </span>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Merge Action */}
-                                    <div className="flex flex-col items-center justify-center shrink-0 px-2 py-4 xl:py-0">
-                                        <Button 
-                                            onClick={() => handleManualMerge(dup.id1, dup.id2)}
-                                            className="bg-orange-600 hover:bg-orange-700 text-white shadow-md flex-col h-auto py-3 px-4 group"
-                                        >
-                                            <ArrowRightLeft className="w-5 h-5 mb-1 group-hover:-translate-x-1 transition-transform" />
-                                            <span className="text-xs font-bold uppercase tracking-wider">Gabungkan</span>
-                                        </Button>
-                                    </div>
-
-                                    {/* Data 2 (Secondary) */}
-                                    <div className="flex-1 w-full bg-gray-50 p-4 rounded-lg border border-gray-200 relative opacity-80 hover:opacity-100 transition-opacity">
-                                        <div className="absolute top-0 right-0 bg-gray-200 text-gray-600 text-[10px] font-bold px-2 py-1 rounded-bl-lg rounded-tr-lg">AKAN DIHAPUS</div>
-                                        <div className="flex items-start gap-3">
-                                            <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center shrink-0">
-                                                <User className="w-5 h-5 text-gray-500" />
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <h4 className="font-bold text-gray-900 truncate">{dup.nama2 || '-'}</h4>
-                                                <p className="text-sm text-gray-600 truncate">{dup.sekolah2 || '-'}</p>
-                                                <div className="mt-2 space-y-1 text-xs text-gray-500">
-                                                    <p className="flex items-center gap-1.5"><Mail className="w-3.5 h-3.5" /> {dup.email2}</p>
-                                                    <p className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5" /> {dup.attendance2} Kehadiran (Event)</p>
+                                            <div className="flex items-start gap-3">
+                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isPrimary1 ? 'bg-blue-100' : 'bg-gray-200'}`}>
+                                                    <User className={`w-5 h-5 ${isPrimary1 ? 'text-blue-600' : 'text-gray-500'}`} />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <h4 className="font-bold text-gray-900 truncate">{dup.nama1 || '-'}</h4>
+                                                    <p className="text-sm text-gray-600 truncate">{dup.sekolah1 || '-'}</p>
+                                                    <div className="mt-2 space-y-1 text-xs text-gray-500">
+                                                        <p className="flex items-center gap-1.5"><Mail className="w-3.5 h-3.5" /> {dup.email1}</p>
+                                                        <p className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5" /> {dup.attendance1} Kehadiran</p>
+                                                    </div>
                                                 </div>
                                             </div>
+                                        </label>
+
+                                        {/* Gabungkan Action (Center) */}
+                                        <div className="flex flex-col items-center justify-center shrink-0">
+                                            <Button 
+                                                onClick={() => handleManualMerge(
+                                                    selectedPrimary === 'id1' ? dup.id1 : dup.id2, 
+                                                    selectedPrimary === 'id1' ? dup.id2 : dup.id1
+                                                )}
+                                                className="bg-blue-600 hover:bg-blue-700 text-white shadow-md flex-col h-auto py-3 px-6"
+                                            >
+                                                <span className="text-sm font-bold uppercase tracking-wider">Gabungkan</span>
+                                            </Button>
                                         </div>
-                                    </div>
-                                    
-                                    {/* Alternate Merge Action (id2 becomes primary) */}
-                                    <div className="flex xl:hidden flex-col items-center justify-center shrink-0 py-2">
-                                        <span className="text-xs text-gray-400">atau</span>
-                                        <Button 
-                                            variant="ghost" size="sm"
-                                            onClick={() => handleManualMerge(dup.id2, dup.id1)}
-                                            className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 text-xs mt-1"
-                                        >
-                                            Balik Arah (Data 2 sebagai Utama)
-                                        </Button>
-                                    </div>
-                                    {/* Alternate Merge Action (Desktop) */}
-                                    <div className="hidden xl:flex absolute inset-x-0 bottom-0 justify-center translate-y-1/2 opacity-0 hover:opacity-100 focus-within:opacity-100 transition-opacity">
-                                         <Button 
-                                            variant="outline" size="sm"
-                                            onClick={() => handleManualMerge(dup.id2, dup.id1)}
-                                            className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 bg-white border-orange-200 text-[10px] h-6 px-2 rounded-full shadow-sm"
-                                        >
-                                            <ArrowRightLeft className="w-3 h-3 mr-1" /> Jadikan Data Kanan sebagai Utama
-                                        </Button>
+
+                                        {/* Data 2 */}
+                                        <label className={`flex-1 w-full p-4 rounded-lg border-2 cursor-pointer transition-all ${!isPrimary1 ? 'border-blue-500 bg-blue-50/50' : 'border-gray-200 bg-gray-50 opacity-70 hover:opacity-100'}`}>
+                                            <div className="flex items-center justify-between mb-3">
+                                                <div className="flex items-center gap-2">
+                                                    <input 
+                                                        type="radio" 
+                                                        name={`primary_${index}`} 
+                                                        checked={!isPrimary1}
+                                                        onChange={() => setPrimarySelections(prev => ({ ...prev, [index]: 'id2' }))}
+                                                        className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                                    />
+                                                    <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${!isPrimary1 ? 'bg-blue-100 text-blue-700' : 'bg-gray-200 text-gray-600'}`}>
+                                                        {!isPrimary1 ? 'AKUN UTAMA' : 'AKAN DIHAPUS'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-start gap-3">
+                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${!isPrimary1 ? 'bg-blue-100' : 'bg-gray-200'}`}>
+                                                    <User className={`w-5 h-5 ${!isPrimary1 ? 'text-blue-600' : 'text-gray-500'}`} />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <h4 className="font-bold text-gray-900 truncate">{dup.nama2 || '-'}</h4>
+                                                    <p className="text-sm text-gray-600 truncate">{dup.sekolah2 || '-'}</p>
+                                                    <div className="mt-2 space-y-1 text-xs text-gray-500">
+                                                        <p className="flex items-center gap-1.5"><Mail className="w-3.5 h-3.5" /> {dup.email2}</p>
+                                                        <p className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5" /> {dup.attendance2} Kehadiran</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </label>
+
                                     </div>
                                 </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
                 </div>

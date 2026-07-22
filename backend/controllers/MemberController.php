@@ -195,6 +195,23 @@ class MemberController
             $stmtEvents = $this->conn->prepare($updateEvents);
             $stmtEvents->execute([':primary_id' => $primaryId, ':secondary_id' => $secondaryId]);
 
+            // 1.5. Transfer premium status if secondary is better
+            $stmtCheckPremium = $this->conn->prepare("SELECT premium_until FROM profiles WHERE id = :id");
+            $stmtCheckPremium->execute([':id' => $secondaryId]);
+            $secPremium = $stmtCheckPremium->fetchColumn();
+
+            $stmtCheckPremiumPrimary = $this->conn->prepare("SELECT premium_until FROM profiles WHERE id = :id");
+            $stmtCheckPremiumPrimary->execute([':id' => $primaryId]);
+            $priPremium = $stmtCheckPremiumPrimary->fetchColumn();
+
+            if ($secPremium) {
+                if (!$priPremium || strtotime($secPremium) > strtotime($priPremium)) {
+                    $updatePremium = "UPDATE profiles SET premium_until = :premium WHERE id = :id";
+                    $stmtUpdatePremium = $this->conn->prepare($updatePremium);
+                    $stmtUpdatePremium->execute([':premium' => $secPremium, ':id' => $primaryId]);
+                }
+            }
+
             // 2. Delete secondary profile & user
             $deleteUser = "DELETE FROM users WHERE id = :secondary_id";
             $stmtDelete = $this->conn->prepare($deleteUser);
