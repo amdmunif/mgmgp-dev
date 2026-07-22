@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Book, Download, Presentation, FileText, X, Eye } from 'lucide-react';
+import { Book, Download, Presentation, FileText, X, Eye, ExternalLink } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { learningService } from '../../services/learningService';
 import type { LearningMaterial } from '../../types';
@@ -12,6 +12,9 @@ export function Modules() {
     const [materials, setMaterials] = useState<LearningMaterial[]>([]);
     const [loading, setLoading] = useState(true);
     const [filterType, setFilterType] = useState('modul');
+    const [filterMapel, setFilterMapel] = useState('all');
+    const [filterKelas, setFilterKelas] = useState('all');
+    const [filterSemester, setFilterSemester] = useState('all');
     const [viewingMaterial, setViewingMaterial] = useState<LearningMaterial | null>(null);
 
     useEffect(() => {
@@ -38,11 +41,16 @@ export function Modules() {
 
     const filteredMaterials = useMemo(() => {
         return materials.filter(m => {
-            if (filterType === 'modul') return m.type === 'modul' || m.type === 'rpp';
-            if (filterType === 'slide') return m.type === 'slide';
-            return true;
+            const matchType = filterType === 'all' || 
+                              (filterType === 'modul' && (m.type === 'modul' || m.type === 'rpp')) || 
+                              (filterType === 'slide' && m.type === 'slide');
+            const matchMapel = filterMapel === 'all' || m.mapel === filterMapel;
+            const matchKelas = filterKelas === 'all' || m.kelas === filterKelas;
+            const matchSemester = filterSemester === 'all' || m.semester?.toString() === filterSemester;
+            
+            return matchType && matchMapel && matchKelas && matchSemester;
         });
-    }, [materials, filterType]);
+    }, [materials, filterType, filterMapel, filterKelas, filterSemester]);
 
     const getPhase = (kelas?: string) => {
         if (!kelas) return 'Umum';
@@ -73,7 +81,7 @@ export function Modules() {
             header: "Target/Kelas",
             accessorKey: "kelas" as keyof LearningMaterial,
             cell: (item: LearningMaterial) => (
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex items-center gap-1.5 whitespace-nowrap overflow-x-auto pb-1 scrollbar-hide">
                     <span className={`text-[10px] font-bold px-2 py-1 rounded-md border ${getPhase(item.kelas) === 'Fase D' ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-green-50 text-green-700 border-green-100'}`}>
                         {getPhase(item.kelas)}
                     </span>
@@ -81,7 +89,6 @@ export function Modules() {
                     {item.semester && <span className="text-[10px] font-bold px-2 py-1 rounded-md bg-gray-50 text-gray-700 border border-gray-200">Smt {item.semester}</span>}
                 </div>
             ),
-            className: "w-48"
         },
         {
             header: "Aksi",
@@ -96,11 +103,19 @@ export function Modules() {
                     >
                         <Eye className="w-4 h-4" />
                     </Button>
-                    <a href={item.file_url} target="_blank" rel="noopener noreferrer">
-                        <Button size="sm" className="bg-white border text-yellow-700 border-yellow-300 hover:bg-yellow-50 h-8" title="Download File">
-                            <Download className="w-4 h-4" />
-                        </Button>
-                    </a>
+                    {item.link_url ? (
+                        <a href={item.link_url} target="_blank" rel="noopener noreferrer">
+                            <Button size="sm" className="bg-white border text-blue-700 border-blue-300 hover:bg-blue-50 h-8" title="Buka Link">
+                                <ExternalLink className="w-4 h-4" />
+                            </Button>
+                        </a>
+                    ) : item.file_url ? (
+                        <a href={item.file_url} target="_blank" rel="noopener noreferrer">
+                            <Button size="sm" className="bg-white border text-yellow-700 border-yellow-300 hover:bg-yellow-50 h-8" title="Download File">
+                                <Download className="w-4 h-4" />
+                            </Button>
+                        </a>
+                    ) : null}
                 </div>
             ),
             className: "w-32 text-right"
@@ -128,15 +143,45 @@ export function Modules() {
                         searchKeys={['title', 'mapel', 'type', 'content']}
                         pageSize={15}
                         filterContent={
-                            <select
-                                className="border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-yellow-500 h-[38px]"
-                                value={filterType}
-                                onChange={(e) => setFilterType(e.target.value)}
-                            >
-                                <option value="all">Semua Tipe</option>
-                                <option value="modul">Modul Ajar (RPP / Modul)</option>
-                                <option value="slide">Slide Presentasi (PPT)</option>
-                            </select>
+                            <div className="flex flex-wrap lg:flex-nowrap items-center gap-2">
+                                <select
+                                    className="border border-gray-200 rounded-lg px-3 py-1.5 text-xs font-medium bg-white focus:outline-none focus:ring-2 focus:ring-yellow-500 w-full sm:w-auto"
+                                    value={filterType}
+                                    onChange={(e) => setFilterType(e.target.value)}
+                                >
+                                    <option value="all">Semua Tipe</option>
+                                    <option value="modul">Modul Ajar</option>
+                                    <option value="slide">Slide</option>
+                                </select>
+                                <select
+                                    className="border border-gray-200 rounded-lg px-3 py-1.5 text-xs font-medium bg-white focus:outline-none focus:ring-2 focus:ring-yellow-500 w-full sm:w-auto"
+                                    value={filterMapel}
+                                    onChange={(e) => setFilterMapel(e.target.value)}
+                                >
+                                    <option value="all">Semua Mapel</option>
+                                    <option value="Informatika">Informatika</option>
+                                    <option value="KKA">KKA</option>
+                                </select>
+                                <select
+                                    className="border border-gray-200 rounded-lg px-3 py-1.5 text-xs font-medium bg-white focus:outline-none focus:ring-2 focus:ring-yellow-500 w-full sm:w-auto"
+                                    value={filterKelas}
+                                    onChange={(e) => setFilterKelas(e.target.value)}
+                                >
+                                    <option value="all">Semua Kls</option>
+                                    <option value="7">Kelas 7</option>
+                                    <option value="8">Kelas 8</option>
+                                    <option value="9">Kelas 9</option>
+                                </select>
+                                <select
+                                    className="border border-gray-200 rounded-lg px-3 py-1.5 text-xs font-medium bg-white focus:outline-none focus:ring-2 focus:ring-yellow-500 w-full sm:w-auto"
+                                    value={filterSemester}
+                                    onChange={(e) => setFilterSemester(e.target.value)}
+                                >
+                                    <option value="all">Semua Smt</option>
+                                    <option value="1">Smt 1</option>
+                                    <option value="2">Smt 2</option>
+                                </select>
+                            </div>
                         }
                     />
                 )}
@@ -156,7 +201,20 @@ export function Modules() {
                             </button>
                         </div>
                         <div className="flex-1 bg-gray-100 overflow-hidden relative">
-                            {viewingMaterial.file_url ? (
+                            {viewingMaterial.link_url && !viewingMaterial.file_url ? (
+                                <div className="flex flex-col items-center justify-center h-full bg-white p-6 text-center">
+                                    <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4">
+                                        <ExternalLink className="w-8 h-8 text-blue-500" />
+                                    </div>
+                                    <p className="text-gray-900 font-medium mb-1">Tautan Eksternal</p>
+                                    <p className="text-sm text-gray-500 mb-6">Materi ini berupa tautan eksternal dan akan dibuka di tab baru.</p>
+                                    <a href={viewingMaterial.link_url} target="_blank" rel="noopener noreferrer">
+                                        <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                                            <ExternalLink className="w-4 h-4 mr-2" /> Buka Tautan
+                                        </Button>
+                                    </a>
+                                </div>
+                            ) : viewingMaterial.file_url ? (
                                 <FileViewer
                                     url={viewingMaterial.file_url}
                                     title={viewingMaterial.title}
@@ -174,13 +232,19 @@ export function Modules() {
                             </span>
                             <div className="flex gap-3">
                                 <Button variant="outline" onClick={() => setViewingMaterial(null)}>Tutup</Button>
-                                {viewingMaterial.file_url && (
+                                {viewingMaterial.link_url ? (
+                                    <a href={viewingMaterial.link_url} target="_blank" rel="noopener noreferrer">
+                                        <Button className="bg-blue-600 hover:bg-blue-700 text-white border-none">
+                                            <ExternalLink className="w-4 h-4 mr-2" /> Buka Link
+                                        </Button>
+                                    </a>
+                                ) : viewingMaterial.file_url ? (
                                     <a href={viewingMaterial.file_url} target="_blank" rel="noopener noreferrer">
                                         <Button className="bg-yellow-500 hover:bg-yellow-600 text-white border-none">
                                             <Download className="w-4 h-4 mr-2" /> Download File
                                         </Button>
                                     </a>
-                                )}
+                                ) : null}
                             </div>
                         </div>
                     </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { cn } from '../../lib/utils';
-import { File, Download, Loader2 } from 'lucide-react';
+import { File, Download, Loader2, ExternalLink } from 'lucide-react';
 import { learningService } from '../../services/learningService';
 import { getFileUrl } from '../../lib/api';
 import type { LearningMaterial } from '../../types';
@@ -79,7 +79,16 @@ export function Learning() {
                                     />
                                 ) : null}
 
-                                {item.file_url ? (
+                                {item.link_url ? (
+                                    <a
+                                        href={item.link_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center text-sm font-medium text-primary-600 hover:text-primary-700 mt-2"
+                                    >
+                                        <ExternalLink className="w-4 h-4 mr-2" /> Buka Link
+                                    </a>
+                                ) : item.file_url ? (
                                     <a
                                         href={getFileUrl(item.file_url)}
                                         target="_blank"
