@@ -69,6 +69,12 @@ class SettingsController
 
             // Merge full site_content safely (compatible with PHP < 8.1)
             $mappedSettings = array_merge($baseSettings, $siteContent);
+            
+            // Explicitly ensure maintenance flags are returned as true booleans, 
+            // since array_merge will overwrite them with string "0" or "1" from the DB
+            $mappedSettings['maintenance_public'] = filter_var($siteContent['maintenance_public'] ?? false, FILTER_VALIDATE_BOOLEAN);
+            $mappedSettings['maintenance_member'] = filter_var($siteContent['maintenance_member'] ?? false, FILTER_VALIDATE_BOOLEAN);
+            $mappedSettings['maintenance_premium'] = filter_var($siteContent['maintenance_premium'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
             return json_encode($mappedSettings);
         } catch (Exception $e) {

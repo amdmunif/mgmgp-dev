@@ -142,9 +142,9 @@ class MemberController
             JOIN profiles p2 ON p1.id < p2.id
             JOIN users u2 ON p2.id = u2.id
             WHERE 
-                (u1.email = u2.email AND u1.email IS NOT NULL AND u1.email != '') OR
-                (p1.no_hp = p2.no_hp AND p1.no_hp IS NOT NULL AND p1.no_hp != '') OR
-                (p1.nama = p2.nama AND p1.asal_sekolah = p2.asal_sekolah AND p1.nama != '' AND p1.asal_sekolah != '')
+                (LOWER(TRIM(u1.email)) = LOWER(TRIM(u2.email)) AND u1.email IS NOT NULL AND u1.email != '') OR
+                (REPLACE(p1.no_hp, ' ', '') = REPLACE(p2.no_hp, ' ', '') AND p1.no_hp IS NOT NULL AND p1.no_hp != '') OR
+                (LOWER(TRIM(p1.nama)) = LOWER(TRIM(p2.nama)) AND p1.nama != '')
         ";
 
         $stmt = $this->conn->prepare($query);
