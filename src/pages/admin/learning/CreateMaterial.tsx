@@ -75,7 +75,12 @@ export function CreateMaterial() {
         try {
             let fileUrl = existingFileUrl || undefined;
             if (file) {
-                fileUrl = await learningService.uploadDocument(file);
+                fileUrl = await learningService.uploadDocument(file, {
+                    type: data.type,
+                    kelas: data.kelas || '',
+                    semester: data.semester || '',
+                    title: data.title
+                });
             }
 
             // Sanitize data

@@ -26,9 +26,15 @@ export const learningService = {
         return api.delete(`/learning/${id}`);
     },
 
-    async uploadDocument(file: File) {
+    async uploadDocument(file: File, metadata?: { type: string, kelas: string, semester: string, title: string }) {
         const formData = new FormData();
         formData.append('file', file);
+        if (metadata) {
+            formData.append('type', metadata.type);
+            formData.append('kelas', metadata.kelas);
+            formData.append('semester', metadata.semester);
+            formData.append('title', metadata.title);
+        }
         const response = await api.post<{ url: string }>('/upload', formData);
         return response.url;
     }

@@ -29,7 +29,28 @@ class UploadController
 
         if (isset($_FILES['file']) && $_FILES['file']['error'] === UPLOAD_ERR_OK) {
             $ext = pathinfo($_FILES['file']['name'], PATHINFO_EXTENSION);
+            
             $filename = uniqid() . '.' . $ext;
+            
+            if (isset($_POST['type']) && isset($_POST['title'])) {
+                $type = strtolower($_POST['type']) === 'slide' ? 'Slide' : 'Modul';
+                $kelas = isset($_POST['kelas']) && $_POST['kelas'] !== '' ? $_POST['kelas'] : '';
+                $semester = isset($_POST['semester']) && $_POST['semester'] !== '' ? $_POST['semester'] : '';
+                
+                $cleanTitle = preg_replace('/[^a-zA-Z0-9_\- ]/', '', $_POST['title']);
+                $cleanTitle = str_replace(' ', '-', $cleanTitle);
+                
+                $customName = "MGMPIF-Wsb-{$type}-{$kelas}-{$semester}-{$cleanTitle}";
+                $customName = preg_replace('/-+/', '-', $customName);
+                $customName = trim($customName, '-');
+                
+                $filename = $customName . '.' . $ext;
+                $counter = 1;
+                while (file_exists($targetDir . $filename)) {
+                    $filename = $customName . '-' . $counter . '.' . $ext;
+                    $counter++;
+                }
+            }
 
             if (move_uploaded_file($_FILES['file']['tmp_name'], $targetDir . $filename)) {
                 return json_encode([
