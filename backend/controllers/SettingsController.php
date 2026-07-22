@@ -154,9 +154,9 @@ class SettingsController
             $stmtContent->bindValue(':bank_number', $data['bank_number'] ?? '');
             $stmtContent->bindValue(':bank_holder', $data['bank_holder'] ?? '');
             
-            $stmtContent->bindValue(':maintenance_public', isset($data['maintenance_public']) ? ($data['maintenance_public'] ? 1 : 0) : 0, PDO::PARAM_INT);
-            $stmtContent->bindValue(':maintenance_member', isset($data['maintenance_member']) ? ($data['maintenance_member'] ? 1 : 0) : 0, PDO::PARAM_INT);
-            $stmtContent->bindValue(':maintenance_premium', isset($data['maintenance_premium']) ? ($data['maintenance_premium'] ? 1 : 0) : 0, PDO::PARAM_INT);
+            $stmtContent->bindValue(':maintenance_public', isset($data['maintenance_public']) ? (filter_var($data['maintenance_public'], FILTER_VALIDATE_BOOLEAN) ? 1 : 0) : 0, PDO::PARAM_INT);
+            $stmtContent->bindValue(':maintenance_member', isset($data['maintenance_member']) ? (filter_var($data['maintenance_member'], FILTER_VALIDATE_BOOLEAN) ? 1 : 0) : 0, PDO::PARAM_INT);
+            $stmtContent->bindValue(':maintenance_premium', isset($data['maintenance_premium']) ? (filter_var($data['maintenance_premium'], FILTER_VALIDATE_BOOLEAN) ? 1 : 0) : 0, PDO::PARAM_INT);
 
             $stmtContent->execute();
 

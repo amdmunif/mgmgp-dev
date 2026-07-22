@@ -101,7 +101,7 @@ export const api = {
     },
 
     get<T>(endpoint: string) {
-        return this.request<T>(endpoint, { method: 'GET' });
+        return this.request<T>(endpoint, { method: 'GET', cache: 'no-store' });
     },
 
     post<T>(endpoint: string, body: any) {

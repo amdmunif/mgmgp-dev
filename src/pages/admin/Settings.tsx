@@ -132,7 +132,11 @@ export function AdminSettings() {
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
                             >
                                 <option value="">Pilih Pendidikan</option>
+                                {!['', 'D3', 'S1/D4', 'S1', 'S2', 'S3'].includes(formData.pendidikan_terakhir) && formData.pendidikan_terakhir && (
+                                    <option value={formData.pendidikan_terakhir}>{formData.pendidikan_terakhir}</option>
+                                )}
                                 <option value="D3">D3</option>
+                                <option value="S1">S1</option>
                                 <option value="S1/D4">S1/D4</option>
                                 <option value="S2">S2</option>
                                 <option value="S3">S3</option>
@@ -157,10 +161,14 @@ export function AdminSettings() {
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
                             >
                                 <option value="">Pilih Status</option>
+                                {!['', 'PNS', 'PPPK', 'GTY', 'GTT', 'Honorer'].includes(formData.status_kepegawaian) && formData.status_kepegawaian && (
+                                    <option value={formData.status_kepegawaian}>{formData.status_kepegawaian}</option>
+                                )}
                                 <option value="PNS">PNS</option>
                                 <option value="PPPK">PPPK</option>
                                 <option value="GTY">GTY</option>
                                 <option value="GTT">GTT</option>
+                                <option value="Honorer">Honorer</option>
                             </select>
                         </div>
                         <div>
