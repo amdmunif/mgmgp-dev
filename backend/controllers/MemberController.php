@@ -230,25 +230,25 @@ class MemberController
             $nama = $primaryData['nama'];
 
             // 1. Move event_participants intelligently (preserve attendance if one of them attended)
-            // Note: VALUES() is deprecated in MySQL 8.0.20+, but we can use the old syntax for broader compatibility,
-            // or do it carefully. For safety across versions, we'll use a clean UPDATE for duplicates and INSERT IGNORE.
-            $mergeEvents = "
-                INSERT INTO event_participants (event_id, user_id, is_hadir, tugas_submitted, task_url, registered_at)
-                SELECT event_id, :primary_id, is_hadir, tugas_submitted, task_url, registered_at
-                FROM event_participants
-                WHERE user_id = :secondary_id
-                ON DUPLICATE KEY UPDATE
-                    is_hadir = IF(VALUES(is_hadir) = 1, 1, event_participants.is_hadir),
-                    tugas_submitted = IF(VALUES(tugas_submitted) = 1, 1, event_participants.tugas_submitted),
-                    task_url = IF(VALUES(task_url) IS NOT NULL AND VALUES(task_url) != '', VALUES(task_url), event_participants.task_url)
-            ";
-            $stmtEvents = $this->conn->prepare($mergeEvents);
-            $stmtEvents->execute([':primary_id' => $primaryId, ':secondary_id' => $secondaryId]);
+            // If they both have the same event, update the primary to take the best of both
+            $mergeBoth = "UPDATE event_participants ep1
+                          JOIN event_participants ep2 ON ep1.event_id = ep2.event_id 
+                          SET ep1.is_hadir = GREATEST(ep1.is_hadir, ep2.is_hadir),
+                              ep1.tugas_submitted = GREATEST(ep1.tugas_submitted, ep2.tugas_submitted),
+                              ep1.task_url = COALESCE(NULLIF(ep1.task_url, ''), ep2.task_url)
+                          WHERE ep1.user_id = :primary_id AND ep2.user_id = :secondary_id";
+            $stmtMergeBoth = $this->conn->prepare($mergeBoth);
+            $stmtMergeBoth->execute([':primary_id' => $primaryId, ':secondary_id' => $secondaryId]);
 
-            // 1.1 Delete the secondary_id records since they have been copied/merged
-            $deleteEvents = "DELETE FROM event_participants WHERE user_id = :secondary_id";
-            $stmtDeleteEvents = $this->conn->prepare($deleteEvents);
-            $stmtDeleteEvents->execute([':secondary_id' => $secondaryId]);
+            // Then update the rest (where primary didn't exist)
+            $updateRest = "UPDATE IGNORE event_participants SET user_id = :primary_id WHERE user_id = :secondary_id";
+            $stmtUpdateRest = $this->conn->prepare($updateRest);
+            $stmtUpdateRest->execute([':primary_id' => $primaryId, ':secondary_id' => $secondaryId]);
+
+            // Then delete any remaining secondary records
+            $deleteRemaining = "DELETE FROM event_participants WHERE user_id = :secondary_id";
+            $stmtDeleteRemaining = $this->conn->prepare($deleteRemaining);
+            $stmtDeleteRemaining->execute([':secondary_id' => $secondaryId]);
 
             // 1.5. Transfer premium status if secondary is better
             $stmtCheckPremium = $this->conn->prepare("SELECT premium_until FROM profiles WHERE id = :id");

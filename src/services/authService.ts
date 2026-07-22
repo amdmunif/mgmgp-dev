@@ -31,8 +31,10 @@ export const authService = {
 
     async login(email: string, password: string) {
         const response = await api.post<any>('/auth/login', { email, password });
-        if (response.session?.access_token) {
-            localStorage.setItem('access_token', response.session.access_token);
+        // Handle both custom backend (token) and potential legacy structure
+        const token = response.token || response.session?.access_token;
+        if (token) {
+            localStorage.setItem('access_token', token);
             localStorage.setItem('user_data', JSON.stringify({ ...response.user, ...response.profile })); // Save basic user info
         }
         return response;

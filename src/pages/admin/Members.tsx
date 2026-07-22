@@ -619,7 +619,8 @@ export function AdminMembers() {
                         </div>
                         
                         {/* Body (Scrollable) */}
-                        <div className="p-6 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
+                        <div className="overflow-y-auto flex-1 custom-scrollbar">
+                            <div className="p-6 space-y-6">
                             <div className="flex items-center gap-4">
                                 <div className="w-20 h-20 rounded-full bg-gray-100 overflow-hidden border border-gray-200 shrink-0">
                                     {viewingMember.foto_profile ? (
@@ -740,8 +741,8 @@ export function AdminMembers() {
                                     </div>
                                 </div>
                             </div>
+                            </div>
                         </div>
-
 
                         {/* Footer */}
                         <div className="p-4 px-6 border-t border-gray-100 shrink-0 flex justify-end bg-gray-50">
