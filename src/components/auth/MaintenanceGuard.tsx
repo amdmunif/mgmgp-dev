@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { settingsService, type AppSettings } from '../../services/settingsService';
+import { settingsService } from '../../services/settingsService';
 import { authService } from '../../services/authService';
 import { Loader2 } from 'lucide-react';
 

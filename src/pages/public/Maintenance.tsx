@@ -1,4 +1,4 @@
-import { Settings, PenTool, Wrench } from 'lucide-react';
+import { Settings, Wrench } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export function Maintenance() {
