@@ -402,10 +402,19 @@ if ($resource === 'news') {
     $controller = new MemberController();
 
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-        echo $controller->getAll();
-    } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'merge-duplicates') {
+        if ($action === 'duplicates') {
+            if ($userRole === 'Admin') {
+                echo $controller->getDuplicates();
+            } else {
+                http_response_code(403);
+                echo json_encode(["message" => "Forbidden"]);
+            }
+        } else {
+            echo $controller->getAll();
+        }
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'merge') {
         if ($userRole === 'Admin') {
-            echo $controller->autoMergeDuplicates();
+            echo $controller->mergeDuplicate($input);
         } else {
             http_response_code(403);
             echo json_encode(["message" => "Forbidden"]);

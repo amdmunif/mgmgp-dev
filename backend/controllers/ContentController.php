@@ -246,6 +246,17 @@ class ContentController
             $stmtTitle->bindParam(':eid', $eventId);
             $stmtTitle->execute();
             $eventTitle = $stmtTitle->fetchColumn();
+            
+            // Get user email
+            $stmtUser = $this->conn->prepare("SELECT u.email, p.nama FROM users u JOIN profiles p ON u.id = p.id WHERE u.id = :uid");
+            $stmtUser->bindParam(':uid', $userId);
+            $stmtUser->execute();
+            $userData = $stmtUser->fetch(PDO::FETCH_ASSOC);
+
+            if ($userData) {
+                Mailer::sendEventRegistration($userData['email'], $userData['nama'], $eventTitle);
+            }
+
             Helper::log($this->conn, $userId, 'Member', 'JOIN_EVENT', $eventTitle || $eventId);
             return json_encode(["message" => "Joined successfully"]);
         }

@@ -22,6 +22,21 @@ export interface Profile {
     is_new?: number; // 1 if created in last 3 months
 }
 
+export interface DuplicatePair {
+    id1: string;
+    nama1: string;
+    sekolah1: string;
+    hp1: string;
+    email1: string;
+    attendance1: number;
+    id2: string;
+    nama2: string;
+    sekolah2: string;
+    hp2: string;
+    email2: string;
+    attendance2: number;
+}
+
 export const memberService = {
     // Get all members
     async getAll() {
@@ -43,8 +58,13 @@ export const memberService = {
         return await api.delete(`/members/${id}`);
     },
 
-    // Auto merge duplicates
-    async autoMergeDuplicates() {
-        return await api.post<{ message: string, merged_count: number }>('/members/merge-duplicates', {});
+    // Get duplicate data
+    async getDuplicates() {
+        return await api.get<DuplicatePair[]>('/members/duplicates');
+    },
+
+    // Merge duplicate
+    async mergeDuplicate(id1: string, id2: string) {
+        return await api.post<{ message: string }>('/members/merge', { id1, id2 });
     }
 };

@@ -248,7 +248,20 @@ class Mailer
             <p>Salam hangat,<br><strong>Tim Admin MGMP Informatika</strong></p>
         ";
         $html = self::getBaseTemplate($title, $body);
-        return self::sendHtmlEmail($email, "Konfirmasi Kehadiran: {$eventName}", $html);
+        return self::sendHtmlEmail($email, "Kehadiran Berhasil Dikonfirmasi - MGMP Informatika", $html);
+    }
+
+    public static function sendEventRegistration($email, $nama, $eventName)
+    {
+        $title = "Pendaftaran Event Berhasil";
+        $body = "
+            <h2 style='color: #1e293b; margin-top: 0;'>Halo, {$nama},</h2>
+            <p>Terima kasih telah mendaftar! Anda telah berhasil terdaftar pada acara <strong>{$eventName}</strong>.</p>
+            <p>Jangan lupa untuk mencatat jadwal acara dan mempersiapkan diri dengan baik.</p>
+            <p>Salam hangat,<br><strong>Tim Admin MGMP Informatika</strong></p>
+        ";
+        $html = self::getBaseTemplate($title, $body);
+        return self::sendHtmlEmail($email, "Konfirmasi Pendaftaran: {$eventName}", $html);
     }
 
     public static function sendTaskSubmitted($email, $nama, $eventName)

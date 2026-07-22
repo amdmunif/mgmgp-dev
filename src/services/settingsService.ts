@@ -47,8 +47,7 @@ export interface AppSettings {
 
 export const settingsService = {
     async getSettings() {
-        const response = await api.get<AppSettings>('/settings');
-        return response;
+        return await api.get<AppSettings>('/settings?t=' + Date.now());
     },
 
     async updateSettings(updates: Partial<AppSettings>) {

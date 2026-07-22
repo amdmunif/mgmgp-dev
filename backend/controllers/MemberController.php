@@ -128,10 +128,9 @@ class MemberController
         return json_encode(["message" => "Gagal menghapus data anggota"]);
     }
 
-    public function autoMergeDuplicates()
+    public function getDuplicates()
     {
-        // 1. Find duplicates based on exact match of Email OR (Nama AND Asal Sekolah) OR No HP
-        // We will do a self join to find potential duplicates
+        // Find duplicates based on exact match of Email OR (Nama AND Asal Sekolah) OR No HP
         $query = "
             SELECT 
                 p1.id as id1, p1.nama as nama1, p1.asal_sekolah as sekolah1, p1.no_hp as hp1, u1.email as email1,
@@ -152,58 +151,73 @@ class MemberController
         $stmt->execute();
         $duplicates = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        $mergedCount = 0;
-        $processedIds = [];
+        return json_encode($duplicates);
+    }
 
-        foreach ($duplicates as $dup) {
-            if (in_array($dup['id1'], $processedIds) || in_array($dup['id2'], $processedIds)) {
-                continue; // Already processed in this batch
-            }
+    public function mergeDuplicate($data)
+    {
+        $id1 = $data['id1'] ?? null;
+        $id2 = $data['id2'] ?? null;
 
-            // Determine primary
-            $primaryId = $dup['id1'];
-            $secondaryId = $dup['id2'];
-            $primaryEmail = $dup['email1'];
-
-            if ($dup['attendance2'] > $dup['attendance1']) {
-                $primaryId = $dup['id2'];
-                $secondaryId = $dup['id1'];
-                $primaryEmail = $dup['email2'];
-            }
-
-            try {
-                $this->conn->beginTransaction();
-
-                // 1. Move event_participants
-                $updateEvents = "UPDATE event_participants SET user_id = :primary_id WHERE user_id = :secondary_id";
-                $stmtEvents = $this->conn->prepare($updateEvents);
-                $stmtEvents->execute([':primary_id' => $primaryId, ':secondary_id' => $secondaryId]);
-
-                // 2. Move other references if any (e.g. audit_logs)
-                
-                // 3. Delete secondary profile & user
-                $deleteUser = "DELETE FROM users WHERE id = :secondary_id";
-                $stmtDelete = $this->conn->prepare($deleteUser);
-                $stmtDelete->execute([':secondary_id' => $secondaryId]);
-
-                $this->conn->commit();
-                $mergedCount++;
-                $processedIds[] = $primaryId;
-                $processedIds[] = $secondaryId;
-
-                // Send Email Notification
-                Mailer::sendDuplicateMerged($primaryEmail, $dup['nama1'] ?? $dup['nama2']);
-
-            } catch (Exception $e) {
-                $this->conn->rollBack();
-                // Log or continue
-            }
+        if (!$id1 || !$id2) {
+            http_response_code(400);
+            return json_encode(["message" => "ID Anggota tidak lengkap."]);
         }
 
-        return json_encode([
-            "message" => "Auto-merge completed.",
-            "merged_count" => $mergedCount
-        ]);
+        try {
+            $this->conn->beginTransaction();
+
+            // Fetch details to know which one is primary based on attendance, 
+            // or just use $id1 as primary as determined by frontend/user.
+            // Let's assume the frontend sends the primary ID as id1 and secondary as id2
+            $primaryId = $id1;
+            $secondaryId = $id2;
+
+            // Get emails for notification
+            $stmtPrimary = $this->conn->prepare("SELECT u.email, p.nama FROM users u JOIN profiles p ON u.id = p.id WHERE u.id = :id");
+            $stmtPrimary->execute([':id' => $primaryId]);
+            $primaryData = $stmtPrimary->fetch(PDO::FETCH_ASSOC);
+
+            $stmtSecondary = $this->conn->prepare("SELECT u.email FROM users u WHERE u.id = :id");
+            $stmtSecondary->execute([':id' => $secondaryId]);
+            $secondaryData = $stmtSecondary->fetch(PDO::FETCH_ASSOC);
+
+            if (!$primaryData || !$secondaryData) {
+                throw new Exception("Data pengguna tidak ditemukan.");
+            }
+
+            $primaryEmail = $primaryData['email'];
+            $secondaryEmail = $secondaryData['email'];
+            $nama = $primaryData['nama'];
+
+            // 1. Move event_participants
+            $updateEvents = "UPDATE event_participants SET user_id = :primary_id WHERE user_id = :secondary_id";
+            $stmtEvents = $this->conn->prepare($updateEvents);
+            $stmtEvents->execute([':primary_id' => $primaryId, ':secondary_id' => $secondaryId]);
+
+            // 2. Delete secondary profile & user
+            $deleteUser = "DELETE FROM users WHERE id = :secondary_id";
+            $stmtDelete = $this->conn->prepare($deleteUser);
+            $stmtDelete->execute([':secondary_id' => $secondaryId]);
+
+            $this->conn->commit();
+
+            // Send Email Notification to primary
+            Mailer::sendDuplicateMerged($primaryEmail, $nama);
+
+            // If secondary email is different and valid, notify them as well
+            if ($secondaryEmail && $secondaryEmail !== $primaryEmail) {
+                Mailer::sendDuplicateMerged($secondaryEmail, $nama);
+            }
+
+            return json_encode([
+                "message" => "Data berhasil digabungkan."
+            ]);
+        } catch (Exception $e) {
+            $this->conn->rollBack();
+            http_response_code(500);
+            return json_encode(["message" => "Gagal menggabungkan data: " . $e->getMessage()]);
+        }
     }
 }
 ?>

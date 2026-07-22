@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { memberService, type Profile } from '../../services/memberService';
+import { memberService, type Profile, type DuplicatePair } from '../../services/memberService';
 import { useOutletContext, useLocation } from 'react-router-dom';
 import {
     ShieldCheck,
@@ -13,7 +13,8 @@ import {
     Filter,
     Users,
     CheckCircle2,
-    AlertCircle
+    AlertCircle,
+    ArrowRightLeft
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { getFileUrl } from '../../lib/api';
@@ -31,6 +32,8 @@ export function AdminMembers() {
     const [loading, setLoading] = useState(true);
     const [filterRole, setFilterRole] = useState('All');
     const [filterPremium, setFilterPremium] = useState('All');
+    const [duplicates, setDuplicates] = useState<DuplicatePair[]>([]);
+    const [loadingDuplicates, setLoadingDuplicates] = useState(false);
 
     // Edit/View State
     const [editingMember, setEditingMember] = useState<Profile | null>(null);
@@ -39,7 +42,7 @@ export function AdminMembers() {
     const [isSaving, setIsSaving] = useState(false);
 
     // Tab: default dari location state jika ada
-    const [activeTab, setActiveTab] = useState<'active' | 'inactive'>(
+    const [activeTab, setActiveTab] = useState<'active' | 'inactive' | 'duplicates'>(
         location.state?.tab === 'inactive' ? 'inactive' : 'active'
     );
 
@@ -65,6 +68,25 @@ export function AdminMembers() {
             setLoading(false);
         }
     };
+
+    const fetchDuplicates = async () => {
+        setLoadingDuplicates(true);
+        try {
+            const data = await memberService.getDuplicates();
+            setDuplicates(data || []);
+        } catch (error) {
+            console.error('Error fetching duplicates:', error);
+            toast.error('Gagal mengambil data duplikat');
+        } finally {
+            setLoadingDuplicates(false);
+        }
+    };
+
+    useEffect(() => {
+        if (activeTab === 'duplicates') {
+            fetchDuplicates();
+        }
+    }, [activeTab]);
 
     // Derived state for counts
     const inactiveCount = members.filter(m => Number(m.is_active) === 0).length;
@@ -184,16 +206,21 @@ export function AdminMembers() {
         toast.success('Data berhasil diekspor');
     };
 
-    const handleMergeDuplicates = async () => {
-        if (!confirm('Peringatan: Aksi ini akan menggabungkan data anggota yang duplikat (berdasarkan Nama & Sekolah, HP, atau Email). Proses ini tidak dapat dibatalkan. Lanjutkan?')) return;
+    const handleMergeDuplicates = () => {
+        setActiveTab('duplicates');
+    };
+
+    const handleManualMerge = async (id1: string, id2: string) => {
+        if (!confirm('Apakah Anda yakin ingin menggabungkan data ini? (Tindakan ini tidak dapat dibatalkan, Data 2 akan dihapus dan email akan dikirim)')) return;
         
         const toastId = toast.loading('Sedang memproses penggabungan...');
         try {
-            const res = await memberService.autoMergeDuplicates();
-            toast.success(`Berhasil! ${res.merged_count} pasang data duplikat telah digabungkan.`, { id: toastId });
-            fetchMembers();
+            await memberService.mergeDuplicate(id1, id2);
+            toast.success('Berhasil menggabungkan data', { id: toastId });
+            fetchDuplicates();
+            fetchMembers(); // refresh list members also
         } catch (error) {
-            toast.error('Gagal menggabungkan data duplikat.', { id: toastId });
+            toast.error('Gagal menggabungkan data.', { id: toastId });
             console.error(error);
         }
     };
@@ -413,19 +440,130 @@ export function AdminMembers() {
                         </span>
                     )}
                 </button>
+                <button
+                    onClick={() => setActiveTab('duplicates')}
+                    className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors duration-200 flex items-center gap-2 ${activeTab === 'duplicates'
+                        ? 'border-orange-500 text-orange-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700'
+                        }`}
+                >
+                    Data Duplikat
+                </button>
             </div>
 
             {/* Data Table */}
-            {loading ? (
-                <div className="p-8 text-center text-gray-500">Memuat data...</div>
+            {activeTab !== 'duplicates' ? (
+                loading ? (
+                    <div className="p-8 text-center text-gray-500">Memuat data...</div>
+                ) : (
+                    <DataTable
+                        data={filteredMembers}
+                        columns={columns}
+                        searchKeys={['nama', 'email']}
+                        pageSize={10}
+                        filterContent={FilterContent}
+                    />
+                )
             ) : (
-                <DataTable
-                    data={filteredMembers}
-                    columns={columns}
-                    searchKeys={['nama', 'email']}
-                    pageSize={10}
-                    filterContent={FilterContent}
-                />
+                <div className="space-y-4">
+                    <div className="flex justify-between items-center bg-orange-50 border border-orange-100 p-4 rounded-lg">
+                        <div className="flex items-start gap-3 text-orange-800">
+                            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+                            <div>
+                                <h3 className="font-semibold">Sistem Penggabungan Data (Merge)</h3>
+                                <p className="text-sm mt-1">Data berikut terdeteksi ganda berdasarkan kesamaan Email, No HP, atau Nama & Asal Sekolah. Silakan klik <strong>Gabungkan</strong> untuk menyatukan data 2 ke data 1. Data 1 (sebelah kiri) akan dipertahankan sebagai akun utama.</p>
+                            </div>
+                        </div>
+                        <Button variant="outline" size="sm" onClick={fetchDuplicates} className="shrink-0 bg-white hover:bg-orange-100 text-orange-700 border-orange-300">
+                            Refresh Data
+                        </Button>
+                    </div>
+
+                    {loadingDuplicates ? (
+                        <div className="p-8 text-center text-gray-500">Memuat data duplikat...</div>
+                    ) : duplicates.length === 0 ? (
+                        <div className="p-12 text-center border-2 border-dashed border-gray-200 rounded-xl bg-gray-50 text-gray-500">
+                            <CheckCircle2 className="w-12 h-12 mx-auto text-green-400 mb-3" />
+                            <h3 className="text-lg font-medium text-gray-900 mb-1">Semua Bersih!</h3>
+                            <p>Tidak ditemukan data anggota yang ganda di dalam sistem.</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            {duplicates.map((dup, index) => (
+                                <div key={index} className="flex flex-col xl:flex-row items-center gap-4 p-4 border border-gray-200 rounded-xl bg-white shadow-sm hover:border-orange-300 transition-colors">
+                                    {/* Data 1 (Primary) */}
+                                    <div className="flex-1 w-full bg-blue-50/50 p-4 rounded-lg border border-blue-100 relative">
+                                        <div className="absolute top-0 right-0 bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-1 rounded-bl-lg rounded-tr-lg">DATA UTAMA</div>
+                                        <div className="flex items-start gap-3">
+                                            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+                                                <User className="w-5 h-5 text-blue-600" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className="font-bold text-gray-900 truncate">{dup.nama1 || '-'}</h4>
+                                                <p className="text-sm text-gray-600 truncate">{dup.sekolah1 || '-'}</p>
+                                                <div className="mt-2 space-y-1 text-xs text-gray-500">
+                                                    <p className="flex items-center gap-1.5"><Mail className="w-3.5 h-3.5" /> {dup.email1}</p>
+                                                    <p className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5" /> {dup.attendance1} Kehadiran (Event)</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Merge Action */}
+                                    <div className="flex flex-col items-center justify-center shrink-0 px-2 py-4 xl:py-0">
+                                        <Button 
+                                            onClick={() => handleManualMerge(dup.id1, dup.id2)}
+                                            className="bg-orange-600 hover:bg-orange-700 text-white shadow-md flex-col h-auto py-3 px-4 group"
+                                        >
+                                            <ArrowRightLeft className="w-5 h-5 mb-1 group-hover:-translate-x-1 transition-transform" />
+                                            <span className="text-xs font-bold uppercase tracking-wider">Gabungkan</span>
+                                        </Button>
+                                    </div>
+
+                                    {/* Data 2 (Secondary) */}
+                                    <div className="flex-1 w-full bg-gray-50 p-4 rounded-lg border border-gray-200 relative opacity-80 hover:opacity-100 transition-opacity">
+                                        <div className="absolute top-0 right-0 bg-gray-200 text-gray-600 text-[10px] font-bold px-2 py-1 rounded-bl-lg rounded-tr-lg">AKAN DIHAPUS</div>
+                                        <div className="flex items-start gap-3">
+                                            <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center shrink-0">
+                                                <User className="w-5 h-5 text-gray-500" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className="font-bold text-gray-900 truncate">{dup.nama2 || '-'}</h4>
+                                                <p className="text-sm text-gray-600 truncate">{dup.sekolah2 || '-'}</p>
+                                                <div className="mt-2 space-y-1 text-xs text-gray-500">
+                                                    <p className="flex items-center gap-1.5"><Mail className="w-3.5 h-3.5" /> {dup.email2}</p>
+                                                    <p className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5" /> {dup.attendance2} Kehadiran (Event)</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Alternate Merge Action (id2 becomes primary) */}
+                                    <div className="flex xl:hidden flex-col items-center justify-center shrink-0 py-2">
+                                        <span className="text-xs text-gray-400">atau</span>
+                                        <Button 
+                                            variant="ghost" size="sm"
+                                            onClick={() => handleManualMerge(dup.id2, dup.id1)}
+                                            className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 text-xs mt-1"
+                                        >
+                                            Balik Arah (Data 2 sebagai Utama)
+                                        </Button>
+                                    </div>
+                                    {/* Alternate Merge Action (Desktop) */}
+                                    <div className="hidden xl:flex absolute inset-x-0 bottom-0 justify-center translate-y-1/2 opacity-0 hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                                         <Button 
+                                            variant="outline" size="sm"
+                                            onClick={() => handleManualMerge(dup.id2, dup.id1)}
+                                            className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 bg-white border-orange-200 text-[10px] h-6 px-2 rounded-full shadow-sm"
+                                        >
+                                            <ArrowRightLeft className="w-3 h-3 mr-1" /> Jadikan Data Kanan sebagai Utama
+                                        </Button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
             )}
 
             {/* View Modal */}
