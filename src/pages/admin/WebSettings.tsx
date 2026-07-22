@@ -656,57 +656,60 @@ export function AdminWebSettings() {
             </div>
             {/* Bank Account Modal */}
             {editingAccount && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
-                        <div className="flex items-center justify-between p-4 border-b border-gray-100">
-                            <h3 className="font-bold text-lg">{editingAccount.id ? 'Edit Rekening' : 'Tambah Rekening'}</h3>
-                            <button onClick={() => setEditingAccount(null)}><X className="w-5 h-5 text-gray-500" /></button>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm animate-in fade-in">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden max-h-[90vh] flex flex-col">
+                        <div className="flex items-center justify-between p-6 border-b border-gray-100 shrink-0">
+                            <h3 className="font-bold text-lg text-gray-900">{editingAccount.id ? 'Edit Rekening' : 'Tambah Rekening'}</h3>
+                            <button onClick={() => setEditingAccount(null)} className="text-gray-400 hover:text-gray-600 transition-colors"><X className="w-5 h-5" /></button>
                         </div>
-                        <form onSubmit={handleSaveAccount} className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Nama Bank</label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={editingAccount.bank_name || ''}
-                                    onChange={e => setEditingAccount({ ...editingAccount, bank_name: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                                    placeholder="Contoh: Bank BCA"
-                                />
+                        <form onSubmit={handleSaveAccount} className="flex flex-col flex-1 overflow-hidden">
+                            <div className="p-6 space-y-4 overflow-y-auto flex-1 custom-scrollbar">
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Nama Bank</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={editingAccount.bank_name || ''}
+                                        onChange={e => setEditingAccount({ ...editingAccount, bank_name: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                                        placeholder="Contoh: Bank BCA"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Nomor Rekening</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={editingAccount.account_number || ''}
+                                        onChange={e => setEditingAccount({ ...editingAccount, account_number: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono"
+                                        placeholder="Contoh: 1234567890"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Atas Nama</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={editingAccount.account_holder || ''}
+                                        onChange={e => setEditingAccount({ ...editingAccount, account_holder: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                                        placeholder="Nama Pemilik Rekening"
+                                    />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        id="is_active"
+                                        checked={editingAccount.is_active !== false} // Default true
+                                        onChange={e => setEditingAccount({ ...editingAccount, is_active: e.target.checked })}
+                                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                    />
+                                    <label htmlFor="is_active" className="text-sm text-gray-700">Aktifkan Rekening Ini</label>
+                                </div>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Nomor Rekening</label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={editingAccount.account_number || ''}
-                                    onChange={e => setEditingAccount({ ...editingAccount, account_number: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono"
-                                    placeholder="Contoh: 1234567890"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Atas Nama</label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={editingAccount.account_holder || ''}
-                                    onChange={e => setEditingAccount({ ...editingAccount, account_holder: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                                    placeholder="Nama Pemilik Rekening"
-                                />
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <input
-                                    type="checkbox"
-                                    id="is_active"
-                                    checked={editingAccount.is_active !== false} // Default true
-                                    onChange={e => setEditingAccount({ ...editingAccount, is_active: e.target.checked })}
-                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                />
-                                <label htmlFor="is_active" className="text-sm text-gray-700">Aktifkan Rekening Ini</label>
-                            </div>
-                            <div className="pt-4 flex justify-end gap-2">
+                            <div className="p-4 px-6 border-t border-gray-100 shrink-0 flex justify-end gap-3 bg-gray-50">
                                 <Button type="button" variant="ghost" onClick={() => setEditingAccount(null)}>Batal</Button>
                                 <Button type="submit" disabled={savingAccount}>
                                     {savingAccount ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Simpan'}

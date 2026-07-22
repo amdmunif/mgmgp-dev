@@ -123,57 +123,59 @@ export function AdminGallery() {
             {/* Add Modal */}
             {isAddModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl">
-                        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                    <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
+                        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
                             <h3 className="font-bold text-gray-900">Tambah Foto Baru</h3>
-                            <button onClick={() => setIsAddModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                            <button onClick={() => setIsAddModalOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
-                        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-semibold text-gray-700">Gambar</label>
-                                <div className="relative group aspect-video rounded-2xl bg-gray-50 border-2 border-dashed border-gray-200 hover:border-blue-400 transition-colors overflow-hidden flex flex-col items-center justify-center">
-                                    {newImage.image_url ? (
-                                        <>
-                                            <img src={getFileUrl(newImage.image_url)} className="w-full h-full object-cover" />
-                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                                <Button type="button" size="sm" variant="outline" className="bg-white" onClick={() => setNewImage({ ...newImage, image_url: '' })}>
-                                                    Ganti Gambar
-                                                </Button>
+                        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+                            <div className="p-6 space-y-4 overflow-y-auto flex-1 custom-scrollbar">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-semibold text-gray-700">Gambar</label>
+                                    <div className="relative group aspect-video rounded-2xl bg-gray-50 border-2 border-dashed border-gray-200 hover:border-blue-400 transition-colors overflow-hidden flex flex-col items-center justify-center">
+                                        {newImage.image_url ? (
+                                            <>
+                                                <img src={getFileUrl(newImage.image_url)} className="w-full h-full object-cover" />
+                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                    <Button type="button" size="sm" variant="outline" className="bg-white" onClick={() => setNewImage({ ...newImage, image_url: '' })}>
+                                                        Ganti Gambar
+                                                    </Button>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div className="text-center">
+                                                <Camera className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                                                <p className="text-xs text-gray-500">Klik untuk unggah foto</p>
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={handleFileUpload}
+                                                    className="absolute inset-0 opacity-0 cursor-pointer"
+                                                />
                                             </div>
-                                        </>
-                                    ) : (
-                                        <div className="text-center">
-                                            <Camera className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                                            <p className="text-xs text-gray-500">Klik untuk unggah foto</p>
-                                            <input
-                                                type="file"
-                                                accept="image/*"
-                                                onChange={handleFileUpload}
-                                                className="absolute inset-0 opacity-0 cursor-pointer"
-                                            />
-                                        </div>
-                                    )}
-                                    {uploading && (
-                                        <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
-                                            <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
-                                        </div>
-                                    )}
+                                        )}
+                                        {uploading && (
+                                            <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
+                                                <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-semibold text-gray-700">Caption / Keterangan</label>
+                                    <textarea
+                                        required
+                                        rows={3}
+                                        value={newImage.caption}
+                                        onChange={(e) => setNewImage({ ...newImage, caption: e.target.value })}
+                                        className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                        placeholder="Tulis keterangan foto..."
+                                    />
                                 </div>
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-semibold text-gray-700">Caption / Keterangan</label>
-                                <textarea
-                                    required
-                                    rows={3}
-                                    value={newImage.caption}
-                                    onChange={(e) => setNewImage({ ...newImage, caption: e.target.value })}
-                                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                                    placeholder="Tulis keterangan foto..."
-                                />
-                            </div>
-                            <div className="pt-2">
+                            <div className="p-4 px-6 border-t border-gray-100 shrink-0 bg-gray-50">
                                 <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 h-10 rounded-xl">
                                     Simpan ke Galeri
                                 </Button>

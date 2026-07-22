@@ -609,14 +609,17 @@ export function AdminMembers() {
             {/* View Modal */}
             {viewingMember && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
-                        <div className="flex items-center justify-between p-6 border-b border-gray-100">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+                        {/* Header */}
+                        <div className="flex items-center justify-between p-6 border-b border-gray-100 shrink-0">
                             <h2 className="text-xl font-bold text-gray-900">Detail Anggota</h2>
                             <button onClick={() => setViewingMember(null)} className="text-gray-400 hover:text-gray-600 transition-colors">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
-                        <div className="p-6 space-y-6 overflow-y-auto max-h-[80vh]">
+                        
+                        {/* Body (Scrollable) */}
+                        <div className="p-6 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
                             <div className="flex items-center gap-4">
                                 <div className="w-20 h-20 rounded-full bg-gray-100 overflow-hidden border border-gray-200 shrink-0">
                                     {viewingMember.foto_profile ? (
@@ -738,9 +741,12 @@ export function AdminMembers() {
                                 </div>
                             </div>
 
-                            <div className="pt-4 flex justify-end border-t border-gray-100">
-                                <Button onClick={() => setViewingMember(null)}>Tutup</Button>
                             </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="p-4 px-6 border-t border-gray-100 shrink-0 flex justify-end bg-gray-50">
+                            <Button onClick={() => setViewingMember(null)}>Tutup</Button>
                         </div>
                     </div>
                 </div>

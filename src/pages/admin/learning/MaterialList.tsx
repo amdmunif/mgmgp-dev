@@ -180,8 +180,8 @@ export function AdminMaterials() {
             {/* View Modal */}
             {viewingMaterial && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
-                        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+                    <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
+                        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50 shrink-0">
                             <h3 className="font-bold text-gray-900 flex items-center gap-2">
                                 {getIcon(viewingMaterial.type)}
                                 {viewingMaterial.title}
@@ -190,7 +190,7 @@ export function AdminMaterials() {
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
-                        <div className="p-6 overflow-y-auto max-h-[70vh] space-y-6">
+                        <div className="p-6 overflow-y-auto flex-1 custom-scrollbar space-y-6">
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 <div className="bg-gray-50 p-3 rounded-lg">
                                     <p className="text-xs text-gray-500 mb-1">Tipe</p>
@@ -233,7 +233,7 @@ export function AdminMaterials() {
                                 </div>
                             )}
                         </div>
-                        <div className="px-6 py-4 border-t border-gray-50 flex justify-end">
+                        <div className="p-4 px-6 border-t border-gray-100 flex justify-end shrink-0 bg-gray-50">
                             <Button onClick={() => setViewingMaterial(null)}>Tutup</Button>
                         </div>
                     </div>

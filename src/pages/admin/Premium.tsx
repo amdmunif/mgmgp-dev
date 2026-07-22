@@ -188,15 +188,15 @@ export function AdminPremium() {
             {viewData && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
                     <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl overflow-hidden max-h-[90vh] flex flex-col">
-                        <div className="flex items-center justify-between p-4 border-b">
-                            <h3 className="font-bold text-lg">Detail Permintaan</h3>
-                            <button onClick={() => setViewData(null)}><X className="w-5 h-5" /></button>
+                        <div className="flex items-center justify-between p-6 border-b border-gray-100 shrink-0">
+                            <h3 className="font-bold text-lg text-gray-900">Detail Permintaan</h3>
+                            <button onClick={() => setViewData(null)} className="text-gray-400 hover:text-gray-600 transition-colors"><X className="w-5 h-5" /></button>
                         </div>
-                        <div className="p-6 overflow-y-auto">
+                        <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
                             <div className="grid grid-cols-2 gap-4 mb-6">
                                 <div>
                                     <p className="text-sm text-gray-500">Nama User</p>
-                                    <p className="font-medium">{viewData.profiles?.nama}</p>
+                                    <p className="font-medium text-gray-900">{viewData.profiles?.nama}</p>
                                 </div>
                                 <div>
                                     <p className="text-sm text-gray-500">Status</p>
@@ -204,15 +204,15 @@ export function AdminPremium() {
                                 </div>
                                 <div>
                                     <p className="text-sm text-gray-500">Bank</p>
-                                    <p className="font-medium">{viewData.bank_name}</p>
+                                    <p className="font-medium text-gray-900">{viewData.bank_name}</p>
                                 </div>
                                 <div>
                                     <p className="text-sm text-gray-500">Nomor Rekening</p>
-                                    <p className="font-medium">{viewData.account_number}</p>
+                                    <p className="font-medium text-gray-900">{viewData.account_number}</p>
                                 </div>
                                 <div className="col-span-2">
                                     <p className="text-sm text-gray-500">Atas Nama</p>
-                                    <p className="font-medium">{viewData.account_holder}</p>
+                                    <p className="font-medium text-gray-900">{viewData.account_holder}</p>
                                 </div>
                                 {viewData.notes && (
                                     <div className="col-span-2">
@@ -228,12 +228,15 @@ export function AdminPremium() {
                                         <img src={viewData.proof_url} alt="Proof" className="w-full object-contain max-h-[400px]" />
                                     </div>
                                     <div className="mt-2 text-right">
-                                        <a href={viewData.proof_url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline text-sm">
+                                        <a href={viewData.proof_url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline text-sm font-medium">
                                             Buka gambar asli
                                         </a>
                                     </div>
                                 </div>
                             )}
+                        </div>
+                        <div className="p-4 px-6 border-t border-gray-100 shrink-0 flex justify-end bg-gray-50">
+                            <Button onClick={() => setViewData(null)}>Tutup</Button>
                         </div>
                     </div>
                 </div>
@@ -242,41 +245,43 @@ export function AdminPremium() {
             {/* Edit Modal */}
             {editData && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
-                        <div className="flex items-center justify-between p-4 border-b">
-                            <h3 className="font-bold text-lg">Edit Data</h3>
-                            <button onClick={() => setEditData(null)}><X className="w-5 h-5" /></button>
+                    <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden max-h-[90vh] flex flex-col">
+                        <div className="flex items-center justify-between p-6 border-b border-gray-100 shrink-0">
+                            <h3 className="font-bold text-lg text-gray-900">Edit Data</h3>
+                            <button onClick={() => setEditData(null)} className="text-gray-400 hover:text-gray-600 transition-colors"><X className="w-5 h-5" /></button>
                         </div>
-                        <form onSubmit={handleEditSave} className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Nama Bank</label>
-                                <input
-                                    type="text"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                                    value={editData.bank_name || ''}
-                                    onChange={e => setEditData({ ...editData, bank_name: e.target.value })}
-                                />
+                        <form onSubmit={handleEditSave} className="flex flex-col flex-1 overflow-hidden">
+                            <div className="p-6 space-y-4 overflow-y-auto flex-1 custom-scrollbar">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Nama Bank</label>
+                                    <input
+                                        type="text"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                        value={editData.bank_name || ''}
+                                        onChange={e => setEditData({ ...editData, bank_name: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Nomor Rekening</label>
+                                    <input
+                                        type="text"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                        value={editData.account_number || ''}
+                                        onChange={e => setEditData({ ...editData, account_number: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Atas Nama</label>
+                                    <input
+                                        type="text"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                        value={editData.account_holder || ''}
+                                        onChange={e => setEditData({ ...editData, account_holder: e.target.value })}
+                                    />
+                                </div>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Nomor Rekening</label>
-                                <input
-                                    type="text"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                                    value={editData.account_number || ''}
-                                    onChange={e => setEditData({ ...editData, account_number: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Atas Nama</label>
-                                <input
-                                    type="text"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                                    value={editData.account_holder || ''}
-                                    onChange={e => setEditData({ ...editData, account_holder: e.target.value })}
-                                />
-                            </div>
-                            <div className="flex justify-end gap-2 pt-4">
-                                <Button type="button" variant="ghost" onClick={() => setEditData(null)}>Batal</Button>
+                            <div className="p-4 px-6 border-t border-gray-100 shrink-0 flex justify-end gap-3 bg-gray-50">
+                                <Button type="button" variant="outline" onClick={() => setEditData(null)}>Batal</Button>
                                 <Button type="submit" disabled={!!processingId}>Simpan</Button>
                             </div>
                         </form>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Mail, Trash2, MessageSquare, User, Calendar, Eye } from 'lucide-react';
+import { Mail, Trash2, MessageSquare, User, Calendar, Eye, X } from 'lucide-react';
 import { contactService } from '../../services/contactService';
 import type { ContactMessage } from '../../services/contactService';
 import { toast } from 'react-hot-toast';
@@ -128,14 +128,14 @@ export function AdminMessages() {
             {/* View Message Modal */}
             {viewingMessage && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
-                        <div className="flex items-center justify-between p-6 border-b border-gray-100">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
+                        <div className="flex items-center justify-between p-6 border-b border-gray-100 shrink-0">
                             <h2 className="text-xl font-bold text-gray-900">Detail Pesan</h2>
-                            <button onClick={() => setViewingMessage(null)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">
-                                &times;
+                            <button onClick={() => setViewingMessage(null)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                                <X className="w-5 h-5" />
                             </button>
                         </div>
-                        <div className="p-6 space-y-4">
+                        <div className="p-6 space-y-4 overflow-y-auto flex-1 custom-scrollbar">
                             <div className="flex items-start gap-4">
                                 <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 shrink-0">
                                     <User className="w-5 h-5" />
@@ -153,10 +153,9 @@ export function AdminMessages() {
                             <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
                                 {viewingMessage.message}
                             </div>
-
-                            <div className="flex justify-end pt-2">
-                                <Button onClick={() => setViewingMessage(null)}>Tutup</Button>
-                            </div>
+                        </div>
+                        <div className="p-4 px-6 border-t border-gray-100 shrink-0 flex justify-end bg-gray-50">
+                            <Button onClick={() => setViewingMessage(null)}>Tutup</Button>
                         </div>
                     </div>
                 </div>

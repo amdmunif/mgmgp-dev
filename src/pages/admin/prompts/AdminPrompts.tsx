@@ -193,14 +193,14 @@ export function AdminPrompts() {
             {/* View Modal */}
             {viewingPrompt && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-                        <div className="flex items-center justify-between p-6 border-b border-gray-100">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
+                        <div className="flex items-center justify-between p-6 border-b border-gray-100 shrink-0">
                             <h2 className="text-xl font-bold text-gray-900">{viewingPrompt.title}</h2>
                             <button onClick={() => setViewingPrompt(null)} className="text-gray-400 hover:text-gray-600 transition-colors">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
-                        <div className="p-6 space-y-4">
+                        <div className="p-6 space-y-4 overflow-y-auto flex-1 custom-scrollbar">
                             <div>
                                 <h3 className="font-semibold text-gray-900 mb-1">Deskripsi</h3>
                                 <p className="text-gray-600">{viewingPrompt.description}</p>
@@ -219,9 +219,9 @@ export function AdminPrompts() {
                                     </div>
                                 </div>
                             )}
-                            <div className="pt-4 flex justify-end">
-                                <Button onClick={() => setViewingPrompt(null)}>Tutup</Button>
-                            </div>
+                        </div>
+                        <div className="p-4 px-6 border-t border-gray-100 shrink-0 flex justify-end bg-gray-50">
+                            <Button onClick={() => setViewingPrompt(null)}>Tutup</Button>
                         </div>
                     </div>
                 </div>
@@ -253,68 +253,68 @@ function EditPromptModal({ prompt, onClose, onSave }: { prompt: Prompt, onClose:
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-                <div className="flex items-center justify-between p-6 border-b border-gray-100">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
+                <div className="flex items-center justify-between p-6 border-b border-gray-100 shrink-0">
                     <h2 className="text-xl font-bold text-gray-900">Edit Prompt</h2>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit((data) => onSave(data))} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Judul Prompt</label>
-                        <input
-                            {...register('title', { required: 'Judul wajib diisi' })}
-                            className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:ring-2 focus:ring-purple-500 focus:outline-none"
-                        />
-                        {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title.message}</p>}
+                <form onSubmit={handleSubmit((data) => onSave(data))} className="flex flex-col flex-1 overflow-hidden">
+                    <div className="p-6 space-y-4 overflow-y-auto flex-1 custom-scrollbar">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Judul Prompt</label>
+                            <input
+                                {...register('title', { required: 'Judul wajib diisi' })}
+                                className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                            />
+                            {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title.message}</p>}
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
+                            <select
+                                {...register('category', { required: 'Kategori wajib dipilih' })}
+                                className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                            >
+                                <option value="">Pilih Kategori</option>
+                                <option value="Teaching">Teaching / Pendidikan</option>
+                                <option value="Coding">Coding / Pemrograman</option>
+                                <option value="Writing">Writing / Penulisan</option>
+                                <option value="Productivity">Productivity / Produktivitas</option>
+                            </select>
+                            {errors.category && <p className="text-red-500 text-xs mt-1">{errors.category.message}</p>}
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Deskripsi Singkat</label>
+                            <input
+                                {...register('description', { required: 'Deskripsi wajib diisi' })}
+                                className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                            />
+                            {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description.message}</p>}
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Isi Prompt</label>
+                            <textarea
+                                {...register('prompt_content', { required: 'Isi prompt wajib diisi' })}
+                                className="w-full rounded-lg border border-gray-300 py-2 px-3 h-32 focus:ring-2 focus:ring-purple-500 focus:outline-none font-mono text-sm bg-gray-50"
+                            />
+                            {errors.prompt_content && <p className="text-red-500 text-xs mt-1">{errors.prompt_content.message}</p>}
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Contoh Hasil (Opsional)</label>
+                            <textarea
+                                {...register('example_result')}
+                                className="w-full rounded-lg border border-gray-300 py-2 px-3 h-24 focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                            />
+                        </div>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
-                        <select
-                            {...register('category', { required: 'Kategori wajib dipilih' })}
-                            className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:ring-2 focus:ring-purple-500 focus:outline-none"
-                        >
-                            <option value="">Pilih Kategori</option>
-                            <option value="Teaching">Teaching / Pendidikan</option>
-                            <option value="Coding">Coding / Pemrograman</option>
-                            <option value="Writing">Writing / Penulisan</option>
-                            <option value="Productivity">Productivity / Produktivitas</option>
-                        </select>
-                        {errors.category && <p className="text-red-500 text-xs mt-1">{errors.category.message}</p>}
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Deskripsi Singkat</label>
-                        <input
-                            {...register('description', { required: 'Deskripsi wajib diisi' })}
-                            className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:ring-2 focus:ring-purple-500 focus:outline-none"
-                        />
-                        {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description.message}</p>}
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Isi Prompt</label>
-                        <textarea
-                            {...register('prompt_content', { required: 'Isi prompt wajib diisi' })}
-                            className="w-full rounded-lg border border-gray-300 py-2 px-3 h-32 focus:ring-2 focus:ring-purple-500 focus:outline-none font-mono text-sm bg-gray-50"
-                        />
-                        {errors.prompt_content && <p className="text-red-500 text-xs mt-1">{errors.prompt_content.message}</p>}
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Contoh Hasil (Opsional)</label>
-                        <textarea
-                            {...register('example_result')}
-                            className="w-full rounded-lg border border-gray-300 py-2 px-3 h-24 focus:ring-2 focus:ring-purple-500 focus:outline-none"
-                        />
-                    </div>
-
-
-
-                    <div className="pt-4 flex justify-end gap-3 sticky bottom-0 bg-white border-t border-gray-100">
+                    <div className="p-4 px-6 border-t border-gray-100 shrink-0 flex justify-end gap-3 bg-gray-50">
                         <Button type="button" variant="outline" onClick={onClose}>Batal</Button>
                         <Button type="submit" disabled={isSubmitting} className="bg-purple-600 hover:bg-purple-700">
                             {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : 'Simpan Perubahan'}

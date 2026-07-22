@@ -625,8 +625,8 @@ export function AdminQuestions() {
             {/* Preview Modal */}
             {viewingQuestion && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white p-6 rounded-xl w-full max-w-2xl shadow-xl max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95">
-                        <div className="flex justify-between items-start mb-4">
+                    <div className="bg-white rounded-2xl w-full max-w-2xl shadow-xl max-h-[90vh] flex flex-col animate-in fade-in zoom-in-95">
+                        <div className="flex justify-between items-center p-6 border-b border-gray-100 shrink-0">
                             <div>
                                 <h3 className="text-lg font-bold text-gray-900">Detail Soal</h3>
                                 <div className="flex gap-2 mt-1">
@@ -636,34 +636,36 @@ export function AdminQuestions() {
                                     {viewingQuestion.tp_code && <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-medium">TP: {viewingQuestion.tp_code}</span>}
                                 </div>
                             </div>
-                            <button onClick={() => setViewingQuestion(null)} className="text-gray-400 hover:text-gray-600">
-                                <span className="text-2xl">&times;</span>
+                            <button onClick={() => setViewingQuestion(null)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                                <X className="w-5 h-5" />
                             </button>
                         </div>
 
-                        <div className="prose prose-sm max-w-none mb-6 p-4 bg-gray-50 rounded-lg border border-gray-100" dangerouslySetInnerHTML={{ __html: viewingQuestion.content }} />
+                        <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
+                            <div className="prose prose-sm max-w-none mb-6 p-4 bg-gray-50 rounded-lg border border-gray-100" dangerouslySetInnerHTML={{ __html: viewingQuestion.content }} />
 
-                        <div className="space-y-2">
-                            <h4 className="font-semibold text-sm text-gray-700">Pilihan Jawaban:</h4>
-                            {viewingQuestion.options?.map((opt: any, idx: number) => (
-                                <div key={idx} className={cn("p-3 rounded-lg border flex items-center gap-3", opt.is_correct ? "bg-green-50 border-green-200" : "bg-white border-gray-200")}>
-                                    <span className={cn("w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold shrink-0", opt.is_correct ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500")}>
-                                        {String.fromCharCode(65 + idx)}
-                                    </span>
-                                    <span className={cn("text-sm", opt.is_correct && "font-medium text-green-800")}>{opt.text}</span>
-                                    {opt.is_correct && <CheckCircle className="w-4 h-4 text-green-600 ml-auto" />}
+                            <div className="space-y-2">
+                                <h4 className="font-semibold text-sm text-gray-700">Pilihan Jawaban:</h4>
+                                {viewingQuestion.options?.map((opt: any, idx: number) => (
+                                    <div key={idx} className={cn("p-3 rounded-lg border flex items-center gap-3", opt.is_correct ? "bg-green-50 border-green-200" : "bg-white border-gray-200")}>
+                                        <span className={cn("w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold shrink-0", opt.is_correct ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500")}>
+                                            {String.fromCharCode(65 + idx)}
+                                        </span>
+                                        <span className={cn("text-sm", opt.is_correct && "font-medium text-green-800")}>{opt.text}</span>
+                                        {opt.is_correct && <CheckCircle className="w-4 h-4 text-green-600 ml-auto" />}
+                                    </div>
+                                ))}
+                            </div>
+
+                            {(viewingQuestion.type === 'essay' || viewingQuestion.type === 'short_answer') && (
+                                <div className="mt-4 p-4 bg-blue-50 text-blue-800 rounded-lg text-sm">
+                                    <strong>Kunci Jawaban:</strong> <br />
+                                    {viewingQuestion.answer_key}
                                 </div>
-                            ))}
+                            )}
                         </div>
 
-                        {(viewingQuestion.type === 'essay' || viewingQuestion.type === 'short_answer') && (
-                            <div className="mt-4 p-4 bg-blue-50 text-blue-800 rounded-lg text-sm">
-                                <strong>Kunci Jawaban:</strong> <br />
-                                {viewingQuestion.answer_key}
-                            </div>
-                        )}
-
-                        <div className="mt-6 flex justify-end">
+                        <div className="p-4 px-6 border-t border-gray-100 shrink-0 flex justify-end bg-gray-50">
                             <Button onClick={() => setViewingQuestion(null)}>Tutup</Button>
                         </div>
                     </div>
@@ -698,40 +700,42 @@ export function AdminQuestions() {
             {/* Upload Modal - same as before */}
             {isUploadModalOpen && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white p-6 rounded-xl w-full max-w-md shadow-xl animate-in fade-in zoom-in-95 duration-200">
-                        <div className="flex justify-between items-center mb-6">
+                    <div className="bg-white rounded-2xl w-full max-w-md shadow-xl flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200">
+                        <div className="flex justify-between items-center p-6 border-b border-gray-100 shrink-0">
                             <h2 className="text-xl font-bold">Upload File baru</h2>
-                            <button onClick={() => setIsUploadModalOpen(false)} className="text-gray-400 hover:text-gray-600">
-                                <span className="text-2xl">&times;</span>
+                            <button onClick={() => setIsUploadModalOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                                <X className="w-5 h-5" />
                             </button>
                         </div>
-                        <form onSubmit={handleUpload} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Judul</label>
-                                <input required className="w-full px-3 py-2 border rounded-lg" value={uploadData.title} onChange={e => setUploadData({ ...uploadData, title: e.target.value })} />
+                        <form onSubmit={handleUpload} className="flex flex-col flex-1 overflow-hidden">
+                            <div className="p-6 space-y-4 overflow-y-auto flex-1 custom-scrollbar">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Judul</label>
+                                    <input required className="w-full px-3 py-2 border rounded-lg" value={uploadData.title} onChange={e => setUploadData({ ...uploadData, title: e.target.value })} />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Mapel</label>
+                                    <input required className="w-full px-3 py-2 border rounded-lg" value={uploadData.mapel} onChange={e => setUploadData({ ...uploadData, mapel: e.target.value })} />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
+                                    <select className="w-full px-3 py-2 border rounded-lg" value={uploadData.category} onChange={e => setUploadData({ ...uploadData, category: e.target.value as any })}>
+                                        <option value="Latihan">Latihan</option>
+                                        <option value="Ujian">Ujian</option>
+                                        <option value="TTS">TTS</option>
+                                        <option value="Wordsearch">Wordsearch</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">File</label>
+                                    <input type="file" required onChange={e => setUploadData({ ...uploadData, file: e.target.files?.[0] || null })} className="w-full" />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <input type="checkbox" checked={uploadData.is_premium} onChange={e => setUploadData({ ...uploadData, is_premium: e.target.checked })} className="h-4 w-4 rounded border-gray-300 text-blue-600" />
+                                    <label className="text-sm">Premium?</label>
+                                </div>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Mapel</label>
-                                <input required className="w-full px-3 py-2 border rounded-lg" value={uploadData.mapel} onChange={e => setUploadData({ ...uploadData, mapel: e.target.value })} />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
-                                <select className="w-full px-3 py-2 border rounded-lg" value={uploadData.category} onChange={e => setUploadData({ ...uploadData, category: e.target.value as any })}>
-                                    <option value="Latihan">Latihan</option>
-                                    <option value="Ujian">Ujian</option>
-                                    <option value="TTS">TTS</option>
-                                    <option value="Wordsearch">Wordsearch</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">File</label>
-                                <input type="file" required onChange={e => setUploadData({ ...uploadData, file: e.target.files?.[0] || null })} className="w-full" />
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <input type="checkbox" checked={uploadData.is_premium} onChange={e => setUploadData({ ...uploadData, is_premium: e.target.checked })} className="h-4 w-4 rounded border-gray-300 text-blue-600" />
-                                <label className="text-sm">Premium?</label>
-                            </div>
-                            <div className="flex justify-end gap-3 mt-6">
+                            <div className="p-4 px-6 border-t border-gray-100 shrink-0 flex justify-end gap-3 bg-gray-50">
                                 <Button type="button" variant="outline" onClick={() => setIsUploadModalOpen(false)}>Batal</Button>
                                 <Button type="submit" disabled={submitting}>{submitting ? 'Mengupload...' : 'Upload'}</Button>
                             </div>
@@ -743,43 +747,41 @@ export function AdminQuestions() {
             {/* Excel Import Modal - same as before */}
             {isExcelModalOpen && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white p-6 rounded-xl w-full max-w-md shadow-xl animate-in fade-in zoom-in-95 duration-200">
-                        <div className="flex justify-between items-center mb-6">
+                    <div className="bg-white rounded-2xl w-full max-w-md shadow-xl flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200">
+                        <div className="flex justify-between items-center p-6 border-b border-gray-100 shrink-0">
                             <h2 className="text-xl font-bold text-green-700">Import Soal dari Excel</h2>
-                            <button onClick={() => setIsExcelModalOpen(false)} className="text-gray-400 hover:text-gray-600">
-                                <span className="text-2xl">&times;</span>
+                            <button onClick={() => setIsExcelModalOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                                <X className="w-5 h-5" />
                             </button>
                         </div>
-
-                        <div className="bg-yellow-50 p-4 rounded-lg mb-4 text-sm text-yellow-800 border border-yellow-200">
-                            Pastikan format kolom: <b>Soal, A, B, C, D, E, Jawaban, Mapel, Kelas, Level</b>.
-                            <br />Jawaban diisi huruf kapital (A/B/C/D/E).
-                        </div>
-
-                        <form onSubmit={handleImportExcel} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">File Excel (.xlsx)</label>
-                                <input
-                                    type="file"
-                                    accept=".xlsx, .xls"
-                                    required
-                                    onChange={e => setExcelFile(e.target.files?.[0] || null)}
-                                    className="w-full"
-                                />
+                        <form onSubmit={handleImportExcel} className="flex flex-col flex-1 overflow-hidden">
+                            <div className="p-6 space-y-4 overflow-y-auto flex-1 custom-scrollbar">
+                                <div className="bg-yellow-50 p-4 rounded-lg mb-4 text-sm text-yellow-800 border border-yellow-200">
+                                    Pastikan format kolom: <b>Soal, A, B, C, D, E, Jawaban, Mapel, Kelas, Level</b>.
+                                    <br />Jawaban diisi huruf kapital (A/B/C/D/E).
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">File Excel (.xlsx)</label>
+                                    <input
+                                        type="file"
+                                        accept=".xlsx, .xls"
+                                        required
+                                        onChange={e => setExcelFile(e.target.files?.[0] || null)}
+                                        className="w-full"
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-2 pt-2">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={downloadTemplate}
+                                        className="w-full text-blue-600 border-blue-200 hover:bg-blue-50"
+                                    >
+                                        <Upload className="w-4 h-4 mr-2 rotate-180" /> Unduh Template Excel
+                                    </Button>
+                                </div>
                             </div>
-
-                            <div className="flex flex-col gap-2">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={downloadTemplate}
-                                    className="w-full text-blue-600 border-blue-200 hover:bg-blue-50"
-                                >
-                                    <Upload className="w-4 h-4 mr-2 rotate-180" /> Unduh Template Excel
-                                </Button>
-                            </div>
-
-                            <div className="flex justify-end gap-3 mt-6">
+                            <div className="p-4 px-6 border-t border-gray-100 shrink-0 flex justify-end gap-3 bg-gray-50">
                                 <Button type="button" variant="outline" onClick={() => setIsExcelModalOpen(false)}>Batal</Button>
                                 <Button type="submit" disabled={importing} className="bg-green-600 hover:bg-green-700 text-white">
                                     {importing ? 'Mengimport...' : 'Mulai Import'}
