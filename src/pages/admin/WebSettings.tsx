@@ -31,6 +31,7 @@ export function AdminWebSettings() {
         { id: 'officials', label: 'Pejabat & Tanda Tangan', icon: PenTool },
         { id: 'contact', label: 'Kontak', icon: Building2 },
         { id: 'payment', label: 'Pembayaran & Premium', icon: CreditCard },
+        { id: 'maintenance', label: 'Maintenance', icon: PenTool },
     ];
 
     useEffect(() => {
@@ -98,8 +99,9 @@ export function AdminWebSettings() {
     }
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target;
-        setSettings(prev => prev ? { ...prev, [name]: value } : null);
+        const { name, value, type } = e.target;
+        const val = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value;
+        setSettings(prev => prev ? { ...prev, [name]: val } : null);
     };
 
     const handleEditorChange = (name: string, value: string) => {
@@ -587,6 +589,66 @@ export function AdminWebSettings() {
                                     height={300}
                                     placeholder="Masukkan ketentuan upgrade premium..."
                                 />
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Maintenance Tab */}
+                {activeTab === 'maintenance' && (
+                    <div className="bg-white rounded-b-xl rounded-tr-xl shadow-sm border border-gray-100 overflow-hidden animate-in fade-in duration-300">
+                        <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center gap-2">
+                            <PenTool className="w-4 h-4 text-red-600" />
+                            <h2 className="font-semibold text-gray-900">Mode Maintenance</h2>
+                        </div>
+                        <div className="p-6 space-y-6">
+                            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md">
+                                <p className="text-sm text-yellow-700">
+                                    Aktifkan mode maintenance untuk mengunci akses pengguna saat Anda sedang melakukan perbaikan atau pembaruan sistem. Admin akan tetap bisa mengakses sistem.
+                                </p>
+                            </div>
+                            <div className="space-y-4">
+                                <label className="flex items-center gap-3 p-4 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        name="maintenance_public"
+                                        checked={settings.maintenance_public || false}
+                                        onChange={handleChange}
+                                        className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                    />
+                                    <div>
+                                        <p className="font-medium text-gray-900">Maintenance Area Publik</p>
+                                        <p className="text-sm text-gray-500">Landing page dan halaman publik lainnya.</p>
+                                    </div>
+                                </label>
+
+                                <label className="flex items-center gap-3 p-4 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        name="maintenance_member"
+                                        checked={settings.maintenance_member || false}
+                                        onChange={handleChange}
+                                        className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                    />
+                                    <div>
+                                        <p className="font-medium text-gray-900">Maintenance Member Area</p>
+                                        <p className="text-sm text-gray-500">Mencegah anggota untuk login dan mengakses dashboard anggota.</p>
+                                    </div>
+                                </label>
+
+                                <label className="flex items-center gap-3 p-4 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        name="maintenance_premium"
+                                        checked={settings.maintenance_premium || false}
+                                        onChange={handleChange}
+                                        className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                    />
+                                    <div>
+                                        <p className="font-medium text-gray-900">Maintenance Fitur Premium</p>
+                                        <p className="text-sm text-gray-500">Mencegah akses ke fitur-fitur berbayar/premium (Prompt, Bank Soal).</p>
+                                    </div>
+                                </label>
                             </div>
                         </div>
                     </div>

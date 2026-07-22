@@ -59,7 +59,12 @@ class SettingsController
                 'premium_price' => $premiumSettings['registration_fee'] ?? 0,
                 'bank_name' => $siteContent['bank_name'] ?? '',
                 'bank_number' => $siteContent['bank_number'] ?? '',
-                'bank_holder' => $siteContent['bank_holder'] ?? ''
+                'bank_holder' => $siteContent['bank_holder'] ?? '',
+                
+                // Maintenance Flags
+                'maintenance_public' => (bool) ($siteContent['maintenance_public'] ?? false),
+                'maintenance_member' => (bool) ($siteContent['maintenance_member'] ?? false),
+                'maintenance_premium' => (bool) ($siteContent['maintenance_premium'] ?? false)
             ];
 
             // Merge full site_content safely (compatible with PHP < 8.1)
@@ -106,7 +111,11 @@ class SettingsController
                 -- Legacy bank fields
                 bank_name = :bank_name,
                 bank_number = :bank_number,
-                bank_holder = :bank_holder
+                bank_holder = :bank_holder,
+                
+                maintenance_public = :maintenance_public,
+                maintenance_member = :maintenance_member,
+                maintenance_premium = :maintenance_premium
                 WHERE id = 1";
 
             // Map incoming 'site_title' back to 'home_hero_title' if provided, else use existing
@@ -144,6 +153,10 @@ class SettingsController
             $stmtContent->bindValue(':bank_name', $data['bank_name'] ?? '');
             $stmtContent->bindValue(':bank_number', $data['bank_number'] ?? '');
             $stmtContent->bindValue(':bank_holder', $data['bank_holder'] ?? '');
+            
+            $stmtContent->bindValue(':maintenance_public', isset($data['maintenance_public']) ? ($data['maintenance_public'] ? 1 : 0) : 0, PDO::PARAM_INT);
+            $stmtContent->bindValue(':maintenance_member', isset($data['maintenance_member']) ? ($data['maintenance_member'] ? 1 : 0) : 0, PDO::PARAM_INT);
+            $stmtContent->bindValue(':maintenance_premium', isset($data['maintenance_premium']) ? ($data['maintenance_premium'] ? 1 : 0) : 0, PDO::PARAM_INT);
 
             $stmtContent->execute();
 

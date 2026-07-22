@@ -36,6 +36,8 @@ CREATE TABLE `profiles` (
   `mapel` longtext DEFAULT NULL,
   `kelas` longtext DEFAULT NULL,
   `premium_until` timestamp NULL DEFAULT NULL,
+  `last_data_update` timestamp NULL DEFAULT NULL,
+  `mengajar_tahun_ini` tinyint(1) DEFAULT 1,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`),
@@ -76,6 +78,9 @@ CREATE TABLE `site_content` (
   `bank_name` text DEFAULT NULL,
   `bank_number` text DEFAULT NULL,
   `bank_holder` text DEFAULT NULL,
+  `maintenance_public` tinyint(1) DEFAULT 0,
+  `maintenance_member` tinyint(1) DEFAULT 0,
+  `maintenance_premium` tinyint(1) DEFAULT 0,
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

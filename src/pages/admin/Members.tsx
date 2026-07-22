@@ -184,6 +184,20 @@ export function AdminMembers() {
         toast.success('Data berhasil diekspor');
     };
 
+    const handleMergeDuplicates = async () => {
+        if (!confirm('Peringatan: Aksi ini akan menggabungkan data anggota yang duplikat (berdasarkan Nama & Sekolah, HP, atau Email). Proses ini tidak dapat dibatalkan. Lanjutkan?')) return;
+        
+        const toastId = toast.loading('Sedang memproses penggabungan...');
+        try {
+            const res = await memberService.autoMergeDuplicates();
+            toast.success(`Berhasil! ${res.merged_count} pasang data duplikat telah digabungkan.`, { id: toastId });
+            fetchMembers();
+        } catch (error) {
+            toast.error('Gagal menggabungkan data duplikat.', { id: toastId });
+            console.error(error);
+        }
+    };
+
     // Enhanced columns with Activate shortcut for Inactive tab
     const columns = [
         // ... Photo, Name, Role ...
@@ -208,7 +222,12 @@ export function AdminMembers() {
             accessorKey: 'nama' as keyof Profile,
             cell: (member: Profile) => (
                 <div>
-                    <p className="font-semibold text-gray-900">{member.nama || 'Tanpa Nama'}</p>
+                    <div className="flex items-center gap-2">
+                        <p className="font-semibold text-gray-900">{member.nama || 'Tanpa Nama'}</p>
+                        {Number(member.is_new) === 1 && (
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 uppercase tracking-wider">Baru</span>
+                        )}
+                    </div>
                     <div className="flex items-center gap-1.5 text-xs text-gray-500">
                         <Mail className="w-3 h-3" />
                         {member.email}
@@ -358,6 +377,7 @@ export function AdminMembers() {
                 </select>
             </div>
             <div className="flex items-center gap-2 ml-auto">
+                <Button variant="outline" size="sm" onClick={handleMergeDuplicates} className="h-9 border-blue-200 text-blue-700 hover:bg-blue-50">Gabungkan Duplikat</Button>
                 <Button variant="outline" size="sm" onClick={fetchMembers} className="h-9">Refresh</Button>
                 <Button onClick={handleExport} size="sm" className="bg-green-600 hover:bg-green-700 h-9">Export Data</Button>
             </div>

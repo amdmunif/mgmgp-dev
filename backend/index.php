@@ -403,6 +403,13 @@ if ($resource === 'news') {
 
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         echo $controller->getAll();
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'merge-duplicates') {
+        if ($userRole === 'Admin') {
+            echo $controller->autoMergeDuplicates();
+        } else {
+            http_response_code(403);
+            echo json_encode(["message" => "Forbidden"]);
+        }
     } elseif ($_SERVER['REQUEST_METHOD'] === 'PUT' && $action) {
         // Update Member (Role, Name, Email)
         echo $controller->update($action, $input);

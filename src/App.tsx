@@ -14,6 +14,10 @@ import { EventAttend } from './pages/public/EventAttend';
 import { Gallery } from './pages/public/Gallery';
 import { Profile } from './pages/public/Profile';
 import { Learning } from './pages/public/Learning';
+import { Maintenance } from './pages/public/Maintenance';
+
+// Guards
+import { MaintenanceGuard } from './components/auth/MaintenanceGuard';
 
 // Admin Pages
 import { AdminLayout } from './components/layout/AdminLayout';
@@ -94,10 +98,12 @@ function App() {
   return (
     <Router>
       <Routes>
+        <Route path="/maintenance" element={<Maintenance />} />
+
         {/* Public Routes - Wrapped in Layout */}
-        <Route path="/" element={<Layout><Home /></Layout>} />
-        <Route path="/news" element={<Layout><News /></Layout>} />
-        <Route path="/news/:id" element={<Layout><NewsDetail /></Layout>} />
+        <Route path="/" element={<MaintenanceGuard type="public"><Layout><Home /></Layout></MaintenanceGuard>} />
+        <Route path="/news" element={<MaintenanceGuard type="public"><Layout><News /></Layout></MaintenanceGuard>} />
+        <Route path="/news/:id" element={<MaintenanceGuard type="public"><Layout><NewsDetail /></Layout></MaintenanceGuard>} />
         <Route path="/events" element={<Layout><Events /></Layout>} />
         <Route path="/events/:id" element={<Layout><EventDetail /></Layout>} />
         <Route path="/events/:id/attend" element={<Layout><EventAttend /></Layout>} />
@@ -117,7 +123,9 @@ function App() {
         {/* Member Routes - Wrapped in MemberLayout */}
         <Route path="/member" element={
           <ErrorBoundary>
-            <MemberLayout />
+            <MaintenanceGuard type="member">
+              <MemberLayout />
+            </MaintenanceGuard>
           </ErrorBoundary>
         }>
           <Route index element={<MemberDashboard />} />
@@ -133,39 +141,46 @@ function App() {
 
           {/* Protected Premium Routes */}
           <Route path="questions" element={
-            <PremiumGuard>
-              <QuestionBankPage />
-            </PremiumGuard>
+            <MaintenanceGuard type="premium">
+              <PremiumGuard>
+                <QuestionBankPage />
+              </PremiumGuard>
+            </MaintenanceGuard>
           } />
           <Route path="games" element={
-            <PremiumGuard>
-              <Games />
-            </PremiumGuard>
+            <MaintenanceGuard type="premium">
+              <PremiumGuard>
+                <Games />
+              </PremiumGuard>
+            </MaintenanceGuard>
           } />
           <Route path="modules" element={
-            <PremiumGuard>
-              <Modules />
-            </PremiumGuard>
+            <MaintenanceGuard type="premium">
+              <PremiumGuard>
+                <Modules />
+              </PremiumGuard>
+            </MaintenanceGuard>
           } />
           <Route path="prompts" element={
-            <PremiumGuard>
-              <PromptLibrary />
-            </PremiumGuard>
+            <MaintenanceGuard type="premium">
+              <PremiumGuard>
+                <PromptLibrary />
+              </PremiumGuard>
+            </MaintenanceGuard>
           } />
           <Route path="prompt-generator" element={
-            <PremiumGuard>
-              <PromptGenerator />
-            </PremiumGuard>
+            <MaintenanceGuard type="premium">
+              <PremiumGuard>
+                <PromptGenerator />
+              </PremiumGuard>
+            </MaintenanceGuard>
           } />
           <Route path="references" element={
-            <PremiumGuard>
-              <References />
-            </PremiumGuard>
-          } />
-          <Route path="references" element={
-            <PremiumGuard>
-              <References />
-            </PremiumGuard>
+            <MaintenanceGuard type="premium">
+              <PremiumGuard>
+                <References />
+              </PremiumGuard>
+            </MaintenanceGuard>
           } />
         </Route>
 

@@ -86,6 +86,12 @@ export function MemberLayout() {
         };
     }, [navigate]);
 
+    useEffect(() => {
+        if (user && user.needs_update && location.pathname !== '/member/profile' && !location.pathname.startsWith('/admin')) {
+            navigate('/member/profile', { replace: true });
+        }
+    }, [user, location.pathname, navigate]);
+
     const handleLogout = async () => {
         await authService.logout();
         navigate('/login');
@@ -322,6 +328,27 @@ export function MemberLayout() {
                 </header>
 
                 <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50/50 p-4 md:p-6">
+                    {/* Needs Update Notification */}
+                    {user?.needs_update && (
+                        <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 animate-in slide-in-from-top-4">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-yellow-100 rounded-lg text-yellow-600 shrink-0">
+                                    <Clock className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-yellow-900">Pembaruan Data Diperlukan</h3>
+                                    <p className="text-sm text-yellow-700">
+                                        {!user.is_profile_complete 
+                                            ? "Mohon lengkapi profil Anda (Nama, Asal Sekolah, No HP) untuk dapat menggunakan layanan." 
+                                            : user.mengajar_tahun_ini == 0
+                                                ? "Akun Anda saat ini dibatasi karena Anda menyatakan tidak mengajar tahun ini. Silakan ubah status jika Anda sudah mengajar."
+                                                : "Silakan perbarui status mengajar Anda untuk tahun ajaran ini agar dapat mengakses fitur."}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Expired Notification */}
                     {isExpired && (
                         <div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 animate-in slide-in-from-top-4">

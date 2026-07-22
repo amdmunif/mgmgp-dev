@@ -219,5 +219,49 @@ class Mailer
         $html = self::getBaseTemplate($title, $body);
         return self::sendHtmlEmail($email, "Invoice Pendaftaran [{$code}] - {$eventName}", $html);
     }
+
+    public static function sendDuplicateMerged($email, $nama)
+    {
+        $loginLink = "https://" . (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'mgmpinformatika.com') . "/login";
+        $title = "Pemberitahuan Penggabungan Akun";
+        $body = "
+            <h2 style='color: #1e293b; margin-top: 0;'>Halo, {$nama},</h2>
+            <p>Sistem kami mendeteksi adanya data ganda untuk akun Anda. Untuk memberikan pengalaman terbaik dan memastikan data Anda tetap terpusat, kami telah menggabungkan akun duplikat Anda ke akun utama ini.</p>
+            <p>Seluruh riwayat kehadiran dan partisipasi acara Anda telah dipindahkan ke akun utama.</p>
+            <div style='text-align: center; margin: 30px 0;'>
+                <a href='{$loginLink}' class='button'>Login ke Akun Anda</a>
+            </div>
+            <p>Jika Anda merasa ini adalah sebuah kesalahan, silakan hubungi tim Admin kami.</p>
+            <p>Salam hangat,<br><strong>Tim Admin MGMP Informatika</strong></p>
+        ";
+        $html = self::getBaseTemplate($title, $body);
+        return self::sendHtmlEmail($email, "Pemberitahuan: Akun Duplikat Anda Telah Digabungkan", $html);
+    }
+
+    public static function sendEventAttendance($email, $nama, $eventName)
+    {
+        $title = "Kehadiran Berhasil Dikonfirmasi";
+        $body = "
+            <h2 style='color: #1e293b; margin-top: 0;'>Halo, {$nama},</h2>
+            <p>Terima kasih telah berpartisipasi! Kami telah mencatat kehadiran Anda pada acara <strong>{$eventName}</strong>.</p>
+            <p>Semoga kegiatan ini memberikan manfaat dan inspirasi untuk Anda.</p>
+            <p>Salam hangat,<br><strong>Tim Admin MGMP Informatika</strong></p>
+        ";
+        $html = self::getBaseTemplate($title, $body);
+        return self::sendHtmlEmail($email, "Konfirmasi Kehadiran: {$eventName}", $html);
+    }
+
+    public static function sendTaskSubmitted($email, $nama, $eventName)
+    {
+        $title = "Tugas Berhasil Dikumpulkan";
+        $body = "
+            <h2 style='color: #1e293b; margin-top: 0;'>Halo, {$nama},</h2>
+            <p>Tugas Anda untuk kegiatan <strong>{$eventName}</strong> telah berhasil kami terima.</p>
+            <p>Tim admin atau instruktur akan segera meninjau tugas yang telah Anda kumpulkan. Terima kasih atas dedikasi Anda.</p>
+            <p>Salam hangat,<br><strong>Tim Admin MGMP Informatika</strong></p>
+        ";
+        $html = self::getBaseTemplate($title, $body);
+        return self::sendHtmlEmail($email, "Tugas Diterima: {$eventName}", $html);
+    }
 }
 ?>

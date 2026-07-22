@@ -30,6 +30,7 @@ export function EditProfile() {
         mapel: [] as string[],
         mapel_custom: '',
         kelas: [] as string[],
+        mengajar_tahun_ini: 1, // Default yes
     });
 
     useEffect(() => {
@@ -71,6 +72,7 @@ export function EditProfile() {
                     mapel: mapelData,
                     mapel_custom: customVal,
                     kelas: Array.isArray(user.kelas) ? user.kelas : [],
+                    mengajar_tahun_ini: user.mengajar_tahun_ini !== undefined ? Number(user.mengajar_tahun_ini) : 1,
                 });
                 setAvatarUrl(user.foto_profile);
             }
@@ -319,7 +321,23 @@ export function EditProfile() {
                             <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                                 <GraduationCap className="w-5 h-5 text-gray-400" /> Profil Mengajar
                             </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                            <div className="mb-6 bg-blue-50 p-4 rounded-lg border border-blue-100 flex items-start gap-3">
+                                <input
+                                    type="checkbox"
+                                    id="mengajar_tahun_ini"
+                                    checked={formData.mengajar_tahun_ini === 1}
+                                    onChange={(e) => setFormData(p => ({ ...p, mengajar_tahun_ini: e.target.checked ? 1 : 0 }))}
+                                    className="mt-1 w-5 h-5 text-primary-600 rounded border-gray-300 focus:ring-primary-500 cursor-pointer"
+                                />
+                                <div>
+                                    <label htmlFor="mengajar_tahun_ini" className="font-semibold text-gray-900 cursor-pointer block">Saya aktif mengajar tahun ini</label>
+                                    <p className="text-sm text-gray-600 mt-1">Hilangkan centang jika Anda sedang tidak aktif mengajar (cuti, pensiun, dll). Perhatian: Jika tidak aktif mengajar, sebagian fitur akan dibatasi.</p>
+                                </div>
+                            </div>
+
+                            {formData.mengajar_tahun_ini === 1 && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-3">Mata Pelajaran yang Diampu</label>
                                     <div className="space-y-2 p-4 border border-gray-200 rounded-lg bg-gray-50">
@@ -364,6 +382,7 @@ export function EditProfile() {
                                     <p className="text-xs text-gray-500 mt-2">Bisa pilih lebih dari satu kelas.</p>
                                 </div>
                             </div>
+                            )}
                         </div>
                     </div>
 

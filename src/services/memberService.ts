@@ -19,6 +19,7 @@ export interface Profile {
     mapel?: string | string[]; // JSON string or parsed array
     kelas?: string | string[]; // JSON string or parsed array
     attendance_count?: number;
+    is_new?: number; // 1 if created in last 3 months
 }
 
 export const memberService = {
@@ -40,5 +41,10 @@ export const memberService = {
     // Delete member
     async delete(id: string) {
         return await api.delete(`/members/${id}`);
+    },
+
+    // Auto merge duplicates
+    async autoMergeDuplicates() {
+        return await api.post<{ message: string, merged_count: number }>('/members/merge-duplicates', {});
     }
 };

@@ -93,7 +93,7 @@ class AuthController
         $email = $data['email'];
         $password = $data['password'];
 
-        $query = "SELECT u.id, u.email, u.password_hash, p.role, p.nama, p.is_active, p.premium_until FROM users u JOIN profiles p ON u.id = p.id WHERE u.email = :email LIMIT 1";
+        $query = "SELECT u.id, u.email, u.password_hash, p.role, p.nama, p.is_active, p.premium_until, p.asal_sekolah, p.no_hp, p.last_data_update, p.mengajar_tahun_ini FROM users u JOIN profiles p ON u.id = p.id WHERE u.email = :email LIMIT 1";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':email', $email);
         $stmt->execute();
@@ -124,13 +124,35 @@ class AuthController
                 $stmtUpdate->bindParam(':id', $row['id']);
                 $stmtUpdate->execute();
 
+                // Check if profile needs update
+                $needs_update = false;
+                $is_profile_complete = !empty($row['nama']) && !empty($row['asal_sekolah']) && !empty($row['no_hp']);
+                
+                $currentYear = (int)date('Y');
+                $currentMonth = (int)date('m');
+                $currentDay = (int)date('d');
+                
+                $targetYear = $currentYear;
+                if ($currentMonth < 7 || ($currentMonth == 7 && $currentDay < 20)) {
+                    $targetYear = $currentYear - 1;
+                }
+                
+                $targetDate = $targetYear . '-07-20 00:00:00';
+                
+                if (empty($row['last_data_update']) || strtotime($row['last_data_update']) < strtotime($targetDate) || $row['mengajar_tahun_ini'] == 0 || !$is_profile_complete) {
+                    $needs_update = true;
+                }
+
                 return json_encode([
                     "user" => [
                         "id" => $row['id'],
                         "email" => $row['email'],
                         "role" => $row['role'],
                         "nama" => $row['nama'],
-                        "premium_until" => $row['premium_until']
+                        "premium_until" => $row['premium_until'],
+                        "needs_update" => $needs_update,
+                        "is_profile_complete" => $is_profile_complete,
+                        "mengajar_tahun_ini" => $row['mengajar_tahun_ini']
                     ],
                     "session" => [
                         "access_token" => $token
@@ -159,6 +181,28 @@ class AuthController
             if (isset($row['kelas']))
                 $row['kelas'] = json_decode($row['kelas']);
 
+            // Check if profile needs update
+            $needs_update = false;
+            $is_profile_complete = !empty($row['nama']) && !empty($row['asal_sekolah']) && !empty($row['no_hp']);
+            
+            $currentYear = (int)date('Y');
+            $currentMonth = (int)date('m');
+            $currentDay = (int)date('d');
+            
+            $targetYear = $currentYear;
+            if ($currentMonth < 7 || ($currentMonth == 7 && $currentDay < 20)) {
+                $targetYear = $currentYear - 1;
+            }
+            
+            $targetDate = $targetYear . '-07-20 00:00:00';
+            
+            if (empty($row['last_data_update']) || strtotime($row['last_data_update']) < strtotime($targetDate) || $row['mengajar_tahun_ini'] == 0 || !$is_profile_complete) {
+                $needs_update = true;
+            }
+
+            $row['needs_update'] = $needs_update;
+            $row['is_profile_complete'] = $is_profile_complete;
+
             return json_encode($row);
         }
 
@@ -179,6 +223,8 @@ class AuthController
             foto_profile = :foto_profile,
             mapel = :mapel,
             kelas = :kelas,
+            mengajar_tahun_ini = :mengajar_tahun_ini,
+            last_data_update = NOW(),
             updated_at = NOW()
             WHERE id = :id";
 
@@ -199,6 +245,9 @@ class AuthController
         $kelas = isset($data['kelas']) ? json_encode($data['kelas']) : '[]';
         $stmt->bindParam(':mapel', $mapel);
         $stmt->bindParam(':kelas', $kelas);
+        
+        $mengajar_tahun_ini = isset($data['mengajar_tahun_ini']) ? (int)$data['mengajar_tahun_ini'] : 1;
+        $stmt->bindParam(':mengajar_tahun_ini', $mengajar_tahun_ini, PDO::PARAM_INT);
 
         if ($stmt->execute()) {
             return $this->getProfile($id);

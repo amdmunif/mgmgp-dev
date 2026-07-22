@@ -2,6 +2,7 @@
 // backend/controllers/ContentController.php
 include_once './config/database.php';
 include_once './utils/Helper.php';
+include_once './utils/Mailer.php';
 
 class ContentController
 {
@@ -271,8 +272,21 @@ class ContentController
         $stmt->bindParam(':eid', $eventId);
         $stmt->bindParam(':uid', $userId);
 
-        if ($stmt->execute())
+        if ($stmt->execute()) {
+            // Send Notification
+            $stmtUser = $this->conn->prepare("SELECT p.nama, u.email FROM profiles p JOIN users u ON p.id = u.id WHERE p.id = :uid");
+            $stmtUser->execute([':uid' => $userId]);
+            $user = $stmtUser->fetch(PDO::FETCH_ASSOC);
+            
+            $stmtTitle = $this->conn->prepare("SELECT title FROM events WHERE id = :eid");
+            $stmtTitle->execute([':eid' => $eventId]);
+            $eventTitle = $stmtTitle->fetchColumn();
+
+            if ($user && $eventTitle) {
+                Mailer::sendTaskSubmitted($user['email'], $user['nama'], $eventTitle);
+            }
             return json_encode(["message" => "Task submitted"]);
+        }
         http_response_code(500);
         return json_encode(["message" => "Failed to submit task"]);
     }
@@ -403,6 +417,16 @@ class ContentController
             $stmtTitle->execute();
             $eventTitle = $stmtTitle->fetchColumn();
             Helper::log($this->conn, $userId, 'Member', 'SELF_ATTENDANCE', $eventTitle || $eventId);
+            
+            // Send Notification
+            $stmtUser = $this->conn->prepare("SELECT p.nama, u.email FROM profiles p JOIN users u ON p.id = u.id WHERE p.id = :uid");
+            $stmtUser->execute([':uid' => $userId]);
+            $user = $stmtUser->fetch(PDO::FETCH_ASSOC);
+            
+            if ($user && $eventTitle) {
+                Mailer::sendEventAttendance($user['email'], $user['nama'], $eventTitle);
+            }
+
             return json_encode(["message" => "Attendance marked successfully"]);
         }
 

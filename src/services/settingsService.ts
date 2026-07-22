@@ -38,6 +38,11 @@ export interface AppSettings {
     mkks_nip?: string;
     mkks_signature_url?: string;
     premium_rules?: string;
+
+    // Maintenance Mode
+    maintenance_public?: boolean;
+    maintenance_member?: boolean;
+    maintenance_premium?: boolean;
 }
 
 export const settingsService = {
