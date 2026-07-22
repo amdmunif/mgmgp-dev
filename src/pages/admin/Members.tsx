@@ -740,9 +740,8 @@ export function AdminMembers() {
                                     </div>
                                 </div>
                             </div>
-
-                            </div>
                         </div>
+
 
                         {/* Footer */}
                         <div className="p-4 px-6 border-t border-gray-100 shrink-0 flex justify-end bg-gray-50">
