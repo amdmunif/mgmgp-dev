@@ -79,16 +79,17 @@ export function Learning() {
                                     />
                                 ) : null}
 
-                                {item.link_url ? (
+                                {item.link_url && (
                                     <a
                                         href={item.link_url}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="inline-flex items-center text-sm font-medium text-primary-600 hover:text-primary-700 mt-2"
+                                        className="inline-flex items-center text-sm font-medium text-primary-600 hover:text-primary-700 mt-2 mr-4"
                                     >
                                         <ExternalLink className="w-4 h-4 mr-2" /> Buka Link
                                     </a>
-                                ) : item.file_url ? (
+                                )}
+                                {item.file_url && (
                                     <a
                                         href={getFileUrl(item.file_url)}
                                         target="_blank"
@@ -97,7 +98,7 @@ export function Learning() {
                                     >
                                         <Download className="w-4 h-4 mr-2" /> Download Materi
                                     </a>
-                                ) : null}
+                                )}
                             </div>
                         ))}
                     </div>

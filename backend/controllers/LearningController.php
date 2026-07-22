@@ -131,8 +131,12 @@ class LearningController
                     type = :type, 
                     content = :content, 
                     is_premium = :is_premium,
-                    link_url = :link_url
-                  WHERE id = :id";
+                    link_url = :link_url";
+
+        if (array_key_exists('file_url', $data)) {
+            $query .= ", file_url = :file_url";
+        }
+        $query .= " WHERE id = :id";
 
         $stmt = $this->conn->prepare($query);
 
@@ -148,6 +152,10 @@ class LearningController
         $stmt->bindParam(':content', $data['content']);
         $stmt->bindParam(':is_premium', $is_premium);
         $stmt->bindParam(':link_url', $link_url);
+        
+        if (array_key_exists('file_url', $data)) {
+            $stmt->bindParam(':file_url', $data['file_url']);
+        }
 
         if ($stmt->execute()) {
             Helper::log($this->conn, $userId, $userName, 'UPDATE_LEARNING', $data['title']);

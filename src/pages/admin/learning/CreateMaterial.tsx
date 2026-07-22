@@ -73,7 +73,7 @@ export function CreateMaterial() {
 
         setSubmitting(true);
         try {
-            let fileUrl = undefined;
+            let fileUrl = existingFileUrl || undefined;
             if (file) {
                 fileUrl = await learningService.uploadDocument(file);
             }

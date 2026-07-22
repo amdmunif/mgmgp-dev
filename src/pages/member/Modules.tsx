@@ -11,7 +11,7 @@ export function Modules() {
     const { setPageHeader } = useOutletContext<any>();
     const [materials, setMaterials] = useState<LearningMaterial[]>([]);
     const [loading, setLoading] = useState(true);
-    const [filterType, setFilterType] = useState('modul');
+    const [filterType, setFilterType] = useState('all');
     const [filterMapel, setFilterMapel] = useState('all');
     const [filterKelas, setFilterKelas] = useState('all');
     const [filterSemester, setFilterSemester] = useState('all');
@@ -103,19 +103,20 @@ export function Modules() {
                     >
                         <Eye className="w-4 h-4" />
                     </Button>
-                    {item.link_url ? (
+                    {item.link_url && (
                         <a href={item.link_url} target="_blank" rel="noopener noreferrer">
                             <Button size="sm" className="bg-white border text-blue-700 border-blue-300 hover:bg-blue-50 h-8" title="Buka Link">
                                 <ExternalLink className="w-4 h-4" />
                             </Button>
                         </a>
-                    ) : item.file_url ? (
+                    )}
+                    {item.file_url && (
                         <a href={item.file_url} target="_blank" rel="noopener noreferrer">
                             <Button size="sm" className="bg-white border text-yellow-700 border-yellow-300 hover:bg-yellow-50 h-8" title="Download File">
                                 <Download className="w-4 h-4" />
                             </Button>
                         </a>
-                    ) : null}
+                    )}
                 </div>
             ),
             className: "w-32 text-right"
@@ -124,14 +125,7 @@ export function Modules() {
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
-            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl p-6 shadow-sm">
-                <h3 className="text-lg font-bold text-yellow-800 mb-2">Benefit Konten Premium</h3>
-                <ul className="list-disc list-inside text-yellow-700 space-y-1 text-sm">
-                    <li>Materi sudah terintegrasi dengan CP/TP terbaru.</li>
-                    <li>Dilengkapi dengan asesmen dan rubrik penilaian.</li>
-                    <li>Format dapat diedit (Word/PPT) untuk disesuaikan.</li>
-                </ul>
-            </div>
+
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 {loading ? (
@@ -232,19 +226,20 @@ export function Modules() {
                             </span>
                             <div className="flex gap-3">
                                 <Button variant="outline" onClick={() => setViewingMaterial(null)}>Tutup</Button>
-                                {viewingMaterial.link_url ? (
+                                {viewingMaterial.link_url && (
                                     <a href={viewingMaterial.link_url} target="_blank" rel="noopener noreferrer">
                                         <Button className="bg-blue-600 hover:bg-blue-700 text-white border-none">
                                             <ExternalLink className="w-4 h-4 mr-2" /> Buka Link
                                         </Button>
                                     </a>
-                                ) : viewingMaterial.file_url ? (
+                                )}
+                                {viewingMaterial.file_url && (
                                     <a href={viewingMaterial.file_url} target="_blank" rel="noopener noreferrer">
                                         <Button className="bg-yellow-500 hover:bg-yellow-600 text-white border-none">
                                             <Download className="w-4 h-4 mr-2" /> Download File
                                         </Button>
                                     </a>
-                                ) : null}
+                                )}
                             </div>
                         </div>
                     </div>
