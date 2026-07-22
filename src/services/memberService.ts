@@ -63,6 +63,11 @@ export const memberService = {
         return await api.get<DuplicatePair[]>('/members/duplicates');
     },
 
+    // Reset password (Admin)
+    async resetPassword(id: string, password: string) {
+        return await api.post<{ message: string }>(`/members/${id}/reset-password`, { password });
+    },
+
     // Merge duplicate
     async mergeDuplicate(id1: string, id2: string) {
         return await api.post<{ message: string }>('/members/merge', { id1, id2 });

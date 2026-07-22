@@ -13,7 +13,8 @@ import {
     Filter,
     Users,
     CheckCircle2,
-    AlertCircle
+    AlertCircle,
+    Key
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { getFileUrl } from '../../lib/api';
@@ -179,6 +180,19 @@ export function AdminMembers() {
             toast.error('Gagal update anggota');
         } finally {
             setIsSaving(false);
+        }
+    };
+
+    const handleResetPassword = async (member: Profile) => {
+        const newPassword = window.prompt(`Masukkan password baru untuk ${member.nama}:`);
+        if (!newPassword) return;
+
+        const toastId = toast.loading('Sedang mereset password...');
+        try {
+            await memberService.resetPassword(member.id, newPassword);
+            toast.success('Password berhasil direset dan dikirim ke email', { id: toastId });
+        } catch (error: any) {
+            toast.error(error.message || 'Gagal mereset password', { id: toastId });
         }
     };
 
@@ -363,6 +377,13 @@ export function AdminMembers() {
                         title="Edit Anggota"
                     >
                         <Pencil className="w-4 h-4" />
+                    </button>
+                    <button
+                        onClick={() => handleResetPassword(member)}
+                        className="p-2 hover:bg-yellow-50 rounded-lg text-gray-400 hover:text-yellow-600 transition-colors"
+                        title="Reset Password"
+                    >
+                        <Key className="w-4 h-4" />
                     </button>
                     <button
                         onClick={() => handleDelete(member.id)}

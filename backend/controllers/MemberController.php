@@ -109,6 +109,42 @@ class MemberController
         }
     }
 
+    public function resetPassword($id, $data)
+    {
+        $newPassword = $data['password'] ?? null;
+        if (!$newPassword) {
+            http_response_code(400);
+            return json_encode(["message" => "Password baru wajib diisi."]);
+        }
+
+        try {
+            $this->conn->beginTransaction();
+
+            // Get user email
+            $stmt = $this->conn->prepare("SELECT email FROM users WHERE id = :id");
+            $stmt->execute([':id' => $id]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$user) {
+                throw new Exception("User tidak ditemukan.");
+            }
+
+            $hashed = password_hash($newPassword, PASSWORD_DEFAULT);
+            $update = $this->conn->prepare("UPDATE users SET password_hash = :hash WHERE id = :id");
+            $update->execute([':hash' => $hashed, ':id' => $id]);
+
+            $this->conn->commit();
+            
+            Helper::log($this->conn, 0, 'Admin', 'RESET_PASSWORD', $id);
+            Mailer::sendPasswordResetAdmin($user['email'], $newPassword);
+
+            return json_encode(["message" => "Password berhasil diubah dan dikirim ke email tujuan."]);
+        } catch (Exception $e) {
+            $this->conn->rollBack();
+            http_response_code(500);
+            return json_encode(["message" => "Gagal mereset password: " . $e->getMessage()]);
+        }
+    }
+
     public function delete($id)
     {
         // Delete from profiles and users (ON DELETE CASCADE usually handles this if set in FK, 
@@ -143,7 +179,11 @@ class MemberController
             JOIN users u2 ON p2.id = u2.id
             WHERE 
                 (LOWER(TRIM(u1.email)) = LOWER(TRIM(u2.email)) AND u1.email IS NOT NULL AND TRIM(u1.email) != '') OR
-                (LOWER(TRIM(p1.nama)) = LOWER(TRIM(p2.nama)) AND p1.nama IS NOT NULL AND TRIM(p1.nama) != '' AND LENGTH(TRIM(p1.nama)) > 3)
+                (
+                    REPLACE(REPLACE(REPLACE(LOWER(TRIM(p1.nama)), ' ', ''), '.', ''), ',', '') = 
+                    REPLACE(REPLACE(REPLACE(LOWER(TRIM(p2.nama)), ' ', ''), '.', ''), ',', '') 
+                    AND p1.nama IS NOT NULL AND TRIM(p1.nama) != '' AND LENGTH(TRIM(p1.nama)) > 3
+                )
         ";
 
         $stmt = $this->conn->prepare($query);
@@ -189,10 +229,26 @@ class MemberController
             $secondaryEmail = $secondaryData['email'];
             $nama = $primaryData['nama'];
 
-            // 1. Move event_participants
-            $updateEvents = "UPDATE event_participants SET user_id = :primary_id WHERE user_id = :secondary_id";
-            $stmtEvents = $this->conn->prepare($updateEvents);
+            // 1. Move event_participants intelligently (preserve attendance if one of them attended)
+            // Note: VALUES() is deprecated in MySQL 8.0.20+, but we can use the old syntax for broader compatibility,
+            // or do it carefully. For safety across versions, we'll use a clean UPDATE for duplicates and INSERT IGNORE.
+            $mergeEvents = "
+                INSERT INTO event_participants (event_id, user_id, is_hadir, tugas_submitted, task_url, registered_at)
+                SELECT event_id, :primary_id, is_hadir, tugas_submitted, task_url, registered_at
+                FROM event_participants
+                WHERE user_id = :secondary_id
+                ON DUPLICATE KEY UPDATE
+                    is_hadir = IF(VALUES(is_hadir) = 1, 1, event_participants.is_hadir),
+                    tugas_submitted = IF(VALUES(tugas_submitted) = 1, 1, event_participants.tugas_submitted),
+                    task_url = IF(VALUES(task_url) IS NOT NULL AND VALUES(task_url) != '', VALUES(task_url), event_participants.task_url)
+            ";
+            $stmtEvents = $this->conn->prepare($mergeEvents);
             $stmtEvents->execute([':primary_id' => $primaryId, ':secondary_id' => $secondaryId]);
+
+            // 1.1 Delete the secondary_id records since they have been copied/merged
+            $deleteEvents = "DELETE FROM event_participants WHERE user_id = :secondary_id";
+            $stmtDeleteEvents = $this->conn->prepare($deleteEvents);
+            $stmtDeleteEvents->execute([':secondary_id' => $secondaryId]);
 
             // 1.5. Transfer premium status if secondary is better
             $stmtCheckPremium = $this->conn->prepare("SELECT premium_until FROM profiles WHERE id = :id");

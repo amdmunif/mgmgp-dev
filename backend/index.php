@@ -419,6 +419,13 @@ if ($resource === 'news') {
             http_response_code(403);
             echo json_encode(["message" => "Forbidden"]);
         }
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($uri_parts[2]) && $uri_parts[2] === 'reset-password') {
+        if ($userRole === 'Admin') {
+            echo $controller->resetPassword($action, $input);
+        } else {
+            http_response_code(403);
+            echo json_encode(["message" => "Forbidden"]);
+        }
     } elseif ($_SERVER['REQUEST_METHOD'] === 'PUT' && $action) {
         // Update Member (Role, Name, Email)
         echo $controller->update($action, $input);

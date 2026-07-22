@@ -69,6 +69,27 @@ class Mailer
         return self::sendHtmlEmail($email, "Permintaan Reset Password - MGMP Informatika", $html);
     }
 
+    public static function sendPasswordResetAdmin($email, $newPassword)
+    {
+        $loginLink = "https://" . (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'mgmpinformatika.com') . "/login";
+        $title = "Password Anda Telah Direset Admin";
+        $body = "
+            <h2 style='color: #1e293b; margin-top: 0;'>Halo,</h2>
+            <p>Administrator telah melakukan reset pada password akun MGMP Informatika Anda.</p>
+            <p>Berikut adalah password baru Anda:</p>
+            <div style='background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin: 20px 0; text-align: center;'>
+                <p style='margin: 0; font-size: 24px; font-weight: bold; color: #0f172a; letter-spacing: 2px;'>{$newPassword}</p>
+            </div>
+            <p>Silakan gunakan password di atas untuk login, lalu segera ubah password Anda di halaman Profil demi keamanan.</p>
+            <div style='text-align: center; margin: 30px 0;'>
+                <a href='{$loginLink}' class='button'>Login Sekarang</a>
+            </div>
+            <p>Salam hangat,<br><strong>Tim Admin MGMP Informatika</strong></p>
+        ";
+        $html = self::getBaseTemplate($title, $body);
+        return self::sendHtmlEmail($email, "Pemberitahuan: Password Akun Anda Direset - MGMP Informatika", $html);
+    }
+
     public static function sendRegistrationSuccess($email, $nama)
     {
         $title = "Pendaftaran Berhasil";
