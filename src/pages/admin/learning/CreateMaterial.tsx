@@ -77,8 +77,8 @@ export function CreateMaterial() {
             if (file) {
                 fileUrl = await learningService.uploadDocument(file, {
                     type: data.type,
-                    kelas: data.kelas || '',
-                    semester: data.semester || '',
+                    kelas: String(data.kelas || ''),
+                    semester: String(data.semester || ''),
                     title: data.title
                 });
             }
