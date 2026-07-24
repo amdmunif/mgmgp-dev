@@ -38,7 +38,17 @@ export function AdminMembers() {
     // Edit/View State
     const [editingMember, setEditingMember] = useState<Profile | null>(null);
     const [viewingMember, setViewingMember] = useState<Profile | null>(null);
-    const [editForm, setEditForm] = useState({ nama: '', email: '', role: 'Anggota', is_active: 0 });
+    const [editForm, setEditForm] = useState({ 
+        nama: '', 
+        email: '', 
+        role: 'Anggota', 
+        is_active: 0,
+        asal_sekolah: '',
+        no_hp: '',
+        pendidikan_terakhir: '',
+        jurusan: '',
+        status_kepegawaian: ''
+    });
     const [primarySelections, setPrimarySelections] = useState<Record<number, 'id1' | 'id2'>>({});
     const [isSaving, setIsSaving] = useState(false);
 
@@ -146,7 +156,12 @@ export function AdminMembers() {
             nama: member.nama || '',
             email: member.email || '',
             role: member.role || 'Anggota',
-            is_active: Number(member.is_active) === 1 ? 1 : 0
+            is_active: Number(member.is_active) === 1 ? 1 : 0,
+            asal_sekolah: member.asal_sekolah || '',
+            no_hp: member.no_hp || '',
+            pendidikan_terakhir: member.pendidikan_terakhir || '',
+            jurusan: member.jurusan || '',
+            status_kepegawaian: member.status_kepegawaian || ''
         });
     };
 
@@ -169,6 +184,11 @@ export function AdminMembers() {
             await memberService.update(editingMember.id, {
                 nama: editForm.nama,
                 email: editForm.email,
+                asal_sekolah: editForm.asal_sekolah,
+                no_hp: editForm.no_hp,
+                pendidikan_terakhir: editForm.pendidikan_terakhir,
+                jurusan: editForm.jurusan,
+                status_kepegawaian: editForm.status_kepegawaian,
                 role: editForm.role as 'Admin' | 'Anggota' | 'Pengurus',
                 is_active: Number(editForm.is_active)
             });
@@ -763,54 +783,118 @@ export function AdminMembers() {
                             </button>
                         </div>
 
-                        <form onSubmit={handleSaveEdit} className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
-                                <input
-                                    type="text"
-                                    value={editForm.nama}
-                                    onChange={(e) => setEditForm(prev => ({ ...prev, nama: e.target.value }))}
-                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                                    required
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                                <input
-                                    type="email"
-                                    value={editForm.email}
-                                    onChange={(e) => setEditForm(prev => ({ ...prev, email: e.target.value }))}
-                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                                    required
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Status Akun</label>
-                                <div className="flex items-center gap-2 mt-2">
+                        <form onSubmit={handleSaveEdit} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto custom-scrollbar">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="col-span-1 md:col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
                                     <input
-                                        type="checkbox"
-                                        id="isActive"
-                                        checked={Number(editForm.is_active) === 1}
-                                        onChange={(e) => setEditForm(prev => ({ ...prev, is_active: e.target.checked ? 1 : 0 }))}
-                                        className="h-5 w-5 text-blue-600 rounded focus:ring-blue-500 border-gray-300"
+                                        type="text"
+                                        value={editForm.nama}
+                                        onChange={(e) => setEditForm(prev => ({ ...prev, nama: e.target.value }))}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                        required
                                     />
-                                    <label htmlFor="isActive" className="text-sm text-gray-700">Aktifkan Anggota</label>
                                 </div>
-                            </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Role / Hak Akses</label>
-                                <select
-                                    value={editForm.role}
-                                    onChange={(e) => setEditForm(prev => ({ ...prev, role: e.target.value }))}
-                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white"
-                                >
-                                    <option value="Anggota">Anggota Reguler</option>
-                                    <option value="Admin">Administrator</option>
-                                    <option value="Pengurus">Pengurus</option>
-                                </select>
+                                <div className="col-span-1 md:col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                    <input
+                                        type="email"
+                                        value={editForm.email}
+                                        onChange={(e) => setEditForm(prev => ({ ...prev, email: e.target.value }))}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                        required
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">No. HP / WA</label>
+                                    <input
+                                        type="text"
+                                        value={editForm.no_hp}
+                                        onChange={(e) => setEditForm(prev => ({ ...prev, no_hp: e.target.value }))}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Asal Sekolah</label>
+                                    <input
+                                        type="text"
+                                        value={editForm.asal_sekolah}
+                                        onChange={(e) => setEditForm(prev => ({ ...prev, asal_sekolah: e.target.value }))}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Pendidikan Terakhir</label>
+                                    <select
+                                        value={editForm.pendidikan_terakhir}
+                                        onChange={(e) => setEditForm(prev => ({ ...prev, pendidikan_terakhir: e.target.value }))}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white"
+                                    >
+                                        <option value="">Pilih Pendidikan</option>
+                                        <option value="SMA/SMK">SMA/SMK</option>
+                                        <option value="D3">D3</option>
+                                        <option value="S1">S1</option>
+                                        <option value="S2">S2</option>
+                                        <option value="S3">S3</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Jurusan</label>
+                                    <input
+                                        type="text"
+                                        value={editForm.jurusan}
+                                        onChange={(e) => setEditForm(prev => ({ ...prev, jurusan: e.target.value }))}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Status Kepegawaian</label>
+                                    <select
+                                        value={editForm.status_kepegawaian}
+                                        onChange={(e) => setEditForm(prev => ({ ...prev, status_kepegawaian: e.target.value }))}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white"
+                                    >
+                                        <option value="">Pilih Status</option>
+                                        <option value="PNS">PNS</option>
+                                        <option value="PPPK">PPPK</option>
+                                        <option value="GTY/PTY">GTY/PTY</option>
+                                        <option value="GTT/PTT">GTT/PTT</option>
+                                        <option value="Honorer">Honorer</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Role / Hak Akses</label>
+                                    <select
+                                        value={editForm.role}
+                                        onChange={(e) => setEditForm(prev => ({ ...prev, role: e.target.value }))}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white"
+                                    >
+                                        <option value="Anggota">Anggota Reguler</option>
+                                        <option value="Admin">Administrator</option>
+                                        <option value="Pengurus">Pengurus</option>
+                                    </select>
+                                </div>
+
+                                <div className="col-span-1 md:col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Status Akun</label>
+                                    <div className="flex items-center gap-2 mt-2">
+                                        <input
+                                            type="checkbox"
+                                            id="isActive"
+                                            checked={Number(editForm.is_active) === 1}
+                                            onChange={(e) => setEditForm(prev => ({ ...prev, is_active: e.target.checked ? 1 : 0 }))}
+                                            className="h-5 w-5 text-blue-600 rounded focus:ring-blue-500 border-gray-300"
+                                        />
+                                        <label htmlFor="isActive" className="text-sm text-gray-700">Aktifkan Anggota</label>
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="flex gap-3 pt-4">

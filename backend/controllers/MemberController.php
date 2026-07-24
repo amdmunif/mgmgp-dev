@@ -36,12 +36,12 @@ class MemberController
         $userUpdates = [];
 
         // Profiles table fields
-        if (isset($data['nama']))
-            $profileUpdates[] = "nama = :nama";
-        if (isset($data['role']))
-            $profileUpdates[] = "role = :role";
-        if (isset($data['is_active']))
-            $profileUpdates[] = "is_active = :is_active";
+        $allowedProfileFields = ['nama', 'role', 'is_active', 'asal_sekolah', 'no_hp', 'pendidikan_terakhir', 'jurusan', 'status_kepegawaian'];
+        foreach ($allowedProfileFields as $field) {
+            if (isset($data[$field])) {
+                $profileUpdates[] = "$field = :$field";
+            }
+        }
 
         // Users table fields
         if (isset($data['email']))
@@ -75,12 +75,11 @@ class MemberController
             if (!empty($profileUpdates)) {
                 $query = "UPDATE profiles SET " . implode(", ", $profileUpdates) . " WHERE id = :id";
                 $stmt = $this->conn->prepare($query);
-                if (isset($data['nama']))
-                    $stmt->bindValue(':nama', $data['nama']);
-                if (isset($data['role']))
-                    $stmt->bindValue(':role', $data['role']);
-                if (isset($data['is_active']))
-                    $stmt->bindValue(':is_active', $data['is_active']);
+                foreach ($allowedProfileFields as $field) {
+                    if (isset($data[$field])) {
+                        $stmt->bindValue(":$field", $data[$field]);
+                    }
+                }
                 $stmt->bindValue(':id', $id);
                 $stmt->execute();
             }
