@@ -775,7 +775,7 @@ export function AdminMembers() {
             {/* Edit Modal */}
             {editingMember && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200">
                         <div className="flex items-center justify-between p-6 border-b border-gray-100">
                             <h2 className="text-xl font-bold text-gray-900">Edit Anggota</h2>
                             <button onClick={() => setEditingMember(null)} className="text-gray-400 hover:text-gray-600 transition-colors">
