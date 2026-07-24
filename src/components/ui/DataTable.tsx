@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Button } from './button';
 import { ChevronLeft, ChevronRight, Search, ArrowUpDown } from 'lucide-react';
@@ -70,8 +70,24 @@ export function DataTable<T extends Record<string, any>>({
         });
     };
 
-    // Use controlled or uncontrolled search term
-    const effectiveSearchTerm = searchValue !== undefined ? searchValue : searchTerm;
+    const [localSearch, setLocalSearch] = useState(searchValue !== undefined ? searchValue : searchTerm);
+
+    // Sync from external changes
+    useEffect(() => {
+        setLocalSearch(searchValue !== undefined ? searchValue : searchTerm);
+    }, [searchValue, searchTerm]);
+
+    // Apply debounce for changes made by the user
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            if (onSearchChange) {
+                if (localSearch !== searchValue) onSearchChange(localSearch);
+            } else {
+                if (localSearch !== searchTerm) setSearchTerm(localSearch);
+            }
+        }, 300);
+        return () => clearTimeout(handler);
+    }, [localSearch, onSearchChange, searchValue, searchTerm]);
 
     // Filter
     const filteredData = useMemo(() => {
@@ -80,8 +96,8 @@ export function DataTable<T extends Record<string, any>>({
 
         let result = data;
 
-        if (effectiveSearchTerm) {
-            const lowerTerm = effectiveSearchTerm.toLowerCase();
+        if (searchTerm) {
+            const lowerTerm = searchTerm.toLowerCase();
             result = result.filter((item) =>
                 searchKeys.some((key) => {
                     const val = item[key];
@@ -91,7 +107,7 @@ export function DataTable<T extends Record<string, any>>({
         }
 
         return result;
-    }, [data, effectiveSearchTerm, searchKeys, onSearchChange]);
+    }, [data, searchTerm, searchKeys, onSearchChange]);
 
     // Sort
     const sortedData = useMemo(() => {
@@ -122,13 +138,9 @@ export function DataTable<T extends Record<string, any>>({
                             <input
                                 type="text"
                                 placeholder="Cari data..."
-                                value={effectiveSearchTerm}
+                                value={localSearch}
                                 onChange={(e) => {
-                                    if (onSearchChange) {
-                                        onSearchChange(e.target.value);
-                                    } else {
-                                        setSearchTerm(e.target.value);
-                                    }
+                                    setLocalSearch(e.target.value);
                                     setCurrentPage(1);
                                 }}
                                 className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm bg-gray-50"

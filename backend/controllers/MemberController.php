@@ -183,6 +183,12 @@ class MemberController
                     REPLACE(REPLACE(REPLACE(LOWER(TRIM(p1.nama)), ' ', ''), '.', ''), ',', '') = 
                     REPLACE(REPLACE(REPLACE(LOWER(TRIM(p2.nama)), ' ', ''), '.', ''), ',', '') 
                     AND p1.nama IS NOT NULL AND TRIM(p1.nama) != '' AND LENGTH(TRIM(p1.nama)) > 3
+                    AND LOWER(TRIM(p1.asal_sekolah)) = LOWER(TRIM(p2.asal_sekolah))
+                    AND p1.asal_sekolah IS NOT NULL AND TRIM(p1.asal_sekolah) != ''
+                ) OR
+                (
+                    REPLACE(REPLACE(p1.no_hp, ' ', ''), '-', '') = REPLACE(REPLACE(p2.no_hp, ' ', ''), '-', '')
+                    AND p1.no_hp IS NOT NULL AND TRIM(p1.no_hp) != '' AND LENGTH(TRIM(p1.no_hp)) > 8
                 )
         ";
 
