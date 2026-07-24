@@ -147,21 +147,30 @@ class MemberController
 
     public function delete($id)
     {
-        // Delete from profiles and users (ON DELETE CASCADE usually handles this if set in FK, 
-        // but let's be safe and delete from users which cascades to profiles usually, or vice versa depending on schema)
-        // Based on schema, profiles has FK to users.id. So deleting user should cascade to profile.
+        try {
+            $this->conn->beginTransaction();
 
-        // Let's delete from users table to ensure complete removal.
-        $query = "DELETE FROM users WHERE id = :id";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':id', $id);
+            // Delete from dependent tables first (event_participants, profiles)
+            // If the schema already has ON DELETE CASCADE, this is harmless. 
+            // If it doesn't, this prevents foreign key constraint errors.
+            $stmt1 = $this->conn->prepare("DELETE FROM event_participants WHERE user_id = :id");
+            $stmt1->execute([':id' => $id]);
 
-        if ($stmt->execute()) {
+            $stmt2 = $this->conn->prepare("DELETE FROM profiles WHERE id = :id");
+            $stmt2->execute([':id' => $id]);
+
+            // Let's delete from users table to ensure complete removal.
+            $query = "DELETE FROM users WHERE id = :id";
+            $stmt = $this->conn->prepare($query);
+            $stmt->execute([':id' => $id]);
+
+            $this->conn->commit();
             return json_encode(["message" => "Data Anggota berhasil dihapus"]);
+        } catch (Exception $e) {
+            $this->conn->rollBack();
+            http_response_code(500);
+            return json_encode(["message" => "Gagal menghapus data anggota: " . $e->getMessage()]);
         }
-
-        http_response_code(500);
-        return json_encode(["message" => "Gagal menghapus data anggota"]);
     }
 
     public function getDuplicates()
@@ -183,8 +192,12 @@ class MemberController
                     REPLACE(REPLACE(REPLACE(LOWER(TRIM(p1.nama)), ' ', ''), '.', ''), ',', '') = 
                     REPLACE(REPLACE(REPLACE(LOWER(TRIM(p2.nama)), ' ', ''), '.', ''), ',', '') 
                     AND p1.nama IS NOT NULL AND TRIM(p1.nama) != '' AND LENGTH(TRIM(p1.nama)) > 3
-                    AND LOWER(TRIM(p1.asal_sekolah)) = LOWER(TRIM(p2.asal_sekolah))
-                    AND p1.asal_sekolah IS NOT NULL AND TRIM(p1.asal_sekolah) != ''
+                    AND (
+                        (LOWER(TRIM(p1.asal_sekolah)) = LOWER(TRIM(p2.asal_sekolah)) AND p1.asal_sekolah IS NOT NULL AND TRIM(p1.asal_sekolah) != '')
+                        OR (p1.asal_sekolah IS NULL OR TRIM(p1.asal_sekolah) = '')
+                        OR (p2.asal_sekolah IS NULL OR TRIM(p2.asal_sekolah) = '')
+                        OR (SUBSTRING_INDEX(LOWER(TRIM(u1.email)), '@', 1) = SUBSTRING_INDEX(LOWER(TRIM(u2.email)), '@', 1))
+                    )
                 ) OR
                 (
                     REPLACE(REPLACE(p1.no_hp, ' ', ''), '-', '') = REPLACE(REPLACE(p2.no_hp, ' ', ''), '-', '')
