@@ -150,19 +150,35 @@ class MemberController
         try {
             $this->conn->beginTransaction();
 
-            // Delete from dependent tables first (event_participants, profiles)
-            // If the schema already has ON DELETE CASCADE, this is harmless. 
-            // If it doesn't, this prevents foreign key constraint errors.
-            $stmt1 = $this->conn->prepare("DELETE FROM event_participants WHERE user_id = :id");
-            $stmt1->execute([':id' => $id]);
+            // Clean up related records manually to avoid FK constraint failures
+            $tablesToDelete = [
+                'audit_logs',
+                'premium_requests',
+                'event_participants',
+                'contributor_applications',
+                'training_registrations',
+                'profiles',
+                'users'
+            ];
 
-            $stmt2 = $this->conn->prepare("DELETE FROM profiles WHERE id = :id");
-            $stmt2->execute([':id' => $id]);
+            foreach ($tablesToDelete as $table) {
+                try {
+                    $col = ($table === 'profiles' || $table === 'users') ? 'id' : 'user_id';
+                    $stmt = $this->conn->prepare("DELETE FROM $table WHERE $col = :id");
+                    $stmt->execute([':id' => $id]);
+                } catch (Exception $e) {
+                    if ($table === 'users' || $table === 'profiles') {
+                        throw $e;
+                    }
+                }
+            }
 
-            // Let's delete from users table to ensure complete removal.
-            $query = "DELETE FROM users WHERE id = :id";
-            $stmt = $this->conn->prepare($query);
-            $stmt->execute([':id' => $id]);
+            // Set creator_id to NULL in questions if applicable (to prevent deleting questions)
+            try {
+                $this->conn->prepare("UPDATE questions SET creator_id = NULL WHERE creator_id = :id")->execute([':id' => $id]);
+            } catch (Exception $e) {
+                // Ignore if table/column doesn't exist or is not nullable
+            }
 
             $this->conn->commit();
             return json_encode(["message" => "Data Anggota berhasil dihapus"]);
@@ -192,12 +208,6 @@ class MemberController
                     REPLACE(REPLACE(REPLACE(LOWER(TRIM(p1.nama)), ' ', ''), '.', ''), ',', '') = 
                     REPLACE(REPLACE(REPLACE(LOWER(TRIM(p2.nama)), ' ', ''), '.', ''), ',', '') 
                     AND p1.nama IS NOT NULL AND TRIM(p1.nama) != '' AND LENGTH(TRIM(p1.nama)) > 3
-                    AND (
-                        (LOWER(TRIM(p1.asal_sekolah)) = LOWER(TRIM(p2.asal_sekolah)) AND p1.asal_sekolah IS NOT NULL AND TRIM(p1.asal_sekolah) != '')
-                        OR (p1.asal_sekolah IS NULL OR TRIM(p1.asal_sekolah) = '')
-                        OR (p2.asal_sekolah IS NULL OR TRIM(p2.asal_sekolah) = '')
-                        OR (SUBSTRING_INDEX(LOWER(TRIM(u1.email)), '@', 1) = SUBSTRING_INDEX(LOWER(TRIM(u2.email)), '@', 1))
-                    )
                 ) OR
                 (
                     REPLACE(REPLACE(p1.no_hp, ' ', ''), '-', '') = REPLACE(REPLACE(p2.no_hp, ' ', ''), '-', '')
