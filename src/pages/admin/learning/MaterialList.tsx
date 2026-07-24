@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useOutletContext } from 'react-router-dom';
+import { Link, useOutletContext, useSearchParams } from 'react-router-dom';
 import { Button } from '../../../components/ui/button';
 import { Plus, FileText, Presentation, File, Book, Eye, Pencil, Trash2, X } from 'lucide-react';
 import { learningService } from '../../../services/learningService';
@@ -11,10 +11,19 @@ import { FileViewer } from '../../../components/ui/FileViewer';
 
 export function AdminMaterials() {
     const { setPageHeader } = useOutletContext<any>() || {};
+    const [searchParams, setSearchParams] = useSearchParams();
     const [materials, setMaterials] = useState<LearningMaterial[]>([]);
     const [loading, setLoading] = useState(true);
-    const [filterType, setFilterType] = useState<MaterialType | 'all'>('all');
-    const [search, setSearch] = useState('');
+    const filterType = (searchParams.get('filter_type') as MaterialType | 'all') || 'all';
+    
+    const setFilterType = (val: string) => {
+        setSearchParams(prev => {
+            const next = new URLSearchParams(prev);
+            next.set('filter_type', val);
+            return next;
+        }, { replace: true });
+    };
+
     const [viewingMaterial, setViewingMaterial] = useState<LearningMaterial | null>(null);
 
     useEffect(() => {
@@ -62,11 +71,6 @@ export function AdminMaterials() {
             default: return <FileText className="w-5 h-5" />;
         }
     };
-
-    const filteredMaterials = materials.filter(m =>
-        m.title.toLowerCase().includes(search.toLowerCase()) ||
-        m.mapel.toLowerCase().includes(search.toLowerCase())
-    );
 
     const columns = [
         {
@@ -149,11 +153,9 @@ export function AdminMaterials() {
                 </div>
             ) : (
                 <DataTable
-                    data={filteredMaterials}
+                    data={materials}
                     columns={columns}
                     searchKeys={['title', 'mapel']}
-                    searchValue={search}
-                    onSearchChange={setSearch}
                     pageSize={10}
                     filterContent={
                         <div className="flex items-center gap-2">

@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Button } from './button';
 import { ChevronLeft, ChevronRight, Search, ArrowUpDown } from 'lucide-react';
 import { cn } from '../../lib/utils';
@@ -27,10 +28,47 @@ export function DataTable<T extends Record<string, any>>({
     searchValue,
     onSearchChange
 }: DataTableProps<T>) {
-    const [currentPage, setCurrentPage] = useState(1);
-    const [limit, setLimit] = useState(pageSize);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [sortConfig, setSortConfig] = useState<{ key: keyof T | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
+    const [searchParams, setSearchParams] = useSearchParams();
+
+    const currentPage = Number(searchParams.get('page')) || 1;
+    const limit = Number(searchParams.get('limit')) || pageSize;
+    const searchTerm = searchParams.get('search') || '';
+    const sortConfig = {
+        key: (searchParams.get('sort') as keyof T) || null,
+        direction: (searchParams.get('dir') as 'asc' | 'desc') || 'asc'
+    };
+
+    const updateParams = (updates: Record<string, string | null>) => {
+        setSearchParams(prev => {
+            const next = new URLSearchParams(prev);
+            Object.entries(updates).forEach(([k, v]) => {
+                if (v === null || v === undefined || v === '') next.delete(k);
+                else next.set(k, v);
+            });
+            return next;
+        }, { replace: true });
+    };
+
+    const setCurrentPage = (val: number | ((p: number) => number)) => {
+        const nextVal = typeof val === 'function' ? val(currentPage) : val;
+        updateParams({ page: nextVal > 1 ? nextVal.toString() : null });
+    };
+
+    const setLimit = (val: number) => {
+        updateParams({ limit: val !== pageSize ? val.toString() : null, page: null });
+    };
+
+    const setSearchTerm = (val: string) => {
+        updateParams({ search: val || null, page: null });
+    };
+
+    const handleSort = (key: keyof T) => {
+        const isAsc = sortConfig.key === key && sortConfig.direction === 'asc';
+        updateParams({
+            sort: key as string,
+            dir: isAsc ? 'desc' : 'asc'
+        });
+    };
 
     // Use controlled or uncontrolled search term
     const effectiveSearchTerm = searchValue !== undefined ? searchValue : searchTerm;
@@ -72,13 +110,6 @@ export function DataTable<T extends Record<string, any>>({
     // Pagination
     const totalPages = Math.ceil(sortedData.length / limit);
     const paginatedData = sortedData.slice((currentPage - 1) * limit, currentPage * limit);
-
-    const handleSort = (key: keyof T) => {
-        setSortConfig((current) => ({
-            key,
-            direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc',
-        }));
-    };
 
     return (
         <div className="space-y-4">

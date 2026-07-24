@@ -94,11 +94,11 @@ export function CreateMaterial() {
 
             if (id) {
                 await learningService.update(id, cleanData);
+                navigate(-1); // Return to previous page to preserve list state
             } else {
                 await learningService.create(cleanData);
+                navigate('/admin/learning');
             }
-
-            navigate('/admin/learning');
         } catch (error) {
             console.error(error);
             const errorMessage = error instanceof Error ? error.message : 'Terjadi kesalahan saat menyimpan data';
