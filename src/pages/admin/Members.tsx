@@ -861,10 +861,13 @@ export function AdminMembers() {
                                         className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white"
                                     >
                                         <option value="">Pilih Status</option>
+                                        {!['', 'PNS', 'PPPK', 'GTY', 'GTT', 'Honorer'].includes(editForm.status_kepegawaian) && editForm.status_kepegawaian && (
+                                            <option value={editForm.status_kepegawaian}>{editForm.status_kepegawaian}</option>
+                                        )}
                                         <option value="PNS">PNS</option>
                                         <option value="PPPK">PPPK</option>
-                                        <option value="GTY/PTY">GTY/PTY</option>
-                                        <option value="GTT/PTT">GTT/PTT</option>
+                                        <option value="GTY">GTY</option>
+                                        <option value="GTT">GTT</option>
                                         <option value="Honorer">Honorer</option>
                                     </select>
                                 </div>
