@@ -131,7 +131,10 @@ export function MemberEvents() {
                         ) : (
                             upcomingEvents.map(event => {
                                 const isEventPremium = Number(event.is_premium) === 1;
-                                const canRegister = !isEventPremium || isPremium;
+                                const isRegistrationOpen = Number(event.is_registration_open) === 1;
+                                const isDeadlinePassed = event.registration_deadline ? new Date(event.registration_deadline) < new Date() : false;
+                                const canRegisterPremium = !isEventPremium || isPremium;
+                                const canRegister = canRegisterPremium && isRegistrationOpen && !isDeadlinePassed;
 
                                 return (
                                     <div key={event.id} className={cn(
@@ -184,7 +187,11 @@ export function MemberEvents() {
                                                     Hadir
                                                 </div>
                                             ) : (
-                                                canRegister ? (
+                                                !isRegistrationOpen || isDeadlinePassed ? (
+                                                    <Button disabled className="w-full md:w-auto bg-gray-200 text-gray-500 border-gray-200">
+                                                        Pendaftaran Ditutup
+                                                    </Button>
+                                                ) : canRegisterPremium ? (
                                                     <Button
                                                         onClick={() => handleRegister(event.id)}
                                                         disabled={processingId === event.id}

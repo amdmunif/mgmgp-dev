@@ -191,6 +191,11 @@ export function MemberDashboard() {
                                                             PRO
                                                         </span>
                                                     )}
+                                                    {(!Number(event.is_registration_open) || (event.registration_deadline && new Date(event.registration_deadline) < new Date())) && (
+                                                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700 border border-red-200">
+                                                            DITUTUP
+                                                        </span>
+                                                    )}
                                                 </h3>
                                                 <p className="text-xs text-gray-500 mb-2 line-clamp-1">{event.location}</p>
                                                 <Link to={`/member/events/${event.id}`}>

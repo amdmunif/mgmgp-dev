@@ -104,7 +104,10 @@ export function MemberEventDetail() {
     }
 
     const isEventPremium = Number(event.is_premium) === 1;
-    const canRegister = !isEventPremium || isPremium;
+    const isRegistrationOpen = Number(event.is_registration_open) === 1;
+    const isDeadlinePassed = event.registration_deadline ? new Date(event.registration_deadline) < new Date() : false;
+    const canRegisterPremium = !isEventPremium || isPremium;
+    const canRegister = canRegisterPremium && isRegistrationOpen && !isDeadlinePassed;
 
     // Determine status badge color/text
     const getStatusBadge = () => {
@@ -235,7 +238,20 @@ export function MemberEventDetail() {
                                     </div>
                                 ) : (
                                     <div className="space-y-4">
-                                        {!canRegister ? (
+                                        {!isRegistrationOpen || isDeadlinePassed ? (
+                                            <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 text-center">
+                                                <div className="w-12 h-12 bg-gray-100 text-gray-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                                                    <FileText className="w-6 h-6" />
+                                                </div>
+                                                <h4 className="font-bold text-gray-700 mb-1">Pendaftaran Ditutup</h4>
+                                                <p className="text-xs text-gray-500 mb-4">
+                                                    Mohon maaf, pendaftaran untuk acara ini sudah ditutup.
+                                                </p>
+                                                <Button disabled className="w-full bg-gray-200 text-gray-500 border-gray-200">
+                                                    Pendaftaran Ditutup
+                                                </Button>
+                                            </div>
+                                        ) : !canRegisterPremium ? (
                                             <div className="bg-amber-50 p-4 rounded-xl border border-amber-200 text-center">
                                                 <Lock className="w-8 h-8 text-amber-500 mx-auto mb-2" />
                                                 <h4 className="font-bold text-amber-800 mb-1">Event Premium</h4>
