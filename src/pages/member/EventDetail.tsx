@@ -107,7 +107,6 @@ export function MemberEventDetail() {
     const isRegistrationOpen = Number(event.is_registration_open) === 1;
     const isDeadlinePassed = event.registration_deadline ? new Date(event.registration_deadline) < new Date() : false;
     const canRegisterPremium = !isEventPremium || isPremium;
-    const canRegister = canRegisterPremium && isRegistrationOpen && !isDeadlinePassed;
 
     // Determine status badge color/text
     const getStatusBadge = () => {

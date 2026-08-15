@@ -16,6 +16,8 @@ type EventWithStatus = {
     date: string;
     location: string;
     is_premium: boolean | number;
+    is_registration_open: boolean | number;
+    registration_deadline?: string;
     participation_status?: string | null;
 }
 
@@ -134,7 +136,6 @@ export function MemberEvents() {
                                 const isRegistrationOpen = Number(event.is_registration_open) === 1;
                                 const isDeadlinePassed = event.registration_deadline ? new Date(event.registration_deadline) < new Date() : false;
                                 const canRegisterPremium = !isEventPremium || isPremium;
-                                const canRegister = canRegisterPremium && isRegistrationOpen && !isDeadlinePassed;
 
                                 return (
                                     <div key={event.id} className={cn(

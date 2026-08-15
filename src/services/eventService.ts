@@ -11,7 +11,8 @@ export interface Event {
     tasks_url?: string;
     certificate_url?: string;
     certificate_template?: string; // HTML Template
-    is_registration_open: boolean;
+    is_registration_open: boolean | number;
+    registration_deadline?: string;
     created_at: string;
     is_premium: boolean | number;
 }
