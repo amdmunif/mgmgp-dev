@@ -287,6 +287,7 @@ export function AdminEventDetail() {
             cell: (item: Participant) => {
                 const isPresent = Number(item.is_hadir) === 1;
                 return (
+                    <>
                     <div className="flex justify-center">
                         <button
                             onClick={() => handleStatusUpdate(item.user_id, Number(item.is_hadir))}

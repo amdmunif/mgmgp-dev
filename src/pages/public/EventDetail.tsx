@@ -208,7 +208,6 @@ export function EventDetail() {
                                     </div>
                                 )}
                             </div>
-                            </div>
                         ) : (Number(event.is_registration_open) !== 1 || (event.registration_deadline && new Date(event.registration_deadline) < new Date())) ? (
                             <div className="bg-red-50 text-red-700 p-4 rounded-lg text-center font-medium">
                                 Pendaftaran Telah Ditutup

@@ -278,11 +278,51 @@ class Mailer
         $body = "
             <h2 style='color: #1e293b; margin-top: 0;'>Halo, {$nama},</h2>
             <p>Terima kasih telah mendaftar! Anda telah berhasil terdaftar pada acara <strong>{$eventName}</strong>.</p>
+            <p>Jika acara ini berbayar, silakan lanjutkan dengan mengunggah bukti pembayaran di halaman detail acara. Jika gratis, Anda bisa mengabaikan pesan ini.</p>
             <p>Jangan lupa untuk mencatat jadwal acara dan mempersiapkan diri dengan baik.</p>
             <p>Salam hangat,<br><strong>Tim Admin MGMP Informatika</strong></p>
         ";
         $html = self::getBaseTemplate($title, $body);
         return self::sendHtmlEmail($email, "Konfirmasi Pendaftaran: {$eventName}", $html);
+    }
+
+    public static function sendEventPaymentProofUploaded($email, $nama, $eventName)
+    {
+        $title = "Bukti Pembayaran Diterima";
+        $body = "
+            <h2 style='color: #1e293b; margin-top: 0;'>Halo, {$nama},</h2>
+            <p>Terima kasih, kami telah menerima unggahan bukti pembayaran Anda untuk acara <strong>{$eventName}</strong>.</p>
+            <p>Admin kami akan segera memverifikasi pembayaran Anda. Anda akan menerima email notifikasi setelah status pembayaran diperbarui.</p>
+            <p>Salam hangat,<br><strong>Tim Admin MGMP Informatika</strong></p>
+        ";
+        $html = self::getBaseTemplate($title, $body);
+        return self::sendHtmlEmail($email, "Bukti Pembayaran Diterima: {$eventName}", $html);
+    }
+
+    public static function sendEventPaymentConfirmed($email, $nama, $eventName)
+    {
+        $title = "Pembayaran Dikonfirmasi";
+        $body = "
+            <h2 style='color: #1e293b; margin-top: 0;'>Halo, {$nama},</h2>
+            <p>Kabar baik! Pembayaran Anda untuk acara <strong>{$eventName}</strong> telah <strong>Berhasil Dikonfirmasi</strong> (Lunas).</p>
+            <p>Status Anda kini telah tercatat sebagai peserta resmi. Jangan lupa untuk menghadiri acara tepat waktu!</p>
+            <p>Salam hangat,<br><strong>Tim Admin MGMP Informatika</strong></p>
+        ";
+        $html = self::getBaseTemplate($title, $body);
+        return self::sendHtmlEmail($email, "Pembayaran Dikonfirmasi: {$eventName}", $html);
+    }
+
+    public static function sendEventPaymentRejected($email, $nama, $eventName)
+    {
+        $title = "Pembayaran Ditolak";
+        $body = "
+            <h2 style='color: #1e293b; margin-top: 0;'>Halo, {$nama},</h2>
+            <p>Mohon maaf, bukti pembayaran yang Anda unggah untuk acara <strong>{$eventName}</strong> telah <strong>Ditolak</strong> oleh Admin.</p>
+            <p>Kemungkinan karena bukti yang diunggah kurang jelas atau tidak sesuai. Silakan masuk ke akun Anda dan unggah ulang bukti pembayaran yang benar.</p>
+            <p>Salam hangat,<br><strong>Tim Admin MGMP Informatika</strong></p>
+        ";
+        $html = self::getBaseTemplate($title, $body);
+        return self::sendHtmlEmail($email, "Pembayaran Ditolak: {$eventName}", $html);
     }
 
     public static function sendTaskSubmitted($email, $nama, $eventName)

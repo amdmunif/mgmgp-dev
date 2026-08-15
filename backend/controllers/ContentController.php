@@ -303,6 +303,9 @@ class ContentController
 
             if ($userData) {
                 Mailer::sendEventRegistration($userData['email'], $userData['nama'], $eventTitle);
+                if ($paymentProofUrl) {
+                    Mailer::sendEventPaymentProofUploaded($userData['email'], $userData['nama'], $eventTitle);
+                }
             }
 
             Helper::log($this->conn, $userId, 'Member', 'JOIN_EVENT', $eventTitle || $eventId);
@@ -480,6 +483,16 @@ class ContentController
                 $trxStmt->execute();
             }
 
+            // Send confirmation email
+            $stmtUser = $this->conn->prepare("SELECT u.email, p.nama, e.title as event_title FROM users u JOIN profiles p ON u.id = p.id JOIN events e ON e.id = :eid WHERE u.id = :uid");
+            $stmtUser->bindParam(':uid', $userId);
+            $stmtUser->bindParam(':eid', $eventId);
+            $stmtUser->execute();
+            $userData = $stmtUser->fetch(PDO::FETCH_ASSOC);
+            if ($userData && $userData['email']) {
+                Mailer::sendEventPaymentConfirmed($userData['email'], $userData['nama'], $userData['event_title']);
+            }
+
             return json_encode(["message" => "Payment confirmed and logged to finance"]);
         }
         http_response_code(500);
@@ -494,6 +507,16 @@ class ContentController
         $stmt->bindParam(':uid', $userId);
 
         if ($stmt->execute()) {
+            // Send rejection email
+            $stmtUser = $this->conn->prepare("SELECT u.email, p.nama, e.title as event_title FROM users u JOIN profiles p ON u.id = p.id JOIN events e ON e.id = :eid WHERE u.id = :uid");
+            $stmtUser->bindParam(':uid', $userId);
+            $stmtUser->bindParam(':eid', $eventId);
+            $stmtUser->execute();
+            $userData = $stmtUser->fetch(PDO::FETCH_ASSOC);
+            if ($userData && $userData['email']) {
+                Mailer::sendEventPaymentRejected($userData['email'], $userData['nama'], $userData['event_title']);
+            }
+
             return json_encode(["message" => "Payment rejected"]);
         }
         http_response_code(500);
