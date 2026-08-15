@@ -99,7 +99,15 @@ if ($token) {
     if ($payload && isset($payload['sub'])) {
         $userId = $payload['sub'];
         $userName = $payload['nama'] ?? 'User'; // Assuming 'nama' is in JWT payload or we might need to fetch it
-        $userRole = ucfirst(strtolower($payload['role'] ?? 'Anggota'));
+        
+        $rawRole = $payload['role'] ?? 'Anggota';
+        if (in_array(strtolower($rawRole), ['admin', 'super admin'])) {
+            $userRole = 'Admin';
+            $payload['role'] = 'Admin'; // Normalize for controllers
+        } else {
+            $userRole = ucfirst(strtolower($rawRole));
+            $payload['role'] = $userRole;
+        }
     }
 }
 
