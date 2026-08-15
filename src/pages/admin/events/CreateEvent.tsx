@@ -104,6 +104,16 @@ export function CreateEvent() {
         }
     };
 
+    const onError = (errors: any) => {
+        console.error("Form errors:", errors);
+        const errorMessages = Object.values(errors).map((err: any) => err.message).filter(Boolean);
+        if (errorMessages.length > 0) {
+            toast.error(`Validasi gagal: ${errorMessages.join(', ')}`);
+        } else {
+            toast.error('Mohon lengkapi semua field yang wajib diisi');
+        }
+    };
+
     const onSubmit = async (data: EventForm) => {
         setSubmitting(true);
         try {
@@ -161,7 +171,7 @@ export function CreateEvent() {
                         {loading ? (
                             <div className="flex justify-center py-12"><Loader2 className="animate-spin w-8 h-8 text-blue-500" /></div>
                         ) : (
-                            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                            <form onSubmit={handleSubmit(onSubmit, onError)} className="space-y-6">
                                 {/* Title */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Nama Kegiatan</label>
@@ -351,7 +361,7 @@ export function CreateEvent() {
                     {/* Action Buttons */}
                     <div className="flex flex-col gap-3">
                         <Button
-                            onClick={handleSubmit(onSubmit)}
+                            onClick={handleSubmit(onSubmit, onError)}
                             disabled={submitting || loading}
                             className="w-full"
                         >
