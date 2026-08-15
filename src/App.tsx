@@ -208,6 +208,7 @@ function App() {
           <Route path="news/edit/:id" element={<CreateNews />} />
 
           <Route path="events" element={<AdminEvents />} />
+          <Route path="events/create" element={<CreateEvent />} />
           <Route path="events/edit/:id" element={<CreateEvent />} />
           <Route path="events/:id" element={<AdminEventDetail />} />
           <Route path="events/:id/print-attendance" element={<AdminEventAttendancePrint />} />
