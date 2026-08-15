@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { api, getFileUrl } from '../../lib/api';
 import { formatDate } from '../../lib/utils';
 import { Button } from '../../components/ui/button';
-import { Calendar, MapPin, ArrowLeft, Clock, Share2, Lock, Loader2 } from 'lucide-react';
+import { Calendar, MapPin, ArrowLeft, Clock, Share2, Lock, Loader2, DollarSign } from 'lucide-react';
 import { authService } from '../../services/authService';
 import type { Event } from '../../types';
 

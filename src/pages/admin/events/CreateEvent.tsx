@@ -22,6 +22,7 @@ interface EventForm {
     bank_name: string;
     bank_account_number: string;
     bank_account_holder: string;
+    registration_deadline?: string;
 }
 
 export function CreateEvent() {
