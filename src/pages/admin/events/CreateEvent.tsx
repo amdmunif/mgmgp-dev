@@ -121,7 +121,7 @@ export function CreateEvent() {
             const fullDate = `${data.date} ${data.time}:00`;
 
             // Format registration deadline for MySQL
-            let formattedDeadline = data.registration_deadline || null;
+            let formattedDeadline = data.registration_deadline || undefined;
             if (formattedDeadline && formattedDeadline.includes('T')) {
                 formattedDeadline = formattedDeadline.replace('T', ' ');
                 if (formattedDeadline.length === 16) {
