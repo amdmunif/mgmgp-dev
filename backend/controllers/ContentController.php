@@ -148,34 +148,38 @@ class ContentController
 
     public function createEvent($data, $userId, $userName)
     {
-        $id = Helper::uuid();
-        $query = "INSERT INTO events (id, title, description, date, location, image_url, is_registration_open, is_premium, is_paid, price, registration_deadline, created_at) 
-                  VALUES (:id, :title, :description, :date, :location, :image_url, :is_registration_open, :is_premium, :is_paid, :price, :registration_deadline, NOW())";
+        try {
+            $id = Helper::uuid();
+            $query = "INSERT INTO events (id, title, description, date, location, image_url, is_registration_open, is_premium, is_paid, price, registration_deadline, created_at) 
+                      VALUES (:id, :title, :description, :date, :location, :image_url, :is_registration_open, :is_premium, :is_paid, :price, :registration_deadline, NOW())";
 
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':id', $id);
-        $stmt->bindParam(':title', $data['title']);
-        $stmt->bindParam(':description', $data['description']);
-        $stmt->bindParam(':date', $data['date']);
-        $stmt->bindParam(':location', $data['location']);
-        $stmt->bindParam(':image_url', $data['image_url']);
-        $isReg = $data['is_registration_open'] ?? 1;
-        $stmt->bindParam(':is_registration_open', $isReg, PDO::PARAM_INT);
-        $isPremium = $data['is_premium'] ?? 0;
-        $stmt->bindParam(':is_premium', $isPremium, PDO::PARAM_INT);
-        $isPaid = $data['is_paid'] ?? 0;
-        $stmt->bindParam(':is_paid', $isPaid, PDO::PARAM_INT);
-        $price = $data['price'] ?? 0;
-        $stmt->bindParam(':price', $price);
-        $deadline = !empty($data['registration_deadline']) ? $data['registration_deadline'] : null;
-        $stmt->bindParam(':registration_deadline', $deadline);
-
-        if ($stmt->execute()) {
-            Helper::log($this->conn, $userId, $userName, 'CREATE_EVENT', $data['title']);
-            return json_encode(["message" => "Event created", "id" => $id]);
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':id', $id);
+            $stmt->bindParam(':title', $data['title']);
+            $stmt->bindParam(':description', $data['description']);
+            $stmt->bindParam(':date', $data['date']);
+            $stmt->bindParam(':location', $data['location']);
+            $stmt->bindParam(':image_url', $data['image_url']);
+            $isReg = $data['is_registration_open'] ?? 1;
+            $stmt->bindParam(':is_registration_open', $isReg, PDO::PARAM_INT);
+            $isPremium = $data['is_premium'] ?? 0;
+            $stmt->bindParam(':is_premium', $isPremium, PDO::PARAM_INT);
+            $isPaid = $data['is_paid'] ?? 0;
+            $stmt->bindParam(':is_paid', $isPaid, PDO::PARAM_INT);
+            $price = $data['price'] ?? 0;
+            $stmt->bindParam(':price', $price);
+            $deadline = !empty($data['registration_deadline']) ? $data['registration_deadline'] : null;
+            $stmt->bindParam(':registration_deadline', $deadline);
+            if ($stmt->execute()) {
+                Helper::log($this->conn, $userId, $userName, 'CREATE_EVENT', $data['title']);
+                return json_encode(["message" => "Event created", "id" => $id]);
+            }
+            http_response_code(500);
+            return json_encode(["message" => "Failed to create event"]);
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            return json_encode(["message" => "SQL Error: " . $e->getMessage() . " at " . $e->getLine()]);
         }
-        http_response_code(500);
-        return json_encode(["message" => "Failed to create event"]);
     }
 
     public function deleteEvent($id, $userId, $userName)
@@ -201,43 +205,48 @@ class ContentController
 
     public function updateEvent($id, $data, $userId, $userName)
     {
-        $query = "UPDATE events SET 
-                    title = :title, 
-                    description = :description, 
-                    date = :date, 
-                    location = :location, 
-                    image_url = :image_url, 
-                    is_registration_open = :is_registration_open,
-                    is_premium = :is_premium,
-                    is_paid = :is_paid,
-                    price = :price,
-                    registration_deadline = :registration_deadline
-                  WHERE id = :id";
+        try {
+            $query = "UPDATE events SET 
+                        title = :title, 
+                        description = :description, 
+                        date = :date, 
+                        location = :location, 
+                        image_url = :image_url, 
+                        is_registration_open = :is_registration_open,
+                        is_premium = :is_premium,
+                        is_paid = :is_paid,
+                        price = :price,
+                        registration_deadline = :registration_deadline
+                      WHERE id = :id";
 
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':id', $id);
-        $stmt->bindParam(':title', $data['title']);
-        $stmt->bindParam(':description', $data['description']);
-        $stmt->bindParam(':date', $data['date']);
-        $stmt->bindParam(':location', $data['location']);
-        $stmt->bindParam(':image_url', $data['image_url']);
-        $isReg = $data['is_registration_open'] ?? 1;
-        $stmt->bindParam(':is_registration_open', $isReg, PDO::PARAM_INT);
-        $isPremium = $data['is_premium'] ?? 0;
-        $stmt->bindParam(':is_premium', $isPremium, PDO::PARAM_INT);
-        $isPaid = $data['is_paid'] ?? 0;
-        $stmt->bindParam(':is_paid', $isPaid, PDO::PARAM_INT);
-        $price = $data['price'] ?? 0;
-        $stmt->bindParam(':price', $price);
-        $deadline = !empty($data['registration_deadline']) ? $data['registration_deadline'] : null;
-        $stmt->bindParam(':registration_deadline', $deadline);
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':id', $id);
+            $stmt->bindParam(':title', $data['title']);
+            $stmt->bindParam(':description', $data['description']);
+            $stmt->bindParam(':date', $data['date']);
+            $stmt->bindParam(':location', $data['location']);
+            $stmt->bindParam(':image_url', $data['image_url']);
+            $isReg = $data['is_registration_open'] ?? 1;
+            $stmt->bindParam(':is_registration_open', $isReg, PDO::PARAM_INT);
+            $isPremium = $data['is_premium'] ?? 0;
+            $stmt->bindParam(':is_premium', $isPremium, PDO::PARAM_INT);
+            $isPaid = $data['is_paid'] ?? 0;
+            $stmt->bindParam(':is_paid', $isPaid, PDO::PARAM_INT);
+            $price = $data['price'] ?? 0;
+            $stmt->bindParam(':price', $price);
+            $deadline = !empty($data['registration_deadline']) ? $data['registration_deadline'] : null;
+            $stmt->bindParam(':registration_deadline', $deadline);
 
-        if ($stmt->execute()) {
-            Helper::log($this->conn, $userId, $userName, 'UPDATE_EVENT', $data['title']);
-            return json_encode(["message" => "Event updated"]);
+            if ($stmt->execute()) {
+                Helper::log($this->conn, $userId, $userName, 'UPDATE_EVENT', $data['title']);
+                return json_encode(["message" => "Event updated"]);
+            }
+            http_response_code(500);
+            return json_encode(["message" => "Failed to update event"]);
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            return json_encode(["message" => "SQL Error: " . $e->getMessage() . " at " . $e->getLine()]);
         }
-        http_response_code(500);
-        return json_encode(["message" => "Failed to update event"]);
     }
 
     // --- EVENT PARTICIPATION ---
