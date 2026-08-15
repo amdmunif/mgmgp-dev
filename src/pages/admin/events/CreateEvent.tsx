@@ -120,6 +120,15 @@ export function CreateEvent() {
             // Combine date and time
             const fullDate = `${data.date} ${data.time}:00`;
 
+            // Format registration deadline for MySQL
+            let formattedDeadline = data.registration_deadline || null;
+            if (formattedDeadline && formattedDeadline.includes('T')) {
+                formattedDeadline = formattedDeadline.replace('T', ' ');
+                if (formattedDeadline.length === 16) {
+                    formattedDeadline += ':00';
+                }
+            }
+
             const eventData = {
                 ...data,
                 date: fullDate, // Send combined datetime
@@ -128,9 +137,7 @@ export function CreateEvent() {
                 is_premium: data.is_premium ? 1 : 0,
                 is_paid: data.is_paid ? 1 : 0,
                 price: data.price,
-                bank_name: data.bank_name,
-                bank_account_number: data.bank_account_number,
-                bank_account_holder: data.bank_account_holder
+                registration_deadline: formattedDeadline
             };
 
             if (id) {

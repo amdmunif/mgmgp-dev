@@ -167,7 +167,7 @@ class ContentController
         $stmt->bindParam(':is_paid', $isPaid, PDO::PARAM_INT);
         $price = $data['price'] ?? 0;
         $stmt->bindParam(':price', $price);
-        $deadline = $data['registration_deadline'] ?? null;
+        $deadline = !empty($data['registration_deadline']) ? $data['registration_deadline'] : null;
         $stmt->bindParam(':registration_deadline', $deadline);
 
         if ($stmt->execute()) {
@@ -229,7 +229,7 @@ class ContentController
         $stmt->bindParam(':is_paid', $isPaid, PDO::PARAM_INT);
         $price = $data['price'] ?? 0;
         $stmt->bindParam(':price', $price);
-        $deadline = $data['registration_deadline'] ?? null;
+        $deadline = !empty($data['registration_deadline']) ? $data['registration_deadline'] : null;
         $stmt->bindParam(':registration_deadline', $deadline);
 
         if ($stmt->execute()) {
