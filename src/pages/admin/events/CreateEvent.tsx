@@ -68,6 +68,10 @@ export function CreateEvent() {
             setValue('bank_name', data.bank_name || '');
             setValue('bank_account_number', data.bank_account_number || '');
             setValue('bank_account_holder', data.bank_account_holder || '');
+            if (data.registration_deadline) {
+                const formattedDeadline = data.registration_deadline.replace(' ', 'T').substring(0, 16);
+                setValue('registration_deadline', formattedDeadline);
+            }
             setDescription(data.description);
             setPreviewUrl(data.image_url);
         } catch (error) {

@@ -173,9 +173,9 @@ if ($resource === 'news') {
             // GET /events/:id/participants
             echo $controller->getEventParticipants($action);
         } elseif ($action) {
-            echo $controller->getEventDetail($action, $userRole === 'Admin');
+            echo $controller->getEventDetail($action, in_array($userRole, ['Admin', 'Pengurus']));
         } else {
-            echo $controller->getEvents($userRole === 'Admin');
+            echo $controller->getEvents(in_array($userRole, ['Admin', 'Pengurus']));
         }
     }
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
