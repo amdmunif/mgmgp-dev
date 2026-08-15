@@ -16,6 +16,9 @@ interface Participant {
     registered_at: string;
     is_hadir: number;
     asal_sekolah?: string;
+    payment_status?: string;
+    payment_proof_url?: string;
+    payment_date?: string;
 }
 
 interface EventDetail {
@@ -26,6 +29,7 @@ interface EventDetail {
     location: string;
     image_url: string;
     is_registration_open: boolean;
+    is_paid: boolean;
 }
 
 export function AdminEventDetail() {
@@ -76,6 +80,23 @@ export function AdminEventDetail() {
             toast.success(!isAttended ? 'Peserta ditandai hadir' : 'Absensi dibatalkan');
         } catch (error) {
             toast.error('Gagal memperbarui status');
+        }
+    };
+
+    const handlePaymentUpdate = async (userId: string, action: 'confirm-payment' | 'reject-payment') => {
+        if (!id) return;
+        try {
+            await contentManagementService.updateEventPayment(id, userId, action);
+            const newStatus = action === 'confirm-payment' ? 'confirmed' : 'rejected';
+            const updatedParticipants = participants.map(p =>
+                p.user_id === userId
+                    ? { ...p, payment_status: newStatus }
+                    : p
+            );
+            setParticipants(updatedParticipants);
+            toast.success(action === 'confirm-payment' ? 'Pembayaran dikonfirmasi' : 'Pembayaran ditolak');
+        } catch (error) {
+            toast.error('Gagal memperbarui status pembayaran');
         }
     };
 
@@ -225,6 +246,43 @@ export function AdminEventDetail() {
             className: "text-center"
         },
         {
+            header: "Pembayaran",
+            accessorKey: "payment_status" as keyof Participant,
+            cell: (item: Participant) => {
+                if (!event?.is_paid) return <span className="text-gray-400 text-xs">-</span>;
+                
+                const statusMap: any = {
+                    'free': { label: 'Gratis', color: 'bg-gray-100 text-gray-800' },
+                    'pending': { label: 'Belum Bayar', color: 'bg-yellow-100 text-yellow-800' },
+                    'waiting_confirmation': { label: 'Menunggu', color: 'bg-blue-100 text-blue-800' },
+                    'confirmed': { label: 'Lunas', color: 'bg-green-100 text-green-800' },
+                    'rejected': { label: 'Ditolak', color: 'bg-red-100 text-red-800' },
+                };
+                
+                const status = item.payment_status || 'free';
+                const { label, color } = statusMap[status] || statusMap['free'];
+                
+                return (
+                    <div className="flex flex-col items-center gap-1">
+                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${color}`}>
+                            {label}
+                        </span>
+                        {item.payment_proof_url && (
+                            <a 
+                                href={getFileUrl(item.payment_proof_url)} 
+                                target="_blank" 
+                                rel="noreferrer"
+                                className="text-xs text-blue-600 hover:underline"
+                            >
+                                Lihat Bukti
+                            </a>
+                        )}
+                    </div>
+                );
+            },
+            className: "text-center"
+        },
+        {
             header: "Aksi",
             cell: (item: Participant) => {
                 const isPresent = Number(item.is_hadir) === 1;
@@ -249,6 +307,23 @@ export function AdminEventDetail() {
                             Hapus
                         </button>
                     </div>
+                    {event?.is_paid && item.payment_status === 'waiting_confirmation' && (
+                        <div className="flex justify-center mt-2 gap-2">
+                            <button
+                                onClick={() => handlePaymentUpdate(item.user_id, 'confirm-payment')}
+                                className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-green-500 text-white hover:bg-green-600"
+                            >
+                                Terima
+                            </button>
+                            <button
+                                onClick={() => handlePaymentUpdate(item.user_id, 'reject-payment')}
+                                className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-red-500 text-white hover:bg-red-600"
+                            >
+                                Tolak
+                            </button>
+                        </div>
+                    )}
+                    </>
                 );
             },
             className: "text-center"

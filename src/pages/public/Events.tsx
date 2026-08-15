@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { api, getFileUrl } from '../../lib/api';
 import { formatDate, stripHtml } from '../../lib/utils';
 import { Button } from '../../components/ui/button';
-import { Calendar, MapPin, Search, ArrowRight, Loader2 } from 'lucide-react';
+import { Calendar, MapPin, Search, ArrowRight, Loader2, Lock, DollarSign } from 'lucide-react';
 import type { Event } from '../../types';
 
 export function Events() {
@@ -79,11 +79,23 @@ export function Events() {
                                     <span className="flex items-center gap-1"><MapPin className="w-4 h-4" /> {event.location}</span>
                                 </div>
                                 <h3 className="text-2xl font-bold text-gray-900 mb-2 group-hover:text-primary-600 transition-colors">{event.title}</h3>
+                                <div className="flex flex-wrap gap-2 mb-3">
+                                    {Number(event.is_premium) === 1 && (
+                                        <span className="bg-amber-100 text-amber-800 text-xs font-bold px-2 py-0.5 rounded flex items-center gap-1">
+                                            <Lock className="w-3 h-3" /> Premium
+                                        </span>
+                                    )}
+                                    {Number(event.is_paid) === 1 && (
+                                        <span className="bg-green-100 text-green-800 text-xs font-bold px-2 py-0.5 rounded flex items-center gap-1">
+                                            <DollarSign className="w-3 h-3" /> Berbayar
+                                        </span>
+                                    )}
+                                </div>
                                 <p className="text-gray-600 mb-4">{stripHtml(event.description)}</p>
                             </div>
                             <div className="flex items-center justify-between mt-4">
-                                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${event.is_registration_open ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                    {event.is_registration_open ? 'Pendaftaran Buka' : 'Pendaftaran Tutup'}
+                                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${(Number(event.is_registration_open) === 1 && (!event.registration_deadline || new Date(event.registration_deadline) >= new Date())) ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                    {(Number(event.is_registration_open) === 1 && (!event.registration_deadline || new Date(event.registration_deadline) >= new Date())) ? 'Pendaftaran Buka' : 'Pendaftaran Tutup'}
                                 </span>
                                 <Link to={`/events/${event.id}`}>
                                     <Button>

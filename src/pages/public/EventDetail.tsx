@@ -14,6 +14,8 @@ export function EventDetail() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isJoining, setIsJoining] = useState(false);
     const [participation, setParticipation] = useState<any>(null);
+    const [paymentProofUrl, setPaymentProofUrl] = useState<string>('');
+    const [uploadingProof, setUploadingProof] = useState(false);
 
     useEffect(() => {
         const fetchEventDetail = async () => {
@@ -38,15 +40,43 @@ export function EventDetail() {
         fetchEventDetail();
     }, [id]);
 
+    const handleUploadProof = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setUploadingProof(true);
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('folder', 'payments');
+
+        try {
+            const res = await api.post<{ url: string }>('/upload', formData);
+            setPaymentProofUrl(res.url);
+        } catch (error) {
+            console.error('Failed to upload proof:', error);
+            alert('Gagal mengunggah bukti pembayaran');
+        } finally {
+            setUploadingProof(false);
+        }
+    };
+
     const handleJoin = async () => {
         if (!event) return;
+        
+        const isPaid = Number(event.is_paid) === 1;
+        if (isPaid && !paymentProofUrl) {
+            alert('Silakan unggah bukti pembayaran terlebih dahulu.');
+            return;
+        }
+
         setIsJoining(true);
         try {
-            await api.post(`/events/${event.id}/join`, {});
+            await api.post(`/events/${event.id}/join`, { payment_proof_url: paymentProofUrl });
             const part = await api.get<any>(`/events/${event.id}/participation`);
             setParticipation(part);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to join event:', error);
+            alert(error.response?.data?.message || 'Gagal mendaftar kegiatan');
         } finally {
             setIsJoining(false);
         }
@@ -100,6 +130,18 @@ export function EventDetail() {
                                 <span>{event.location}</span>
                             </div>
                         </div>
+                        <div className="flex flex-wrap gap-2 mt-4">
+                            {Number(event.is_premium) === 1 && (
+                                <span className="bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
+                                    <Lock className="w-3 h-3" /> Premium
+                                </span>
+                            )}
+                            {Number(event.is_paid) === 1 && (
+                                <span className="bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
+                                    <DollarSign className="w-3 h-3" /> Berbayar
+                                </span>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -136,13 +178,38 @@ export function EventDetail() {
                                     <p className="font-medium text-gray-900">{event.location}</p>
                                 </div>
                             </div>
+                            {event.registration_deadline && (
+                                <div className="flex items-start gap-3">
+                                    <Clock className="w-5 h-5 text-red-400 mt-0.5" />
+                                    <div>
+                                        <p className="text-sm text-gray-500">Batas Pendaftaran</p>
+                                        <p className="font-medium text-red-600">{formatDate(event.registration_deadline)}</p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {participation ? (
-                            <div className="bg-green-50 text-green-700 p-4 rounded-lg text-center font-bold">
-                                Anda sudah terdaftar di kegiatan ini
+                            <div className="space-y-3">
+                                <div className="bg-green-50 text-green-700 p-4 rounded-lg text-center font-bold">
+                                    Anda sudah terdaftar di kegiatan ini
+                                </div>
+                                {Number(event.is_paid) === 1 && participation.payment_status && (
+                                    <div className="p-3 text-sm rounded-lg border text-center font-medium bg-white">
+                                        Status Pembayaran: 
+                                        <span className={`ml-2 px-2 py-0.5 rounded-full ${
+                                            participation.payment_status === 'confirmed' ? 'bg-green-100 text-green-700' :
+                                            participation.payment_status === 'rejected' ? 'bg-red-100 text-red-700' :
+                                            'bg-blue-100 text-blue-700'
+                                        }`}>
+                                            {participation.payment_status === 'confirmed' ? 'Lunas' :
+                                             participation.payment_status === 'rejected' ? 'Ditolak' : 'Menunggu Konfirmasi'}
+                                        </span>
+                                    </div>
+                                )}
                             </div>
-                        ) : !event.is_registration_open ? (
+                            </div>
+                        ) : (Number(event.is_registration_open) !== 1 || (event.registration_deadline && new Date(event.registration_deadline) < new Date())) ? (
                             <div className="bg-red-50 text-red-700 p-4 rounded-lg text-center font-medium">
                                 Pendaftaran Telah Ditutup
                             </div>
@@ -173,11 +240,33 @@ export function EventDetail() {
                                 }
 
                                 return (
-                                    <div className="space-y-3">
+                                    <div className="space-y-4">
+                                        {Number(event.is_paid) === 1 && (
+                                            <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 text-sm">
+                                                <h4 className="font-bold text-blue-900 mb-2">Informasi Pembayaran</h4>
+                                                <p className="text-blue-800 mb-1">Harga: <strong>Rp {event.price?.toLocaleString('id-ID')}</strong></p>
+                                                <p className="text-blue-800 mb-1">Bank/E-Wallet: <strong>{event.bank_name}</strong></p>
+                                                <p className="text-blue-800 mb-1">No. Rekening: <strong>{event.bank_account_number}</strong></p>
+                                                <p className="text-blue-800 mb-3">Atas Nama: <strong>{event.bank_account_holder}</strong></p>
+                                                
+                                                <div className="mt-3">
+                                                    <label className="block text-blue-900 font-medium mb-1">Upload Bukti Transfer</label>
+                                                    <input 
+                                                        type="file" 
+                                                        accept="image/*"
+                                                        onChange={handleUploadProof}
+                                                        className="w-full text-xs"
+                                                    />
+                                                    {uploadingProof && <span className="text-xs text-blue-600 mt-1 block animate-pulse">Mengunggah...</span>}
+                                                    {paymentProofUrl && <span className="text-xs text-green-600 mt-1 block font-medium">✓ Bukti berhasil diunggah</span>}
+                                                </div>
+                                            </div>
+                                        )}
+
                                         <Button
                                             className="w-full text-lg h-12 shadow-primary-500/20 hover:shadow-primary-500/40"
                                             onClick={handleJoin}
-                                            disabled={isJoining}
+                                            disabled={isJoining || uploadingProof || (Number(event.is_paid) === 1 && !paymentProofUrl)}
                                         >
                                             {isJoining ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Daftar Sekarang'}
                                         </Button>

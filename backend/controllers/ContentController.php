@@ -101,29 +101,56 @@ class ContentController
     }
 
     // --- EVENTS ---
-    public function getEvents()
+    public function getEvents($isAdmin = false)
     {
-        $query = "SELECT * FROM events ORDER BY date DESC";
+        $query = "SELECT * FROM events";
+        if (!$isAdmin) {
+            $query .= " WHERE is_registration_open = 1";
+        }
+        $query .= " ORDER BY date DESC";
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
         return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
     }
 
-    public function getEventDetail($id)
+    public function getEventDetail($id, $isAdmin = false)
     {
         $query = "SELECT * FROM events WHERE id = :id";
+        if (!$isAdmin) {
+            $query .= " AND is_registration_open = 1";
+        }
+        
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id', $id);
         $stmt->execute();
         $event = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($event) {
+            $event['is_registration_open'] = (int)$event['is_registration_open'];
+            $event['is_premium'] = (int)$event['is_premium'];
+            $event['is_paid'] = (int)$event['is_paid'];
+            $event['price'] = (float)$event['price'];
+            
+            if ($event['is_paid'] === 1) {
+                // Fetch bank details from premium_bank_accounts
+                $stmtBank = $this->conn->prepare("SELECT bank_name, account_number, account_holder FROM premium_bank_accounts WHERE is_active = 1 LIMIT 1");
+                $stmtBank->execute();
+                $bank = $stmtBank->fetch(PDO::FETCH_ASSOC);
+                if ($bank) {
+                    $event['bank_name'] = $bank['bank_name'];
+                    $event['bank_account_number'] = $bank['account_number'];
+                    $event['bank_account_holder'] = $bank['account_holder'];
+                }
+            }
+        }
         return json_encode($event ?: null);
     }
 
     public function createEvent($data, $userId, $userName)
     {
         $id = Helper::uuid();
-        $query = "INSERT INTO events (id, title, description, date, location, image_url, is_registration_open, is_premium, created_at) 
-                  VALUES (:id, :title, :description, :date, :location, :image_url, :is_registration_open, :is_premium, NOW())";
+        $query = "INSERT INTO events (id, title, description, date, location, image_url, is_registration_open, is_premium, is_paid, price, registration_deadline, created_at) 
+                  VALUES (:id, :title, :description, :date, :location, :image_url, :is_registration_open, :is_premium, :is_paid, :price, :registration_deadline, NOW())";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id', $id);
@@ -132,11 +159,16 @@ class ContentController
         $stmt->bindParam(':date', $data['date']);
         $stmt->bindParam(':location', $data['location']);
         $stmt->bindParam(':image_url', $data['image_url']);
-        $stmt->bindParam(':image_url', $data['image_url']);
         $isReg = $data['is_registration_open'] ?? 1;
         $stmt->bindParam(':is_registration_open', $isReg, PDO::PARAM_INT);
         $isPremium = $data['is_premium'] ?? 0;
         $stmt->bindParam(':is_premium', $isPremium, PDO::PARAM_INT);
+        $isPaid = $data['is_paid'] ?? 0;
+        $stmt->bindParam(':is_paid', $isPaid, PDO::PARAM_INT);
+        $price = $data['price'] ?? 0;
+        $stmt->bindParam(':price', $price);
+        $deadline = $data['registration_deadline'] ?? null;
+        $stmt->bindParam(':registration_deadline', $deadline);
 
         if ($stmt->execute()) {
             Helper::log($this->conn, $userId, $userName, 'CREATE_EVENT', $data['title']);
@@ -176,7 +208,10 @@ class ContentController
                     location = :location, 
                     image_url = :image_url, 
                     is_registration_open = :is_registration_open,
-                    is_premium = :is_premium
+                    is_premium = :is_premium,
+                    is_paid = :is_paid,
+                    price = :price,
+                    registration_deadline = :registration_deadline
                   WHERE id = :id";
 
         $stmt = $this->conn->prepare($query);
@@ -190,6 +225,12 @@ class ContentController
         $stmt->bindParam(':is_registration_open', $isReg, PDO::PARAM_INT);
         $isPremium = $data['is_premium'] ?? 0;
         $stmt->bindParam(':is_premium', $isPremium, PDO::PARAM_INT);
+        $isPaid = $data['is_paid'] ?? 0;
+        $stmt->bindParam(':is_paid', $isPaid, PDO::PARAM_INT);
+        $price = $data['price'] ?? 0;
+        $stmt->bindParam(':price', $price);
+        $deadline = $data['registration_deadline'] ?? null;
+        $stmt->bindParam(':registration_deadline', $deadline);
 
         if ($stmt->execute()) {
             Helper::log($this->conn, $userId, $userName, 'UPDATE_EVENT', $data['title']);
@@ -200,10 +241,10 @@ class ContentController
     }
 
     // --- EVENT PARTICIPATION ---
-    public function joinEvent($eventId, $userId)
+    public function joinEvent($eventId, $userId, $paymentProofUrl = null)
     {
-        // 0. Check Premium Status
-        $stmtEvent = $this->conn->prepare("SELECT is_premium FROM events WHERE id = :eid");
+        // 0. Check Premium & Payment Status
+        $stmtEvent = $this->conn->prepare("SELECT is_premium, is_paid FROM events WHERE id = :eid");
         $stmtEvent->bindParam(':eid', $eventId);
         $stmtEvent->execute();
         $event = $stmtEvent->fetch(PDO::FETCH_ASSOC);
@@ -236,10 +277,17 @@ class ContentController
         if ($check->rowCount() > 0)
             return json_encode(["message" => "Already joined"]);
 
-        $query = "INSERT INTO event_participants (event_id, user_id, registered_at) VALUES (:eid, :uid, NOW())";
+        $paymentStatus = ($event && $event['is_paid'] == 1) ? 'waiting_confirmation' : 'free';
+        $paymentDate = ($paymentProofUrl) ? date('Y-m-d H:i:s') : null;
+
+        $query = "INSERT INTO event_participants (event_id, user_id, payment_status, payment_proof_url, payment_date, registered_at) 
+                  VALUES (:eid, :uid, :payment_status, :payment_proof_url, :payment_date, NOW())";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':eid', $eventId);
         $stmt->bindParam(':uid', $userId);
+        $stmt->bindParam(':payment_status', $paymentStatus);
+        $stmt->bindParam(':payment_proof_url', $paymentProofUrl);
+        $stmt->bindParam(':payment_date', $paymentDate);
 
         if ($stmt->execute()) {
             $stmtTitle = $this->conn->prepare("SELECT title FROM events WHERE id = :eid");
@@ -400,6 +448,56 @@ class ContentController
         }
         http_response_code(500);
         return json_encode(["message" => "Failed to update status"]);
+    }
+
+    public function confirmPayment($eventId, $userId, $adminId)
+    {
+        // Update payment status to confirmed
+        $query = "UPDATE event_participants SET payment_status = 'confirmed' WHERE event_id = :eid AND user_id = :uid";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':eid', $eventId);
+        $stmt->bindParam(':uid', $userId);
+
+        if ($stmt->execute()) {
+            // Also insert into finance transactions
+            $stmtEvent = $this->conn->prepare("SELECT title, price FROM events WHERE id = :eid");
+            $stmtEvent->bindParam(':eid', $eventId);
+            $stmtEvent->execute();
+            $event = $stmtEvent->fetch(PDO::FETCH_ASSOC);
+
+            if ($event && $event['price'] > 0) {
+                $trxId = Helper::uuid();
+                $desc = "Pendaftaran Event: " . $event['title'];
+                
+                $trxQuery = "INSERT INTO finance_transactions (id, type, amount, description, reference_id, reference_type, created_by) 
+                             VALUES (:id, 'income', :amount, :desc, :ref, 'event_registration', :admin)";
+                $trxStmt = $this->conn->prepare($trxQuery);
+                $trxStmt->bindParam(':id', $trxId);
+                $trxStmt->bindParam(':amount', $event['price']);
+                $trxStmt->bindParam(':desc', $desc);
+                $trxStmt->bindParam(':ref', $eventId);
+                $trxStmt->bindParam(':admin', $adminId);
+                $trxStmt->execute();
+            }
+
+            return json_encode(["message" => "Payment confirmed and logged to finance"]);
+        }
+        http_response_code(500);
+        return json_encode(["message" => "Failed to confirm payment"]);
+    }
+
+    public function rejectPayment($eventId, $userId)
+    {
+        $query = "UPDATE event_participants SET payment_status = 'rejected' WHERE event_id = :eid AND user_id = :uid";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':eid', $eventId);
+        $stmt->bindParam(':uid', $userId);
+
+        if ($stmt->execute()) {
+            return json_encode(["message" => "Payment rejected"]);
+        }
+        http_response_code(500);
+        return json_encode(["message" => "Failed to reject payment"]);
     }
 
     public function markSelfAttendance($eventId, $userId)

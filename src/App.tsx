@@ -45,6 +45,7 @@ import { AdminEvents } from './pages/admin/events/AdminEvents';
 import { AdminEventDetail } from './pages/admin/events/AdminEventDetail';
 import { CreateEvent } from './pages/admin/events/CreateEvent';
 import { AdminEventAttendancePrint } from './pages/admin/events/AdminEventAttendancePrint';
+import { AdminFinances } from './pages/admin/finances/AdminFinances';
 import { AdminMembers } from './pages/admin/Members';
 import { AdminGames } from './pages/admin/games/AdminGames';
 import { CreateGame } from './pages/admin/games/CreateGame';
@@ -207,9 +208,12 @@ function App() {
           <Route path="news/edit/:id" element={<CreateNews />} />
 
           <Route path="events" element={<AdminEvents />} />
-          <Route path="events/create" element={<CreateEvent />} />
-          <Route path="events/:id" element={<AdminEventDetail />} />
           <Route path="events/edit/:id" element={<CreateEvent />} />
+          <Route path="events/:id" element={<AdminEventDetail />} />
+          <Route path="events/:id/print-attendance" element={<AdminEventAttendancePrint />} />
+        
+          {/* Finances Route */}
+          <Route path="finances" element={<AdminFinances />} />
 
           <Route path="letters" element={<AdminLetters />} />
           <Route path="letters/create" element={<CreateLetter />} />

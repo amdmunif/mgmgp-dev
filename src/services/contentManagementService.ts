@@ -52,5 +52,9 @@ export const contentManagementService = {
 
     async deleteParticipant(eventId: string, userId: string) {
         return await api.delete(`/events/${eventId}/participants/${userId}`);
+    },
+
+    async updateEventPayment(eventId: string, userId: string, action: 'confirm-payment' | 'reject-payment') {
+        return await api.post(`/events/${eventId}/${action}`, { user_id: userId });
     }
 };

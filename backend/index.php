@@ -108,6 +108,7 @@ include_once './controllers/QuestionController.php';
 include_once './controllers/LetterController.php';
 include_once './controllers/StatsController.php';
 include_once './controllers/TrainingController.php';
+include_once './controllers/FinanceController.php';
 
 // ... includes
 
@@ -164,9 +165,9 @@ if ($resource === 'news') {
             // GET /events/:id/participants
             echo $controller->getEventParticipants($action);
         } elseif ($action) {
-            echo $controller->getEventDetail($action);
+            echo $controller->getEventDetail($action, $userRole === 'Admin');
         } else {
-            echo $controller->getEvents();
+            echo $controller->getEvents($userRole === 'Admin');
         }
     }
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -192,13 +193,29 @@ if ($resource === 'news') {
                 http_response_code(401);
                 echo json_encode(["message" => "Unauthorized"]);
             }
+        } elseif ($action && $subAction === 'confirm-payment') {
+            $targetUserId = $input['user_id'] ?? null;
+            if ($targetUserId && $userRole === 'Admin')
+                echo $controller->confirmPayment($action, $targetUserId, $userId);
+            else {
+                http_response_code(403);
+                echo json_encode(["message" => "Forbidden or missing user_id"]);
+            }
+        } elseif ($action && $subAction === 'reject-payment') {
+            $targetUserId = $input['user_id'] ?? null;
+            if ($targetUserId && $userRole === 'Admin')
+                echo $controller->rejectPayment($action, $targetUserId);
+            else {
+                http_response_code(403);
+                echo json_encode(["message" => "Forbidden or missing user_id"]);
+            }
         } elseif ($action && $subAction === 'participants' && isset($uri_parts[3]) && $uri_parts[3] === 'bulk') {
             // POST /events/:id/participants/bulk
             $userIds = $input['user_ids'] ?? [];
             $status = $input['status'] ?? 'registered';
 
             // Check admin role
-            if ($currUser && $currUser['role'] === 'Admin')
+            if ($userRole === 'Admin')
                 echo $controller->updateParticipantsBulk($action, $userIds, $status);
             else {
                 http_response_code(403);
@@ -651,6 +668,25 @@ if ($resource === 'news') {
         } else {
             http_response_code(404);
             echo json_encode(["message" => "Endpoint not found"]);
+        }
+    }
+} elseif ($resource === 'finances') {
+    $controller = new FinanceController();
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        if ($action === 'summary' && $userRole === 'Admin') {
+            echo $controller->getSummary();
+        } elseif ($action === 'transactions' && $userRole === 'Admin') {
+            echo $controller->getTransactions();
+        } else {
+            http_response_code(403);
+            echo json_encode(["message" => "Forbidden"]);
+        }
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if ($action === 'add' && $userRole === 'Admin') {
+            echo $controller->addTransaction($input, $userId, $userName);
+        } else {
+            http_response_code(403);
+            echo json_encode(["message" => "Forbidden"]);
         }
     }
 } else {

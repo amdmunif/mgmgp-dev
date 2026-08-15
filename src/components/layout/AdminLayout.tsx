@@ -23,6 +23,7 @@ import {
     UserCheck,
     ImageIcon,
     Target,
+    Wallet,
     ListChecks
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
@@ -34,6 +35,7 @@ const menuGroups = [
         title: "Utama",
         items: [
             { icon: LayoutDashboard, label: 'Dashboard', path: '/admin' },
+            { icon: Wallet, label: 'Buku Kas Keuangan', path: '/admin/finances' },
         ]
     },
     {

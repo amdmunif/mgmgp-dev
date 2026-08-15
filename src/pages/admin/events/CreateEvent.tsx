@@ -17,6 +17,11 @@ interface EventForm {
     image_url: string;
     is_registration_open: boolean;
     is_premium: boolean;
+    is_paid: boolean;
+    price: number;
+    bank_name: string;
+    bank_account_number: string;
+    bank_account_holder: string;
 }
 
 export function CreateEvent() {
@@ -57,6 +62,11 @@ export function CreateEvent() {
             setValue('image_url', data.image_url);
             setValue('is_registration_open', Number(data.is_registration_open) === 1);
             setValue('is_premium', Number(data.is_premium) === 1);
+            setValue('is_paid', Number(data.is_paid) === 1);
+            setValue('price', data.price || 0);
+            setValue('bank_name', data.bank_name || '');
+            setValue('bank_account_number', data.bank_account_number || '');
+            setValue('bank_account_holder', data.bank_account_holder || '');
             setDescription(data.description);
             setPreviewUrl(data.image_url);
         } catch (error) {
@@ -104,7 +114,12 @@ export function CreateEvent() {
                 date: fullDate, // Send combined datetime
                 description,
                 is_registration_open: data.is_registration_open ? 1 : 0,
-                is_premium: data.is_premium ? 1 : 0
+                is_premium: data.is_premium ? 1 : 0,
+                is_paid: data.is_paid ? 1 : 0,
+                price: data.price,
+                bank_name: data.bank_name,
+                bank_account_number: data.bank_account_number,
+                bank_account_holder: data.bank_account_holder
             };
 
             if (id) {
@@ -183,6 +198,19 @@ export function CreateEvent() {
                                     </div>
                                 </div>
 
+                                {/* Registration Deadline */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Batas Waktu Pendaftaran (Deadline)</label>
+                                    <div className="relative">
+                                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                        <input
+                                            type="datetime-local"
+                                            {...register('registration_deadline')}
+                                            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        />
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-1">Kosongkan jika pendaftaran dibuka tanpa batas waktu tertentu.</p>
+                                </div>
                                 {/* Location */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Lokasi</label>
@@ -286,7 +314,38 @@ export function CreateEvent() {
                                 <span className="text-amber-600">★</span> Khusus Member Premium
                             </label>
                         </div>
+                        
+                        <div className="flex items-center gap-2 mt-2">
+                            <input
+                                type="checkbox"
+                                id="is_paid"
+                                {...register('is_paid')}
+                                className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                            />
+                            <label htmlFor="is_paid" className="text-sm font-medium text-gray-700 flex items-center gap-1">
+                                <span className="text-green-600">💰</span> Event Berbayar
+                            </label>
+                        </div>
                     </div>
+
+                    {watch('is_paid') && (
+                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-4">
+                            <label className="block text-sm font-medium text-gray-700 mb-2 border-b pb-2">Informasi Harga</label>
+                            
+                            <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">Harga (Rp)</label>
+                                <input
+                                    type="number"
+                                    {...register('price', { valueAsNumber: true, required: 'Harga wajib diisi jika berbayar' })}
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                                    placeholder="Contoh: 50000"
+                                />
+                                {errors.price && <span className="text-xs text-red-500">{errors.price.message}</span>}
+                            </div>
+                            <p className="text-xs text-gray-500 mt-2">Nomor rekening transfer akan otomatis menggunakan rekening utama MGMP yang diatur di menu Pengaturan Web.</p>
+                        </div>
+                    )}
+
 
                     {/* Action Buttons */}
                     <div className="flex flex-col gap-3">

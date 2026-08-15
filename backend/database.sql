@@ -150,8 +150,11 @@ CREATE TABLE `events` (
   `certificate_template` text DEFAULT NULL,
   `is_registration_open` tinyint(1) DEFAULT 1,
   `is_premium` tinyint(1) DEFAULT 0,
+  `is_paid` tinyint(1) DEFAULT 0,
+  `price` decimal(10,2) DEFAULT 0.00,
+  `registration_deadline` datetime DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -161,6 +164,9 @@ CREATE TABLE `event_participants` (
   `is_hadir` tinyint(1) DEFAULT 0,
   `tugas_submitted` tinyint(1) DEFAULT 0,
   `task_url` text DEFAULT NULL,
+  `payment_status` enum('free','pending','waiting_confirmation','confirmed','rejected') DEFAULT 'free',
+  `payment_proof_url` text DEFAULT NULL,
+  `payment_date` timestamp NULL DEFAULT NULL,
   `registered_at` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`event_id`,`user_id`),
   CONSTRAINT `event_participants_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `events` (`id`) ON DELETE CASCADE,
@@ -350,6 +356,19 @@ CREATE TABLE `contributor_applications` (
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`),
   CONSTRAINT `contributor_applications_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE `finance_transactions` (
+  `id` char(36) NOT NULL,
+  `type` enum('income', 'expense') NOT NULL,
+  `amount` decimal(10,2) NOT NULL,
+  `description` text NOT NULL,
+  `reference_id` char(36) DEFAULT NULL,
+  `reference_type` varchar(50) DEFAULT NULL,
+  `transaction_date` timestamp NOT NULL DEFAULT current_timestamp(),
+  `created_by` char(36) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 COMMIT;

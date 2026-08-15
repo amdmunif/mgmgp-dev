@@ -31,6 +31,12 @@ export interface Event {
     image_url: string;
     is_registration_open: boolean | number;
     is_premium: boolean | number;
+    is_paid?: boolean | number;
+    price?: number;
+    registration_deadline?: string;
+    bank_name?: string;
+    bank_account_number?: string;
+    bank_account_holder?: string;
     participants_count?: number;
 }
 
