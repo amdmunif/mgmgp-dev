@@ -252,8 +252,8 @@ class ContentController
     // --- EVENT PARTICIPATION ---
     public function joinEvent($eventId, $userId, $paymentProofUrl = null)
     {
-        // 0. Check Premium & Payment Status
-        $stmtEvent = $this->conn->prepare("SELECT is_premium, is_paid FROM events WHERE id = :eid");
+        // 0. Check Premium & Payment Status & Get Details for Email
+        $stmtEvent = $this->conn->prepare("SELECT is_premium, is_paid, title, date, location FROM events WHERE id = :eid");
         $stmtEvent->bindParam(':eid', $eventId);
         $stmtEvent->execute();
         $event = $stmtEvent->fetch(PDO::FETCH_ASSOC);
