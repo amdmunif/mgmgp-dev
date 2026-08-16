@@ -8,7 +8,7 @@ import type { Event as EventType } from '../../services/eventService';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { toast } from 'react-hot-toast';
-import { getFileUrl } from '../../lib/api';
+import { api, getFileUrl } from '../../lib/api';
 
 export function MemberEventDetail() {
     const { id: eventId } = useParams();
