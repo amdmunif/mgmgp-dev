@@ -4,6 +4,7 @@ import { Button } from '../../components/ui/button';
 import { Calendar, MapPin, ArrowLeft, Loader2, Share2, CheckCircle, Lock, Crown, Clock, CalendarDays, ExternalLink, UploadCloud, Banknote } from 'lucide-react';
 import { eventService } from '../../services/eventService';
 import { authService } from '../../services/authService';
+import { settingsService, type BankAccount } from '../../services/settingsService';
 import type { Event as EventType } from '../../services/eventService';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
@@ -21,6 +22,7 @@ export function MemberEventDetail() {
     const [isPremium, setIsPremium] = useState(false);
     const [participationStatus, setParticipationStatus] = useState<string | null>(null);
     const [participationData, setParticipationData] = useState<any>(null);
+    const [globalBanks, setGlobalBanks] = useState<BankAccount[]>([]);
 
     useEffect(() => {
         if (setPageHeader) {
@@ -49,6 +51,16 @@ export function MemberEventDetail() {
             // Get Event Detail
             const eventData = await eventService.getEventById(eventId);
             setEvent(eventData);
+
+            // Fetch global banks if event is paid
+            if (Number(eventData.is_paid) === 1) {
+                try {
+                    const banks = await settingsService.getBankAccounts(true);
+                    setGlobalBanks(banks);
+                } catch (e) {
+                    console.error("Failed to load global banks", e);
+                }
+            }
 
             // Get Participation Status
             const participation = await eventService.getParticipation(eventId);
@@ -149,17 +161,17 @@ export function MemberEventDetail() {
 
     return (
         <div className="max-w-full px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in duration-500">
-            {/* Breadcrumb / Back Navigation */}
-            <div className="mb-6">
-                <Link to="/member/events" className="inline-flex items-center text-gray-500 hover:text-primary-600 transition-colors font-medium">
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Kembali ke Agenda Kegiatan
-                </Link>
-            </div>
-
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Main Content Column */}
-                <div className="lg:col-span-2 space-y-8">
+                <div className="lg:col-span-2 space-y-6">
+                    {/* Breadcrumb / Back Navigation */}
+                    <div>
+                        <Link to="/member/events" className="inline-flex items-center text-gray-500 hover:text-primary-600 transition-colors font-medium">
+                            <ArrowLeft className="w-4 h-4 mr-2" />
+                            Kembali ke Agenda Kegiatan
+                        </Link>
+                    </div>
+
                     {/* Header Image & Title */}
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                         <div className="relative aspect-video w-full bg-gray-100">
@@ -275,21 +287,41 @@ export function MemberEventDetail() {
                                                         <span>Biaya</span>
                                                         <span className="font-bold">Rp {parseInt(event.price?.toString() || '0').toLocaleString('id-ID')}</span>
                                                     </div>
-                                                    <div className="flex justify-between border-b border-blue-100 pb-2">
-                                                        <span>Bank</span>
-                                                        <span className="font-bold">{event.bank_name}</span>
-                                                    </div>
-                                                    <div className="flex justify-between border-b border-blue-100 pb-2">
-                                                        <span>No. Rekening</span>
-                                                        <span className="font-bold">{event.bank_account_number}</span>
-                                                    </div>
-                                                    <div className="flex justify-between pb-2">
-                                                        <span>Atas Nama</span>
-                                                        <span className="font-bold">{event.bank_account_holder}</span>
-                                                    </div>
+                                                    
+                                                    {event.bank_name ? (
+                                                        <>
+                                                            <div className="flex justify-between border-b border-blue-100 pb-2">
+                                                                <span>Bank</span>
+                                                                <span className="font-bold">{event.bank_name}</span>
+                                                            </div>
+                                                            <div className="flex justify-between border-b border-blue-100 pb-2">
+                                                                <span>No. Rekening</span>
+                                                                <span className="font-bold">{event.bank_account_number}</span>
+                                                            </div>
+                                                            <div className="flex justify-between pb-2 border-b border-blue-100">
+                                                                <span>Atas Nama</span>
+                                                                <span className="font-bold">{event.bank_account_holder}</span>
+                                                            </div>
+                                                        </>
+                                                    ) : globalBanks.length > 0 ? (
+                                                        <div className="border-b border-blue-100 pb-2">
+                                                            <span className="block mb-2 font-semibold">Tujuan Transfer:</span>
+                                                            {globalBanks.map((bank, idx) => (
+                                                                <div key={idx} className="bg-white/60 p-2 rounded mb-2 border border-blue-100/50">
+                                                                    <div className="font-bold">{bank.bank_name}</div>
+                                                                    <div className="font-mono text-sm">{bank.account_number}</div>
+                                                                    <div className="text-xs">a.n. {bank.account_holder}</div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-sm italic text-gray-500 py-2">
+                                                            Menunggu informasi rekening dari Admin...
+                                                        </div>
+                                                    )}
                                                 </div>
 
-                                                {participationData.payment_status === 'pending' || participationData.payment_status === 'rejected' || participationData.payment_status === 'free' ? (
+                                                {participationData.payment_status === 'pending' || participationData.payment_status === 'rejected' || participationData.payment_status === 'free' || participationData.payment_status === 'waiting_confirmation' ? (
                                                     <div>
                                                         {participationData.payment_status === 'rejected' && (
                                                             <div className="bg-red-50 text-red-600 p-2 rounded text-xs mb-3 text-center border border-red-100">
@@ -310,14 +342,17 @@ export function MemberEventDetail() {
                                                         >
                                                             {uploadingProof ? (
                                                                 <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Mengunggah...</>
+                                                            ) : participationData.payment_status === 'waiting_confirmation' ? (
+                                                                <><UploadCloud className="w-4 h-4 mr-2" /> Unggah Ulang Bukti Bayar</>
                                                             ) : (
                                                                 <><UploadCloud className="w-4 h-4 mr-2" /> Unggah Bukti Bayar</>
                                                             )}
                                                         </Button>
-                                                    </div>
-                                                ) : participationData.payment_status === 'waiting_confirmation' ? (
-                                                    <div className="text-center p-3 bg-amber-50 text-amber-700 rounded-lg text-sm font-medium border border-amber-200">
-                                                        <Clock className="w-4 h-4 inline-block mr-1 mb-0.5" /> Menunggu Konfirmasi Admin
+                                                        {participationData.payment_status === 'waiting_confirmation' && (
+                                                            <div className="text-center mt-3 text-amber-700 text-xs font-medium bg-amber-50 p-2 rounded border border-amber-200">
+                                                                <Clock className="w-3 h-3 inline-block mr-1 mb-0.5" /> Menunggu Konfirmasi Admin
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 ) : null}
                                             </div>
