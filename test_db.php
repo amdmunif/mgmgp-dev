@@ -1,8 +1,6 @@
 <?php
-require_once 'backend/config/Database.php';
+include_once 'backend/config/Database.php';
 $db = new Database();
 $conn = $db->getConnection();
-$stmt = $conn->query("SHOW COLUMNS FROM users");
-while($row = $stmt->fetch()) {
-    echo $row['Field'] . " - " . $row['Type'] . "\n";
-}
+$stmt = $conn->query("SHOW COLUMNS FROM event_participants");
+print_r($stmt->fetchAll(PDO::FETCH_ASSOC));

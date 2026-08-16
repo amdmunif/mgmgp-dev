@@ -286,7 +286,11 @@ class ContentController
         if ($check->rowCount() > 0)
             return json_encode(["message" => "Already joined"]);
 
-        $paymentStatus = ($event && $event['is_paid'] == 1) ? 'waiting_confirmation' : 'free';
+        if ($event && $event['is_paid'] == 1) {
+            $paymentStatus = $paymentProofUrl ? 'waiting_confirmation' : 'pending';
+        } else {
+            $paymentStatus = 'free';
+        }
         $paymentDate = ($paymentProofUrl) ? date('Y-m-d H:i:s') : null;
 
         $query = "INSERT INTO event_participants (event_id, user_id, payment_status, payment_proof_url, payment_date, registered_at) 
@@ -322,6 +326,35 @@ class ContentController
         }
         http_response_code(500);
         return json_encode(["message" => "Failed to join"]);
+    }
+
+    public function uploadEventPaymentProof($eventId, $userId, $proofUrl)
+    {
+        $query = "UPDATE event_participants SET payment_proof_url = :proofUrl, payment_status = 'waiting_confirmation', payment_date = NOW() WHERE event_id = :eid AND user_id = :uid";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':proofUrl', $proofUrl);
+        $stmt->bindParam(':eid', $eventId);
+        $stmt->bindParam(':uid', $userId);
+        
+        if ($stmt->execute()) {
+            $stmtEvent = $this->conn->prepare("SELECT title FROM events WHERE id = :eid");
+            $stmtEvent->bindParam(':eid', $eventId);
+            $stmtEvent->execute();
+            $eventTitle = $stmtEvent->fetchColumn();
+
+            $stmtUser = $this->conn->prepare("SELECT u.email, p.nama FROM users u JOIN profiles p ON u.id = p.id WHERE u.id = :uid");
+            $stmtUser->bindParam(':uid', $userId);
+            $stmtUser->execute();
+            $userData = $stmtUser->fetch(PDO::FETCH_ASSOC);
+
+            if ($userData && $eventTitle) {
+                Mailer::sendEventPaymentProofUploaded($userData['email'], $userData['nama'], $eventTitle);
+            }
+            return json_encode(["message" => "Payment proof uploaded successfully"]);
+        }
+        
+        http_response_code(500);
+        return json_encode(["message" => "Failed to upload payment proof"]);
     }
 
     public function getParticipation($eventId, $userId)

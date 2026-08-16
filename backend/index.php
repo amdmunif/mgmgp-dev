@@ -193,6 +193,14 @@ if ($resource === 'news') {
                 http_response_code(401);
                 echo json_encode(["message" => "Unauthorized"]);
             }
+        } elseif ($action && $subAction === 'upload-payment') {
+            $proofUrl = $input['proof_url'] ?? '';
+            if ($userId)
+                echo $controller->uploadEventPaymentProof($action, $userId, $proofUrl);
+            else {
+                http_response_code(401);
+                echo json_encode(["message" => "Unauthorized"]);
+            }
         } elseif ($action && $subAction === 'submit-task') {
             $taskUrl = $input['task_url'] ?? '';
             if ($userId)

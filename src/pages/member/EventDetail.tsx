@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useOutletContext, Link } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
-import { Calendar, MapPin, ArrowLeft, Loader2, Share2, CheckCircle, Lock, Crown, Clock, CalendarDays, ExternalLink } from 'lucide-react';
+import { Calendar, MapPin, ArrowLeft, Loader2, Share2, CheckCircle, Lock, Crown, Clock, CalendarDays, ExternalLink, UploadCloud, Banknote } from 'lucide-react';
 import { eventService } from '../../services/eventService';
 import { authService } from '../../services/authService';
 import type { Event as EventType } from '../../services/eventService';
@@ -20,6 +20,7 @@ export function MemberEventDetail() {
     const [processing, setProcessing] = useState(false);
     const [isPremium, setIsPremium] = useState(false);
     const [participationStatus, setParticipationStatus] = useState<string | null>(null);
+    const [participationData, setParticipationData] = useState<any>(null);
 
     useEffect(() => {
         if (setPageHeader) {
@@ -52,6 +53,7 @@ export function MemberEventDetail() {
             // Get Participation Status
             const participation = await eventService.getParticipation(eventId);
             if (participation) {
+                setParticipationData(participation);
                 setParticipationStatus(participation.is_hadir ? 'attended' : 'registered');
             }
         } catch (error) {
@@ -77,6 +79,32 @@ export function MemberEventDetail() {
             setProcessing(false);
         }
     }
+
+    const [uploadingProof, setUploadingProof] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleUploadProof = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !eventId) return;
+
+        setUploadingProof(true);
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            const res = await api.post<{ url: string }>('/upload', formData);
+            if (res.url) {
+                await eventService.uploadPaymentProof(eventId, res.url);
+                toast.success('Bukti pembayaran berhasil diunggah');
+                loadData();
+            }
+        } catch (error) {
+            console.error('Failed to upload proof', error);
+            toast.error('Gagal mengunggah bukti pembayaran');
+        } finally {
+            setUploadingProof(false);
+        }
+    };
 
     const handleShare = () => {
         navigator.clipboard.writeText(window.location.href);
@@ -120,7 +148,7 @@ export function MemberEventDetail() {
     };
 
     return (
-        <div className="max-w-6xl mx-auto px-4 py-8 animate-in fade-in duration-500">
+        <div className="max-w-full px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in duration-500">
             {/* Breadcrumb / Back Navigation */}
             <div className="mb-6">
                 <Link to="/member/events" className="inline-flex items-center text-gray-500 hover:text-primary-600 transition-colors font-medium">
@@ -226,14 +254,74 @@ export function MemberEventDetail() {
                                 <p className="text-sm text-gray-500 mb-6">Amankan kursi Anda sekarang.</p>
 
                                 {participationStatus === 'registered' || participationStatus === 'attended' ? (
-                                    <div className="text-center py-6 bg-green-50 rounded-xl border border-green-100 mb-4">
-                                        <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-3">
-                                            <CheckCircle className="w-6 h-6" />
+                                    <div className="space-y-4 mb-4">
+                                        <div className="text-center py-6 bg-green-50 rounded-xl border border-green-100">
+                                            <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                                                <CheckCircle className="w-6 h-6" />
+                                            </div>
+                                            <h4 className="font-bold text-green-800">Anda Sudah Terdaftar!</h4>
+                                            <p className="text-xs text-green-600 mt-1 px-4">
+                                                Silakan hadir tepat waktu sesuai jadwal yang ditentukan.
+                                            </p>
                                         </div>
-                                        <h4 className="font-bold text-green-800">Anda Sudah Terdaftar!</h4>
-                                        <p className="text-xs text-green-600 mt-1 px-4">
-                                            Silakan hadir tepat waktu sesuai jadwal yang ditentukan.
-                                        </p>
+                                        
+                                        {event.is_paid == 1 && participationData && participationData.payment_status !== 'confirmed' && (
+                                            <div className="bg-blue-50 border border-blue-100 rounded-xl p-5">
+                                                <h4 className="font-bold text-blue-900 flex items-center gap-2 mb-3 text-sm">
+                                                    <Banknote className="w-4 h-4" /> Informasi Pembayaran
+                                                </h4>
+                                                <div className="space-y-3 mb-4 text-sm text-blue-800">
+                                                    <div className="flex justify-between border-b border-blue-100 pb-2">
+                                                        <span>Biaya</span>
+                                                        <span className="font-bold">Rp {parseInt(event.price?.toString() || '0').toLocaleString('id-ID')}</span>
+                                                    </div>
+                                                    <div className="flex justify-between border-b border-blue-100 pb-2">
+                                                        <span>Bank</span>
+                                                        <span className="font-bold">{event.bank_name}</span>
+                                                    </div>
+                                                    <div className="flex justify-between border-b border-blue-100 pb-2">
+                                                        <span>No. Rekening</span>
+                                                        <span className="font-bold">{event.bank_account_number}</span>
+                                                    </div>
+                                                    <div className="flex justify-between pb-2">
+                                                        <span>Atas Nama</span>
+                                                        <span className="font-bold">{event.bank_account_holder}</span>
+                                                    </div>
+                                                </div>
+
+                                                {participationData.payment_status === 'pending' || participationData.payment_status === 'rejected' || participationData.payment_status === 'free' ? (
+                                                    <div>
+                                                        {participationData.payment_status === 'rejected' && (
+                                                            <div className="bg-red-50 text-red-600 p-2 rounded text-xs mb-3 text-center border border-red-100">
+                                                                Bukti pembayaran ditolak. Silakan unggah ulang.
+                                                            </div>
+                                                        )}
+                                                        <input 
+                                                            type="file" 
+                                                            className="hidden" 
+                                                            ref={fileInputRef} 
+                                                            accept="image/*"
+                                                            onChange={handleUploadProof}
+                                                        />
+                                                        <Button 
+                                                            onClick={() => fileInputRef.current?.click()} 
+                                                            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                                                            disabled={uploadingProof}
+                                                        >
+                                                            {uploadingProof ? (
+                                                                <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Mengunggah...</>
+                                                            ) : (
+                                                                <><UploadCloud className="w-4 h-4 mr-2" /> Unggah Bukti Bayar</>
+                                                            )}
+                                                        </Button>
+                                                    </div>
+                                                ) : participationData.payment_status === 'waiting_confirmation' ? (
+                                                    <div className="text-center p-3 bg-amber-50 text-amber-700 rounded-lg text-sm font-medium border border-amber-200">
+                                                        <Clock className="w-4 h-4 inline-block mr-1 mb-0.5" /> Menunggu Konfirmasi Admin
+                                                    </div>
+                                                ) : null}
+                                            </div>
+                                        )}
                                     </div>
                                 ) : (
                                     <div className="space-y-4">

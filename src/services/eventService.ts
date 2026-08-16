@@ -15,6 +15,11 @@ export interface Event {
     registration_deadline?: string;
     created_at: string;
     is_premium: boolean | number;
+    is_paid?: boolean | number;
+    price?: number;
+    bank_name?: string;
+    bank_account_number?: string;
+    bank_account_holder?: string;
 }
 
 export interface EventParticipant {
@@ -26,6 +31,9 @@ export interface EventParticipant {
     is_hadir?: boolean;
     tugas_submitted?: boolean;
     task_url?: string;
+    payment_status?: 'free' | 'pending' | 'waiting_confirmation' | 'confirmed' | 'rejected';
+    payment_proof_url?: string;
+    payment_date?: string;
     registered_at: string;
     events?: {
         title: string;
@@ -70,5 +78,10 @@ export const eventService = {
     // Mark self attendance
     async markAttendance(eventId: string) {
         return await api.post(`/events/${eventId}/attendance`, {});
+    },
+
+    // Upload payment proof
+    async uploadPaymentProof(eventId: string, proofUrl: string) {
+        return await api.post(`/events/${eventId}/upload-payment`, { proof_url: proofUrl });
     }
 };
