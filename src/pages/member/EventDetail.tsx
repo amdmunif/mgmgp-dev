@@ -109,7 +109,9 @@ export function MemberEventDetail() {
             if (res.url) {
                 await eventService.uploadPaymentProof(eventId, res.url);
                 toast.success('Bukti pembayaran berhasil diunggah');
-                loadData();
+                if (participationData) {
+                    setParticipationData({ ...participationData, payment_status: 'waiting_confirmation' });
+                }
             }
         } catch (error) {
             console.error('Failed to upload proof', error);
@@ -329,29 +331,32 @@ export function MemberEventDetail() {
                                                                 Bukti pembayaran ditolak. Silakan unggah ulang.
                                                             </div>
                                                         )}
-                                                        <input 
-                                                            type="file" 
-                                                            className="hidden" 
-                                                            ref={fileInputRef} 
-                                                            accept="image/*"
-                                                            onChange={handleUploadProof}
-                                                        />
-                                                        <Button 
-                                                            onClick={() => fileInputRef.current?.click()} 
-                                                            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                                                            disabled={uploadingProof}
-                                                        >
-                                                            {uploadingProof ? (
-                                                                <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Mengunggah...</>
-                                                            ) : participationData.payment_status === 'waiting_confirmation' ? (
-                                                                <><UploadCloud className="w-4 h-4 mr-2" /> Unggah Ulang Bukti Bayar</>
-                                                            ) : (
-                                                                <><UploadCloud className="w-4 h-4 mr-2" /> Unggah Bukti Bayar</>
-                                                            )}
-                                                        </Button>
-                                                        {participationData.payment_status === 'waiting_confirmation' && (
-                                                            <div className="text-center mt-3 text-amber-700 text-xs font-medium bg-amber-50 p-2 rounded border border-amber-200">
-                                                                <Clock className="w-3 h-3 inline-block mr-1 mb-0.5" /> Menunggu Konfirmasi Admin
+                                                        {participationData.payment_status !== 'waiting_confirmation' ? (
+                                                            <>
+                                                                <input 
+                                                                    type="file" 
+                                                                    className="hidden" 
+                                                                    ref={fileInputRef} 
+                                                                    accept="image/*"
+                                                                    onChange={handleUploadProof}
+                                                                />
+                                                                <Button 
+                                                                    onClick={() => fileInputRef.current?.click()} 
+                                                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                                                                    disabled={uploadingProof}
+                                                                >
+                                                                    {uploadingProof ? (
+                                                                        <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Mengunggah...</>
+                                                                    ) : (
+                                                                        <><UploadCloud className="w-4 h-4 mr-2" /> Unggah Bukti Bayar</>
+                                                                    )}
+                                                                </Button>
+                                                            </>
+                                                        ) : (
+                                                            <div className="text-center mt-3 text-amber-700 text-sm font-medium bg-amber-50 p-3 rounded-lg border border-amber-200">
+                                                                <Clock className="w-5 h-5 mx-auto mb-1 text-amber-600" /> 
+                                                                <div>Bukti Sedang Diverifikasi</div>
+                                                                <div className="text-xs font-normal mt-1 opacity-80">Harap tunggu Admin mengonfirmasi pembayaran Anda.</div>
                                                             </div>
                                                         )}
                                                     </div>
