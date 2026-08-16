@@ -84,6 +84,7 @@ export function MemberEventDetail() {
         try {
             await eventService.joinEvent(eventId);
             setParticipationStatus('registered');
+            await loadData(); // Reload data to fetch participationData for payment UI
             toast.success('Berhasil mendaftar! Silakan cek email Anda untuk detail lebih lanjut.');
         } catch (error: any) {
             toast.error('Gagal mendaftar: ' + error.message);
