@@ -288,7 +288,18 @@ export function MemberEventDetail() {
                                                         <span className="font-bold">Rp {parseInt(event.price?.toString() || '0').toLocaleString('id-ID')}</span>
                                                     </div>
                                                     
-                                                    {event.bank_name ? (
+                                                    {globalBanks.length > 0 ? (
+                                                        <div className="border-b border-blue-100 pb-2">
+                                                            <span className="block mb-2 font-semibold">Tujuan Transfer:</span>
+                                                            {globalBanks.map((bank, idx) => (
+                                                                <div key={idx} className="bg-white/60 p-2 rounded mb-2 border border-blue-100/50">
+                                                                    <div className="font-bold">{bank.bank_name}</div>
+                                                                    <div className="font-mono text-sm">{bank.account_number}</div>
+                                                                    <div className="text-xs">a.n. {bank.account_holder}</div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    ) : event.bank_name ? (
                                                         <>
                                                             <div className="flex justify-between border-b border-blue-100 pb-2">
                                                                 <span>Bank</span>
@@ -303,17 +314,6 @@ export function MemberEventDetail() {
                                                                 <span className="font-bold">{event.bank_account_holder}</span>
                                                             </div>
                                                         </>
-                                                    ) : globalBanks.length > 0 ? (
-                                                        <div className="border-b border-blue-100 pb-2">
-                                                            <span className="block mb-2 font-semibold">Tujuan Transfer:</span>
-                                                            {globalBanks.map((bank, idx) => (
-                                                                <div key={idx} className="bg-white/60 p-2 rounded mb-2 border border-blue-100/50">
-                                                                    <div className="font-bold">{bank.bank_name}</div>
-                                                                    <div className="font-mono text-sm">{bank.account_number}</div>
-                                                                    <div className="text-xs">a.n. {bank.account_holder}</div>
-                                                                </div>
-                                                            ))}
-                                                        </div>
                                                     ) : (
                                                         <div className="text-sm italic text-gray-500 py-2">
                                                             Menunggu informasi rekening dari Admin...
@@ -391,7 +391,11 @@ export function MemberEventDetail() {
                                             <>
                                                 <div className="flex items-center justify-between text-sm py-2 border-b border-gray-100">
                                                     <span className="text-gray-500">Biaya Pendaftaran</span>
-                                                    <span className="font-bold text-green-600">Gratis</span>
+                                                    {event.is_paid == 1 ? (
+                                                        <span className="font-bold text-blue-600">Rp {parseInt(event.price?.toString() || '0').toLocaleString('id-ID')}</span>
+                                                    ) : (
+                                                        <span className="font-bold text-green-600">Gratis</span>
+                                                    )}
                                                 </div>
                                                 <div className="flex items-center justify-between text-sm py-2 border-b border-gray-100 mb-2">
                                                     <span className="text-gray-500">Kuota Tersedia</span>

@@ -315,9 +315,9 @@ class ContentController
             $userData = $stmtUser->fetch(PDO::FETCH_ASSOC);
 
             if ($userData) {
-                Mailer::sendEventRegistration($userData['email'], $userData['nama'], $eventTitle);
+                Mailer::sendEventRegistration($userData['email'], $userData['nama'], $event['title'], $event);
                 if ($paymentProofUrl) {
-                    Mailer::sendEventPaymentProofUploaded($userData['email'], $userData['nama'], $eventTitle);
+                    Mailer::sendEventPaymentProofUploaded($userData['email'], $userData['nama'], $event['title']);
                 }
             }
 
@@ -497,6 +497,25 @@ class ContentController
 
     public function confirmPayment($eventId, $userId, $adminId)
     {
+        // First check if it's already confirmed
+        $check = $this->conn->prepare("SELECT payment_status FROM event_participants WHERE event_id = :eid AND user_id = :uid");
+        $check->execute([':eid' => $eventId, ':uid' => $userId]);
+        $participant = $check->fetch(PDO::FETCH_ASSOC);
+
+        if (!$participant) {
+            http_response_code(404);
+            return json_encode(["message" => "Participant not found"]);
+        }
+
+        if ($participant['payment_status'] === 'confirmed') {
+            return json_encode(["message" => "Payment already confirmed"]);
+        }
+
+        // Fetch user data and event data
+        $stmtUser = $this->conn->prepare("SELECT u.email, p.nama, e.title as event_title, e.price FROM users u JOIN profiles p ON u.id = p.id JOIN events e ON e.id = :eid WHERE u.id = :uid");
+        $stmtUser->execute([':uid' => $userId, ':eid' => $eventId]);
+        $userData = $stmtUser->fetch(PDO::FETCH_ASSOC);
+
         // Update payment status to confirmed
         $query = "UPDATE event_participants SET payment_status = 'confirmed' WHERE event_id = :eid AND user_id = :uid";
         $stmt = $this->conn->prepare($query);
@@ -504,21 +523,15 @@ class ContentController
         $stmt->bindParam(':uid', $userId);
 
         if ($stmt->execute()) {
-            // Also insert into finance transactions
-            $stmtEvent = $this->conn->prepare("SELECT title, price FROM events WHERE id = :eid");
-            $stmtEvent->bindParam(':eid', $eventId);
-            $stmtEvent->execute();
-            $event = $stmtEvent->fetch(PDO::FETCH_ASSOC);
-
-            if ($event && $event['price'] > 0) {
+            if ($userData && $userData['price'] > 0) {
                 $trxId = Helper::uuid();
-                $desc = "Pendaftaran Event: " . $event['title'];
+                $desc = "Pendaftaran Event: " . $userData['event_title'] . " (a.n. " . $userData['nama'] . ")";
                 
                 $trxQuery = "INSERT INTO finance_transactions (id, type, amount, description, reference_id, reference_type, created_by) 
                              VALUES (:id, 'income', :amount, :desc, :ref, 'event_registration', :admin)";
                 $trxStmt = $this->conn->prepare($trxQuery);
                 $trxStmt->bindParam(':id', $trxId);
-                $trxStmt->bindParam(':amount', $event['price']);
+                $trxStmt->bindParam(':amount', $userData['price']);
                 $trxStmt->bindParam(':desc', $desc);
                 $trxStmt->bindParam(':ref', $eventId);
                 $trxStmt->bindParam(':admin', $adminId);
@@ -526,11 +539,6 @@ class ContentController
             }
 
             // Send confirmation email
-            $stmtUser = $this->conn->prepare("SELECT u.email, p.nama, e.title as event_title FROM users u JOIN profiles p ON u.id = p.id JOIN events e ON e.id = :eid WHERE u.id = :uid");
-            $stmtUser->bindParam(':uid', $userId);
-            $stmtUser->bindParam(':eid', $eventId);
-            $stmtUser->execute();
-            $userData = $stmtUser->fetch(PDO::FETCH_ASSOC);
             if ($userData && $userData['email']) {
                 Mailer::sendEventPaymentConfirmed($userData['email'], $userData['nama'], $userData['event_title']);
             }

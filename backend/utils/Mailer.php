@@ -272,12 +272,29 @@ class Mailer
         return self::sendHtmlEmail($email, "Kehadiran Berhasil Dikonfirmasi - MGMP Informatika", $html);
     }
 
-    public static function sendEventRegistration($email, $nama, $eventName)
+    public static function sendEventRegistration($email, $nama, $eventName, $eventDetails = null)
     {
         $title = "Pendaftaran Event Berhasil";
+        
+        $detailsHtml = "";
+        if ($eventDetails) {
+            $date = isset($eventDetails['date']) ? date('d M Y, H:i', strtotime($eventDetails['date'])) : '-';
+            $location = $eventDetails['location'] ?? '-';
+            
+            $detailsHtml = "
+            <div style='background-color: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0;'>
+                <h4 style='margin-top: 0; color: #334155; margin-bottom: 10px;'>Detail Acara:</h4>
+                <ul style='margin: 0; padding-left: 20px; color: #475569;'>
+                    <li><strong>Waktu:</strong> {$date}</li>
+                    <li><strong>Lokasi:</strong> {$location}</li>
+                </ul>
+            </div>";
+        }
+
         $body = "
             <h2 style='color: #1e293b; margin-top: 0;'>Halo, {$nama},</h2>
             <p>Terima kasih telah mendaftar! Anda telah berhasil terdaftar pada acara <strong>{$eventName}</strong>.</p>
+            {$detailsHtml}
             <p>Jika acara ini berbayar, silakan lanjutkan dengan mengunggah bukti pembayaran di halaman detail acara. Jika gratis, Anda bisa mengabaikan pesan ini.</p>
             <p>Jangan lupa untuk mencatat jadwal acara dan mempersiapkan diri dengan baik.</p>
             <p>Salam hangat,<br><strong>Tim Admin MGMP Informatika</strong></p>
