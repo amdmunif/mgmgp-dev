@@ -194,7 +194,7 @@ export function AdminFinances() {
     return (
         <div className="space-y-6">
             {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 print:hidden">
                 <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm relative overflow-hidden">
                     <div className="absolute -right-4 -top-4 bg-blue-50 w-24 h-24 rounded-full opacity-50"></div>
                     <div className="flex items-center gap-4 relative z-10">

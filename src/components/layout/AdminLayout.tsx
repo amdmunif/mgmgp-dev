@@ -231,7 +231,7 @@ export function AdminLayout() {
 
             {/* Sidebar */}
             <aside className={cn(
-                "fixed lg:static inset-y-0 left-0 z-50 w-72 bg-slate-900 text-white transition-all duration-300 ease-in-out transform flex flex-col shadow-2xl h-screen overflow-hidden",
+                "fixed lg:static inset-y-0 left-0 z-50 w-72 bg-slate-900 text-white transition-all duration-300 ease-in-out transform flex flex-col shadow-2xl h-screen overflow-hidden print:hidden",
                 isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
             )}>
                 {/* Sidebar Header */}
@@ -357,7 +357,7 @@ export function AdminLayout() {
             {/* Main Content Area */}
             <main className="flex-1 flex flex-col h-screen overflow-hidden bg-gray-50/30 relative">
                 {/* Top Desktop Header */}
-                <header className="h-20 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center justify-between px-8 shadow-sm z-40">
+                <header className="h-20 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center justify-between px-8 shadow-sm z-40 print:hidden">
                     <div className="flex items-center gap-4 flex-1">
                         <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors">
                             <Menu className="w-6 h-6" />
