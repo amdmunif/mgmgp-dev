@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate, useOutletContext } from 'react-router-dom';
 import {
     BookOpen, Gamepad2, Terminal, Crown,
-    ArrowRight, Lock, LayoutDashboard, Calendar
+    ArrowRight, Lock, LayoutDashboard, Calendar, Eye, X
 } from 'lucide-react';
 import { authService } from '../../services/authService';
 import { statsService } from '../../services/statsService';
+import { premiumService } from '../../services/premiumService';
+import { settingsService } from '../../services/settingsService';
 import { Button } from '../../components/ui/button';
 
 export function MemberDashboard() {
@@ -20,6 +22,12 @@ export function MemberDashboard() {
         events: 0,
         premium: 0
     });
+    
+    // Premium Detail States
+    const [showPremiumDetail, setShowPremiumDetail] = useState(false);
+    const [latestRequest, setLatestRequest] = useState<any>(null);
+    const [premiumPrice, setPremiumPrice] = useState<string>('0');
+    const [adminBanks, setAdminBanks] = useState<any[]>([]);
 
     useEffect(() => {
         setPageHeader({
@@ -46,6 +54,22 @@ export function MemberDashboard() {
                 const userWithPremium = currentUser as any;
                 const isPremiumActive = userWithPremium?.premium_until && new Date(userWithPremium.premium_until) > new Date();
                 setIsPremium(!!isPremiumActive);
+
+                // Load Premium Info if active
+                if (isPremiumActive) {
+                    try {
+                        const [req, settings, banks] = await Promise.all([
+                            premiumService.getMyLatestRequest(),
+                            settingsService.getSettings(),
+                            settingsService.getBankAccounts(true)
+                        ]);
+                        setLatestRequest(req);
+                        setPremiumPrice(settings?.premium_price?.toString() || '0');
+                        setAdminBanks(banks || []);
+                    } catch (e) {
+                        console.error("Failed to load premium details", e);
+                    }
+                }
 
                 // Load Events
                 import('../../services/eventService').then(async m => {
@@ -217,7 +241,7 @@ export function MemberDashboard() {
 
             {/* Premium Status Banner (Moved to Bottom) */}
             {isPremium ? (
-                <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-2xl p-8 text-white relative overflow-hidden">
+                <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-2xl p-8 text-white relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
                     <div className="flex items-center gap-4 relative z-10">
                         <div className="p-3 bg-yellow-400/20 rounded-xl">
                             <Crown className="w-8 h-8 text-yellow-400" />
@@ -226,6 +250,11 @@ export function MemberDashboard() {
                             <h3 className="text-xl font-bold">Status Premium Aktif</h3>
                             <p className="text-gray-300">Terima kasih telah menjadi bagian dari komunitas premium kami.</p>
                         </div>
+                    </div>
+                    <div className="relative z-10">
+                        <Button onClick={() => setShowPremiumDetail(true)} variant="outline" className="bg-white/10 text-white border-white/20 hover:bg-white/20">
+                            <Eye className="w-4 h-4 mr-2" /> Detail Member
+                        </Button>
                     </div>
                 </div>
             ) : (
@@ -273,6 +302,71 @@ export function MemberDashboard() {
                     </div>
                 </div>
             )}
+
+            {/* Modal Detail Member Premium */}
+            {showPremiumDetail && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden relative">
+                        <div className="p-6 bg-gradient-to-br from-yellow-400 to-yellow-600 text-white relative">
+                            <button onClick={() => setShowPremiumDetail(false)} className="absolute top-4 right-4 p-1 rounded-full hover:bg-white/20 transition-colors">
+                                <X className="w-5 h-5 text-white" />
+                            </button>
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className="p-2 bg-white/20 rounded-full">
+                                    <Crown className="w-6 h-6 text-white" />
+                                </div>
+                                <h3 className="text-xl font-bold">Detail Premium</h3>
+                            </div>
+                            <p className="text-yellow-50 opacity-90 text-sm">Informasi langganan akun Anda</p>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div>
+                                <label className="text-xs text-gray-500 font-bold uppercase mb-1 block">Mulai Berlangganan</label>
+                                <p className="text-gray-900 font-medium">
+                                    {latestRequest?.created_at ? new Date(latestRequest.created_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Tidak tersedia'}
+                                </p>
+                            </div>
+                            <div>
+                                <label className="text-xs text-gray-500 font-bold uppercase mb-1 block">Berakhir Pada</label>
+                                <p className="text-gray-900 font-medium">
+                                    {profile?.premium_until ? new Date(profile.premium_until).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Tidak tersedia'}
+                                </p>
+                            </div>
+                            <div className="h-px bg-gray-100 my-2"></div>
+                            <div>
+                                <label className="text-xs text-gray-500 font-bold uppercase mb-1 block">Biaya Transfer</label>
+                                <p className="text-lg font-bold text-green-600">
+                                    Rp {parseInt(premiumPrice || '0').toLocaleString('id-ID')}
+                                </p>
+                            </div>
+                            <div>
+                                <label className="text-xs text-gray-500 font-bold uppercase mb-1 block">Tujuan Transfer</label>
+                                {adminBanks && adminBanks.length > 0 ? (
+                                    adminBanks.map((bank, idx) => (
+                                        <p key={idx} className="text-gray-900 font-medium text-sm">
+                                            {bank.bank_name} - {bank.account_number} <span className="text-gray-500">(a.n {bank.account_holder})</span>
+                                        </p>
+                                    ))
+                                ) : (
+                                    <p className="text-gray-900 font-medium">Rekening Resmi MGMP</p>
+                                )}
+                            </div>
+                            {latestRequest && (
+                                <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 mt-2">
+                                    <label className="text-xs text-gray-500 font-bold uppercase mb-1 block">Info Pengirim</label>
+                                    <p className="text-gray-800 text-sm">Bank: <span className="font-medium">{latestRequest.bank_name || '-'}</span></p>
+                                    <p className="text-gray-800 text-sm">No. Rek: <span className="font-medium">{latestRequest.account_number || '-'}</span></p>
+                                    <p className="text-gray-800 text-sm">A/n: <span className="font-medium">{latestRequest.account_holder || '-'}</span></p>
+                                </div>
+                            )}
+                        </div>
+                        <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end">
+                            <Button onClick={() => setShowPremiumDetail(false)} variant="default">Tutup</Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
+
