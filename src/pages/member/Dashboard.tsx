@@ -305,63 +305,113 @@ export function MemberDashboard() {
 
             {/* Modal Detail Member Premium */}
             {showPremiumDetail && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden relative">
-                        <div className="p-6 bg-gradient-to-br from-yellow-400 to-yellow-600 text-white relative">
-                            <button onClick={() => setShowPremiumDetail(false)} className="absolute top-4 right-4 p-1 rounded-full hover:bg-white/20 transition-colors">
-                                <X className="w-5 h-5 text-white" />
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm animate-in fade-in">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden relative transform transition-all">
+                        {/* Header */}
+                        <div className="p-6 bg-gradient-to-r from-yellow-500 to-amber-600 text-white relative">
+                            <button onClick={() => setShowPremiumDetail(false)} className="absolute top-4 right-4 p-1.5 rounded-full bg-white/20 hover:bg-white/30 transition-colors">
+                                <X className="w-4 h-4 text-white" />
                             </button>
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="p-2 bg-white/20 rounded-full">
-                                    <Crown className="w-6 h-6 text-white" />
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 bg-white/20 rounded-xl backdrop-blur-sm">
+                                    <Crown className="w-7 h-7 text-white" />
                                 </div>
-                                <h3 className="text-xl font-bold">Detail Premium</h3>
-                            </div>
-                            <p className="text-yellow-50 opacity-90 text-sm">Informasi langganan akun Anda</p>
-                        </div>
-                        <div className="p-6 space-y-4">
-                            <div>
-                                <label className="text-xs text-gray-500 font-bold uppercase mb-1 block">Mulai Berlangganan</label>
-                                <p className="text-gray-900 font-medium">
-                                    {latestRequest?.created_at ? new Date(latestRequest.created_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Tidak tersedia'}
-                                </p>
-                            </div>
-                            <div>
-                                <label className="text-xs text-gray-500 font-bold uppercase mb-1 block">Berakhir Pada</label>
-                                <p className="text-gray-900 font-medium">
-                                    {profile?.premium_until ? new Date(profile.premium_until).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Tidak tersedia'}
-                                </p>
-                            </div>
-                            <div className="h-px bg-gray-100 my-2"></div>
-                            <div>
-                                <label className="text-xs text-gray-500 font-bold uppercase mb-1 block">Biaya Transfer</label>
-                                <p className="text-lg font-bold text-green-600">
-                                    Rp {parseInt(premiumPrice || '0').toLocaleString('id-ID')}
-                                </p>
-                            </div>
-                            <div>
-                                <label className="text-xs text-gray-500 font-bold uppercase mb-1 block">Tujuan Transfer</label>
-                                {adminBanks && adminBanks.length > 0 ? (
-                                    adminBanks.map((bank, idx) => (
-                                        <p key={idx} className="text-gray-900 font-medium text-sm">
-                                            {bank.bank_name} - {bank.account_number} <span className="text-gray-500">(a.n {bank.account_holder})</span>
-                                        </p>
-                                    ))
-                                ) : (
-                                    <p className="text-gray-900 font-medium">Rekening Resmi MGMP</p>
-                                )}
-                            </div>
-                            {latestRequest && (
-                                <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 mt-2">
-                                    <label className="text-xs text-gray-500 font-bold uppercase mb-1 block">Info Pengirim</label>
-                                    <p className="text-gray-800 text-sm">Bank: <span className="font-medium">{latestRequest.bank_name || '-'}</span></p>
-                                    <p className="text-gray-800 text-sm">No. Rek: <span className="font-medium">{latestRequest.account_number || '-'}</span></p>
-                                    <p className="text-gray-800 text-sm">A/n: <span className="font-medium">{latestRequest.account_holder || '-'}</span></p>
+                                <div>
+                                    <h3 className="text-xl font-bold tracking-tight">Sertifikat Premium</h3>
+                                    <p className="text-yellow-50 text-sm font-medium opacity-90">Detail langganan aktif Anda</p>
                                 </div>
-                            )}
+                            </div>
                         </div>
-                        <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end">
-                            <Button onClick={() => setShowPremiumDetail(false)} variant="default">Tutup</Button>
+                        
+                        {/* Body */}
+                        <div className="p-6 space-y-6">
+                            {/* Dates Grid */}
+                            <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                                <div>
+                                    <div className="flex items-center gap-1.5 mb-1 text-gray-500">
+                                        <Calendar className="w-3.5 h-3.5" />
+                                        <span className="text-xs font-bold uppercase tracking-wider">Mulai Aktif</span>
+                                    </div>
+                                    <p className="text-gray-900 font-semibold text-sm">
+                                        {profile?.premium_until ? (() => {
+                                            const d = new Date(profile.premium_until);
+                                            d.setFullYear(d.getFullYear() - 1);
+                                            return d.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+                                        })() : '-'}
+                                    </p>
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-1.5 mb-1 text-gray-500">
+                                        <Calendar className="w-3.5 h-3.5" />
+                                        <span className="text-xs font-bold uppercase tracking-wider">Berakhir Pada</span>
+                                    </div>
+                                    <p className="text-gray-900 font-semibold text-sm">
+                                        {profile?.premium_until ? new Date(profile.premium_until).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }) : '-'}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Payment Info */}
+                            <div>
+                                <div className="flex items-center justify-between mb-3">
+                                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Total Pembayaran</span>
+                                    <span className="text-lg font-black text-green-600 bg-green-50 px-3 py-1 rounded-lg border border-green-100">
+                                        Rp {parseInt(premiumPrice || '0').toLocaleString('id-ID')}
+                                    </span>
+                                </div>
+                                
+                                <div className="space-y-4">
+                                    {/* Destination */}
+                                    <div>
+                                        <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Tujuan Transfer</p>
+                                        <div className="bg-white border border-gray-200 rounded-xl p-3 shadow-sm">
+                                            {adminBanks && adminBanks.length > 0 ? (
+                                                adminBanks.map((bank, idx) => (
+                                                    <div key={idx} className="flex items-start gap-3">
+                                                        <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center shrink-0 mt-0.5">
+                                                            <span className="text-blue-600 font-bold text-xs">{bank.bank_name?.substring(0, 3)}</span>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-gray-900 font-bold text-sm tracking-wide">{bank.account_number}</p>
+                                                            <p className="text-gray-500 text-xs">a.n {bank.account_holder}</p>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <p className="text-gray-900 font-medium text-sm">Rekening Resmi MGMP</p>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Sender Info */}
+                                    {latestRequest && (
+                                        <div>
+                                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Data Pengirim</p>
+                                            <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm">
+                                                <div className="grid grid-cols-3 gap-2 mb-1">
+                                                    <span className="text-gray-500">Bank</span>
+                                                    <span className="col-span-2 font-semibold text-gray-900">{latestRequest.bank_name || '-'}</span>
+                                                </div>
+                                                <div className="grid grid-cols-3 gap-2 mb-1">
+                                                    <span className="text-gray-500">No. Rek</span>
+                                                    <span className="col-span-2 font-semibold text-gray-900">{latestRequest.account_number || '-'}</span>
+                                                </div>
+                                                <div className="grid grid-cols-3 gap-2">
+                                                    <span className="text-gray-500">Atas Nama</span>
+                                                    <span className="col-span-2 font-semibold text-gray-900">{latestRequest.account_holder || '-'}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {/* Footer */}
+                        <div className="p-4 border-t border-gray-100 bg-gray-50/80 backdrop-blur-sm">
+                            <Button onClick={() => setShowPremiumDetail(false)} className="w-full bg-gray-900 hover:bg-gray-800 text-white font-semibold py-2.5 rounded-xl transition-all">
+                                Tutup Detail
+                            </Button>
                         </div>
                     </div>
                 </div>

@@ -85,23 +85,17 @@ class PremiumController
             $sUp->bindParam(':id', $id);
             $sUp->execute();
 
-            // 3. Update Profile (Add 1 Year)
-            // First check current expiry
+            // 3. Update Profile (Set to 1 Year from Now)
             $qProf = "SELECT premium_until FROM profiles WHERE id = :uid";
             $sProf = $this->conn->prepare($qProf);
             $sProf->bindParam(':uid', $userId);
             $sProf->execute();
             $profile = $sProf->fetch(PDO::FETCH_ASSOC);
 
-            $currentExpiry = $profile['premium_until'] ? new DateTime($profile['premium_until']) : null;
             $now = new DateTime();
             $newExpiry = new DateTime();
 
-            if ($currentExpiry && $currentExpiry > $now) {
-                // If active, add 1 year to current expiry
-                $newExpiry = clone $currentExpiry;
-            }
-
+            // Set expiry to exactly 1 year from today (approval date)
             $newExpiry->modify('+1 year');
             $newExpiryStr = $newExpiry->format('Y-m-d H:i:s');
 
@@ -214,7 +208,7 @@ class PremiumController
 
     public function extend($userId)
     {
-        // Add 1 year to current expiry
+        // Set premium to exactly 1 year from now
         $query = "SELECT premium_until FROM profiles WHERE id = :id";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id', $userId);
@@ -226,16 +220,9 @@ class PremiumController
             return json_encode(["message" => "User not found"]);
         }
 
-        $expiry = $current['premium_until'] ? new DateTime($current['premium_until']) : new DateTime();
-
-        // If expired, start from now + 1 year
         $now = new DateTime();
-        if ($expiry < $now) {
-            $expiry = new DateTime();
-        }
-
-        $expiry->modify('+1 year');
-        $newExpiry = $expiry->format('Y-m-d H:i:s');
+        $now->modify('+1 year');
+        $newExpiry = $now->format('Y-m-d H:i:s');
 
         $update = "UPDATE profiles SET premium_until = :expiry WHERE id = :id";
         $stmtUp = $this->conn->prepare($update);
