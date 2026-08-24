@@ -704,6 +704,8 @@ if ($resource === 'news') {
             http_response_code(403);
             echo json_encode(["message" => "Forbidden"]);
         }
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action && $userRole === 'Admin') {
+        echo $controller->deleteTransaction($action, $userId, $userName);
     }
 } else {
     echo json_encode([

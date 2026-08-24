@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Wallet, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, DollarSign, Calendar, Plus, Minus, X, Loader2, Printer, Download, FileText } from 'lucide-react';
+import { Wallet, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, DollarSign, Calendar, Plus, Minus, X, Loader2, Printer, Download, FileText, Trash2 } from 'lucide-react';
 import { financeService } from '../../../services/financeService';
 import { toast } from 'react-hot-toast';
 import { DataTable } from '../../../components/ui/DataTable';
@@ -147,6 +147,18 @@ export function AdminFinances() {
         });
     };
 
+    const handleDelete = async (id: string, description: string) => {
+        if (!confirm(`Apakah Anda yakin ingin menghapus transaksi "${description}"? Saldo kas akan disesuaikan kembali.`)) return;
+
+        try {
+            await financeService.deleteTransaction(id);
+            toast.success('Transaksi berhasil dihapus');
+            loadData();
+        } catch (error) {
+            toast.error('Gagal menghapus transaksi');
+        }
+    };
+
     const columns = [
         {
             header: "Tanggal",
@@ -186,6 +198,19 @@ export function AdminFinances() {
                 </div>
             ),
             className: "text-right"
+        },
+        {
+            header: "Aksi",
+            cell: (item: FinanceTransaction) => (
+                <button
+                    onClick={() => handleDelete(item.id, item.description)}
+                    className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors tooltip mx-auto block"
+                    title="Hapus Transaksi"
+                >
+                    <Trash2 className="w-4 h-4" />
+                </button>
+            ),
+            className: "text-center w-16"
         }
     ];
 

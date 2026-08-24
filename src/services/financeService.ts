@@ -11,5 +11,9 @@ export const financeService = {
 
     async addTransaction(data: { type: 'income'|'expense', amount: number, description: string, transaction_date?: string }) {
         return await api.post('/finances/add', data);
+    },
+
+    async deleteTransaction(id: string) {
+        return await api.delete(`/finances/${id}`);
     }
 };

@@ -77,5 +77,19 @@ class FinanceController
         http_response_code(500);
         return json_encode(["message" => "Failed to add transaction"]);
     }
+    public function deleteTransaction($id, $userId, $userName)
+    {
+        $query = "DELETE FROM finance_transactions WHERE id = :id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':id', $id);
+
+        if ($stmt->execute()) {
+            Helper::log($this->conn, $userId, $userName, 'DELETE_TRANSACTION', "Deleted ID: $id");
+            return json_encode(["message" => "Transaction deleted successfully"]);
+        }
+        
+        http_response_code(500);
+        return json_encode(["message" => "Failed to delete transaction"]);
+    }
 }
 ?>
