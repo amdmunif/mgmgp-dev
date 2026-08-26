@@ -91,7 +91,7 @@ export function Events() {
                                         </span>
                                     )}
                                 </div>
-                                <p className="text-gray-600 mb-4">{stripHtml(event.description)}</p>
+                                <p className="text-gray-600 mb-4 line-clamp-3">{stripHtml(event.description)}</p>
                             </div>
                             <div className="flex items-center justify-between mt-4">
                                 <span className={`px-3 py-1 rounded-full text-xs font-semibold ${(Number(event.is_registration_open) === 1 && (!event.registration_deadline || new Date(event.registration_deadline) >= new Date())) ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
