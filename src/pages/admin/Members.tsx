@@ -1,20 +1,10 @@
 import { useState, useEffect } from 'react';
 import { memberService, type Profile, type DuplicatePair } from '../../services/memberService';
 import { useOutletContext, useLocation } from 'react-router-dom';
-import {
-    ShieldCheck,
-    Crown,
-    User,
-    Mail,
-    XCircle,
-    Pencil,
-    X,
-    Eye,
-    Filter,
-    Users,
-    CheckCircle2,
-    AlertCircle,
-    Key
+import { 
+    Users, UserCheck, UserX, Crown, Search, CheckCircle2, 
+    XCircle, AlertCircle, Loader2, Key, Filter, ChevronDown, 
+    FileSpreadsheet, Mail, LayoutGrid, List as ListIcon, ShieldCheck, UserPlus, Eye, Pencil, UserCog, Printer, X, User
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { getFileUrl } from '../../lib/api';
@@ -226,9 +216,15 @@ export function AdminMembers() {
         const dataToExport = filteredMembers.map(m => ({
             'Nama': m.nama,
             'Email': m.email,
+            'No. HP': m.no_hp || '-',
+            'Asal Sekolah': m.asal_sekolah || '-',
+            'Status Kepegawaian': m.status_kepegawaian || '-',
+            'Pendidikan Terakhir': m.pendidikan_terakhir || '-',
+            'Jurusan': m.jurusan || '-',
             'Role': m.role,
             'Status': Number(m.is_active) === 1 ? 'Aktif' : 'Pending',
             'Tipe Akun': (m.premium_until && new Date(m.premium_until) > new Date()) ? 'Premium' : 'Reguler',
+            'Masa Aktif Premium': (m.premium_until && new Date(m.premium_until) > new Date()) ? format(new Date(m.premium_until), 'dd/MM/yyyy') : '-',
             'Hadir (Event)': m.attendance_count || 0
         }));
 
@@ -386,6 +382,13 @@ export function AdminMembers() {
                             <ShieldCheck className="w-4 h-4" />
                         </button>
                     )}
+                    <button
+                        onClick={() => navigate('/admin/members/print', { state: { member } })}
+                        className="p-2 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-800 transition-colors"
+                        title="Cetak/Download PDF"
+                    >
+                        <Printer className="w-4 h-4" />
+                    </button>
                     <button
                         onClick={() => setViewingMember(member)}
                         className="p-2 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600 transition-colors"

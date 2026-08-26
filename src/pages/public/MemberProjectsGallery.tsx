@@ -37,7 +37,7 @@ export function MemberProjectsGallery() {
         <div className="min-h-screen bg-gray-50 py-8">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 
-                <div className="text-center max-w-3xl mx-auto mb-16">
+                <div className="text-center max-w-3xl mx-auto mb-8">
                     <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-6 leading-tight">
                         Galeri <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Karya Anggota</span>
                     </h1>
