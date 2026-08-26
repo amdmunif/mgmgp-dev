@@ -45,7 +45,6 @@ export function MemberProjectsGallery() {
                         Kumpulan karya inovatif dan kreatif yang telah dibuat oleh para anggota MGMP Informatika. 
                         Temukan berbagai inspirasi untuk pembelajaran.
                     </p>
-                    </p>
                 </div>
 
                 <div className="max-w-2xl mx-auto mb-12">
