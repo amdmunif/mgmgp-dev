@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { memberService, type Profile, type DuplicatePair } from '../../services/memberService';
 import { useOutletContext, useLocation } from 'react-router-dom';
 import { 
-    Users, UserCheck, UserX, Crown, Search, CheckCircle2, 
-    XCircle, AlertCircle, Loader2, Key, Filter, ChevronDown, 
-    FileSpreadsheet, Mail, LayoutGrid, List as ListIcon, ShieldCheck, UserPlus, Eye, Pencil, UserCog, Printer, X, User
+    Users, Crown, CheckCircle2, 
+    XCircle, AlertCircle, Key, Filter, 
+    Mail, ShieldCheck, Eye, Pencil, Printer, X, User
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { getFileUrl } from '../../lib/api';
