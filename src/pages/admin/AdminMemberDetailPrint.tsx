@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Crown, Mail, Phone, MapPin, Briefcase, GraduationCap, Clock } from 'lucide-react';
-import { Profile } from '../../services/memberService';
+import type { Profile } from '../../services/memberService';
 import { format } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
 

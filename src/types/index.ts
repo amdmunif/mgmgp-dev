@@ -34,6 +34,7 @@ export interface Event {
     is_paid?: boolean | number;
     price?: number;
     registration_deadline?: string;
+    attendance_deadline?: string;
     bank_name?: string;
     bank_account_number?: string;
     bank_account_holder?: string;

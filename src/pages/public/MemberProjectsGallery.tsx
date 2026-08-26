@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Loader2, ExternalLink, Camera } from 'lucide-react';
-import { projectService, MemberProject } from '../../services/projectService';
+import { projectService } from '../../services/projectService';
+import type { MemberProject } from '../../services/projectService';
 import { getFileUrl } from '../../lib/api';
 import { toast } from 'react-hot-toast';
 

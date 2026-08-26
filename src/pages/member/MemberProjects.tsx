@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Plus, Loader2, Camera, ExternalLink, Edit2, Trash2 } from 'lucide-react';
-import { projectService, MemberProject } from '../../services/projectService';
+import { projectService } from '../../services/projectService';
+import type { MemberProject } from '../../services/projectService';
 import { toast } from 'react-hot-toast';
 import { api, getFileUrl } from '../../lib/api';
 import { Button } from '../../components/ui/button';

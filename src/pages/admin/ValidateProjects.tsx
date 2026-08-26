@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Loader2, CheckCircle, XCircle, Trash2, ExternalLink } from 'lucide-react';
-import { projectService, MemberProject } from '../../services/projectService';
+import { projectService } from '../../services/projectService';
+import type { MemberProject } from '../../services/projectService';
 import { toast } from 'react-hot-toast';
 import { getFileUrl } from '../../lib/api';
 import { Button } from '../../components/ui/button';
@@ -33,7 +34,7 @@ export function ValidateProjects() {
         }
     };
 
-    const handleUpdateStatus = async (id: string, status: 'approved' | 'rejected') => {
+    const handleUpdateStatus = async (id: string, status: 'approved' | 'rejected' | 'pending') => {
         try {
             await projectService.updateStatus(id, status);
             toast.success(`Karya berhasil di${status === 'approved' ? 'setujui' : 'tolak'}`);
