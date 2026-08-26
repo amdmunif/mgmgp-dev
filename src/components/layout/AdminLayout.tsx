@@ -65,6 +65,7 @@ const menuGroups = [
             { icon: Users, label: 'Pelatihan Publik', path: '/admin/training' },
             { icon: FileText, label: 'Berita & Artikel', path: '/admin/news' },
             { icon: ImageIcon, label: 'Galeri Foto', path: '/admin/gallery' },
+            { icon: ImageIcon, label: 'Validasi Karya', path: '/admin/projects' },
         ]
     },
     {

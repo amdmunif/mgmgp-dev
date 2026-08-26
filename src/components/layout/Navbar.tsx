@@ -16,6 +16,7 @@ export function Navbar() {
         { name: 'Agenda', href: '/events' },
         { name: 'Pelatihan', href: '/training' },
         { name: 'Galeri', href: '/gallery' },
+        { name: 'Karya', href: '/karya' },
     ];
 
     const [user, setUser] = useState<any>(null);

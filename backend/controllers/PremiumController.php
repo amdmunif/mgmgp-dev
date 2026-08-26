@@ -106,6 +106,34 @@ class PremiumController
             $sProfUp->bindParam(':uid', $userId);
             $sProfUp->execute();
 
+            // 4. Insert into finance_transactions
+            $qFee = "SELECT registration_fee FROM premium_settings LIMIT 1";
+            $sFee = $this->conn->prepare($qFee);
+            $sFee->execute();
+            $feeRow = $sFee->fetch(PDO::FETCH_ASSOC);
+            $fee = $feeRow ? (float)$feeRow['registration_fee'] : 0;
+
+            if ($fee > 0) {
+                $txId = Helper::uuid();
+                // Get user name for description
+                $qName = "SELECT nama FROM profiles WHERE id = :uid";
+                $sName = $this->conn->prepare($qName);
+                $sName->bindParam(':uid', $userId);
+                $sName->execute();
+                $nameRow = $sName->fetch(PDO::FETCH_ASSOC);
+                $userName = $nameRow ? $nameRow['nama'] : 'Unknown';
+
+                $desc = "Premium Upgrade Request Approved - a.n. $userName";
+                $qTx = "INSERT INTO finance_transactions (id, type, amount, description, reference_id, reference_type, transaction_date) 
+                        VALUES (:txId, 'income', :amount, :desc, :refId, 'premium_upgrade', NOW())";
+                $sTx = $this->conn->prepare($qTx);
+                $sTx->bindParam(':txId', $txId);
+                $sTx->bindParam(':amount', $fee);
+                $sTx->bindParam(':desc', $desc);
+                $sTx->bindParam(':refId', $id);
+                $sTx->execute();
+            }
+
             $this->conn->commit();
 
             // Fetch user info for email

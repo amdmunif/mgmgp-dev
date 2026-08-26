@@ -150,8 +150,8 @@ class ContentController
     {
         try {
             $id = Helper::uuid();
-            $query = "INSERT INTO events (id, title, description, date, location, image_url, is_registration_open, is_premium, is_paid, price, registration_deadline, created_at) 
-                      VALUES (:id, :title, :description, :date, :location, :image_url, :is_registration_open, :is_premium, :is_paid, :price, :registration_deadline, NOW())";
+            $query = "INSERT INTO events (id, title, description, date, location, image_url, is_registration_open, is_premium, is_paid, price, registration_deadline, attendance_deadline, created_at) 
+                      VALUES (:id, :title, :description, :date, :location, :image_url, :is_registration_open, :is_premium, :is_paid, :price, :registration_deadline, :attendance_deadline, NOW())";
 
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':id', $id);
@@ -170,6 +170,8 @@ class ContentController
             $stmt->bindParam(':price', $price);
             $deadline = !empty($data['registration_deadline']) ? $data['registration_deadline'] : null;
             $stmt->bindParam(':registration_deadline', $deadline);
+            $attDeadline = !empty($data['attendance_deadline']) ? $data['attendance_deadline'] : null;
+            $stmt->bindParam(':attendance_deadline', $attDeadline);
             if ($stmt->execute()) {
                 Helper::log($this->conn, $userId, $userName, 'CREATE_EVENT', $data['title']);
                 return json_encode(["message" => "Event created", "id" => $id]);
@@ -216,7 +218,8 @@ class ContentController
                         is_premium = :is_premium,
                         is_paid = :is_paid,
                         price = :price,
-                        registration_deadline = :registration_deadline
+                        registration_deadline = :registration_deadline,
+                        attendance_deadline = :attendance_deadline
                       WHERE id = :id";
 
             $stmt = $this->conn->prepare($query);
@@ -236,6 +239,8 @@ class ContentController
             $stmt->bindParam(':price', $price);
             $deadline = !empty($data['registration_deadline']) ? $data['registration_deadline'] : null;
             $stmt->bindParam(':registration_deadline', $deadline);
+            $attDeadline = !empty($data['attendance_deadline']) ? $data['attendance_deadline'] : null;
+            $stmt->bindParam(':attendance_deadline', $attDeadline);
 
             if ($stmt->execute()) {
                 Helper::log($this->conn, $userId, $userName, 'UPDATE_EVENT', $data['title']);
@@ -321,7 +326,8 @@ class ContentController
                 }
             }
 
-            Helper::log($this->conn, $userId, 'Member', 'JOIN_EVENT', $eventTitle || $eventId);
+            $targetLog = !empty($eventTitle) ? $eventTitle : $eventId;
+            Helper::log($this->conn, $userId, 'Member', 'JOIN_EVENT', $targetLog);
             return json_encode(["message" => "Joined successfully"]);
         }
         http_response_code(500);
@@ -587,6 +593,21 @@ class ContentController
             return json_encode(["message" => "User not registered for this event"]);
         }
 
+        // 1.5 Check attendance deadline
+        $checkEvent = "SELECT attendance_deadline FROM events WHERE id = :eid";
+        $stmtEvent = $this->conn->prepare($checkEvent);
+        $stmtEvent->execute([':eid' => $eventId]);
+        $eventData = $stmtEvent->fetch(PDO::FETCH_ASSOC);
+
+        if ($eventData && $eventData['attendance_deadline']) {
+            $deadline = new DateTime($eventData['attendance_deadline']);
+            $now = new DateTime();
+            if ($now > $deadline) {
+                http_response_code(400);
+                return json_encode(["message" => "Batas waktu absensi telah berakhir."]);
+            }
+        }
+
         // 2. Mark as attended
         $updateQuery = "UPDATE event_participants SET is_hadir = 1 WHERE event_id = :eid AND user_id = :uid";
         $updateStmt = $this->conn->prepare($updateQuery);
@@ -598,7 +619,8 @@ class ContentController
             $stmtTitle->bindParam(':eid', $eventId);
             $stmtTitle->execute();
             $eventTitle = $stmtTitle->fetchColumn();
-            Helper::log($this->conn, $userId, 'Member', 'SELF_ATTENDANCE', $eventTitle || $eventId);
+            $targetLog = !empty($eventTitle) ? $eventTitle : $eventId;
+            Helper::log($this->conn, $userId, 'Member', 'SELF_ATTENDANCE', $targetLog);
             
             // Send Notification
             $stmtUser = $this->conn->prepare("SELECT p.nama, u.email FROM profiles p JOIN users u ON p.id = u.id WHERE p.id = :uid");

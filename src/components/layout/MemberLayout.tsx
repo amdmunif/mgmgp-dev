@@ -20,7 +20,8 @@ import {
     Book,
     Clock,
     PenTool,
-    Wand2
+    Wand2,
+    Camera
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { cn } from '../../lib/utils';
@@ -112,6 +113,7 @@ export function MemberLayout() {
         { icon: Terminal, label: 'Prompt Library', path: '/member/prompts', premium: true },
         { icon: Wand2, label: 'Prompt Generator', path: '/member/prompt-generator', premium: true },
         { icon: BookOpen, label: 'Referensi Belajar', path: '/member/references', premium: true },
+        { icon: Camera, label: 'Karya Saya', path: '/member/projects' },
         { icon: PenTool, label: 'Program Kontributor', path: '/member/contributor' },
         // Mobile Only Items
         { icon: UserCircle, label: 'Edit Profil', path: '/member/profile', className: 'md:hidden' },

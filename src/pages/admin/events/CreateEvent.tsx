@@ -23,6 +23,7 @@ interface EventForm {
     bank_account_number: string;
     bank_account_holder: string;
     registration_deadline?: string;
+    attendance_deadline?: string;
 }
 
 export function CreateEvent() {
@@ -71,6 +72,10 @@ export function CreateEvent() {
             if (data.registration_deadline) {
                 const formattedDeadline = data.registration_deadline.replace(' ', 'T').substring(0, 16);
                 setValue('registration_deadline', formattedDeadline);
+            }
+            if (data.attendance_deadline) {
+                const formattedAttDeadline = data.attendance_deadline.replace(' ', 'T').substring(0, 16);
+                setValue('attendance_deadline', formattedAttDeadline);
             }
             setDescription(data.description);
             setPreviewUrl(data.image_url);
@@ -132,6 +137,14 @@ export function CreateEvent() {
                     formattedDeadline += ':00';
                 }
             }
+            
+            let formattedAttDeadline = data.attendance_deadline || undefined;
+            if (formattedAttDeadline && formattedAttDeadline.includes('T')) {
+                formattedAttDeadline = formattedAttDeadline.replace('T', ' ');
+                if (formattedAttDeadline.length === 16) {
+                    formattedAttDeadline += ':00';
+                }
+            }
 
             const eventData = {
                 ...data,
@@ -141,7 +154,8 @@ export function CreateEvent() {
                 is_premium: data.is_premium ? 1 : 0,
                 is_paid: data.is_paid ? 1 : 0,
                 price: data.price,
-                registration_deadline: formattedDeadline
+                registration_deadline: formattedDeadline,
+                attendance_deadline: formattedAttDeadline
             };
 
             if (id) {
@@ -232,6 +246,20 @@ export function CreateEvent() {
                                         />
                                     </div>
                                     <p className="text-xs text-gray-500 mt-1">Kosongkan jika pendaftaran dibuka tanpa batas waktu tertentu.</p>
+                                </div>
+                                
+                                {/* Attendance Deadline */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Batas Waktu Absensi (Opsional)</label>
+                                    <div className="relative">
+                                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                        <input
+                                            type="datetime-local"
+                                            {...register('attendance_deadline')}
+                                            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        />
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-1">Jika diatur, anggota tidak bisa melakukan absensi mandiri setelah waktu ini berlalu.</p>
                                 </div>
                                 {/* Location */}
                                 <div>

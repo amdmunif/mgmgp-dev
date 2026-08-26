@@ -45,6 +45,7 @@ import { AdminEvents } from './pages/admin/events/AdminEvents';
 import { AdminEventDetail } from './pages/admin/events/AdminEventDetail';
 import { CreateEvent } from './pages/admin/events/CreateEvent';
 import { AdminEventAttendancePrint } from './pages/admin/events/AdminEventAttendancePrint';
+import { AdminMemberDetailPrint } from './pages/admin/AdminMemberDetailPrint';
 import { AdminFinances } from './pages/admin/finances/AdminFinances';
 import { AdminMembers } from './pages/admin/Members';
 import { AdminGames } from './pages/admin/games/AdminGames';
@@ -61,6 +62,7 @@ import { AdminMessages } from './pages/admin/AdminMessages';
 import { AuditLogs } from './pages/admin/AuditLogs';
 import { CPManager } from './pages/admin/curriculum/CPManager';
 import { TPManager } from './pages/admin/curriculum/TPManager';
+import { ValidateProjects } from './pages/admin/ValidateProjects';
 
 // Member Feature Pages
 import { CPTP } from './pages/member/CPTP';
@@ -71,6 +73,8 @@ import { Games } from './pages/member/Games';
 import { Modules } from './pages/member/Modules';
 import { ContributorRegistration } from './pages/member/ContributorRegistration';
 import { PromptGenerator } from './pages/member/PromptGenerator';
+import { MemberProjects } from './pages/member/MemberProjects';
+import { MemberProjectsGallery } from './pages/public/MemberProjectsGallery';
 import { PremiumGuard } from './components/auth/PremiumGuard';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
 
@@ -109,10 +113,12 @@ function App() {
         <Route path="/events/:id" element={<Layout><EventDetail /></Layout>} />
         <Route path="/events/:id/attend" element={<Layout><EventAttend /></Layout>} />
         <Route path="/gallery" element={<Layout><Gallery /></Layout>} />
+        <Route path="/karya" element={<Layout><MemberProjectsGallery /></Layout>} />
         <Route path="/profile" element={<Layout><Profile /></Layout>} />
         <Route path="/learning" element={<Layout><Learning /></Layout>} />
         <Route path="/training" element={<Layout><TrainingRegistration /></Layout>} />
         <Route path="/admin/events/:id/print-attendance" element={<AdminEventAttendancePrint />} />
+        <Route path="/admin/members/print" element={<AdminMemberDetailPrint />} />
         <Route path="/pelatihan" element={<Layout><TrainingRegistration /></Layout>} />
 
         {/* Auth Routes - Wrapped in Layout */}
@@ -139,6 +145,7 @@ function App() {
           {/* Contributor: Create & Edit Question */}
           <Route path="questions/create" element={<QuestionBuilder basePath="/member/contributor" />} />
           <Route path="questions/edit/:id" element={<QuestionBuilder basePath="/member/contributor" />} />
+          <Route path="projects" element={<MemberProjects />} />
 
           {/* Protected Premium Routes */}
           <Route path="questions" element={
@@ -234,6 +241,7 @@ function App() {
           <Route path="training" element={<AdminTraining />} />
           <Route path="messages" element={<AdminMessages />} />
           <Route path="contributors" element={<VerificationList />} />
+          <Route path="projects" element={<ValidateProjects />} />
           <Route path="logs" element={<AuditLogs />} />
         </Route>
 

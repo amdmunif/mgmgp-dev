@@ -20,12 +20,14 @@ import { toast } from 'react-hot-toast';
 import { getFileUrl } from '../../lib/api';
 import { Button } from '../../components/ui/button';
 import { format } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 
 import { DataTable } from '../../components/ui/DataTable';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 
 export function AdminMembers() {
+    const navigate = useNavigate();
     const { setPageHeader } = useOutletContext<any>() || {};
     const location = useLocation();
     const [members, setMembers] = useState<Profile[]>([]);
@@ -765,7 +767,13 @@ export function AdminMembers() {
                         </div>
 
                         {/* Footer */}
-                        <div className="p-4 px-6 border-t border-gray-100 shrink-0 flex justify-end bg-gray-50">
+                        <div className="p-4 px-6 border-t border-gray-100 shrink-0 flex justify-between bg-gray-50">
+                            <Button 
+                                variant="outline" 
+                                onClick={() => navigate('/admin/members/print', { state: { member: viewingMember } })}
+                            >
+                                Cetak / Download PDF
+                            </Button>
                             <Button onClick={() => setViewingMember(null)}>Tutup</Button>
                         </div>
                     </div>

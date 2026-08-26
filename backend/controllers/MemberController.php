@@ -94,7 +94,8 @@ class MemberController
             }
 
             $this->conn->commit();
-            Helper::log($this->conn, 0, 'Admin', 'UPDATE_MEMBER', $userNama || $id);
+            $targetLog = !empty($userNama) ? $userNama : $id;
+            Helper::log($this->conn, 0, 'Admin', 'UPDATE_MEMBER', $targetLog);
 
             if ($isActivating && $userEmail) {
                 Mailer::sendMemberActivated($userEmail, $userNama);

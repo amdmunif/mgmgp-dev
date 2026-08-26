@@ -117,6 +117,7 @@ include_once './controllers/LetterController.php';
 include_once './controllers/StatsController.php';
 include_once './controllers/TrainingController.php';
 include_once './controllers/FinanceController.php';
+include_once './controllers/ProjectController.php';
 
 // ... includes
 
@@ -706,6 +707,63 @@ if ($resource === 'news') {
         }
     } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action && $userRole === 'Admin') {
         echo $controller->deleteTransaction($action, $userId, $userName);
+    }
+} elseif ($resource === 'projects') {
+    $controller = new ProjectController();
+
+    // Re-verify token because some endpoints need auth
+    $headers = getallheaders();
+    $authHeader = isset($headers['Authorization']) ? $headers['Authorization'] : '';
+    $token = str_replace('Bearer ', '', $authHeader);
+    $userId = null;
+    $userRole = null;
+
+    if ($token) {
+        $payload = Helper::verifyJWT($token);
+        if ($payload && isset($payload['sub'])) {
+            $userId = $payload['sub'];
+            $userRole = ucfirst(strtolower($payload['role'] ?? 'Anggota'));
+            if (in_array(strtolower($payload['role'] ?? ''), ['admin', 'super admin'])) {
+                $userRole = 'Admin';
+            }
+        }
+    }
+
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        if ($action === 'public') {
+            echo $controller->getPublicProjects();
+        } elseif ($action === 'my' && $userId) {
+            echo $controller->getMyProjects($userId);
+        } elseif ($action === 'all' && $userRole === 'Admin') {
+            echo $controller->getAllProjects();
+        } else {
+            http_response_code($userId ? 403 : 401);
+            echo json_encode(["message" => "Unauthorized"]);
+        }
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if ($userId) {
+            echo $controller->createProject($userId, $input);
+        } else {
+            http_response_code(401);
+            echo json_encode(["message" => "Unauthorized"]);
+        }
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'PUT' && $action) {
+        if ($userId && $userRole !== 'Admin') {
+            echo $controller->updateProject($action, $userId, $input);
+        } elseif ($userRole === 'Admin' && isset($input['status'])) {
+            // Admin updating status
+            echo $controller->updateStatus($action, $input['status']);
+        } else {
+            http_response_code(403);
+            echo json_encode(["message" => "Forbidden"]);
+        }
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action) {
+        if ($userId) {
+            echo $controller->deleteProject($action, $userId);
+        } else {
+            http_response_code(401);
+            echo json_encode(["message" => "Unauthorized"]);
+        }
     }
 } else {
     echo json_encode([
