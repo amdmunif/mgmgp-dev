@@ -99,7 +99,15 @@ if ($token) {
     if ($payload && isset($payload['sub'])) {
         $userId = $payload['sub'];
         $userName = $payload['nama'] ?? 'User'; // Assuming 'nama' is in JWT payload or we might need to fetch it
-        $userRole = $payload['role'] ?? 'Anggota';
+        
+        $rawRole = $payload['role'] ?? 'Anggota';
+        if (in_array(strtolower($rawRole), ['admin', 'super admin'])) {
+            $userRole = 'Admin';
+            $payload['role'] = 'Admin'; // Normalize for controllers
+        } else {
+            $userRole = ucfirst(strtolower($rawRole));
+            $payload['role'] = $userRole;
+        }
     }
 }
 
@@ -107,6 +115,10 @@ include_once './controllers/ContentController.php';
 include_once './controllers/QuestionController.php';
 include_once './controllers/LetterController.php';
 include_once './controllers/StatsController.php';
+include_once './controllers/TrainingController.php';
+include_once './controllers/FinanceController.php';
+include_once './controllers/ProjectController.php';
+include_once './controllers/LmsController.php';
 
 // ... includes
 
@@ -126,6 +138,47 @@ if ($resource === 'news') {
     if ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action)
         echo $controller->deleteNews($action, $userId, $userName);
 
+} elseif ($resource === 'lms') {
+    $controller = new LmsController();
+    $subAction = isset($uri_parts[2]) ? $uri_parts[2] : null;
+
+    if ($action === 'topics') {
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            // GET /lms/topics/:eventId
+            echo $controller->getTopicsByEvent($subAction);
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            // POST /lms/topics
+            echo $controller->createTopic($input, $userId, $userName);
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'PUT' && $subAction) {
+            // PUT /lms/topics/:id
+            echo $controller->updateTopic($subAction, $input, $userId, $userName);
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $subAction) {
+            // DELETE /lms/topics/:id
+            echo $controller->deleteTopic($subAction, $userId, $userName);
+        }
+    } elseif ($action === 'materials') {
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            // GET /lms/materials/:topicId
+            echo $controller->getMaterialsByTopic($subAction);
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            // POST /lms/materials
+            echo $controller->createMaterial($input, $userId, $userName);
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'PUT' && $subAction) {
+            // PUT /lms/materials/:id
+            echo $controller->updateMaterial($subAction, $input, $userId, $userName);
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $subAction) {
+            // DELETE /lms/materials/:id
+            echo $controller->deleteMaterial($subAction, $userId, $userName);
+        }
+    } elseif ($action === 'quizzes') {
+        if ($_SERVER['REQUEST_METHOD'] === 'GET' && $subAction) {
+            // GET /lms/quizzes/:materialId
+            echo $controller->getQuizByMaterialId($subAction);
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'PUT') {
+            // POST /lms/quizzes
+            echo $controller->saveQuiz($input, $userId, $userName);
+        }
+    }
 } elseif ($resource === 'events') {
     $controller = new ContentController();
 
@@ -163,15 +216,30 @@ if ($resource === 'news') {
             // GET /events/:id/participants
             echo $controller->getEventParticipants($action);
         } elseif ($action) {
-            echo $controller->getEventDetail($action);
+            echo $controller->getEventDetail($action, in_array($userRole, ['Admin', 'Pengurus']));
         } else {
-            echo $controller->getEvents();
+            echo $controller->getEvents(in_array($userRole, ['Admin', 'Pengurus']));
         }
     }
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($action && $subAction === 'join') {
             if ($userId)
                 echo $controller->joinEvent($action, $userId);
+            else {
+                http_response_code(401);
+                echo json_encode(["message" => "Unauthorized"]);
+            }
+        } elseif ($action && $subAction === 'attend') {
+            if ($userId)
+                echo $controller->markSelfAttendance($action, $userId);
+            else {
+                http_response_code(401);
+                echo json_encode(["message" => "Unauthorized"]);
+            }
+        } elseif ($action && $subAction === 'upload-payment') {
+            $proofUrl = $input['proof_url'] ?? '';
+            if ($userId)
+                echo $controller->uploadEventPaymentProof($action, $userId, $proofUrl);
             else {
                 http_response_code(401);
                 echo json_encode(["message" => "Unauthorized"]);
@@ -184,13 +252,29 @@ if ($resource === 'news') {
                 http_response_code(401);
                 echo json_encode(["message" => "Unauthorized"]);
             }
+        } elseif ($action && $subAction === 'confirm-payment') {
+            $targetUserId = $input['user_id'] ?? null;
+            if ($targetUserId && $userRole === 'Admin')
+                echo $controller->confirmPayment($action, $targetUserId, $userId);
+            else {
+                http_response_code(403);
+                echo json_encode(["message" => "Forbidden or missing user_id"]);
+            }
+        } elseif ($action && $subAction === 'reject-payment') {
+            $targetUserId = $input['user_id'] ?? null;
+            if ($targetUserId && $userRole === 'Admin')
+                echo $controller->rejectPayment($action, $targetUserId);
+            else {
+                http_response_code(403);
+                echo json_encode(["message" => "Forbidden or missing user_id"]);
+            }
         } elseif ($action && $subAction === 'participants' && isset($uri_parts[3]) && $uri_parts[3] === 'bulk') {
             // POST /events/:id/participants/bulk
             $userIds = $input['user_ids'] ?? [];
             $status = $input['status'] ?? 'registered';
 
             // Check admin role
-            if ($currUser && $currUser['role'] === 'Admin')
+            if ($userRole === 'Admin')
                 echo $controller->updateParticipantsBulk($action, $userIds, $status);
             else {
                 http_response_code(403);
@@ -289,19 +373,19 @@ if ($resource === 'news') {
     if ($_SERVER['REQUEST_METHOD'] === 'GET')
         echo $controller->getGames();
     if ($_SERVER['REQUEST_METHOD'] === 'POST')
-        echo $controller->createGame($input);
+        echo $controller->createGame($input, $userId, $userName);
     if ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action)
-        echo $controller->deleteGame($action);
+        echo $controller->deleteGame($action, $userId, $userName);
 } elseif ($resource === 'prompts') {
     $controller = new ResourceController();
     if ($_SERVER['REQUEST_METHOD'] === 'GET')
-        echo $controller->getPrompts();
+        echo $controller->getPrompts($userId, $userRole);
     if ($_SERVER['REQUEST_METHOD'] === 'POST')
-        echo $controller->createPrompt($input);
+        echo $controller->createPrompt($input, $userId, $userName);
     if ($_SERVER['REQUEST_METHOD'] === 'PUT' && $action)
-        echo $controller->updatePrompt($action, $input);
+        echo $controller->updatePrompt($action, $input, $userId, $userName);
     if ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action)
-        echo $controller->deletePrompt($action);
+        echo $controller->deletePrompt($action, $userId, $userName);
 } elseif ($resource === 'logs') {
     include_once './controllers/AuditController.php';
     $controller = new AuditController();
@@ -394,7 +478,30 @@ if ($resource === 'news') {
     $controller = new MemberController();
 
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-        echo $controller->getAll();
+        if ($action === 'duplicates') {
+            if ($userRole === 'Admin') {
+                echo $controller->getDuplicates();
+            } else {
+                http_response_code(403);
+                echo json_encode(["message" => "Forbidden"]);
+            }
+        } else {
+            echo $controller->getAll();
+        }
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'merge') {
+        if ($userRole === 'Admin') {
+            echo $controller->mergeDuplicate($input);
+        } else {
+            http_response_code(403);
+            echo json_encode(["message" => "Forbidden"]);
+        }
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($uri_parts[2]) && $uri_parts[2] === 'reset-password') {
+        if ($userRole === 'Admin') {
+            echo $controller->resetPassword($action, $input);
+        } else {
+            http_response_code(403);
+            echo json_encode(["message" => "Forbidden"]);
+        }
     } elseif ($_SERVER['REQUEST_METHOD'] === 'PUT' && $action) {
         // Update Member (Role, Name, Email)
         echo $controller->update($action, $input);
@@ -514,7 +621,7 @@ if ($resource === 'news') {
         $payload = Helper::verifyJWT($token);
         if ($payload && isset($payload['sub'])) {
             $userId = $payload['sub'];
-            $userRole = $payload['role'] ?? 'Anggota';
+            $userRole = ucfirst(strtolower($payload['role'] ?? 'Anggota'));
         }
     }
 
@@ -600,6 +707,105 @@ if ($resource === 'news') {
     } else {
         http_response_code(404);
         echo json_encode(["message" => "Endpoint not found"]);
+    }
+} elseif ($resource === 'training') {
+    $training = new TrainingController();
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        if ($action === 'settings') {
+            echo $training->getSettings();
+        } elseif ($action === 'registrations' && $userRole === 'Admin') {
+            echo $training->getRegistrations();
+        } else {
+            http_response_code(403);
+            echo json_encode(["message" => "Forbidden: Admin access required"]);
+        }
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if ($action === 'register') {
+            echo $training->register($input);
+        } elseif ($action === 'settings' && $userRole === 'Admin') {
+            echo $training->updateSettings($input);
+        } else {
+            http_response_code(404);
+            echo json_encode(["message" => "Endpoint not found"]);
+        }
+    }
+} elseif ($resource === 'finances') {
+    $controller = new FinanceController();
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        if ($action === 'summary' && $userRole === 'Admin') {
+            echo $controller->getSummary();
+        } elseif ($action === 'transactions' && $userRole === 'Admin') {
+            echo $controller->getTransactions();
+        } else {
+            http_response_code(403);
+            echo json_encode(["message" => "Forbidden"]);
+        }
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if ($action === 'add' && $userRole === 'Admin') {
+            echo $controller->addTransaction($input, $userId, $userName);
+        } else {
+            http_response_code(403);
+            echo json_encode(["message" => "Forbidden"]);
+        }
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action && $userRole === 'Admin') {
+        echo $controller->deleteTransaction($action, $userId, $userName);
+    }
+} elseif ($resource === 'projects') {
+    $controller = new ProjectController();
+
+    // Re-verify token because some endpoints need auth
+    $headers = getallheaders();
+    $authHeader = isset($headers['Authorization']) ? $headers['Authorization'] : '';
+    $token = str_replace('Bearer ', '', $authHeader);
+    $userId = null;
+    $userRole = null;
+
+    if ($token) {
+        $payload = Helper::verifyJWT($token);
+        if ($payload && isset($payload['sub'])) {
+            $userId = $payload['sub'];
+            $userRole = ucfirst(strtolower($payload['role'] ?? 'Anggota'));
+            if (in_array(strtolower($payload['role'] ?? ''), ['admin', 'super admin'])) {
+                $userRole = 'Admin';
+            }
+        }
+    }
+
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        if ($action === 'public') {
+            echo $controller->getPublicProjects();
+        } elseif ($action === 'my' && $userId) {
+            echo $controller->getMyProjects($userId);
+        } elseif ($action === 'all' && $userRole === 'Admin') {
+            echo $controller->getAllProjects();
+        } else {
+            http_response_code($userId ? 403 : 401);
+            echo json_encode(["message" => "Unauthorized"]);
+        }
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if ($userId) {
+            echo $controller->createProject($userId, $input);
+        } else {
+            http_response_code(401);
+            echo json_encode(["message" => "Unauthorized"]);
+        }
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'PUT' && $action) {
+        if ($userId && $userRole !== 'Admin') {
+            echo $controller->updateProject($action, $userId, $input);
+        } elseif ($userRole === 'Admin' && isset($input['status'])) {
+            // Admin updating status
+            echo $controller->updateStatus($action, $input['status']);
+        } else {
+            http_response_code(403);
+            echo json_encode(["message" => "Forbidden"]);
+        }
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action) {
+        if ($userId) {
+            echo $controller->deleteProject($action, $userId);
+        } else {
+            http_response_code(401);
+            echo json_encode(["message" => "Unauthorized"]);
+        }
     }
 } else {
     echo json_encode([

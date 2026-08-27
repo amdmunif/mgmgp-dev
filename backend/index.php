@@ -118,6 +118,7 @@ include_once './controllers/StatsController.php';
 include_once './controllers/TrainingController.php';
 include_once './controllers/FinanceController.php';
 include_once './controllers/ProjectController.php';
+include_once './controllers/LmsController.php';
 
 // ... includes
 
@@ -137,6 +138,47 @@ if ($resource === 'news') {
     if ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action)
         echo $controller->deleteNews($action, $userId, $userName);
 
+} elseif ($resource === 'lms') {
+    $controller = new LmsController();
+    $subAction = isset($uri_parts[2]) ? $uri_parts[2] : null;
+
+    if ($action === 'topics') {
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            // GET /lms/topics/:eventId
+            echo $controller->getTopicsByEvent($subAction);
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            // POST /lms/topics
+            echo $controller->createTopic($input, $userId, $userName);
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'PUT' && $subAction) {
+            // PUT /lms/topics/:id
+            echo $controller->updateTopic($subAction, $input, $userId, $userName);
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $subAction) {
+            // DELETE /lms/topics/:id
+            echo $controller->deleteTopic($subAction, $userId, $userName);
+        }
+    } elseif ($action === 'materials') {
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            // GET /lms/materials/:topicId
+            echo $controller->getMaterialsByTopic($subAction);
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            // POST /lms/materials
+            echo $controller->createMaterial($input, $userId, $userName);
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'PUT' && $subAction) {
+            // PUT /lms/materials/:id
+            echo $controller->updateMaterial($subAction, $input, $userId, $userName);
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $subAction) {
+            // DELETE /lms/materials/:id
+            echo $controller->deleteMaterial($subAction, $userId, $userName);
+        }
+    } elseif ($action === 'quizzes') {
+        if ($_SERVER['REQUEST_METHOD'] === 'GET' && $subAction) {
+            // GET /lms/quizzes/:materialId
+            echo $controller->getQuizByMaterialId($subAction);
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'PUT') {
+            // POST /lms/quizzes
+            echo $controller->saveQuiz($input, $userId, $userName);
+        }
+    }
 } elseif ($resource === 'events') {
     $controller = new ContentController();
 

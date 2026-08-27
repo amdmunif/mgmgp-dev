@@ -1,58 +1,62 @@
+import { api } from '../lib/api';
 import type { LmsTopic, LmsMaterial, LmsQuiz } from '../types';
 
 export const lmsService = {
     // Topik
-    getTopicsByEvent: async (_eventId: string): Promise<LmsTopic[]> => {
-        // Mock data
-        return [
-            { id: 't1', event_id: _eventId, title: 'Pendahuluan', order_num: 1 },
-            { id: 't2', event_id: _eventId, title: 'Materi Utama', order_num: 2 }
-        ];
+    getTopicsByEvent: async (eventId: string): Promise<LmsTopic[]> => {
+        const response = await api.get(`/lms/topics/${eventId}`);
+        return response.data;
     },
 
     saveTopic: async (topic: Partial<LmsTopic>): Promise<any> => {
-        return { success: true, data: { ...topic, id: topic.id || 'new-t-id' } };
+        if (topic.id) {
+            const response = await api.put(`/lms/topics/${topic.id}`, topic);
+            return response;
+        } else {
+            const response = await api.post('/lms/topics', topic);
+            return response;
+        }
     },
 
-    deleteTopic: async (_id: string): Promise<any> => {
-        return { success: true };
+    deleteTopic: async (id: string): Promise<any> => {
+        const response = await api.delete(`/lms/topics/${id}`);
+        return response;
     },
 
     // Materi
-    getMaterialsByTopic: async (_topicId: string): Promise<LmsMaterial[]> => {
-        // Mock data
-        if (_topicId === 't1') {
-            return [
-                { id: 'm1', topic_id: _topicId, title: 'Video Pengantar', type: 'video', order_num: 1 },
-                { id: 'm2', topic_id: _topicId, title: 'Pretest', type: 'quiz', order_num: 2 }
-            ];
-        }
-        return [
-            { id: 'm3', topic_id: _topicId, title: 'Modul PDF', type: 'pdf', order_num: 1 }
-        ];
+    getMaterialsByTopic: async (topicId: string): Promise<LmsMaterial[]> => {
+        const response = await api.get(`/lms/materials/${topicId}`);
+        return response.data;
     },
 
     saveMaterial: async (material: Partial<LmsMaterial>): Promise<any> => {
-        return { success: true, data: { ...material, id: material.id || 'new-m-id' } };
+        if (material.id) {
+            const response = await api.put(`/lms/materials/${material.id}`, material);
+            return response;
+        } else {
+            const response = await api.post('/lms/materials', material);
+            return response;
+        }
     },
 
-    deleteMaterial: async (_id: string): Promise<any> => {
-        return { success: true };
+    deleteMaterial: async (id: string): Promise<any> => {
+        const response = await api.delete(`/lms/materials/${id}`);
+        return response;
     },
 
     // Kuis
     getQuizByMaterialId: async (materialId: string): Promise<LmsQuiz | null> => {
-        if (materialId === 'm2') {
-            return {
-                id: 'q1',
-                topic_id: 't1',
-                title: 'Pretest',
-                duration_minutes: 30,
-                passing_score: 70,
-                max_attempts: 1,
-                order_num: 2
-            };
+        try {
+            const response = await api.get(`/lms/quizzes/${materialId}`);
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching quiz:', error);
+            return null;
         }
-        return null;
+    },
+    
+    saveQuiz: async (quizData: Partial<LmsQuiz>): Promise<any> => {
+        const response = await api.post('/lms/quizzes', quizData);
+        return response;
     }
 };

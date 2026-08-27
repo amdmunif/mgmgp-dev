@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
 import { ArrowLeft, Plus, Video, FileText, CheckSquare, Pencil, Trash2, GripVertical, FileQuestion, X } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { lmsService } from '../../../services/lmsService';
@@ -9,6 +9,10 @@ import { toast } from 'react-hot-toast';
 export function AdminEventLms() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    
+    // For updating the global admin layout header
+    const { setPageHeader } = useOutletContext<any>();
+    
     const [topics, setTopics] = useState<LmsTopic[]>([]);
     const [materials, setMaterials] = useState<Record<string, LmsMaterial[]>>({});
     const [loading, setLoading] = useState(true);
@@ -16,6 +20,11 @@ export function AdminEventLms() {
     // Modal States
     const [isTopicModalOpen, setIsTopicModalOpen] = useState(false);
     const [isMaterialModalOpen, setIsMaterialModalOpen] = useState(false);
+    
+    // State to determine if we are editing an existing item
+    const [editingTopic, setEditingTopic] = useState<LmsTopic | null>(null);
+    const [editingMaterial, setEditingMaterial] = useState<LmsMaterial | null>(null);
+    
     const [activeTopicId, setActiveTopicId] = useState<string | null>(null);
 
     // Form States
@@ -23,8 +32,22 @@ export function AdminEventLms() {
     const [materialForm, setMaterialForm] = useState({
         title: '',
         type: 'video',
+        url: '',
         duration: ''
     });
+
+    useEffect(() => {
+        // Set the global header
+        setPageHeader({
+            title: "Kelola LMS",
+            subtitle: "Susun topik dan tambahkan materi, kuis, atau tugas"
+        });
+
+        // Cleanup on unmount
+        return () => {
+            setPageHeader(null);
+        };
+    }, [setPageHeader]);
 
     useEffect(() => {
         if (id) {
@@ -62,23 +85,132 @@ export function AdminEventLms() {
         }
     };
 
+    // --- TOPIC HANDLERS ---
+    
+    const handleOpenTopicModal = (topic?: LmsTopic) => {
+        if (topic) {
+            setEditingTopic(topic);
+            setTopicTitle(topic.title);
+        } else {
+            setEditingTopic(null);
+            setTopicTitle('');
+        }
+        setIsTopicModalOpen(true);
+    };
+
+    const handleSaveTopic = async () => {
+        if (!topicTitle.trim()) {
+            toast.error("Judul topik tidak boleh kosong");
+            return;
+        }
+
+        try {
+            const payload: Partial<LmsTopic> = {
+                title: topicTitle,
+                event_id: id,
+                order_num: editingTopic ? editingTopic.order_num : topics.length + 1
+            };
+
+            if (editingTopic) {
+                payload.id = editingTopic.id;
+            }
+
+            await lmsService.saveTopic(payload);
+            toast.success(`Topik berhasil ${editingTopic ? 'diperbarui' : 'ditambahkan'}!`);
+            setIsTopicModalOpen(false);
+            setTopicTitle('');
+            if (id) loadData(id);
+        } catch (error) {
+            toast.error("Gagal menyimpan topik");
+            console.error(error);
+        }
+    };
+
+    const handleDeleteTopic = async (topicId: string) => {
+        if (!confirm('Apakah Anda yakin ingin menghapus topik ini? Semua materi di dalamnya akan ikut terhapus.')) return;
+        try {
+            await lmsService.deleteTopic(topicId);
+            toast.success("Topik berhasil dihapus");
+            if (id) loadData(id);
+        } catch (error) {
+            toast.error("Gagal menghapus topik");
+            console.error(error);
+        }
+    };
+
+    // --- MATERIAL HANDLERS ---
+
+    const handleOpenMaterialModal = (topicId: string, material?: LmsMaterial) => {
+        setActiveTopicId(topicId);
+        if (material) {
+            setEditingMaterial(material);
+            setMaterialForm({
+                title: material.title,
+                type: material.type,
+                url: material.url || '',
+                duration: material.duration?.toString() || ''
+            });
+        } else {
+            setEditingMaterial(null);
+            setMaterialForm({ title: '', type: 'video', url: '', duration: '' });
+        }
+        setIsMaterialModalOpen(true);
+    };
+
+    const handleSaveMaterial = async () => {
+        if (!materialForm.title.trim() || !activeTopicId) {
+            toast.error("Judul materi tidak boleh kosong");
+            return;
+        }
+
+        try {
+            const payload: Partial<LmsMaterial> = {
+                title: materialForm.title,
+                topic_id: activeTopicId,
+                type: materialForm.type as any,
+                url: materialForm.url,
+                duration: materialForm.duration ? parseInt(materialForm.duration) : 0,
+                order_num: editingMaterial ? editingMaterial.order_num : (materials[activeTopicId]?.length || 0) + 1
+            };
+
+            if (editingMaterial) {
+                payload.id = editingMaterial.id;
+            }
+
+            await lmsService.saveMaterial(payload);
+            toast.success(`Materi berhasil ${editingMaterial ? 'diperbarui' : 'ditambahkan'}!`);
+            setIsMaterialModalOpen(false);
+            if (id) loadData(id);
+        } catch (error) {
+            toast.error("Gagal menyimpan materi");
+            console.error(error);
+        }
+    };
+
+    const handleDeleteMaterial = async (materialId: string) => {
+        if (!confirm('Apakah Anda yakin ingin menghapus materi ini?')) return;
+        try {
+            await lmsService.deleteMaterial(materialId);
+            toast.success("Materi berhasil dihapus");
+            if (id) loadData(id);
+        } catch (error) {
+            toast.error("Gagal menghapus materi");
+            console.error(error);
+        }
+    };
+
     if (loading) return <div className="p-8 text-center">Memuat data kurikulum LMS...</div>;
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center gap-4 mb-6">
-                <Button variant="ghost" onClick={() => navigate(`/admin/events/${id}`)} className="text-gray-500">
-                    <ArrowLeft className="w-5 h-5" />
-                </Button>
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Kelola Kurikulum LMS</h1>
-                    <p className="text-sm text-gray-500">Susun topik dan tambahkan materi, kuis, atau tugas</p>
-                </div>
-            </div>
-
             <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-                <span className="font-medium text-gray-700">Daftar Topik ({topics.length})</span>
-                <Button onClick={() => setIsTopicModalOpen(true)} className="bg-blue-600 hover:bg-blue-700">
+                <div className="flex items-center gap-4">
+                    <Button variant="ghost" onClick={() => navigate(`/admin/events/${id}`)} className="text-gray-500 p-2 h-auto">
+                        <ArrowLeft className="w-5 h-5" />
+                    </Button>
+                    <span className="font-medium text-gray-700">Daftar Topik ({topics.length})</span>
+                </div>
+                <Button onClick={() => handleOpenTopicModal()} className="bg-blue-600 hover:bg-blue-700">
                     <Plus className="w-4 h-4 mr-2" />
                     Tambah Topik
                 </Button>
@@ -94,56 +226,36 @@ export function AdminEventLms() {
                                 <h2 className="font-bold text-lg text-gray-800">{topic.title}</h2>
                             </div>
                             <div className="flex items-center gap-2">
-                                <Button variant="outline" size="sm" className="h-8">
+                                <Button onClick={() => handleOpenTopicModal(topic)} variant="outline" size="sm" className="h-8">
                                     <Pencil className="w-3 h-3 mr-1" /> Edit
                                 </Button>
-                                <Button variant="outline" size="sm" className="h-8 text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200">
-                                    <Trash2 className="w-3 h-3" />
+                                <Button onClick={() => handleDeleteTopic(topic.id)} variant="outline" size="sm" className="h-8 text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200">
+                                    <Trash2 className="w-3 h-3 mr-1" /> Hapus
                                 </Button>
                             </div>
                         </div>
 
                         {/* Materials List */}
-                        <div className="p-4">
-                            {(materials[topic.id] || []).length > 0 ? (
-                                <div className="space-y-2 mb-4">
-                                    {materials[topic.id].map(mat => (
-                                        <div key={mat.id} className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-lg hover:border-blue-200 hover:bg-blue-50/50 transition-colors group">
+                        <div className="p-4 space-y-3">
+                            {materials[topic.id] && materials[topic.id].length > 0 ? (
+                                <div className="space-y-2">
+                                    {materials[topic.id].map((material) => (
+                                        <div key={material.id} className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-lg hover:border-blue-100 hover:shadow-sm transition-all group">
                                             <div className="flex items-center gap-3">
-                                                <GripVertical className="w-4 h-4 text-gray-300 opacity-0 group-hover:opacity-100 cursor-move transition-opacity" />
-                                                <div className="w-8 h-8 rounded bg-gray-50 flex items-center justify-center border border-gray-100">
-                                                    {getIcon(mat.type)}
+                                                <GripVertical className="w-4 h-4 text-gray-300 cursor-move opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                <div className="w-8 h-8 rounded-md bg-gray-50 flex items-center justify-center border border-gray-100">
+                                                    {getIcon(material.type)}
                                                 </div>
                                                 <div>
-                                                    <div className="font-medium text-sm text-gray-900">{mat.title}</div>
-                                                    <div className="text-xs text-gray-500 uppercase tracking-wider mt-0.5">{mat.type}</div>
+                                                    <h4 className="font-medium text-gray-800 text-sm">{material.title}</h4>
+                                                    <p className="text-xs text-gray-500 uppercase tracking-wider mt-0.5">{material.type}</p>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                {mat.type === 'quiz' && (
-                                                    <Button 
-                                                        onClick={() => navigate(`/admin/events/${id}/lms/quiz/${mat.id}`)}
-                                                        variant="outline" 
-                                                        size="sm" 
-                                                        className="h-7 text-xs bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100"
-                                                    >
-                                                        Kelola Soal
-                                                    </Button>
-                                                )}
-                                                {mat.type === 'assignment' && (
-                                                    <Button 
-                                                        onClick={() => navigate(`/admin/events/${id}/lms/assignment/${mat.id}`)}
-                                                        variant="outline" 
-                                                        size="sm" 
-                                                        className="h-7 text-xs bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
-                                                    >
-                                                        Periksa Tugas
-                                                    </Button>
-                                                )}
-                                                <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-gray-500">
+                                            <div className="flex items-center gap-2">
+                                                <Button onClick={() => handleOpenMaterialModal(topic.id, material)} variant="ghost" size="sm" className="h-7 w-7 p-0 text-gray-500">
                                                     <Pencil className="w-3 h-3" />
                                                 </Button>
-                                                <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-red-500">
+                                                <Button onClick={() => handleDeleteMaterial(material.id)} variant="ghost" size="sm" className="h-7 w-7 p-0 text-red-500">
                                                     <Trash2 className="w-3 h-3" />
                                                 </Button>
                                             </div>
@@ -157,10 +269,7 @@ export function AdminEventLms() {
                             )}
 
                             <Button 
-                                onClick={() => {
-                                    setActiveTopicId(topic.id);
-                                    setIsMaterialModalOpen(true);
-                                }}
+                                onClick={() => handleOpenMaterialModal(topic.id)}
                                 variant="outline" 
                                 size="sm" 
                                 className="w-full border-dashed border-2 border-gray-300 text-gray-600 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50"
@@ -172,12 +281,12 @@ export function AdminEventLms() {
                 ))}
             </div>
 
-            {/* Modal Tambah Topik */}
+            {/* Modal Topik */}
             {isTopicModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
                     <div className="bg-white rounded-2xl w-full max-w-md shadow-xl overflow-hidden">
                         <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                            <h3 className="font-bold text-gray-900">Tambah Topik Baru</h3>
+                            <h3 className="font-bold text-gray-900">{editingTopic ? 'Edit Topik' : 'Tambah Topik Baru'}</h3>
                             <button onClick={() => setIsTopicModalOpen(false)} className="text-gray-400 hover:text-gray-600">
                                 <X className="w-5 h-5" />
                             </button>
@@ -194,22 +303,18 @@ export function AdminEventLms() {
                         </div>
                         <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
                             <Button variant="outline" onClick={() => setIsTopicModalOpen(false)}>Batal</Button>
-                            <Button onClick={() => {
-                                toast.success("Topik berhasil ditambahkan! (Simulasi)");
-                                setIsTopicModalOpen(false);
-                                setTopicTitle('');
-                            }} className="bg-blue-600 hover:bg-blue-700">Simpan</Button>
+                            <Button onClick={handleSaveTopic} className="bg-blue-600 hover:bg-blue-700">Simpan</Button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* Modal Tambah Materi */}
+            {/* Modal Materi */}
             {isMaterialModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl w-full max-w-md shadow-xl overflow-hidden">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto">
+                    <div className="bg-white rounded-2xl w-full max-w-md shadow-xl overflow-hidden my-8">
                         <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                            <h3 className="font-bold text-gray-900">Tambah Materi Baru</h3>
+                            <h3 className="font-bold text-gray-900">{editingMaterial ? 'Edit Materi' : 'Tambah Materi Baru'}</h3>
                             <button onClick={() => setIsMaterialModalOpen(false)} className="text-gray-400 hover:text-gray-600">
                                 <X className="w-5 h-5" />
                             </button>
@@ -239,11 +344,13 @@ export function AdminEventLms() {
                                     <option value="assignment">Penugasan</option>
                                 </select>
                             </div>
-                            {['video', 'pdf'].includes(materialForm.type) && (
+                            {['video', 'pdf', 'link'].includes(materialForm.type) && (
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Tautan File / Video URL</label>
                                     <input 
                                         type="url"
+                                        value={materialForm.url}
+                                        onChange={(e) => setMaterialForm({...materialForm, url: e.target.value})}
                                         placeholder="https://..."
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                                     />
@@ -252,11 +359,7 @@ export function AdminEventLms() {
                         </div>
                         <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
                             <Button variant="outline" onClick={() => setIsMaterialModalOpen(false)}>Batal</Button>
-                            <Button onClick={() => {
-                                toast.success("Materi berhasil ditambahkan! (Simulasi) ke topik ID: " + activeTopicId);
-                                setIsMaterialModalOpen(false);
-                                setMaterialForm({ title: '', type: 'video', duration: '' });
-                            }} className="bg-blue-600 hover:bg-blue-700">Simpan</Button>
+                            <Button onClick={handleSaveMaterial} className="bg-blue-600 hover:bg-blue-700">Simpan</Button>
                         </div>
                     </div>
                 </div>
