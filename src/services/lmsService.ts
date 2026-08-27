@@ -28,7 +28,7 @@ export const lmsService = {
             ];
         }
         return [
-            { id: 'm3', topic_id: topicId, title: 'Modul PDF', type: 'pdf', order_num: 1 }
+            { id: 'm3', topic_id: _topicId, title: 'Modul PDF', type: 'pdf', order_num: 1 }
         ];
     },
 
@@ -36,7 +36,7 @@ export const lmsService = {
         return { success: true, data: { ...material, id: material.id || 'new-m-id' } };
     },
 
-    deleteMaterial: async (id: string): Promise<any> => {
+    deleteMaterial: async (_id: string): Promise<any> => {
         return { success: true };
     },
 
