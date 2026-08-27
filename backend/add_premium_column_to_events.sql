@@ -1,1 +1,0 @@
-ALTER TABLE events ADD COLUMN is_premium TINYINT(1) DEFAULT 0;

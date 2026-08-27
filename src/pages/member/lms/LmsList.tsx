@@ -1,19 +1,27 @@
 import { useState, useEffect } from 'react';
 import { MonitorPlay, ChevronRight, Loader2 } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { contentManagementService } from '../../../services/contentManagementService';
 import { getFileUrl } from '../../../lib/api';
 import type { Event } from '../../../types';
 
 export function LmsList() {
     const navigate = useNavigate();
+    const { setPageHeader } = useOutletContext<any>();
     const [events, setEvents] = useState<Event[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        setPageHeader({
+            title: "LMS (Kelas Saya)",
+            subtitle: "Lanjutkan proses belajar dan kerjakan tugas dari kegiatan yang menggunakan LMS."
+        });
+
         loadData();
-    }, []);
+
+        return () => setPageHeader(null);
+    }, [setPageHeader]);
 
     const loadData = async () => {
         try {
@@ -29,14 +37,6 @@ export function LmsList() {
 
     return (
         <div className="w-full">
-            <div className="mb-8">
-                <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                    <MonitorPlay className="w-6 h-6 text-primary-600" />
-                    LMS (Kelas Saya)
-                </h1>
-                <p className="text-gray-500 mt-1">Lanjutkan proses belajar dan kerjakan tugas dari kegiatan yang menggunakan LMS.</p>
-            </div>
-
             {loading ? (
                 <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-primary-500" /></div>
             ) : events.length === 0 ? (

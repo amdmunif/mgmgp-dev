@@ -165,20 +165,13 @@ export function MemberProjects() {
                                 Kunjungi Link <ExternalLink className="w-3 h-3 ml-1" />
                             </a>
                             
-                            <div className="flex gap-2 pt-4 border-t border-gray-100">
+                            <div className="pt-4 border-t border-gray-100">
                                 <Button 
                                     onClick={() => handleEdit(project)} 
                                     variant="outline" 
-                                    className="flex-1 h-9 text-gray-600 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50"
+                                    className="w-full h-9 text-gray-600 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50"
                                 >
-                                    <Edit2 className="w-4 h-4 mr-2" /> Edit
-                                </Button>
-                                <Button 
-                                    onClick={() => handleDelete(project.id)} 
-                                    variant="outline"
-                                    className="h-9 px-3 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-200"
-                                >
-                                    <Trash2 className="w-4 h-4" />
+                                    <Edit2 className="w-4 h-4 mr-2" /> Kelola Karya
                                 </Button>
                             </div>
                         </div>
@@ -275,10 +268,20 @@ export function MemberProjects() {
                                 </div>
                             </div>
                             <div className="p-4 px-6 border-t border-gray-100 shrink-0 bg-gray-50 flex gap-3">
-                                <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)} className="flex-1 bg-white">
+                                {editingId && (
+                                    <Button 
+                                        type="button" 
+                                        variant="outline" 
+                                        onClick={() => handleDelete(editingId)} 
+                                        className="h-10 px-3 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 shrink-0"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                )}
+                                <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)} className="flex-1 bg-white h-10">
                                     Batal
                                 </Button>
-                                <Button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700 text-white">
+                                <Button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700 text-white h-10">
                                     {editingId ? 'Simpan Perubahan' : 'Unggah Karya'}
                                 </Button>
                             </div>

@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronDown, ChevronRight, PlayCircle, FileText, CheckCircle, ArrowLeft, Menu, X, Play, CheckSquare, Trophy } from 'lucide-react';
+import { ChevronDown, ChevronRight, PlayCircle, FileText, CheckCircle, ArrowLeft, Menu, X, Play, CheckSquare, Trophy, Loader2 } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { cn } from '../../../lib/utils';
 import { toast } from 'react-hot-toast';
+import { lmsService } from '../../../services/lmsService';
 
 // Mock Data Types
 interface LmsMaterial {
@@ -20,42 +21,57 @@ interface LmsTopic {
     items: LmsMaterial[];
 }
 
-const INITIAL_TOPICS: LmsTopic[] = [
-    {
-        id: 't1',
-        title: 'Pendahuluan',
-        items: [
-            { id: 'm1', title: 'Gambaran Kelas Kecerdasan Artifisial', type: 'video', duration: '04:12', is_completed: true },
-            { id: 'm2', title: 'Pretest Kelas Kecerdasan Artifisial', type: 'quiz', duration: '15 Soal', is_completed: true }
-        ]
-    },
-    {
-        id: 't2',
-        title: 'Pengenalan Teknologi Kecerdasan Artifisial (KA)',
-        items: [
-            { id: 'm3', title: 'Teknologi Kecerdasan Artifisial (KA)', type: 'video', duration: '12:00', is_completed: false },
-            { id: 'm4', title: 'KA Akan Mengubah Cara Belajar', type: 'video', duration: '08:30', is_completed: false },
-            { id: 'm5', title: 'Modul 1: Pengenalan Teknologi KA', type: 'pdf', duration: '15 Halaman', is_completed: false },
-            { id: 'm6', title: 'Kuis 1: Pengenalan Teknologi KA', type: 'quiz', duration: '5 Soal', is_completed: false }
-        ]
-    },
-    {
-        id: 't3',
-        title: 'Manajemen Prompt dan Interaksi dengan LLM',
-        items: [
-            { id: 'm7', title: 'Manajemen Prompt', type: 'video', duration: '15:20', is_completed: false },
-            { id: 'm8', title: 'Tugas 1: Praktik Membuat Prompt', type: 'assignment', duration: 'Tugas', is_completed: false }
-        ]
-    }
-];
-
 export function LmsViewer() {
     const { eventId } = useParams();
     const navigate = useNavigate();
     const [sidebarOpen, setSidebarOpen] = useState(true);
-    const [expandedTopics, setExpandedTopics] = useState<string[]>(['t1', 't2']);
-    const [activeMaterial, setActiveMaterial] = useState<string>('m3');
-    const [topics, setTopics] = useState<LmsTopic[]>(INITIAL_TOPICS);
+    const [expandedTopics, setExpandedTopics] = useState<string[]>([]);
+    const [activeMaterial, setActiveMaterial] = useState<string>('');
+    const [topics, setTopics] = useState<LmsTopic[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (eventId) {
+            loadData(eventId);
+        }
+    }, [eventId]);
+
+    const loadData = async (eId: string) => {
+        try {
+            setLoading(true);
+            const fetchedTopics = await lmsService.getTopicsByEvent(eId);
+            
+            const fullTopics: LmsTopic[] = [];
+            for (const topic of fetchedTopics) {
+                const materials = await lmsService.getMaterialsByTopic(topic.id);
+                fullTopics.push({
+                    id: topic.id,
+                    title: topic.title,
+                    items: materials.map(m => ({
+                        id: m.id,
+                        title: m.title,
+                        type: m.type as any,
+                        duration: m.duration ? `${m.duration} Menit` : '',
+                        is_completed: false // default for now, until backend progress tracking is built
+                    }))
+                });
+            }
+
+            setTopics(fullTopics);
+            
+            if (fullTopics.length > 0) {
+                setExpandedTopics([fullTopics[0].id]);
+                if (fullTopics[0].items.length > 0) {
+                    setActiveMaterial(fullTopics[0].items[0].id);
+                }
+            }
+        } catch (error) {
+            console.error('Failed to load LMS data', error);
+            toast.error("Gagal memuat materi LMS");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const toggleTopic = (id: string) => {
         setExpandedTopics(prev => 
@@ -76,7 +92,7 @@ export function LmsViewer() {
     };
 
     // Calculate progress
-    const totalItems = topics.reduce((acc, topic) => acc + topic.items.length, 0);
+    const totalItems = topics.reduce((acc, topic) => acc + topic.items.length, 0) || 1; // prevent div by zero
     const completedItems = topics.reduce((acc, topic) => acc + topic.items.filter(i => i.is_completed).length, 0);
     const progressPercent = Math.round((completedItems / totalItems) * 100);
 
@@ -234,23 +250,29 @@ export function LmsViewer() {
 
                 {/* Topics Accordion */}
                 <div className="flex-1 overflow-y-auto">
-                    {/* Mobile Progress Bar (Shown only on small screens) */}
-                    <div className="md:hidden p-4 border-b border-gray-100 bg-blue-50/50">
-                        <div className="flex justify-between text-xs font-medium text-gray-600 mb-2">
-                            <span>Kemajuan Belajar</span>
-                            <span>{progressPercent}%</span>
-                        </div>
-                        <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                            <div className="h-full bg-blue-600 transition-all duration-500" style={{ width: `${progressPercent}%` }} />
-                        </div>
-                        {progressPercent === 100 && (
-                            <Button size="sm" className="w-full mt-3 bg-yellow-500 hover:bg-yellow-600 text-yellow-950 font-bold">
-                                <Trophy className="w-4 h-4 mr-2" /> Unduh Sertifikat
-                            </Button>
-                        )}
-                    </div>
+                    {loading ? (
+                        <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-gray-300" /></div>
+                    ) : topics.length === 0 ? (
+                        <div className="p-4 text-center text-sm text-gray-500">Belum ada materi di kelas ini</div>
+                    ) : (
+                        <>
+                            {/* Mobile Progress Bar (Shown only on small screens) */}
+                            <div className="md:hidden p-4 border-b border-gray-100 bg-blue-50/50">
+                                <div className="flex justify-between text-xs font-medium text-gray-600 mb-2">
+                                    <span>Kemajuan Belajar</span>
+                                    <span>{progressPercent}%</span>
+                                </div>
+                                <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                                    <div className="h-full bg-blue-600 transition-all duration-500" style={{ width: `${progressPercent}%` }} />
+                                </div>
+                                {progressPercent === 100 && (
+                                    <Button size="sm" className="w-full mt-3 bg-yellow-500 hover:bg-yellow-600 text-yellow-950 font-bold">
+                                        <Trophy className="w-4 h-4 mr-2" /> Unduh Sertifikat
+                                    </Button>
+                                )}
+                            </div>
 
-                    {topics.map((topic) => {
+                            {topics.map((topic) => {
                         const isExpanded = expandedTopics.includes(topic.id);
                         const completedCount = topic.items.filter(i => i.is_completed).length;
                         
@@ -298,6 +320,8 @@ export function LmsViewer() {
                             </div>
                         );
                     })}
+                        </>
+                    )}
                 </div>
             </div>
 

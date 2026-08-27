@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { MonitorPlay, ChevronRight, Search } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { contentManagementService } from '../../../services/contentManagementService';
@@ -8,13 +8,21 @@ import type { Event } from '../../../types';
 
 export function AdminLmsList() {
     const navigate = useNavigate();
+    const { setPageHeader } = useOutletContext<any>();
     const [events, setEvents] = useState<Event[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
+        setPageHeader({
+            title: "Learning Management System (LMS)",
+            subtitle: "Kelola kelas, materi, dan tugas untuk kegiatan yang menggunakan fitur LMS"
+        });
+
         loadData();
-    }, []);
+
+        return () => setPageHeader(null);
+    }, [setPageHeader]);
 
     const loadData = async () => {
         try {
@@ -34,14 +42,6 @@ export function AdminLmsList() {
 
     return (
         <div className="space-y-6">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Learning Management System (LMS)</h1>
-                    <p className="text-gray-500 text-sm mt-1">Kelola kelas, materi, dan tugas untuk kegiatan yang menggunakan fitur LMS</p>
-                </div>
-            </div>
-
             {/* Main Content */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                 <div className="p-4 border-b border-gray-100 flex items-center justify-between">

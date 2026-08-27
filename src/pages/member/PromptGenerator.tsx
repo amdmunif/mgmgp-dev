@@ -224,7 +224,7 @@ export function PromptGenerator() {
     const labelClass = 'block text-sm font-semibold text-gray-700 mb-1.5';
 
     return (
-        <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in duration-500 pb-10">
+        <div className="w-full max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500 pb-10">
             {/* Step Indicator */}
             <div className="flex items-center gap-2">
                 {['Dasar', 'Konfigurasi Soal', 'Stimulus & Extra', 'Hasil Prompt'].map((label, i) => (
