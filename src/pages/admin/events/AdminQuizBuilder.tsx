@@ -18,7 +18,7 @@ interface QuizQuestion {
 }
 
 export function AdminQuizBuilder() {
-    const { id, quizId } = useParams();
+    const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     
     const [title, setTitle] = useState('Pretest Kelas Kecerdasan Artifisial');

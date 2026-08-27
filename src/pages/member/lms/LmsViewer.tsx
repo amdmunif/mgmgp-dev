@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronDown, ChevronRight, PlayCircle, FileText, CheckCircle, ArrowLeft, Menu, X, Play, CheckSquare, Trophy, Download } from 'lucide-react';
+import { ChevronDown, ChevronRight, PlayCircle, FileText, CheckCircle, ArrowLeft, Menu, X, Play, CheckSquare, Trophy } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { cn } from '../../../lib/utils';
 import { toast } from 'react-hot-toast';

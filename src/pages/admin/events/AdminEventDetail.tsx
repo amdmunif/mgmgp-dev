@@ -30,6 +30,7 @@ interface EventDetail {
     image_url: string;
     is_registration_open: boolean;
     is_paid: boolean;
+    has_lms?: boolean | number;
 }
 
 export function AdminEventDetail() {

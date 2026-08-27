@@ -40,7 +40,7 @@ const MOCK_QUESTIONS = [
 ];
 
 export function QuizPlayer() {
-    const { eventId, quizId } = useParams();
+    const { eventId } = useParams();
     const navigate = useNavigate();
 
     const [started, setStarted] = useState(false);

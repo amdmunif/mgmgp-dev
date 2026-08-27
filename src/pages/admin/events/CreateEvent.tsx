@@ -160,7 +160,7 @@ export function CreateEvent() {
                 price: data.price,
                 registration_deadline: formattedDeadline,
                 attendance_deadline: formattedAttDeadline,
-                quota: data.quota || null,
+                quota: data.quota || undefined,
                 has_lms: data.has_lms ? 1 : 0
             };
 

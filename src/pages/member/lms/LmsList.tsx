@@ -1,4 +1,4 @@
-import { MonitorPlay, ChevronRight, Clock, Users } from 'lucide-react';
+import { MonitorPlay, ChevronRight } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { useNavigate } from 'react-router-dom';
 

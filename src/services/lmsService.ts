@@ -1,13 +1,12 @@
-import { api } from '../lib/api';
 import type { LmsTopic, LmsMaterial, LmsQuiz } from '../types';
 
 export const lmsService = {
     // Topik
-    getTopicsByEvent: async (eventId: string): Promise<LmsTopic[]> => {
+    getTopicsByEvent: async (_eventId: string): Promise<LmsTopic[]> => {
         // Mock data
         return [
-            { id: 't1', event_id: eventId, title: 'Pendahuluan', order_num: 1 },
-            { id: 't2', event_id: eventId, title: 'Materi Utama', order_num: 2 }
+            { id: 't1', event_id: _eventId, title: 'Pendahuluan', order_num: 1 },
+            { id: 't2', event_id: _eventId, title: 'Materi Utama', order_num: 2 }
         ];
     },
 
@@ -15,17 +14,17 @@ export const lmsService = {
         return { success: true, data: { ...topic, id: topic.id || 'new-t-id' } };
     },
 
-    deleteTopic: async (id: string): Promise<any> => {
+    deleteTopic: async (_id: string): Promise<any> => {
         return { success: true };
     },
 
     // Materi
-    getMaterialsByTopic: async (topicId: string): Promise<LmsMaterial[]> => {
+    getMaterialsByTopic: async (_topicId: string): Promise<LmsMaterial[]> => {
         // Mock data
-        if (topicId === 't1') {
+        if (_topicId === 't1') {
             return [
-                { id: 'm1', topic_id: topicId, title: 'Video Pengantar', type: 'video', order_num: 1 },
-                { id: 'm2', topic_id: topicId, title: 'Pretest', type: 'quiz', order_num: 2 }
+                { id: 'm1', topic_id: _topicId, title: 'Video Pengantar', type: 'video', order_num: 1 },
+                { id: 'm2', topic_id: _topicId, title: 'Pretest', type: 'quiz', order_num: 2 }
             ];
         }
         return [

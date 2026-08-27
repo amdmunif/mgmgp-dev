@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Video, FileText, CheckSquare, Pencil, Trash2, GripVertical, FileQuestion, X } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { lmsService } from '../../../services/lmsService';
@@ -253,7 +253,7 @@ export function AdminEventLms() {
                         <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
                             <Button variant="outline" onClick={() => setIsMaterialModalOpen(false)}>Batal</Button>
                             <Button onClick={() => {
-                                toast.success("Materi berhasil ditambahkan! (Simulasi)");
+                                toast.success("Materi berhasil ditambahkan! (Simulasi) ke topik ID: " + activeTopicId);
                                 setIsMaterialModalOpen(false);
                                 setMaterialForm({ title: '', type: 'video', duration: '' });
                             }} className="bg-blue-600 hover:bg-blue-700">Simpan</Button>
