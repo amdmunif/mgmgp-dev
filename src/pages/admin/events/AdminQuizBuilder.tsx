@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation, useOutletContext } from 'react-router-dom';
-import { ArrowLeft, Plus, Save, Clock, Trash2, CheckCircle2, Search, LibraryBig, X, Loader2, FileQuestion } from 'lucide-react';
+import { Plus, Save, Clock, Trash2, CheckCircle2, Search, LibraryBig, X, Loader2, FileQuestion } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { toast } from 'react-hot-toast';
 import { cn } from '../../../lib/utils';
