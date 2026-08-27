@@ -20,6 +20,9 @@ export interface Event {
     bank_name?: string;
     bank_account_number?: string;
     bank_account_holder?: string;
+    quota?: number;
+    participants_count?: number;
+    has_lms?: boolean | number;
 }
 
 export interface EventParticipant {

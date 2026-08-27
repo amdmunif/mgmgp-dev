@@ -18,7 +18,7 @@ export function LmsList() {
     const loadData = async () => {
         try {
             // Mengambil semua data acara, lalu memfilter yang memiliki fitur LMS
-            const data = await contentManagementService.getEvents();
+            const data = await contentManagementService.getAllEvents();
             setEvents(data.filter((e: any) => e.has_lms === 1 || e.has_lms === true));
         } catch (error) {
             console.error('Failed to load events:', error);
@@ -49,7 +49,7 @@ export function LmsList() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {events.map(event => {
                         // Dummy progress logic since we don't have the user's progress from API yet
-                        const percent = 0; 
+                        const percent: number = 0; 
                         
                         return (
                             <div key={event.id} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex flex-col group hover:shadow-md transition-shadow">

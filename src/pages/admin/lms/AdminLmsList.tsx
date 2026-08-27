@@ -18,7 +18,7 @@ export function AdminLmsList() {
 
     const loadData = async () => {
         try {
-            const data = await contentManagementService.getEvents();
+            const data = await contentManagementService.getAllEvents();
             // Filter events that have LMS
             setEvents(data.filter((e: any) => e.has_lms === 1 || e.has_lms === true));
         } catch (error) {
