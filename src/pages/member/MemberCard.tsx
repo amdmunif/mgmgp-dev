@@ -4,7 +4,6 @@ import { CreditCard, User as UserIcon } from 'lucide-react';
 import { api, getFileUrl } from '../../lib/api';
 import { settingsService } from '../../services/settingsService';
 import type { AppSettings } from '../../services/settingsService';
-import { Button } from '../../components/ui/button';
 import { toast } from 'react-hot-toast';
 
 export function MemberCard() {
