@@ -69,6 +69,7 @@ import { CPTP } from './pages/member/CPTP';
 import { MemberEvents } from './pages/member/Events';
 import { MemberEventDetail } from './pages/member/EventDetail';
 import { EditProfile } from './pages/member/EditProfile';
+import { MemberCard } from './pages/member/MemberCard';
 import { Games } from './pages/member/Games';
 import { Modules } from './pages/member/Modules';
 import { ContributorRegistration } from './pages/member/ContributorRegistration';
@@ -139,6 +140,7 @@ function App() {
           <Route path="profile" element={<EditProfile />} />
           <Route path="upgrade" element={<UpgradePremium />} />
           <Route path="cptp" element={<CPTP />} />
+          <Route path="card" element={<MemberCard />} />
           <Route path="events" element={<MemberEvents />} />
           <Route path="events/:id" element={<MemberEventDetail />} />
           <Route path="contributor" element={<ContributorRegistration />} />

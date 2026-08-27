@@ -21,7 +21,8 @@ import {
     Clock,
     PenTool,
     Wand2,
-    Camera
+    Camera,
+    CreditCard
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { cn } from '../../lib/utils';
@@ -115,6 +116,7 @@ export function MemberLayout() {
         { icon: BookOpen, label: 'Referensi Belajar', path: '/member/references', premium: true },
         { icon: Camera, label: 'Karya Saya', path: '/member/projects' },
         { icon: PenTool, label: 'Program Kontributor', path: '/member/contributor' },
+        { icon: CreditCard, label: 'Kartu Anggota', path: '/member/card' },
         // Mobile Only Items
         { icon: UserCircle, label: 'Edit Profil', path: '/member/profile', className: 'md:hidden' },
         ...(user?.role === 'Admin' || user?.role === 'Pengurus' ? [{ icon: LayoutDashboard, label: 'Admin Dashboard', path: '/admin', className: 'md:hidden text-primary-600' }] : []),
