@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation, useOutletContext } from 'react-router-dom';
-import { Plus, Save, Clock, Trash2, CheckCircle2, Search, LibraryBig, X, Loader2, FileQuestion } from 'lucide-react';
+import { Plus, Save, Clock, Trash2, CheckCircle2, Search, LibraryBig, X, Loader2, FileQuestion, ArrowLeft } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { toast } from 'react-hot-toast';
 import { cn } from '../../../lib/utils';
@@ -55,12 +55,6 @@ export function AdminQuizBuilder() {
             setPageHeader({
             title: 'Pembangun Kuis',
             subtitle: "Buat pertanyaan untuk Pretest atau Post-test",
-            action: (
-                <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
-                    {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-                    Simpan Kuis
-                </Button>
-            ),
             backUrl: `/admin/events/${id}/lms`
         });
         }
@@ -282,8 +276,23 @@ export function AdminQuizBuilder() {
     if (loading) return <div className="p-8 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-500"/></div>;
 
     return (
-        <div className="max-w-4xl mx-auto pb-20">
-            <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6 shadow-sm mt-4">
+        <div className="max-w-4xl mx-auto pb-20 mt-4">
+            <div className="flex justify-between items-center mb-4">
+                <Button 
+                    onClick={() => navigate(`/admin/events/${id}/lms`)} 
+                    variant="outline" 
+                    className="border-gray-200 text-gray-700 hover:bg-gray-50"
+                >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Kembali
+                </Button>
+                <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
+                    {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                    Simpan Kuis
+                </Button>
+            </div>
+            
+            <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6 shadow-sm">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Judul Kuis</label>
