@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Plus, Save, Clock, Trash2, CheckCircle2, Search, LibraryBig, X, Loader2 } from 'lucide-react';
+import { ArrowLeft, Plus, Save, Clock, Trash2, CheckCircle2, Search, LibraryBig, X, Loader2, FileQuestion } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { toast } from 'react-hot-toast';
 import { cn } from '../../../lib/utils';
 import { lmsService } from '../../../services/lmsService';
 import { questionService, type Question } from '../../../services/questionService';
-import type { LmsQuiz } from '../../../types';
 
 interface QuizOption {
     id: string;
@@ -59,7 +58,7 @@ export function AdminQuizBuilder() {
     const loadQuiz = async () => {
         try {
             setLoading(true);
-            const quizData = await lmsService.getQuizByMaterialId(materialId!);
+            const quizData: any = await lmsService.getQuizByMaterialId(materialId!);
             if (quizData) {
                 setTitle(quizData.title);
                 setDescription(quizData.description || '');
