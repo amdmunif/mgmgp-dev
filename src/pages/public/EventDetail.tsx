@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { api, getFileUrl } from '../../lib/api';
 import { formatDate } from '../../lib/utils';
 import { Button } from '../../components/ui/button';
-import { Calendar, MapPin, ArrowLeft, Clock, Share2, Lock, Loader2, DollarSign } from 'lucide-react';
+import { Calendar, MapPin, ArrowLeft, Clock, Share2, Lock, Loader2, DollarSign, Users } from 'lucide-react';
 import { authService } from '../../services/authService';
 import type { Event } from '../../types';
 
@@ -178,6 +178,20 @@ export function EventDetail() {
                                     <p className="font-medium text-gray-900">{event.location}</p>
                                 </div>
                             </div>
+                            {event.quota ? (
+                                <div className="flex items-start gap-3">
+                                    <Users className="w-5 h-5 text-blue-400 mt-0.5" />
+                                    <div>
+                                        <p className="text-sm text-gray-500">Kuota Peserta</p>
+                                        <p className="font-medium text-gray-900">
+                                            {event.participants_count || 0} / {event.quota} terdaftar
+                                            {(event.quota - (event.participants_count || 0)) <= 0 && (
+                                                <span className="text-red-600 ml-2">(Penuh)</span>
+                                            )}
+                                        </p>
+                                    </div>
+                                </div>
+                            ) : null}
                             {event.registration_deadline && (
                                 <div className="flex items-start gap-3">
                                     <Clock className="w-5 h-5 text-red-400 mt-0.5" />
@@ -208,9 +222,9 @@ export function EventDetail() {
                                     </div>
                                 )}
                             </div>
-                        ) : (Number(event.is_registration_open) !== 1 || (event.registration_deadline && new Date(event.registration_deadline) < new Date())) ? (
+                        ) : (Number(event.is_registration_open) !== 1 || (event.registration_deadline && new Date(event.registration_deadline) < new Date()) || (event.quota && (event.participants_count || 0) >= event.quota)) ? (
                             <div className="bg-red-50 text-red-700 p-4 rounded-lg text-center font-medium">
-                                Pendaftaran Telah Ditutup
+                                {(event.quota && (event.participants_count || 0) >= event.quota) ? 'Kuota Pendaftaran Penuh' : 'Pendaftaran Telah Ditutup'}
                             </div>
                         ) : isAuthenticated ? (
                             (() => {

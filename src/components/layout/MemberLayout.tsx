@@ -22,7 +22,8 @@ import {
     PenTool,
     Wand2,
     Camera,
-    CreditCard
+    CreditCard,
+    MonitorPlay
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { cn } from '../../lib/utils';
@@ -107,6 +108,7 @@ export function MemberLayout() {
     const menuItems = [
         { icon: LayoutDashboard, label: 'Dashboard', path: '/member' },
         { icon: Calendar, label: 'Acara (Event)', path: '/member/events' },
+        { icon: MonitorPlay, label: 'LMS (Kelas Saya)', path: '/member/lms' },
         { icon: FileText, label: 'Referensi CP/TP', path: '/member/cptp' },
         { icon: FileQuestion, label: 'Bank Soal', path: '/member/questions', premium: true },
         { icon: Gamepad2, label: 'Bank Games', path: '/member/games', premium: true },

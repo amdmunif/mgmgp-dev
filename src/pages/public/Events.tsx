@@ -94,9 +94,16 @@ export function Events() {
                                 <p className="text-gray-600 mb-4 line-clamp-3">{stripHtml(event.description)}</p>
                             </div>
                             <div className="flex items-center justify-between mt-4">
-                                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${(Number(event.is_registration_open) === 1 && (!event.registration_deadline || new Date(event.registration_deadline) >= new Date())) ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                    {(Number(event.is_registration_open) === 1 && (!event.registration_deadline || new Date(event.registration_deadline) >= new Date())) ? 'Pendaftaran Buka' : 'Pendaftaran Tutup'}
-                                </span>
+                                <div className="flex flex-col gap-1">
+                                    <span className={`px-3 py-1 rounded-full text-xs font-semibold w-fit ${(Number(event.is_registration_open) === 1 && (!event.registration_deadline || new Date(event.registration_deadline) >= new Date())) ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                        {(Number(event.is_registration_open) === 1 && (!event.registration_deadline || new Date(event.registration_deadline) >= new Date())) ? 'Pendaftaran Buka' : 'Pendaftaran Tutup'}
+                                    </span>
+                                    {event.quota ? (
+                                        <span className={`text-xs font-medium ${(event.quota - (event.participants_count || 0)) <= 0 ? 'text-red-600' : 'text-blue-600'}`}>
+                                            {(event.quota - (event.participants_count || 0)) <= 0 ? 'Kuota Penuh' : `Sisa Kuota: ${event.quota - (event.participants_count || 0)}`}
+                                        </span>
+                                    ) : null}
+                                </div>
                                 <Link to={`/events/${event.id}`}>
                                     <Button>
                                         Detail Acara <ArrowRight className="ml-2 w-4 h-4" />

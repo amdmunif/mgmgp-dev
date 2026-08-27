@@ -43,6 +43,9 @@ import { AdminNews } from './pages/admin/news/AdminNews';
 import { CreateNews } from './pages/admin/news/CreateNews';
 import { AdminEvents } from './pages/admin/events/AdminEvents';
 import { AdminEventDetail } from './pages/admin/events/AdminEventDetail';
+import { AdminEventLms } from './pages/admin/events/AdminEventLms';
+import { AdminQuizBuilder } from './pages/admin/events/AdminQuizBuilder';
+import { AdminAssignmentGrader } from './pages/admin/events/AdminAssignmentGrader';
 import { CreateEvent } from './pages/admin/events/CreateEvent';
 import { AdminEventAttendancePrint } from './pages/admin/events/AdminEventAttendancePrint';
 import { AdminMemberDetailPrint } from './pages/admin/AdminMemberDetailPrint';
@@ -72,6 +75,9 @@ import { EditProfile } from './pages/member/EditProfile';
 import { MemberCard } from './pages/member/MemberCard';
 import { Games } from './pages/member/Games';
 import { Modules } from './pages/member/Modules';
+import { LmsList } from './pages/member/lms/LmsList';
+import { LmsViewer } from './pages/member/lms/LmsViewer';
+import { QuizPlayer } from './pages/member/lms/QuizPlayer';
 import { ContributorRegistration } from './pages/member/ContributorRegistration';
 import { PromptGenerator } from './pages/member/PromptGenerator';
 import { MemberProjects } from './pages/member/MemberProjects';
@@ -129,6 +135,21 @@ function App() {
         <Route path="/reset-password" element={<Layout><ResetPassword /></Layout>} />
 
         {/* Member Routes - Wrapped in MemberLayout */}
+        <Route path="/member/lms/classroom/:eventId" element={
+          <ErrorBoundary>
+            <MaintenanceGuard type="member">
+              <LmsViewer />
+            </MaintenanceGuard>
+          </ErrorBoundary>
+        } />
+        <Route path="/member/lms/classroom/:eventId/quiz/:quizId" element={
+          <ErrorBoundary>
+            <MaintenanceGuard type="member">
+              <QuizPlayer />
+            </MaintenanceGuard>
+          </ErrorBoundary>
+        } />
+
         <Route path="/member" element={
           <ErrorBoundary>
             <MaintenanceGuard type="member">
@@ -143,6 +164,7 @@ function App() {
           <Route path="card" element={<MemberCard />} />
           <Route path="events" element={<MemberEvents />} />
           <Route path="events/:id" element={<MemberEventDetail />} />
+          <Route path="lms" element={<LmsList />} />
           <Route path="contributor" element={<ContributorRegistration />} />
           {/* Contributor: Create & Edit Question */}
           <Route path="questions/create" element={<QuestionBuilder basePath="/member/contributor" />} />
@@ -220,6 +242,9 @@ function App() {
           <Route path="events/create" element={<CreateEvent />} />
           <Route path="events/edit/:id" element={<CreateEvent />} />
           <Route path="events/:id" element={<AdminEventDetail />} />
+          <Route path="events/:id/lms" element={<AdminEventLms />} />
+          <Route path="events/:id/lms/quiz/:quizId" element={<AdminQuizBuilder />} />
+          <Route path="events/:id/lms/assignment/:assignmentId" element={<AdminAssignmentGrader />} />
           <Route path="events/:id/print-attendance" element={<AdminEventAttendancePrint />} />
         
           {/* Finances Route */}

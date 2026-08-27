@@ -39,6 +39,8 @@ export interface Event {
     bank_account_number?: string;
     bank_account_holder?: string;
     participants_count?: number;
+    quota?: number;
+    has_lms?: boolean | number;
 }
 
 export type MaterialType = 'cp' | 'tp' | 'rpp' | 'slide' | 'modul';
@@ -161,4 +163,35 @@ export interface TPData {
     tujuan: string;
     created_by?: string;
     created_at?: string;
+}
+
+export interface LmsTopic {
+    id: string;
+    event_id: string;
+    title: string;
+    order_num: number;
+    created_at?: string;
+}
+
+export interface LmsMaterial {
+    id: string;
+    topic_id: string;
+    title: string;
+    type: 'video' | 'text' | 'pdf' | 'link' | 'quiz' | 'assignment';
+    content?: string;
+    url?: string;
+    duration?: number;
+    order_num: number;
+    created_at?: string;
+}
+
+export interface LmsQuiz {
+    id: string;
+    topic_id: string;
+    title: string;
+    description?: string;
+    duration_minutes: number;
+    passing_score: number;
+    max_attempts: number;
+    order_num: number;
 }

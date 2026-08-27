@@ -24,6 +24,8 @@ interface EventForm {
     bank_account_holder: string;
     registration_deadline?: string;
     attendance_deadline?: string;
+    quota?: number;
+    has_lms?: boolean;
 }
 
 export function CreateEvent() {
@@ -77,6 +79,8 @@ export function CreateEvent() {
                 const formattedAttDeadline = data.attendance_deadline.replace(' ', 'T').substring(0, 16);
                 setValue('attendance_deadline', formattedAttDeadline);
             }
+            if (data.quota) setValue('quota', data.quota);
+            setValue('has_lms', Number(data.has_lms) === 1);
             setDescription(data.description);
             setPreviewUrl(data.image_url);
         } catch (error) {
@@ -155,7 +159,9 @@ export function CreateEvent() {
                 is_paid: data.is_paid ? 1 : 0,
                 price: data.price,
                 registration_deadline: formattedDeadline,
-                attendance_deadline: formattedAttDeadline
+                attendance_deadline: formattedAttDeadline,
+                quota: data.quota || null,
+                has_lms: data.has_lms ? 1 : 0
             };
 
             if (id) {
@@ -261,16 +267,31 @@ export function CreateEvent() {
                                     </div>
                                     <p className="text-xs text-gray-500 mt-1">Jika diatur, anggota tidak bisa melakukan absensi mandiri setelah waktu ini berlalu.</p>
                                 </div>
-                                {/* Location */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Lokasi</label>
-                                    <div className="relative">
-                                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                        <input
-                                            {...register('location', { required: 'Lokasi wajib diisi' })}
-                                            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                            placeholder="Contoh: Aula Utama atau Zoom Meeting"
-                                        />
+                                </div>
+
+                                {/* Quota & Location */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Kuota (Opsional)</label>
+                                        <div className="relative">
+                                            <input
+                                                type="number"
+                                                {...register('quota', { valueAsNumber: true })}
+                                                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                placeholder="Kosongkan jika tak terbatas"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Lokasi</label>
+                                        <div className="relative">
+                                            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                            <input
+                                                {...register('location', { required: 'Lokasi wajib diisi' })}
+                                                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                placeholder="Contoh: Aula Utama atau Zoom"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
 
@@ -374,6 +395,18 @@ export function CreateEvent() {
                             />
                             <label htmlFor="is_paid" className="text-sm font-medium text-gray-700 flex items-center gap-1">
                                 <span className="text-green-600">💰</span> Event Berbayar
+                            </label>
+                        </div>
+
+                        <div className="flex items-center gap-2 mt-2">
+                            <input
+                                type="checkbox"
+                                id="has_lms"
+                                {...register('has_lms')}
+                                className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                            />
+                            <label htmlFor="has_lms" className="text-sm font-medium text-gray-700 flex items-center gap-1">
+                                <span className="text-purple-600">📚</span> Gunakan LMS
                             </label>
                         </div>
                     </div>

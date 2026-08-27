@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { contentManagementService } from '../../../services/contentManagementService';
-import { ArrowLeft, Calendar, MapPin, Users, CheckCircle, XCircle, Trash2, Printer, QrCode, X } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, CheckCircle, XCircle, Trash2, Printer, QrCode, X, MonitorPlay } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { getFileUrl } from '../../../lib/api';
 import { DataTable } from '../../../components/ui/DataTable';
@@ -395,6 +395,15 @@ export function AdminEventDetail() {
                     <QrCode className="w-4 h-4 mr-2" />
                     Buka QR Absensi
                 </Button>
+                {event?.has_lms ? (
+                    <Button 
+                        onClick={() => navigate(`/admin/events/${id}/lms`)}
+                        className="bg-purple-600 hover:bg-purple-700 text-white"
+                    >
+                        <MonitorPlay className="w-4 h-4 mr-2" />
+                        Kelola Materi LMS
+                    </Button>
+                ) : null}
             </div>
 
 
