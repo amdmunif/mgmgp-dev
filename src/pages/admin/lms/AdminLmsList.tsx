@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MonitorPlay, ChevronRight, Search, Plus } from 'lucide-react';
+import { MonitorPlay, ChevronRight, Search } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { contentManagementService } from '../../../services/contentManagementService';
 import { getFileUrl } from '../../../lib/api';
