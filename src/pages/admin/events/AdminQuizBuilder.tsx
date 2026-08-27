@@ -22,7 +22,7 @@ interface QuizQuestion {
 }
 
 export function AdminQuizBuilder() {
-    const { id, materialId } = useParams<{ id: string, materialId: string }>();
+    const { id, quizId } = useParams<{ id: string, quizId: string }>();
     const navigate = useNavigate();
     const location = useLocation();
     
@@ -61,17 +61,17 @@ export function AdminQuizBuilder() {
     }, [setPageHeader, saving, title, description, duration, passingScore, maxAttempts, questions]);
 
     useEffect(() => {
-        if (materialId) {
+        if (quizId) {
             loadQuiz();
         } else {
             setLoading(false);
         }
-    }, [materialId]);
+    }, [quizId]);
 
     const loadQuiz = async () => {
         try {
             setLoading(true);
-            const quizData: any = await lmsService.getQuizByMaterialId(materialId!);
+            const quizData: any = await lmsService.getQuizByMaterialId(quizId!);
             if (quizData) {
                 if (quizData.topic_id && !topicId) {
                     setTopicId(quizData.topic_id);
@@ -107,6 +107,7 @@ export function AdminQuizBuilder() {
     const handleAddQuestion = () => {
         const newId = `q${Date.now()}${Math.floor(Math.random() * 1000)}`;
         setQuestions([
+            ...questions,
             {
                 id: newId,
                 text: '',
@@ -169,7 +170,7 @@ export function AdminQuizBuilder() {
         try {
             setSaving(true);
             const payload = {
-                id: materialId,
+                id: quizId,
                 topic_id: topicId,
                 title,
                 description,
