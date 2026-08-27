@@ -30,8 +30,8 @@ export function AdminMemberDetailPrint() {
 
     if (!member) return null;
 
-    const wonosoboLogo = 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Lambang_Kabupaten_Wonosobo.png/371px-Lambang_Kabupaten_Wonosobo.png';
-    const mainLogo = settings?.logo_url ? getFileUrl(settings.logo_url) : '/mgmp-logo.png';
+    const wonosoboLogo = 'https://upload.wikimedia.org/wikipedia/commons/c/cd/Lambang_Kabupaten_Wonosobo.png';
+    const mainLogo = settings?.app_logo ? getFileUrl(settings.app_logo) : (settings?.logo_url ? getFileUrl(settings.logo_url) : '');
     const contactAddress = settings?.address || settings?.contact_address || 'Jl. Raya Wonosobo, Jawa Tengah, Indonesia';
 
     return (
@@ -77,13 +77,16 @@ export function AdminMemberDetailPrint() {
                 {/* ID CARD CONTAINER */}
                 <div 
                     id="printable-card"
-                    className="w-[8.6cm] h-[5.4cm] md:w-[17.2cm] md:h-[10.8cm] bg-white rounded-xl shadow-2xl relative overflow-hidden border border-gray-200 flex flex-col"
+                    className="w-[8.6cm] h-[5.4cm] md:w-[17.2cm] md:h-[10.8cm] bg-[#f8fafc] rounded-xl shadow-2xl relative overflow-hidden border border-gray-200 flex flex-col"
+                    style={{
+                        backgroundImage: 'radial-gradient(circle at 100% 100%, #e0e7ff 0%, transparent 60%), radial-gradient(circle at 0% 0%, #e0e7ff 0%, transparent 60%)'
+                    }}
                 >
                     {/* Header Kop */}
                     <div className="bg-blue-900 text-white p-2 md:p-4 flex items-center justify-between relative z-10">
                         {/* Left Logo */}
-                        <div className="w-10 h-10 md:w-16 md:h-16 shrink-0 bg-white rounded-full p-1 flex items-center justify-center shadow-inner">
-                            <img src={mainLogo} alt="Logo MGMP" className="w-full h-full object-contain" crossOrigin="anonymous" />
+                        <div className="w-10 h-10 md:w-16 md:h-16 shrink-0 bg-white rounded-full p-1 flex items-center justify-center shadow-inner overflow-hidden">
+                            {mainLogo ? <img src={mainLogo} alt="Logo MGMP" className="w-full h-full object-contain" crossOrigin="anonymous" onError={(e) => e.currentTarget.style.display = 'none'} /> : <div className="w-full h-full bg-blue-100 rounded-full"></div>}
                         </div>
                         
                         {/* Text Center */}
@@ -101,7 +104,7 @@ export function AdminMemberDetailPrint() {
                         
                         {/* Right Logo (Wonosobo) */}
                         <div className="w-10 h-10 md:w-16 md:h-16 shrink-0 flex items-center justify-center">
-                            <img src={wonosoboLogo} alt="Logo Wonosobo" className="w-full h-full object-contain drop-shadow-lg" crossOrigin="anonymous" />
+                            <img src={wonosoboLogo} alt="Logo Wonosobo" className="w-full h-full object-contain drop-shadow-lg" crossOrigin="anonymous" onError={(e) => e.currentTarget.style.display = 'none'} />
                         </div>
                     </div>
 
@@ -115,8 +118,8 @@ export function AdminMemberDetailPrint() {
                     {/* Body */}
                     <div className="flex-1 flex p-2 md:p-5 gap-3 md:gap-8 relative z-10 items-center">
                         {/* Watermark in background */}
-                        <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none z-0 overflow-hidden">
-                            <img src={mainLogo} alt="watermark" className="w-[120%] h-[120%] object-contain grayscale" crossOrigin="anonymous" />
+                        <div className="absolute inset-0 flex items-center justify-center opacity-[0.05] pointer-events-none z-0 overflow-hidden">
+                            {mainLogo && <img src={mainLogo} alt="watermark" className="w-[120%] h-[120%] object-contain grayscale" crossOrigin="anonymous" />}
                         </div>
 
                         {/* Photo */}
