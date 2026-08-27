@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { CreditCard, Printer, User as UserIcon } from 'lucide-react';
+import { CreditCard, User as UserIcon } from 'lucide-react';
 import { api, getFileUrl } from '../../lib/api';
 import { settingsService } from '../../services/settingsService';
 import type { AppSettings } from '../../services/settingsService';
@@ -42,16 +42,12 @@ export function MemberCard() {
     if (loading) return <div className="p-10 text-center animate-pulse">Memuat kartu anggota...</div>;
 
     const wonosoboLogo = 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Lambang_Kabupaten_Wonosobo.png/371px-Lambang_Kabupaten_Wonosobo.png';
-    const mainLogo = settings?.logo_url ? getFileUrl(settings.logo_url) : wonosoboLogo;
+    const mainLogo = settings?.logo_url ? getFileUrl(settings.logo_url) : '/mgmp-logo.png';
+    const contactAddress = settings?.address || settings?.contact_address || 'Jl. Raya Wonosobo, Jawa Tengah, Indonesia';
 
     return (
         <div className="w-full max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500 pb-10">
-            {/* Header Action */}
-            <div className="flex justify-end gap-3 print:hidden">
-                <Button onClick={() => window.print()} className="gap-2 shadow-sm bg-primary-600 hover:bg-primary-700 text-white">
-                    <Printer className="w-4 h-4" /> Cetak Kartu
-                </Button>
-            </div>
+
 
             {/* Print Styles for hiding unnecessary elements */}
             <style>
@@ -78,14 +74,10 @@ export function MemberCard() {
                 {/* ID CARD CONTAINER */}
                 <div 
                     id="printable-card"
-                    className="w-[8.6cm] h-[5.4cm] md:w-[17.2cm] md:h-[10.8cm] bg-white rounded-xl shadow-2xl relative overflow-hidden border-2 border-gray-100 flex flex-col"
-                    style={{
-                        backgroundImage: `url('https://www.transparenttextures.com/patterns/cubes.png')`,
-                        backgroundSize: 'cover'
-                    }}
+                    className="w-[8.6cm] h-[5.4cm] md:w-[17.2cm] md:h-[10.8cm] bg-white rounded-xl shadow-2xl relative overflow-hidden border border-gray-200 flex flex-col"
                 >
                     {/* Header Kop */}
-                    <div className="bg-gradient-to-r from-blue-900 to-blue-700 text-white p-2 md:p-4 flex items-center justify-between border-b-[3px] border-yellow-400 relative z-10">
+                    <div className="bg-blue-900 text-white p-2 md:p-4 flex items-center justify-between relative z-10">
                         {/* Left Logo */}
                         <div className="w-10 h-10 md:w-16 md:h-16 shrink-0 bg-white rounded-full p-1 flex items-center justify-center shadow-inner">
                             <img src={mainLogo} alt="Logo MGMP" className="w-full h-full object-contain" crossOrigin="anonymous" />
@@ -96,11 +88,11 @@ export function MemberCard() {
                             <h2 className="text-[10px] md:text-sm font-bold uppercase tracking-wide leading-tight">
                                 MGMP Informatika SMP/MTS
                             </h2>
-                            <h3 className="text-[11px] md:text-lg font-black uppercase tracking-wider text-yellow-300 leading-tight drop-shadow-md">
+                            <h3 className="text-[11px] md:text-lg font-black uppercase tracking-wider text-white leading-tight drop-shadow-md">
                                 Kabupaten Wonosobo
                             </h3>
                             <p className="text-[6px] md:text-[9px] mt-0.5 opacity-90 leading-tight max-w-[200px] md:max-w-[350px] mx-auto">
-                                {settings?.address || 'Jl. Raya Wonosobo, Jawa Tengah, Indonesia'}
+                                {contactAddress}
                             </p>
                         </div>
                         
@@ -167,13 +159,13 @@ export function MemberCard() {
                     </div>
 
                     {/* Bottom Bar */}
-                    <div className="h-1.5 md:h-3 bg-gradient-to-r from-blue-900 via-blue-600 to-yellow-400 z-10 w-full mt-auto"></div>
+                    <div className="h-1.5 md:h-3 bg-blue-900 z-10 w-full mt-auto"></div>
                 </div>
             </div>
             
             <div className="text-center mt-6 text-sm text-gray-500 max-w-xl mx-auto print:hidden bg-gray-50 p-4 rounded-xl border border-gray-100">
-                <p className="font-medium text-gray-700 mb-1">Panduan Cetak</p>
-                <p>Silakan klik tombol <strong>Cetak Kartu</strong> di atas. Gunakan rasio ukuran kertas standar atau simpan ke PDF. Data di atas diambil otomatis dari profil Anda.</p>
+                <p className="font-medium text-gray-700 mb-1">Kartu Anggota Elektronik</p>
+                <p>Ini adalah pratinjau desain kartu anggota resmi Anda. Pencetakan fisik hanya dapat dilakukan oleh Admin.</p>
             </div>
         </div>
     );
