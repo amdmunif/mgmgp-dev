@@ -1,5 +1,5 @@
 import { api } from '../lib/api';
-import type { LmsTopic, LmsMaterial, LmsQuiz } from '../types';
+import type { LmsTopic, LmsMaterial } from '../types';
 
 export const lmsService = {
     // Topik
