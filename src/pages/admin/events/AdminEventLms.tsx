@@ -256,8 +256,22 @@ export function AdminEventLms() {
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-2">
-                                                <Button onClick={() => handleOpenMaterialModal(topic.id, material)} variant="ghost" size="sm" className="h-7 w-7 p-0 text-gray-500">
-                                                    <Pencil className="w-3 h-3" />
+                                                {material.type === 'quiz' && (
+                                                    <Button 
+                                                        onClick={() => navigate(`/admin/events/${id}/lms/quiz/${material.id}`)}
+                                                        size="sm" 
+                                                        className="h-7 text-xs bg-purple-600 hover:bg-purple-700 text-white"
+                                                    >
+                                                        <FileQuestion className="w-3 h-3 mr-1" /> Kelola Soal
+                                                    </Button>
+                                                )}
+                                                <Button 
+                                                    onClick={() => handleOpenMaterialModal(topic.id, material)} 
+                                                    variant="outline" 
+                                                    size="sm" 
+                                                    className="h-7 text-xs text-blue-600 hover:bg-blue-50 hover:text-blue-700 border-blue-200"
+                                                >
+                                                    <Pencil className="w-3 h-3 mr-1" /> {material.type === 'quiz' ? 'Edit Setelan' : 'Isi Konten'}
                                                 </Button>
                                                 <Button onClick={() => handleDeleteMaterial(material.id)} variant="ghost" size="sm" className="h-7 w-7 p-0 text-red-500">
                                                     <Trash2 className="w-3 h-3" />

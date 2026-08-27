@@ -5,6 +5,7 @@ import { Button } from '../../../components/ui/button';
 import { cn } from '../../../lib/utils';
 import { toast } from 'react-hot-toast';
 import { lmsService } from '../../../services/lmsService';
+import { contentManagementService } from '../../../services/contentManagementService';
 
 // Mock Data Types
 interface LmsMaterial {
@@ -31,6 +32,7 @@ export function LmsViewer() {
     const [activeMaterial, setActiveMaterial] = useState<string>('');
     const [topics, setTopics] = useState<LmsTopic[]>([]);
     const [loading, setLoading] = useState(true);
+    const [eventTitle, setEventTitle] = useState('Kelas LMS');
 
     useEffect(() => {
         if (eventId) {
@@ -41,6 +43,14 @@ export function LmsViewer() {
     const loadData = async (eId: string) => {
         try {
             setLoading(true);
+            
+            try {
+                const ev = await contentManagementService.getEventById(eId);
+                if (ev && ev.title) setEventTitle(ev.title);
+            } catch (e) {
+                console.error('Failed to load event title', e);
+            }
+
             const fetchedTopics = await lmsService.getTopicsByEvent(eId);
             
             const fullTopics: LmsTopic[] = [];
@@ -112,7 +122,22 @@ export function LmsViewer() {
         toast.success("Berhasil menandai materi sebagai selesai!");
     };
 
+    const getNavigation = () => {
+        let allItems: LmsMaterial[] = [];
+        topics.forEach(t => {
+            if (t.items) allItems.push(...t.items);
+        });
+        const currentIndex = allItems.findIndex(i => i.id === activeMaterial);
+        
+        return {
+            prev: currentIndex > 0 ? allItems[currentIndex - 1] : null,
+            next: currentIndex > -1 && currentIndex < allItems.length - 1 ? allItems[currentIndex + 1] : null
+        };
+    };
+
     const renderMainContent = () => {
+        const { prev, next } = getNavigation();
+
         return (
             <div className="w-full h-full flex flex-col">
                 {/* Header for content */}
@@ -121,7 +146,7 @@ export function LmsViewer() {
                         <button onClick={() => setSidebarOpen(!sidebarOpen)} className="md:hidden p-1 hover:bg-white/10 rounded">
                             <Menu className="w-5 h-5" />
                         </button>
-                        <h1 className="font-medium text-lg hidden md:block">Kelas Kecerdasan Artifisial Wonosobo – 28 Februari 2026</h1>
+                        <h1 className="font-medium text-lg hidden md:block line-clamp-1">{eventTitle}</h1>
                     </div>
                     <div className="flex items-center gap-4 text-sm">
                         <div className="hidden md:flex flex-col items-end">
@@ -144,65 +169,168 @@ export function LmsViewer() {
                 {/* Content Area */}
                 <div className="flex-1 bg-gray-50 p-6 md:p-10 overflow-y-auto relative flex flex-col">
                     {activeItem?.type === 'quiz' ? (
-                        <div className="w-full flex-1 mx-auto bg-white p-10 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center">
-                            <div className="w-20 h-20 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                                <FileText className="w-10 h-10" />
+                        <div className="w-full mx-auto bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+                            <div className="p-8 border-b border-gray-100">
+                                <p className="text-gray-500 text-sm mb-2">Kuis</p>
+                                <h2 className="text-3xl font-bold text-gray-900 mb-6">{activeItem.title}</h2>
+                                
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-4 border-t border-b border-gray-100">
+                                    <div>
+                                        <p className="text-sm text-gray-500">Pertanyaan</p>
+                                        <p className="font-semibold text-gray-900">18</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-gray-500">Waktu Kuis</p>
+                                        <p className="font-semibold text-gray-900">0 Menit</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-gray-500">Jumlah Nilai</p>
+                                        <p className="font-semibold text-gray-900">100</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-gray-500">Nilai Kelulusan</p>
+                                        <p className="font-semibold text-gray-900">75</p>
+                                    </div>
+                                </div>
                             </div>
-                            <h2 className="text-2xl font-bold text-gray-900 mb-4">{activeItem.title}</h2>
-                            <p className="text-gray-600 mb-8">
-                                Ujian ini memiliki durasi yang dibatasi. Waktu akan mulai berjalan ketika Anda menekan tombol di bawah.
-                            </p>
-                            <Button 
-                                size="lg" 
-                                className="w-full h-14 text-lg bg-blue-600 hover:bg-blue-700"
-                                onClick={() => navigate(`/member/lms/classroom/${eventId}/quiz/${activeItem.id}`)}
-                            >
-                                Mulai Ujian Sekarang
-                            </Button>
+                            
+                            <div className="p-8 bg-gray-50">
+                                <div className="bg-white rounded-xl border border-gray-200 overflow-x-auto">
+                                    <table className="w-full text-left text-sm">
+                                        <thead className="bg-gray-50 text-gray-600 font-medium">
+                                            <tr>
+                                                <th className="py-3 px-4 whitespace-nowrap">Tanggal</th>
+                                                <th className="py-3 px-4 whitespace-nowrap">Pertanyaan</th>
+                                                <th className="py-3 px-4 whitespace-nowrap">Jumlah Nilai</th>
+                                                <th className="py-3 px-4 whitespace-nowrap">Jawaban Benar</th>
+                                                <th className="py-3 px-4 whitespace-nowrap">Jawaban Salah</th>
+                                                <th className="py-3 px-4 whitespace-nowrap">Nilai Diperoleh</th>
+                                                <th className="py-3 px-4 whitespace-nowrap">Hasil</th>
+                                                <th className="py-3 px-4 whitespace-nowrap">Rincian</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100">
+                                            <tr>
+                                                <td className="py-4 px-4 text-gray-900 whitespace-nowrap">Belum Dikerjakan</td>
+                                                <td className="py-4 px-4 text-gray-600">-</td>
+                                                <td className="py-4 px-4 text-gray-600">-</td>
+                                                <td className="py-4 px-4 text-gray-600">-</td>
+                                                <td className="py-4 px-4 text-gray-600">-</td>
+                                                <td className="py-4 px-4 text-gray-900 font-medium whitespace-nowrap">-</td>
+                                                <td className="py-4 px-4">
+                                                    <span className="px-2.5 py-1 bg-gray-100 text-gray-700 rounded-md text-xs font-semibold">Belum Mulai</span>
+                                                </td>
+                                                <td className="py-4 px-4">
+                                                    <Button variant="outline" size="sm" className="h-8" disabled>Rincian</Button>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <div className="mt-8 flex justify-end">
+                                    <Button 
+                                        onClick={() => navigate(`/member/lms/classroom/${eventId}/quiz/${activeItem.id}`)}
+                                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                                    >
+                                        Mulai / Ulangi Ujian
+                                    </Button>
+                                </div>
+                            </div>
                         </div>
                     ) : activeItem?.type === 'assignment' ? (
                         <div className="w-full mx-auto bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
                             <div className="p-8 border-b border-gray-100">
-                                <div className="flex items-center gap-3 mb-4">
-                                    <div className="w-12 h-12 bg-green-100 text-green-600 rounded-lg flex items-center justify-center">
-                                        <CheckSquare className="w-6 h-6" />
+                                <p className="text-gray-500 text-sm mb-2">Penugasan</p>
+                                <h2 className="text-3xl font-bold text-gray-900 mb-6">{activeItem.title}</h2>
+                                
+                                <div className="flex flex-wrap items-center gap-x-8 gap-y-4 py-4 border-t border-b border-gray-100 text-sm">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-gray-500">Duration:</span>
+                                        <span className="font-semibold text-gray-900">No limit</span>
                                     </div>
-                                    <div>
-                                        <h2 className="text-2xl font-bold text-gray-900">{activeItem.title}</h2>
-                                        <p className="text-gray-500 text-sm">Batas Pengumpulan: 30 Agustus 2026, 23:59</p>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-gray-500">Deadline:</span>
+                                        <span className="font-semibold text-gray-900">N\A</span>
                                     </div>
-                                </div>
-                                <div className="prose prose-sm text-gray-600">
-                                    <p>Buatlah 5 prompt efektif menggunakan metode peran (Role-play) yang telah dipelajari. Kumpulkan tugas Anda dalam bentuk link Google Drive atau Google Docs yang bisa diakses (viewer).</p>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-gray-500">Total Attempts:</span>
+                                        <span className="font-semibold text-gray-900">1/6</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-gray-500">Total Marks:</span>
+                                        <span className="font-semibold text-gray-900">90.00/100.00</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-gray-500">Passing Mark:</span>
+                                        <span className="font-semibold text-gray-900">50.00</span>
+                                    </div>
                                 </div>
                             </div>
-                            <div className="p-8 bg-gray-50">
-                                <h3 className="font-bold text-gray-800 mb-4">Pengumpulan Tugas</h3>
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Tautan / Link Tugas</label>
-                                        <input 
-                                            type="url" 
-                                            placeholder="https://..."
-                                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Catatan Tambahan (Opsional)</label>
-                                        <textarea 
-                                            rows={3}
-                                            placeholder="Tulis pesan untuk instruktur..."
-                                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white resize-y"
-                                        />
-                                    </div>
-                                    <Button className="w-full h-12 bg-green-600 hover:bg-green-700 text-white mt-2">
-                                        Kumpulkan Tugas
-                                    </Button>
+                            
+                            <div className="p-8 bg-white border-b border-gray-100">
+                                <div className="bg-white rounded-xl border border-gray-200 overflow-x-auto">
+                                    <table className="w-full text-left text-sm">
+                                        <thead className="bg-gray-50 text-gray-600 font-medium">
+                                            <tr>
+                                                <th className="py-3 px-4 whitespace-nowrap">Tanggal</th>
+                                                <th className="py-3 px-4 whitespace-nowrap">Jumlah Nilai</th>
+                                                <th className="py-3 px-4 whitespace-nowrap">Pass Marks</th>
+                                                <th className="py-3 px-4 whitespace-nowrap">Nilai yang Diperoleh</th>
+                                                <th className="py-3 px-4 whitespace-nowrap">Hasil</th>
+                                                <th className="py-3 px-4 whitespace-nowrap">Rincian</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100">
+                                            <tr>
+                                                <td className="py-4 px-4 text-gray-900 whitespace-nowrap">28 Februari 2026, 15:49</td>
+                                                <td className="py-4 px-4 text-gray-600">100</td>
+                                                <td className="py-4 px-4 text-gray-600">50</td>
+                                                <td className="py-4 px-4 text-gray-900">90</td>
+                                                <td className="py-4 px-4">
+                                                    <span className="px-2.5 py-1 bg-green-100 text-green-700 rounded-md text-xs font-semibold">Lulus</span>
+                                                </td>
+                                                <td className="py-4 px-4">
+                                                    <Button variant="outline" size="sm" className="h-8">Rincian</Button>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div className="p-8 bg-white">
+                                <h3 className="font-bold text-gray-900 mb-4">Keterangan</h3>
+                                <div className="prose prose-sm prose-blue max-w-none text-gray-700">
+                                    <p className="font-semibold mb-4">Studi Kasus: Praktik Membuat <i>Prompt</i> dengan Struktur yang Tepat</p>
+                                    <p className="font-semibold mt-4 mb-2">Konteks:</p>
+                                    <p>Ibu Sinta adalah guru Bahasa Indonesia yang ingin memanfaatkan KA untuk membantu muridnya memahami cara membuat teks narasi. Ia berencana menggunakan ChatGPT untuk membuat contoh teks narasi pendek berdasarkan tema yang sedang dibahas di kelas.</p>
+                                    <p className="mt-4">Sebagai guru, Anda diminta membantu Ibu Sinta <strong>menyusun prompt yang tepat</strong> agar KA dapat memberikan hasil sesuai harapan.</p>
+                                    <p className="font-semibold mt-4 mb-2">Tugas Anda:</p>
+                                    <p>Buatlah sebuah <strong>prompt</strong> untuk diberikan ke KA (seperti ChatGPT) dengan mengikuti <strong>struktur anatomi prompt</strong> berikut:</p>
+                                    <ul className="list-disc pl-5 mt-2 space-y-1">
+                                        <li><strong>Persona:</strong> Jelaskan identitas awal sebagai pengguna.</li>
+                                        <li><strong>Konteks:</strong> Jelaskan latar belakang atau tujuan penggunaan KA.</li>
+                                        <li><strong>Input:</strong> Berikan data yang dibutuhkan (misalnya tema, target pembaca, atau gaya bahasa).</li>
+                                        <li><strong>Perintah:</strong> Jelaskan dengan jelas apa yang harus dilakukan KA.</li>
+                                        <li><strong>Output:</strong> Jelaskan bentuk hasil akhir yang diharapkan (misalnya paragraf narasi, dalam bahasa apa, jumlah kata, dll).</li>
+                                    </ul>
+                                </div>
+                                
+                                <div className="mt-8 flex gap-3">
+                                    <Button className="bg-blue-900 hover:bg-blue-800 text-white rounded-md">Resubmit Assignment</Button>
+                                    <Button className="bg-blue-900 hover:bg-blue-800 text-white rounded-md">Continue Lesson</Button>
                                 </div>
                             </div>
                         </div>
                     ) : (
                         <div className="w-full mx-auto flex flex-col flex-1 h-full">
+                            <div className="mb-4 bg-white p-6 rounded-xl border border-gray-100 shadow-sm shrink-0">
+                                <h2 className="text-2xl font-bold text-gray-900 mb-2">{activeItem?.title}</h2>
+                                <p className="text-gray-600 leading-relaxed">
+                                    Simak materi berikut ini dengan saksama.
+                                </p>
+                            </div>
                             <div className="w-full flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative flex flex-col min-h-[400px]">
                                 {activeItem?.type === 'video' ? (
                                     <div className="w-full h-full bg-black relative flex-1 min-h-[400px]">
@@ -237,23 +365,36 @@ export function LmsViewer() {
                                     </div>
                                 )}
                             </div>
-                            <div className="mt-8 bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0">
-                                <div>
-                                    <h2 className="text-2xl font-bold text-gray-900 mb-2">{activeItem?.title}</h2>
-                                    <p className="text-gray-600 leading-relaxed">
-                                        Selesaikan materi ini untuk melanjutkan ke materi berikutnya.
-                                    </p>
+                            
+                            {/* Navigation & Complete Button Footer */}
+                            <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 shrink-0 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                                <Button 
+                                    variant="outline" 
+                                    disabled={!prev} 
+                                    onClick={() => prev && setActiveMaterial(prev.id)}
+                                >
+                                    <ArrowLeft className="w-4 h-4 mr-2" /> Sebelumnya
+                                </Button>
+                                
+                                <div className="flex-1 flex justify-center">
+                                    {!activeItem?.is_completed ? (
+                                        <Button onClick={handleMarkComplete} className="bg-green-600 hover:bg-green-700 h-10">
+                                            <CheckCircle className="w-4 h-4 mr-2" /> Tandai Selesai
+                                        </Button>
+                                    ) : (
+                                        <span className="px-4 py-2 bg-green-50 text-green-700 font-medium rounded-lg flex items-center gap-2 border border-green-200 h-10">
+                                            <CheckCircle className="w-5 h-5" /> Selesai Ditonton
+                                        </span>
+                                    )}
                                 </div>
-                                {!activeItem?.is_completed && (
-                                    <Button onClick={handleMarkComplete} className="bg-green-600 hover:bg-green-700 flex-shrink-0">
-                                        <CheckCircle className="w-4 h-4 mr-2" /> Tandai Selesai
-                                    </Button>
-                                )}
-                                {activeItem?.is_completed && (
-                                    <span className="px-4 py-2 bg-green-50 text-green-700 font-medium rounded-lg flex items-center gap-2 border border-green-200">
-                                        <CheckCircle className="w-5 h-5" /> Selesai Ditonton
-                                    </span>
-                                )}
+                                
+                                <Button 
+                                    variant="outline" 
+                                    disabled={!next} 
+                                    onClick={() => next && setActiveMaterial(next.id)}
+                                >
+                                    Selanjutnya <ChevronRight className="w-4 h-4 ml-2" />
+                                </Button>
                             </div>
                         </div>
                     )}
