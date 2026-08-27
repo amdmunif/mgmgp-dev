@@ -142,6 +142,8 @@ class ContentController
                     $event['bank_account_holder'] = $bank['account_holder'];
                 }
             }
+            $event['has_lms'] = isset($event['has_lms']) ? (int)$event['has_lms'] : 0;
+            $event['quota'] = isset($event['quota']) ? (int)$event['quota'] : null;
         }
         return json_encode($event ?: null);
     }
@@ -150,8 +152,8 @@ class ContentController
     {
         try {
             $id = Helper::uuid();
-            $query = "INSERT INTO events (id, title, description, date, location, image_url, is_registration_open, is_premium, is_paid, price, registration_deadline, attendance_deadline, created_at) 
-                      VALUES (:id, :title, :description, :date, :location, :image_url, :is_registration_open, :is_premium, :is_paid, :price, :registration_deadline, :attendance_deadline, NOW())";
+            $query = "INSERT INTO events (id, title, description, date, location, image_url, is_registration_open, is_premium, is_paid, price, registration_deadline, attendance_deadline, quota, has_lms, created_at) 
+                      VALUES (:id, :title, :description, :date, :location, :image_url, :is_registration_open, :is_premium, :is_paid, :price, :registration_deadline, :attendance_deadline, :quota, :has_lms, NOW())";
 
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':id', $id);
@@ -172,6 +174,12 @@ class ContentController
             $stmt->bindParam(':registration_deadline', $deadline);
             $attDeadline = !empty($data['attendance_deadline']) ? $data['attendance_deadline'] : null;
             $stmt->bindParam(':attendance_deadline', $attDeadline);
+            
+            $quota = !empty($data['quota']) ? $data['quota'] : null;
+            $stmt->bindParam(':quota', $quota, PDO::PARAM_INT);
+            $has_lms = $data['has_lms'] ?? 0;
+            $stmt->bindParam(':has_lms', $has_lms, PDO::PARAM_INT);
+
             if ($stmt->execute()) {
                 Helper::log($this->conn, $userId, $userName, 'CREATE_EVENT', $data['title']);
                 return json_encode(["message" => "Event created", "id" => $id]);
@@ -219,7 +227,9 @@ class ContentController
                         is_paid = :is_paid,
                         price = :price,
                         registration_deadline = :registration_deadline,
-                        attendance_deadline = :attendance_deadline
+                        attendance_deadline = :attendance_deadline,
+                        quota = :quota,
+                        has_lms = :has_lms
                       WHERE id = :id";
 
             $stmt = $this->conn->prepare($query);
@@ -241,6 +251,11 @@ class ContentController
             $stmt->bindParam(':registration_deadline', $deadline);
             $attDeadline = !empty($data['attendance_deadline']) ? $data['attendance_deadline'] : null;
             $stmt->bindParam(':attendance_deadline', $attDeadline);
+
+            $quota = !empty($data['quota']) ? $data['quota'] : null;
+            $stmt->bindParam(':quota', $quota, PDO::PARAM_INT);
+            $has_lms = $data['has_lms'] ?? 0;
+            $stmt->bindParam(':has_lms', $has_lms, PDO::PARAM_INT);
 
             if ($stmt->execute()) {
                 Helper::log($this->conn, $userId, $userName, 'UPDATE_EVENT', $data['title']);
