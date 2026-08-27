@@ -33,6 +33,7 @@ export function LmsViewer() {
     const [topics, setTopics] = useState<LmsTopic[]>([]);
     const [loading, setLoading] = useState(true);
     const [eventTitle, setEventTitle] = useState('Kelas LMS');
+    const [quizData, setQuizData] = useState<any>(null);
 
     useEffect(() => {
         if (eventId) {
@@ -112,6 +113,22 @@ export function LmsViewer() {
 
     const activeItem = topics.flatMap(t => t.items).find(i => i.id === activeMaterial);
 
+    useEffect(() => {
+        if (activeItem?.type === 'quiz' && activeItem.id) {
+            const fetchQuizData = async () => {
+                try {
+                    const data = await lmsService.getQuizByMaterialId(activeItem.id);
+                    setQuizData(data);
+                } catch (error) {
+                    console.error('Failed to load quiz data', error);
+                }
+            };
+            fetchQuizData();
+        } else {
+            setQuizData(null);
+        }
+    }, [activeItem?.id, activeItem?.type]);
+
     const handleMarkComplete = () => {
         setTopics(prevTopics => prevTopics.map(topic => ({
             ...topic,
@@ -177,19 +194,19 @@ export function LmsViewer() {
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-4 border-t border-b border-gray-100">
                                     <div>
                                         <p className="text-sm text-gray-500">Pertanyaan</p>
-                                        <p className="font-semibold text-gray-900">18</p>
+                                        <p className="font-semibold text-gray-900">{quizData?.questions?.length || 0}</p>
                                     </div>
                                     <div>
                                         <p className="text-sm text-gray-500">Waktu Kuis</p>
-                                        <p className="font-semibold text-gray-900">0 Menit</p>
+                                        <p className="font-semibold text-gray-900">{quizData?.duration_minutes || 0} Menit</p>
                                     </div>
                                     <div>
                                         <p className="text-sm text-gray-500">Jumlah Nilai</p>
-                                        <p className="font-semibold text-gray-900">100</p>
+                                        <p className="font-semibold text-gray-900">{quizData?.questions?.reduce((acc: number, q: any) => acc + (q.points || 1), 0) || 0}</p>
                                     </div>
                                     <div>
                                         <p className="text-sm text-gray-500">Nilai Kelulusan</p>
-                                        <p className="font-semibold text-gray-900">75</p>
+                                        <p className="font-semibold text-gray-900">{quizData?.passing_score || 0}</p>
                                     </div>
                                 </div>
                             </div>
@@ -300,26 +317,14 @@ export function LmsViewer() {
                             </div>
 
                             <div className="p-8 bg-white">
-                                <h3 className="font-bold text-gray-900 mb-4">Keterangan</h3>
-                                <div className="prose prose-sm prose-blue max-w-none text-gray-700">
-                                    <p className="font-semibold mb-4">Studi Kasus: Praktik Membuat <i>Prompt</i> dengan Struktur yang Tepat</p>
-                                    <p className="font-semibold mt-4 mb-2">Konteks:</p>
-                                    <p>Ibu Sinta adalah guru Bahasa Indonesia yang ingin memanfaatkan KA untuk membantu muridnya memahami cara membuat teks narasi. Ia berencana menggunakan ChatGPT untuk membuat contoh teks narasi pendek berdasarkan tema yang sedang dibahas di kelas.</p>
-                                    <p className="mt-4">Sebagai guru, Anda diminta membantu Ibu Sinta <strong>menyusun prompt yang tepat</strong> agar KA dapat memberikan hasil sesuai harapan.</p>
-                                    <p className="font-semibold mt-4 mb-2">Tugas Anda:</p>
-                                    <p>Buatlah sebuah <strong>prompt</strong> untuk diberikan ke KA (seperti ChatGPT) dengan mengikuti <strong>struktur anatomi prompt</strong> berikut:</p>
-                                    <ul className="list-disc pl-5 mt-2 space-y-1">
-                                        <li><strong>Persona:</strong> Jelaskan identitas awal sebagai pengguna.</li>
-                                        <li><strong>Konteks:</strong> Jelaskan latar belakang atau tujuan penggunaan KA.</li>
-                                        <li><strong>Input:</strong> Berikan data yang dibutuhkan (misalnya tema, target pembaca, atau gaya bahasa).</li>
-                                        <li><strong>Perintah:</strong> Jelaskan dengan jelas apa yang harus dilakukan KA.</li>
-                                        <li><strong>Output:</strong> Jelaskan bentuk hasil akhir yang diharapkan (misalnya paragraf narasi, dalam bahasa apa, jumlah kata, dll).</li>
-                                    </ul>
-                                </div>
+                                <h3 className="font-bold text-gray-900 mb-4">Keterangan Tugas / Instruksi</h3>
+                                <div 
+                                    className="prose prose-sm prose-blue max-w-none text-gray-700"
+                                    dangerouslySetInnerHTML={{ __html: activeItem.content || '<p>Tidak ada instruksi khusus untuk penugasan ini.</p>' }}
+                                />
                                 
                                 <div className="mt-8 flex gap-3">
-                                    <Button className="bg-blue-900 hover:bg-blue-800 text-white rounded-md">Resubmit Assignment</Button>
-                                    <Button className="bg-blue-900 hover:bg-blue-800 text-white rounded-md">Continue Lesson</Button>
+                                    <Button className="bg-blue-900 hover:bg-blue-800 text-white rounded-md">Unggah Jawaban (Segera Hadir)</Button>
                                 </div>
                             </div>
                         </div>

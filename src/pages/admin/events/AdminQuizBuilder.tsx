@@ -48,10 +48,11 @@ export function AdminQuizBuilder() {
     const [searchBank, setSearchBank] = useState('');
     const [selectedBankIds, setSelectedBankIds] = useState<Set<string>>(new Set());
 
-    const { setHeaderProps } = useOutletContext<any>();
+    const { setPageHeader } = useOutletContext<any>();
 
     useEffect(() => {
-        setHeaderProps({
+        if (setPageHeader) {
+            setPageHeader({
             title: 'Pembangun Kuis',
             subtitle: "Buat pertanyaan untuk Pretest atau Post-test",
             action: (
@@ -62,7 +63,8 @@ export function AdminQuizBuilder() {
             ),
             backUrl: `/admin/events/${id}/lms`
         });
-    }, [setHeaderProps, saving, title, description, duration, passingScore, maxAttempts, questions]);
+        }
+    }, [setPageHeader, saving, title, description, duration, passingScore, maxAttempts, questions]);
 
     useEffect(() => {
         if (materialId) {

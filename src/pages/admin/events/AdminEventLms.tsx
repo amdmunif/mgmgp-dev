@@ -374,14 +374,16 @@ export function AdminEventLms() {
                                     />
                                 </div>
                             )}
-                            {materialForm.type === 'text' && (
+                            {['text', 'assignment'].includes(materialForm.type) && (
                                 <div className="mt-4">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Konten Artikel / Teks</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        {materialForm.type === 'text' ? 'Konten Artikel / Teks' : 'Instruksi Penugasan'}
+                                    </label>
                                     <RichTextEditor
                                         value={materialForm.content || ''}
                                         onChange={(content) => setMaterialForm({...materialForm, content})}
                                         height={300}
-                                        placeholder="Tulis konten materi di sini..."
+                                        placeholder={materialForm.type === 'text' ? "Tulis konten materi di sini..." : "Tuliskan instruksi penugasan di sini..."}
                                     />
                                 </div>
                             )}
