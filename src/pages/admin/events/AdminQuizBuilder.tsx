@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, useOutletContext } from 'react-router-dom';
 import { ArrowLeft, Plus, Save, Clock, Trash2, CheckCircle2, Search, LibraryBig, X, Loader2, FileQuestion } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { toast } from 'react-hot-toast';
@@ -28,7 +28,8 @@ export function AdminQuizBuilder() {
     
     // Parse topic_id from query params if passed
     const searchParams = new URLSearchParams(location.search);
-    const topicId = searchParams.get('topic_id') || '';
+    const initialTopicId = searchParams.get('topic_id') || '';
+    const [topicId, setTopicId] = useState(initialTopicId);
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -47,6 +48,22 @@ export function AdminQuizBuilder() {
     const [searchBank, setSearchBank] = useState('');
     const [selectedBankIds, setSelectedBankIds] = useState<Set<string>>(new Set());
 
+    const { setHeaderProps } = useOutletContext<any>();
+
+    useEffect(() => {
+        setHeaderProps({
+            title: 'Pembangun Kuis',
+            subtitle: "Buat pertanyaan untuk Pretest atau Post-test",
+            action: (
+                <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+                    {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                    Simpan Kuis
+                </Button>
+            ),
+            backUrl: `/admin/events/${id}/lms`
+        });
+    }, [setHeaderProps, saving, title, description, duration, passingScore, maxAttempts, questions]);
+
     useEffect(() => {
         if (materialId) {
             loadQuiz();
@@ -60,6 +77,9 @@ export function AdminQuizBuilder() {
             setLoading(true);
             const quizData: any = await lmsService.getQuizByMaterialId(materialId!);
             if (quizData) {
+                if (quizData.topic_id && !topicId) {
+                    setTopicId(quizData.topic_id);
+                }
                 setTitle(quizData.title);
                 setDescription(quizData.description || '');
                 setDuration(quizData.duration_minutes || 30);
@@ -89,10 +109,10 @@ export function AdminQuizBuilder() {
     };
 
     const handleAddQuestion = () => {
+        const newId = `q${Date.now()}${Math.floor(Math.random() * 1000)}`;
         setQuestions([
-            ...questions,
             {
-                id: `q${Date.now()}`,
+                id: newId,
                 text: '',
                 type: 'multiple_choice',
                 points: 1,
@@ -102,8 +122,14 @@ export function AdminQuizBuilder() {
                     { id: `o${Date.now()}3`, text: '', is_correct: false },
                     { id: `o${Date.now()}4`, text: '', is_correct: false },
                 ]
-            }
+            },
+            ...questions
         ]);
+        
+        // Use a short timeout to scroll to the top of the questions list
+        setTimeout(() => {
+            window.scrollTo({ top: 400, behavior: 'smooth' });
+        }, 100);
     };
 
     const handleUpdateQuestion = (qId: string, text: string) => {
@@ -255,23 +281,7 @@ export function AdminQuizBuilder() {
 
     return (
         <div className="max-w-4xl mx-auto pb-20">
-            <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center gap-4">
-                    <Button variant="ghost" onClick={() => navigate(`/admin/events/${id}/lms`)} className="text-gray-500">
-                        <ArrowLeft className="w-5 h-5" />
-                    </Button>
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-900">Pembangun Kuis</h1>
-                        <p className="text-sm text-gray-500">Buat pertanyaan untuk Pretest atau Post-test</p>
-                    </div>
-                </div>
-                <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
-                    {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-                    Simpan Kuis
-                </Button>
-            </div>
-
-            <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6 shadow-sm">
+            <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6 shadow-sm mt-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Judul Kuis</label>

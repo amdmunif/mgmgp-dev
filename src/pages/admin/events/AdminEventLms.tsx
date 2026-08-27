@@ -258,7 +258,7 @@ export function AdminEventLms() {
                                             <div className="flex items-center gap-2">
                                                 {material.type === 'quiz' && (
                                                     <Button 
-                                                        onClick={() => navigate(`/admin/events/${id}/lms/quiz/${material.id}`)}
+                                                        onClick={() => navigate(`/admin/events/${id}/lms/quiz/${material.id}?topic_id=${topic.id}`)}
                                                         size="sm" 
                                                         className="h-7 text-xs bg-purple-600 hover:bg-purple-700 text-white"
                                                     >
