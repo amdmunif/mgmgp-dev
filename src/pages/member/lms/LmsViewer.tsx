@@ -96,7 +96,7 @@ export function LmsViewer() {
         return (
             <div className="w-full h-full flex flex-col">
                 {/* Header for content */}
-                <div className="bg-[#2D1B69] text-white p-4 flex items-center justify-between">
+                <div className="bg-primary-900 text-white p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <button onClick={() => setSidebarOpen(!sidebarOpen)} className="md:hidden p-1 hover:bg-white/10 rounded">
                             <Menu className="w-5 h-5" />
@@ -106,7 +106,7 @@ export function LmsViewer() {
                     <div className="flex items-center gap-4 text-sm">
                         <div className="hidden md:flex flex-col items-end">
                             <span>Kemajuan Anda: <strong>{completedItems}</strong> dari <strong>{totalItems}</strong> ({progressPercent}%)</span>
-                            <div className="w-48 h-2 bg-[#1d0f4d] rounded-full mt-1 overflow-hidden">
+                            <div className="w-48 h-2 bg-primary-950 rounded-full mt-1 overflow-hidden">
                                 <div className="h-full bg-green-400 transition-all duration-500" style={{ width: `${progressPercent}%` }} />
                             </div>
                         </div>
@@ -122,9 +122,9 @@ export function LmsViewer() {
                 </div>
 
                 {/* Content Area */}
-                <div className="flex-1 bg-gray-50 p-6 md:p-10 overflow-y-auto relative flex flex-col items-center">
+                <div className="flex-1 bg-gray-50 p-6 md:p-10 overflow-y-auto relative flex flex-col">
                     {activeItem?.type === 'quiz' ? (
-                        <div className="max-w-2xl w-full mx-auto mt-12 bg-white p-10 rounded-2xl border border-gray-100 shadow-sm text-center">
+                        <div className="w-full flex-1 mx-auto bg-white p-10 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center">
                             <div className="w-20 h-20 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mx-auto mb-6">
                                 <FileText className="w-10 h-10" />
                             </div>
@@ -141,7 +141,7 @@ export function LmsViewer() {
                             </Button>
                         </div>
                     ) : activeItem?.type === 'assignment' ? (
-                        <div className="max-w-3xl w-full mx-auto bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div className="w-full mx-auto bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
                             <div className="p-8 border-b border-gray-100">
                                 <div className="flex items-center gap-3 mb-4">
                                     <div className="w-12 h-12 bg-green-100 text-green-600 rounded-lg flex items-center justify-center">
@@ -182,8 +182,8 @@ export function LmsViewer() {
                             </div>
                         </div>
                     ) : (
-                        <div className="w-full max-w-4xl mx-auto">
-                            <div className="w-full aspect-video bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl shadow-lg relative overflow-hidden flex items-center justify-center group cursor-pointer">
+                        <div className="w-full mx-auto flex flex-col flex-1">
+                            <div className="w-full flex-1 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl shadow-lg relative overflow-hidden flex items-center justify-center group cursor-pointer min-h-[400px]">
                                 <div className="absolute inset-0 bg-white/20 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"></div>
                                 <div className="w-20 h-20 bg-black/60 rounded-xl flex items-center justify-center shadow-2xl relative z-10 transition-transform group-hover:scale-110">
                                     <Play className="w-10 h-10 text-white ml-2" />

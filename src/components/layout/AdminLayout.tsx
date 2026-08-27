@@ -63,6 +63,7 @@ const menuGroups = [
         items: [
             { icon: Calendar, label: 'Acara & Kegiatan', path: '/admin/events' },
             { icon: Users, label: 'Pelatihan Publik', path: '/admin/training' },
+            { icon: BookOpen, label: 'Kelola LMS', path: '/admin/lms' },
             { icon: FileText, label: 'Berita & Artikel', path: '/admin/news' },
             { icon: ImageIcon, label: 'Galeri Foto', path: '/admin/gallery' },
             { icon: ImageIcon, label: 'Validasi Karya', path: '/admin/projects' },

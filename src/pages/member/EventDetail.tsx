@@ -405,7 +405,9 @@ export function MemberEventDetail() {
                                                 </div>
                                                 <div className="flex items-center justify-between text-sm py-2 border-b border-gray-100 mb-2">
                                                     <span className="text-gray-500">Kuota Tersedia</span>
-                                                    <span className="font-bold text-gray-900">Terbatas</span>
+                                                    <span className="font-bold text-gray-900">
+                                                        {event.quota ? `${(event.quota - (event.participants_count || 0))} dari ${event.quota} kursi` : 'Tak Terbatas'}
+                                                    </span>
                                                 </div>
 
                                                 <Button
