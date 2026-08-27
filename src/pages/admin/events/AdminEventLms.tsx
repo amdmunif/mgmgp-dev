@@ -5,6 +5,7 @@ import { Button } from '../../../components/ui/button';
 import { lmsService } from '../../../services/lmsService';
 import type { LmsTopic, LmsMaterial } from '../../../types';
 import { toast } from 'react-hot-toast';
+import { Editor } from '@tinymce/tinymce-react';
 
 export function AdminEventLms() {
     const { id } = useParams<{ id: string }>();
@@ -33,6 +34,7 @@ export function AdminEventLms() {
         title: '',
         type: 'video',
         url: '',
+        content: '',
         duration: ''
     });
 
@@ -148,11 +150,12 @@ export function AdminEventLms() {
                 title: material.title,
                 type: material.type,
                 url: material.url || '',
-                duration: material.duration?.toString() || ''
+                content: material.content || '',
+                duration: material.duration ? material.duration.toString() : ''
             });
         } else {
             setEditingMaterial(null);
-            setMaterialForm({ title: '', type: 'video', url: '', duration: '' });
+            setMaterialForm({ title: '', type: 'video', url: '', content: '', duration: '' });
         }
         setIsMaterialModalOpen(true);
     };
@@ -169,6 +172,7 @@ export function AdminEventLms() {
                 topic_id: activeTopicId,
                 type: materialForm.type as any,
                 url: materialForm.url,
+                content: materialForm.content,
                 duration: materialForm.duration ? parseInt(materialForm.duration) : 0,
                 order_num: editingMaterial ? editingMaterial.order_num : (materials[activeTopicId]?.length || 0) + 1
             };
@@ -312,7 +316,7 @@ export function AdminEventLms() {
             {/* Modal Materi */}
             {isMaterialModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto">
-                    <div className="bg-white rounded-2xl w-full max-w-md shadow-xl overflow-hidden my-8">
+                    <div className="bg-white rounded-2xl w-full max-w-2xl shadow-xl overflow-hidden my-8">
                         <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
                             <h3 className="font-bold text-gray-900">{editingMaterial ? 'Edit Materi' : 'Tambah Materi Baru'}</h3>
                             <button onClick={() => setIsMaterialModalOpen(false)} className="text-gray-400 hover:text-gray-600">
@@ -346,13 +350,30 @@ export function AdminEventLms() {
                             </div>
                             {['video', 'pdf', 'link'].includes(materialForm.type) && (
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Tautan File / Video URL</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Tautan URL (YouTube, GDrive, Canva, MP4)</label>
                                     <input 
                                         type="url"
                                         value={materialForm.url}
                                         onChange={(e) => setMaterialForm({...materialForm, url: e.target.value})}
                                         placeholder="https://..."
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                    />
+                                </div>
+                            )}
+                            {materialForm.type === 'text' && (
+                                <div className="mt-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Konten Artikel / Teks</label>
+                                    <Editor
+                                        apiKey="your-tinymce-api-key"
+                                        value={materialForm.content}
+                                        onEditorChange={(content) => setMaterialForm({...materialForm, content})}
+                                        init={{
+                                            height: 300,
+                                            menubar: false,
+                                            plugins: ['lists', 'link', 'image', 'preview'],
+                                            toolbar: 'undo redo | blocks | bold italic | alignleft aligncenter alignright | bullist numlist | link image | removeformat',
+                                            content_style: 'body { font-family:Inter,sans-serif; font-size:14px }'
+                                        }}
                                     />
                                 </div>
                             )}

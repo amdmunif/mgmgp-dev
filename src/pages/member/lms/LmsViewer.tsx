@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronDown, ChevronRight, PlayCircle, FileText, CheckCircle, ArrowLeft, Menu, X, Play, CheckSquare, Trophy, Loader2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, PlayCircle, FileText, CheckCircle, ArrowLeft, Menu, X, CheckSquare, Trophy, Loader2 } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { cn } from '../../../lib/utils';
 import { toast } from 'react-hot-toast';
@@ -10,9 +10,11 @@ import { lmsService } from '../../../services/lmsService';
 interface LmsMaterial {
     id: string;
     title: string;
-    type: 'video' | 'pdf' | 'text' | 'quiz' | 'assignment';
+    type: 'video' | 'pdf' | 'text' | 'link' | 'quiz' | 'assignment';
     duration: string;
     is_completed: boolean;
+    url?: string;
+    content?: string;
 }
 
 interface LmsTopic {
@@ -51,6 +53,8 @@ export function LmsViewer() {
                         id: m.id,
                         title: m.title,
                         type: m.type as any,
+                        url: m.url,
+                        content: m.content,
                         duration: m.duration ? `${m.duration} Menit` : '',
                         is_completed: false // default for now, until backend progress tracking is built
                     }))
@@ -198,18 +202,46 @@ export function LmsViewer() {
                             </div>
                         </div>
                     ) : (
-                        <div className="w-full mx-auto flex flex-col flex-1">
-                            <div className="w-full flex-1 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl shadow-lg relative overflow-hidden flex items-center justify-center group cursor-pointer min-h-[400px]">
-                                <div className="absolute inset-0 bg-white/20 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                <div className="w-20 h-20 bg-black/60 rounded-xl flex items-center justify-center shadow-2xl relative z-10 transition-transform group-hover:scale-110">
-                                    <Play className="w-10 h-10 text-white ml-2" />
-                                </div>
+                        <div className="w-full mx-auto flex flex-col flex-1 h-full">
+                            <div className="w-full flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative flex flex-col min-h-[400px]">
+                                {activeItem?.type === 'video' ? (
+                                    <div className="w-full h-full bg-black relative flex-1 min-h-[400px]">
+                                        {activeItem.url?.includes('youtube.com') || activeItem.url?.includes('youtu.be') ? (
+                                            <iframe
+                                                className="absolute inset-0 w-full h-full"
+                                                src={activeItem.url.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
+                                                allowFullScreen
+                                                title={activeItem.title}
+                                            />
+                                        ) : (
+                                            <video 
+                                                className="absolute inset-0 w-full h-full object-contain"
+                                                controls 
+                                                src={activeItem.url} 
+                                            />
+                                        )}
+                                    </div>
+                                ) : activeItem?.type === 'pdf' || activeItem?.type === 'link' ? (
+                                    <iframe 
+                                        src={activeItem.url} 
+                                        className="w-full h-full flex-1 min-h-[600px] bg-gray-50 border-0"
+                                        title={activeItem.title}
+                                        allowFullScreen
+                                    />
+                                ) : activeItem?.type === 'text' ? (
+                                    <div className="p-8 md:p-12 prose prose-blue max-w-none w-full overflow-y-auto" dangerouslySetInnerHTML={{ __html: activeItem.content || '' }} />
+                                ) : (
+                                    <div className="flex-1 flex flex-col items-center justify-center text-gray-400 bg-gray-50 min-h-[400px]">
+                                        <FileText className="w-16 h-16 mb-4 opacity-20" />
+                                        <p>Konten tidak tersedia</p>
+                                    </div>
+                                )}
                             </div>
-                            <div className="mt-8 bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                            <div className="mt-8 bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0">
                                 <div>
                                     <h2 className="text-2xl font-bold text-gray-900 mb-2">{activeItem?.title}</h2>
                                     <p className="text-gray-600 leading-relaxed">
-                                        Ini adalah area untuk menampilkan video, PDF, atau teks secara langsung.
+                                        Selesaikan materi ini untuk melanjutkan ke materi berikutnya.
                                     </p>
                                 </div>
                                 {!activeItem?.is_completed && (
