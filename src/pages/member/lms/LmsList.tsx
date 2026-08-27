@@ -19,7 +19,7 @@ export function LmsList() {
         try {
             // Mengambil semua data acara, lalu memfilter yang memiliki fitur LMS
             const data = await contentManagementService.getAllEvents();
-            setEvents(data.filter((e: any) => e.has_lms === 1 || e.has_lms === true));
+            setEvents(data.filter((e: any) => Number(e.has_lms) === 1 || e.has_lms === true));
         } catch (error) {
             console.error('Failed to load events:', error);
         } finally {

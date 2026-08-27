@@ -20,7 +20,7 @@ export function AdminLmsList() {
         try {
             const data = await contentManagementService.getAllEvents();
             // Filter events that have LMS
-            setEvents(data.filter((e: any) => e.has_lms === 1 || e.has_lms === true));
+            setEvents(data.filter((e: any) => Number(e.has_lms) === 1 || e.has_lms === true));
         } catch (error) {
             console.error('Failed to load events:', error);
         } finally {
@@ -91,10 +91,6 @@ export function AdminLmsList() {
                             </div>
                             <h3 className="text-lg font-medium text-gray-900 mb-1">Belum Ada Kelas LMS</h3>
                             <p className="text-gray-500 mb-4 max-w-sm mx-auto">Anda belum mengaktifkan fitur LMS pada acara atau kegiatan mana pun.</p>
-                            <Button onClick={() => navigate('/admin/events/create')} className="bg-blue-600 hover:bg-blue-700">
-                                <Plus className="w-4 h-4 mr-2" />
-                                Buat Kegiatan dengan LMS
-                            </Button>
                         </div>
                     )}
                 </div>
