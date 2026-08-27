@@ -267,7 +267,6 @@ export function CreateEvent() {
                                     </div>
                                     <p className="text-xs text-gray-500 mt-1">Jika diatur, anggota tidak bisa melakukan absensi mandiri setelah waktu ini berlalu.</p>
                                 </div>
-                                </div>
 
                                 {/* Quota & Location */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
