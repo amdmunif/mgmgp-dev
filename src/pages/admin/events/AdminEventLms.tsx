@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
 import { ArrowLeft, Plus, Video, FileText, CheckSquare, Pencil, Trash2, GripVertical, FileQuestion, X } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
+import { RichTextEditor } from '../../../components/ui/RichTextEditor';
 import { lmsService } from '../../../services/lmsService';
 import type { LmsTopic, LmsMaterial } from '../../../types';
 import { toast } from 'react-hot-toast';
-import { Editor } from '@tinymce/tinymce-react';
 
 export function AdminEventLms() {
     const { id } = useParams<{ id: string }>();
@@ -377,17 +377,11 @@ export function AdminEventLms() {
                             {materialForm.type === 'text' && (
                                 <div className="mt-4">
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Konten Artikel / Teks</label>
-                                    <Editor
-                                        apiKey="your-tinymce-api-key"
-                                        value={materialForm.content}
-                                        onEditorChange={(content) => setMaterialForm({...materialForm, content})}
-                                        init={{
-                                            height: 300,
-                                            menubar: false,
-                                            plugins: ['lists', 'link', 'image', 'preview'],
-                                            toolbar: 'undo redo | blocks | bold italic | alignleft aligncenter alignright | bullist numlist | link image | removeformat',
-                                            content_style: 'body { font-family:Inter,sans-serif; font-size:14px }'
-                                        }}
+                                    <RichTextEditor
+                                        value={materialForm.content || ''}
+                                        onChange={(content) => setMaterialForm({...materialForm, content})}
+                                        height={300}
+                                        placeholder="Tulis konten materi di sini..."
                                     />
                                 </div>
                             )}
