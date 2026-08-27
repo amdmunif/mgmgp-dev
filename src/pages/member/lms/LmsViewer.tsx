@@ -263,56 +263,23 @@ export function LmsViewer() {
                                 
                                 <div className="flex flex-wrap items-center gap-x-8 gap-y-4 py-4 border-t border-b border-gray-100 text-sm">
                                     <div className="flex items-center gap-2">
-                                        <span className="text-gray-500">Duration:</span>
-                                        <span className="font-semibold text-gray-900">No limit</span>
+                                        <span className="text-gray-500">Batas Waktu:</span>
+                                        <span className="font-semibold text-gray-900">Sesuai jadwal pengajar</span>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <span className="text-gray-500">Deadline:</span>
-                                        <span className="font-semibold text-gray-900">N\A</span>
+                                        <span className="text-gray-500">Nilai Maksimal:</span>
+                                        <span className="font-semibold text-gray-900">100.00</span>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <span className="text-gray-500">Total Attempts:</span>
-                                        <span className="font-semibold text-gray-900">1/6</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-gray-500">Total Marks:</span>
-                                        <span className="font-semibold text-gray-900">90.00/100.00</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-gray-500">Passing Mark:</span>
-                                        <span className="font-semibold text-gray-900">50.00</span>
+                                        <span className="text-gray-500">Tipe Pengumpulan:</span>
+                                        <span className="font-semibold text-gray-900">Unggah File</span>
                                     </div>
                                 </div>
                             </div>
                             
                             <div className="p-8 bg-white border-b border-gray-100">
-                                <div className="bg-white rounded-xl border border-gray-200 overflow-x-auto">
-                                    <table className="w-full text-left text-sm">
-                                        <thead className="bg-gray-50 text-gray-600 font-medium">
-                                            <tr>
-                                                <th className="py-3 px-4 whitespace-nowrap">Tanggal</th>
-                                                <th className="py-3 px-4 whitespace-nowrap">Jumlah Nilai</th>
-                                                <th className="py-3 px-4 whitespace-nowrap">Pass Marks</th>
-                                                <th className="py-3 px-4 whitespace-nowrap">Nilai yang Diperoleh</th>
-                                                <th className="py-3 px-4 whitespace-nowrap">Hasil</th>
-                                                <th className="py-3 px-4 whitespace-nowrap">Rincian</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-100">
-                                            <tr>
-                                                <td className="py-4 px-4 text-gray-900 whitespace-nowrap">28 Februari 2026, 15:49</td>
-                                                <td className="py-4 px-4 text-gray-600">100</td>
-                                                <td className="py-4 px-4 text-gray-600">50</td>
-                                                <td className="py-4 px-4 text-gray-900">90</td>
-                                                <td className="py-4 px-4">
-                                                    <span className="px-2.5 py-1 bg-green-100 text-green-700 rounded-md text-xs font-semibold">Lulus</span>
-                                                </td>
-                                                <td className="py-4 px-4">
-                                                    <Button variant="outline" size="sm" className="h-8">Rincian</Button>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
+                                <div className="bg-gray-50 rounded-xl border border-gray-200 p-6 text-center text-gray-500">
+                                    Belum ada tugas yang dikumpulkan.
                                 </div>
                             </div>
 

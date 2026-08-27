@@ -181,7 +181,7 @@ export function AdminQuizBuilder() {
 
             await lmsService.saveQuiz(payload);
             toast.success('Kuis berhasil disimpan!');
-            navigate(`/admin/events/${id}/lms`);
+            // navigate(`/admin/events/${id}/lms`); // User should manually click "Kembali" when done
         } catch (error) {
             console.error(error);
             toast.error("Gagal menyimpan kuis");
