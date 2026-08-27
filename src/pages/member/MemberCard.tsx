@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { CreditCard, Printer, User as UserIcon } from 'lucide-react';
 import { api, getFileUrl } from '../../lib/api';
-import { settingsService, AppSettings } from '../../services/settingsService';
+import { settingsService } from '../../services/settingsService';
+import type { AppSettings } from '../../services/settingsService';
 import { Button } from '../../components/ui/button';
 import { toast } from 'react-hot-toast';
 
