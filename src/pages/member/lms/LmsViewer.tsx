@@ -24,6 +24,32 @@ interface LmsTopic {
     items: LmsMaterial[];
 }
 
+const getEmbedUrl = (url: string | undefined): string => {
+    if (!url) return '';
+    let embedUrl = url;
+    
+    // YouTube
+    if (embedUrl.includes('youtube.com') || embedUrl.includes('youtu.be')) {
+        return embedUrl.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/');
+    }
+    
+    // Canva
+    if (embedUrl.includes('canva.com/design') && !embedUrl.includes('embed')) {
+        if (embedUrl.includes('/view')) {
+            embedUrl = embedUrl.split('/view')[0] + '/view?embed';
+        } else {
+            embedUrl += '?embed';
+        }
+    }
+    
+    // Google Drive
+    if (embedUrl.includes('drive.google.com/file/d/') && embedUrl.includes('/view')) {
+        embedUrl = embedUrl.replace('/view', '/preview');
+    }
+    
+    return embedUrl;
+};
+
 export function LmsViewer() {
     const { eventId } = useParams();
     const navigate = useNavigate();
@@ -466,33 +492,44 @@ export function LmsViewer() {
                         </div>
                     ) : (
                         <div className="w-full mx-auto flex flex-col flex-1 h-full">
-                            <div className="mb-4 bg-white p-6 rounded-xl border border-gray-100 shadow-sm shrink-0">
-                                <h2 className="text-2xl font-bold text-gray-900 mb-2">{activeItem?.title}</h2>
-                                <p className="text-gray-600 leading-relaxed">
-                                    Simak materi berikut ini dengan saksama.
-                                </p>
+                            <div className="mb-4 bg-white p-6 rounded-xl border border-gray-100 shadow-sm shrink-0 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                                <div>
+                                    <h2 className="text-2xl font-bold text-gray-900 mb-2">{activeItem?.title}</h2>
+                                    <p className="text-gray-600 leading-relaxed">
+                                        Simak materi berikut ini dengan saksama.
+                                    </p>
+                                </div>
+                                {(activeItem?.type === 'pdf' || activeItem?.type === 'link') && activeItem.url && (
+                                    <a href={activeItem.url} target="_blank" rel="noopener noreferrer" className="shrink-0 w-full sm:w-auto">
+                                        <Button variant="outline" className="w-full sm:w-auto border-blue-200 text-blue-700 hover:bg-blue-50">
+                                            Buka di Tab Baru
+                                        </Button>
+                                    </a>
+                                )}
                             </div>
                             <div className="w-full flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative flex flex-col min-h-[400px]">
                                 {activeItem?.type === 'video' ? (
-                                    <div className="w-full h-full bg-black relative flex-1 min-h-[400px]">
-                                        {activeItem.url?.includes('youtube.com') || activeItem.url?.includes('youtu.be') ? (
-                                            <iframe
-                                                className="absolute inset-0 w-full h-full"
-                                                src={activeItem.url.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
-                                                allowFullScreen
-                                                title={activeItem.title}
-                                            />
-                                        ) : (
-                                            <video 
-                                                className="absolute inset-0 w-full h-full object-contain"
-                                                controls 
-                                                src={activeItem.url} 
-                                            />
-                                        )}
+                                    <div className="w-full h-full bg-black relative flex-1 flex items-center justify-center min-h-[400px]">
+                                        <div className="w-full aspect-video relative max-w-[1200px]">
+                                            {activeItem.url?.includes('youtube.com') || activeItem.url?.includes('youtu.be') ? (
+                                                <iframe
+                                                    className="absolute inset-0 w-full h-full border-0"
+                                                    src={getEmbedUrl(activeItem.url)}
+                                                    allowFullScreen
+                                                    title={activeItem.title}
+                                                />
+                                            ) : (
+                                                <video 
+                                                    className="absolute inset-0 w-full h-full"
+                                                    controls 
+                                                    src={activeItem.url} 
+                                                />
+                                            )}
+                                        </div>
                                     </div>
                                 ) : activeItem?.type === 'pdf' || activeItem?.type === 'link' ? (
                                     <iframe 
-                                        src={activeItem.url} 
+                                        src={getEmbedUrl(activeItem.url)} 
                                         className="w-full h-full flex-1 min-h-[600px] bg-gray-50 border-0"
                                         title={activeItem.title}
                                         allowFullScreen
