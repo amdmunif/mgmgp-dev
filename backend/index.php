@@ -226,6 +226,11 @@ if ($resource === 'news') {
                 echo $controller->markProgress($input, $userId);
             }
         }
+    } elseif ($action === 'gradebook') {
+        if ($_SERVER['REQUEST_METHOD'] === 'GET' && $subAction === 'event' && isset($uri_parts[3])) {
+            // GET /lms/gradebook/event/:eventId
+            echo $controller->getEventGradebook($uri_parts[3]);
+        }
     }
 } elseif ($resource === 'events') {
     $controller = new ContentController();

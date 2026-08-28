@@ -40,6 +40,7 @@ export function LmsViewer() {
     const [submissionUrl, setSubmissionUrl] = useState('');
     const [submissionText, setSubmissionText] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isFormOpen, setIsFormOpen] = useState(false);
     const [quizAttempts, setQuizAttempts] = useState<any[]>([]);
 
     useEffect(() => {
@@ -141,6 +142,11 @@ export function LmsViewer() {
     const activeItem = topics.flatMap(t => t.items).find(i => i.id === activeMaterial);
 
     useEffect(() => {
+        // Reset states when changing material
+        setIsFormOpen(false);
+        setSubmissionUrl('');
+        setSubmissionText('');
+
         if (activeItem?.type === 'quiz' && activeItem.id) {
             const fetchQuizData = async () => {
                 try {
@@ -259,7 +265,7 @@ export function LmsViewer() {
                 </div>
 
                 {/* Content Area */}
-                <div className="flex-1 bg-gray-50 p-6 md:p-10 overflow-y-auto relative flex flex-col">
+                <div className="flex-1 bg-gray-50 p-6 md:p-10 overflow-y-auto relative flex flex-col min-h-0">
                     {activeItem?.type === 'quiz' ? (
                         <div className="w-full mx-auto bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
                             <div className="p-8 border-b border-gray-100">
@@ -277,7 +283,7 @@ export function LmsViewer() {
                                     </div>
                                     <div>
                                         <p className="text-sm text-gray-500">Jumlah Nilai</p>
-                                        <p className="font-semibold text-gray-900">{quizData?.questions?.reduce((acc: number, q: any) => acc + (q.points || 1), 0) || 0}</p>
+                                        <p className="font-semibold text-gray-900">{quizData?.questions?.reduce((acc: number, q: any) => acc + (Number(q.points) || 1), 0) || 0}</p>
                                     </div>
                                     <div>
                                         <p className="text-sm text-gray-500">Nilai Kelulusan</p>
@@ -313,7 +319,7 @@ export function LmsViewer() {
                                                             {new Date(attempt.started_at).toLocaleString('id-ID')}
                                                         </td>
                                                         <td className="py-4 px-4 text-gray-600">{quizData?.questions?.length || 0}</td>
-                                                        <td className="py-4 px-4 text-gray-600">{quizData?.questions?.reduce((acc: number, q: any) => acc + (q.points || 1), 0) || 0}</td>
+                                                        <td className="py-4 px-4 text-gray-600">{quizData?.questions?.reduce((acc: number, q: any) => acc + (Number(q.points) || 1), 0) || 0}</td>
                                                         <td className="py-4 px-4 text-gray-600">-</td>
                                                         <td className="py-4 px-4 text-gray-600">-</td>
                                                         <td className="py-4 px-4 text-gray-900 font-medium whitespace-nowrap">{attempt.total_score}</td>
@@ -399,42 +405,62 @@ export function LmsViewer() {
                                     className="prose prose-sm prose-blue max-w-none text-gray-700 mb-8"
                                     dangerouslySetInnerHTML={{ __html: activeItem.content || '<p>Tidak ada instruksi khusus untuk penugasan ini.</p>' }}
                                 />
-                                
-                                <div className="space-y-4 max-w-2xl">
-                                    <h3 className="font-bold text-gray-900 border-b pb-2">Lembar Jawaban</h3>
-                                    
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Tautan Lampiran (Google Drive, Docs, dll) (Opsional)</label>
-                                        <input
-                                            type="url"
-                                            value={submissionUrl}
-                                            onChange={(e) => setSubmissionUrl(e.target.value)}
-                                            placeholder="https://..."
-                                            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Catatan / Jawaban Teks</label>
-                                        <textarea
-                                            value={submissionText}
-                                            onChange={(e) => setSubmissionText(e.target.value)}
-                                            rows={5}
-                                            placeholder="Ketik jawaban Anda di sini..."
-                                            className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-                                        />
-                                    </div>
-                                </div>
-                                
                                 <div className="mt-8 flex gap-3">
-                                    <Button 
-                                        onClick={handleAssignmentSubmit}
-                                        disabled={isSubmitting || (!submissionUrl && !submissionText)}
-                                        className="bg-blue-900 hover:bg-blue-800 text-white rounded-md"
-                                    >
-                                        {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                                        Kirim Jawaban Tugas
-                                    </Button>
+                                    {!isFormOpen ? (
+                                        <Button 
+                                            onClick={() => setIsFormOpen(true)}
+                                            className="bg-blue-600 hover:bg-blue-700 text-white rounded-md"
+                                        >
+                                            Mulai Pengumpulan Tugas
+                                        </Button>
+                                    ) : (
+                                        <div className="w-full">
+                                            <div className="space-y-4 max-w-2xl bg-gray-50 p-6 rounded-xl border border-gray-200">
+                                                <h3 className="font-bold text-gray-900 border-b pb-2">Lembar Jawaban</h3>
+                                                
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">Tautan Lampiran (Google Drive, Docs, dll) (Opsional)</label>
+                                                    <input
+                                                        type="url"
+                                                        value={submissionUrl}
+                                                        onChange={(e) => setSubmissionUrl(e.target.value)}
+                                                        placeholder="https://..."
+                                                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                                                    />
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">Catatan / Jawaban Teks</label>
+                                                    <textarea
+                                                        value={submissionText}
+                                                        onChange={(e) => setSubmissionText(e.target.value)}
+                                                        rows={5}
+                                                        placeholder="Ketik jawaban Anda di sini..."
+                                                        className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                                                    />
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="mt-4 flex gap-3">
+                                                <Button 
+                                                    onClick={handleAssignmentSubmit}
+                                                    disabled={isSubmitting || (!submissionUrl && !submissionText)}
+                                                    className="bg-blue-900 hover:bg-blue-800 text-white rounded-md"
+                                                >
+                                                    {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                                                    Kirim Jawaban Tugas
+                                                </Button>
+                                                <Button 
+                                                    variant="outline"
+                                                    onClick={() => setIsFormOpen(false)}
+                                                    disabled={isSubmitting}
+                                                    className="rounded-md"
+                                                >
+                                                    Batal
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>

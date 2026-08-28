@@ -117,5 +117,9 @@ export const lmsService = {
             item_type: itemType,
             item_id: itemId
         });
+    },
+
+    getEventGradebook: async (eventId: string): Promise<any> => {
+        return await api.get(`/lms/gradebook/event/${eventId}`);
     }
 };

@@ -780,5 +780,111 @@ class LmsController
             // ignore
         }
     }
+// Function draft for LmsController.php
+public function getEventGradebook($eventId) {
+    // 1. Get all participants
+    $qParts = "SELECT ep.user_id, p.nama, p.asal_sekolah, p.foto_profile 
+               FROM event_participants ep 
+               LEFT JOIN profiles p ON ep.user_id = p.id 
+               WHERE ep.event_id = :eid";
+    $stmt = $this->conn->prepare($qParts);
+    $stmt->execute([':eid' => $eventId]);
+    $participants = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // 2. Get all quizzes for this event
+    $qQuizzes = "SELECT q.id, q.title FROM lms_quizzes q 
+                 JOIN lms_topics t ON q.topic_id = t.id 
+                 WHERE t.event_id = :eid ORDER BY q.order_num ASC";
+    $stmt = $this->conn->prepare($qQuizzes);
+    $stmt->execute([':eid' => $eventId]);
+    $quizzes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // 3. Get all assignments for this event
+    $qAssignments = "SELECT a.id, a.title FROM lms_assignments a 
+                     JOIN lms_topics t ON a.topic_id = t.id 
+                     WHERE t.event_id = :eid ORDER BY a.order_num ASC";
+    $stmt = $this->conn->prepare($qAssignments);
+    $stmt->execute([':eid' => $eventId]);
+    $assignments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // 4. Get quiz scores (latest attempt for each user & quiz)
+    // We can fetch all attempts and filter in PHP since it's simpler.
+    $qQuizScores = "SELECT qa.user_id, qa.quiz_id, qa.total_score, qa.started_at 
+                    FROM lms_quiz_attempts qa
+                    JOIN lms_quizzes q ON qa.quiz_id = q.id
+                    JOIN lms_topics t ON q.topic_id = t.id
+                    WHERE t.event_id = :eid
+                    ORDER BY qa.started_at DESC";
+    $stmt = $this->conn->prepare($qQuizScores);
+    $stmt->execute([':eid' => $eventId]);
+    $allQuizAttempts = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Group quiz attempts (latest only)
+    $quizScores = [];
+    foreach ($allQuizAttempts as $qa) {
+        $key = $qa['user_id'] . '_' . $qa['quiz_id'];
+        if (!isset($quizScores[$key])) {
+            $quizScores[$key] = $qa['total_score'];
+        }
+    }
+
+    // 5. Get assignment scores
+    $qAssignmentScores = "SELECT s.user_id, s.assignment_id, s.score 
+                          FROM lms_assignment_submissions s
+                          JOIN lms_assignments a ON s.assignment_id = a.id
+                          JOIN lms_topics t ON a.topic_id = t.id
+                          WHERE t.event_id = :eid";
+    $stmt = $this->conn->prepare($qAssignmentScores);
+    $stmt->execute([':eid' => $eventId]);
+    $allAssignmentSubs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $assignmentScores = [];
+    foreach ($allAssignmentSubs as $sub) {
+        $key = $sub['user_id'] . '_' . $sub['assignment_id'];
+        $assignmentScores[$key] = $sub['score'];
+    }
+
+    // 6. Assemble gradebook
+    $gradebook = [];
+    foreach ($participants as $p) {
+        $p['quizzes'] = [];
+        $p['assignments'] = [];
+        $totalScore = 0;
+        $countItems = count($quizzes) + count($assignments);
+
+        foreach ($quizzes as $q) {
+            $score = isset($quizScores[$p['user_id'] . '_' . $q['id']]) ? floatval($quizScores[$p['user_id'] . '_' . $q['id']]) : null;
+            $p['quizzes'][] = [
+                'quiz_id' => $q['id'],
+                'title' => $q['title'],
+                'score' => $score
+            ];
+            if ($score !== null) {
+                $totalScore += $score;
+            }
+        }
+
+        foreach ($assignments as $a) {
+            $score = isset($assignmentScores[$p['user_id'] . '_' . $a['id']]) ? floatval($assignmentScores[$p['user_id'] . '_' . $a['id']]) : null;
+            $p['assignments'][] = [
+                'assignment_id' => $a['id'],
+                'title' => $a['title'],
+                'score' => $score
+            ];
+            if ($score !== null) {
+                $totalScore += $score;
+            }
+        }
+
+        $p['average_score'] = $countItems > 0 ? round($totalScore / $countItems, 2) : 0;
+        $gradebook[] = $p;
+    }
+
+    return json_encode([
+        'quizzes' => $quizzes,
+        'assignments' => $assignments,
+        'participants' => $gradebook
+    ]);
+}
 }
 ?>
