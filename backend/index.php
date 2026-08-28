@@ -368,7 +368,7 @@ if ($resource === 'news') {
                 echo json_encode(["message" => "User ID required"]);
             }
         } else {
-            echo $controller->deleteEvent($action, $userId, $userName);
+            echo $controller->deleteEvent($action, $userId, $userName, $userRole);
         }
     }
 

@@ -192,25 +192,127 @@ class ContentController
         }
     }
 
-    public function deleteEvent($id, $userId, $userName)
+    public function deleteEvent($id, $userId, $userName, $userRole = '')
     {
-        // Get title for logging
-        $title = "Unknown Event";
-        $stmtTitle = $this->conn->prepare("SELECT title FROM events WHERE id = :id");
-        $stmtTitle->bindParam(':id', $id);
-        $stmtTitle->execute();
-        if ($res = $stmtTitle->fetch(PDO::FETCH_ASSOC))
-            $title = $res['title'];
+        try {
+            $this->conn->beginTransaction();
+            
+            // Get title and event details for logging and role checks
+            $title = "Unknown Event";
+            $stmtEvent = $this->conn->prepare("SELECT title, is_paid, has_lms FROM events WHERE id = :id");
+            $stmtEvent->bindParam(':id', $id);
+            $stmtEvent->execute();
+            if ($res = $stmtEvent->fetch(PDO::FETCH_ASSOC)) {
+                $title = $res['title'];
+                
+                // Role check: Only Admin can delete events that are paid or have LMS
+                if (($res['is_paid'] || $res['has_lms']) && $userRole !== 'Admin') {
+                    $this->conn->rollBack();
+                    http_response_code(403);
+                    return json_encode(["message" => "Hanya Super Admin yang dapat menghapus kegiatan berbayar atau kegiatan yang memiliki modul LMS."]);
+                }
+            } else {
+                $this->conn->rollBack();
+                http_response_code(404);
+                return json_encode(["message" => "Event not found"]);
+            }
 
-        $query = "DELETE FROM events WHERE id = :id";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':id', $id);
-        if ($stmt->execute()) {
+            // 1. Lms Sub-items
+            $stmtTopics = $this->conn->prepare("SELECT id FROM lms_topics WHERE event_id = :id");
+            $stmtTopics->execute([':id' => $id]);
+            $topicIds = $stmtTopics->fetchAll(PDO::FETCH_COLUMN);
+
+            if (!empty($topicIds)) {
+                $topicIn = str_repeat('?,', count($topicIds) - 1) . '?';
+                
+                // Quizzes
+                $stmtQuiz = $this->conn->prepare("SELECT id FROM lms_quizzes WHERE topic_id IN ($topicIn)");
+                $stmtQuiz->execute($topicIds);
+                $quizIds = $stmtQuiz->fetchAll(PDO::FETCH_COLUMN);
+
+                if (!empty($quizIds)) {
+                    $quizIn = str_repeat('?,', count($quizIds) - 1) . '?';
+                    
+                    // Attempts
+                    $stmtAtt = $this->conn->prepare("SELECT id FROM lms_quiz_attempts WHERE quiz_id IN ($quizIn)");
+                    $stmtAtt->execute($quizIds);
+                    $attemptIds = $stmtAtt->fetchAll(PDO::FETCH_COLUMN);
+                    
+                    if (!empty($attemptIds)) {
+                        $attIn = str_repeat('?,', count($attemptIds) - 1) . '?';
+                        $stmt = $this->conn->prepare("DELETE FROM lms_quiz_answers WHERE attempt_id IN ($attIn)");
+                        $stmt->execute($attemptIds);
+                    }
+                    
+                    $stmt = $this->conn->prepare("DELETE FROM lms_quiz_attempts WHERE quiz_id IN ($quizIn)");
+                    $stmt->execute($quizIds);
+
+                    // Questions
+                    $stmtQ = $this->conn->prepare("SELECT id FROM lms_quiz_questions WHERE quiz_id IN ($quizIn)");
+                    $stmtQ->execute($quizIds);
+                    $qIds = $stmtQ->fetchAll(PDO::FETCH_COLUMN);
+
+                    if (!empty($qIds)) {
+                        $qIn = str_repeat('?,', count($qIds) - 1) . '?';
+                        $stmt = $this->conn->prepare("DELETE FROM lms_quiz_options WHERE question_id IN ($qIn)");
+                        $stmt->execute($qIds);
+                    }
+
+                    $stmt = $this->conn->prepare("DELETE FROM lms_quiz_questions WHERE quiz_id IN ($quizIn)");
+                    $stmt->execute($quizIds);
+
+                    $stmt = $this->conn->prepare("DELETE FROM lms_quizzes WHERE topic_id IN ($topicIn)");
+                    $stmt->execute($topicIds);
+                }
+
+                // Assignments
+                $stmtAsg = $this->conn->prepare("SELECT id FROM lms_assignments WHERE topic_id IN ($topicIn)");
+                $stmtAsg->execute($topicIds);
+                $asgIds = $stmtAsg->fetchAll(PDO::FETCH_COLUMN);
+
+                if (!empty($asgIds)) {
+                    $asgIn = str_repeat('?,', count($asgIds) - 1) . '?';
+                    $stmt = $this->conn->prepare("DELETE FROM lms_assignment_submissions WHERE assignment_id IN ($asgIn)");
+                    $stmt->execute($asgIds);
+                }
+
+                $stmt = $this->conn->prepare("DELETE FROM lms_assignments WHERE topic_id IN ($topicIn)");
+                $stmt->execute($topicIds);
+
+                $stmt = $this->conn->prepare("DELETE FROM lms_materials WHERE topic_id IN ($topicIn)");
+                $stmt->execute($topicIds);
+
+                $stmt = $this->conn->prepare("DELETE FROM lms_topics WHERE event_id = ?");
+                $stmt->execute([$id]);
+            }
+
+            // 2. Direct Event relations
+            $stmt = $this->conn->prepare("DELETE FROM lms_user_progress WHERE event_id = ?");
+            $stmt->execute([$id]);
+
+            $stmt = $this->conn->prepare("DELETE FROM event_participants WHERE event_id = ?");
+            $stmt->execute([$id]);
+
+            $stmt = $this->conn->prepare("DELETE FROM letters WHERE event_id = ?");
+            $stmt->execute([$id]);
+
+            $stmt = $this->conn->prepare("DELETE FROM gallery_images WHERE event_id = ?");
+            $stmt->execute([$id]);
+
+            // 3. Delete Event
+            $stmt = $this->conn->prepare("DELETE FROM events WHERE id = ?");
+            $stmt->execute([$id]);
+
             Helper::log($this->conn, $userId, $userName, 'DELETE_EVENT', $title);
-            return json_encode(["message" => "Event deleted"]);
+            
+            $this->conn->commit();
+            return json_encode(["message" => "Event deleted completely"]);
+            
+        } catch (\Exception $e) {
+            $this->conn->rollBack();
+            http_response_code(500);
+            return json_encode(["message" => "Failed to delete event: " . $e->getMessage()]);
         }
-        http_response_code(500);
-        return json_encode(["message" => "Failed to delete event"]);
     }
 
     public function updateEvent($id, $data, $userId, $userName)
