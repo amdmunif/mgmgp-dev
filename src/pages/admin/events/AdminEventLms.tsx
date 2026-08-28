@@ -281,7 +281,7 @@ export function AdminEventLms() {
                                                             <FileQuestion className="w-3 h-3 mr-1" /> Kelola Soal
                                                         </Button>
                                                         <Button 
-                                                            onClick={() => navigate(`/admin/events/${id}/lms/quiz-results/${material.id}`)}
+                                                            onClick={() => navigate(`/admin/events/${id}/lms/quiz-results/${material.id}`, { state: { quizTitle: material.title } })}
                                                             size="sm" 
                                                             className="h-7 text-xs bg-indigo-600 hover:bg-indigo-700 text-white"
                                                         >

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, useOutletContext } from 'react-router-dom';
 import { ArrowLeft, Search, Loader2 } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { lmsService } from '../../../services/lmsService';
@@ -8,15 +8,25 @@ import { toast } from 'react-hot-toast';
 export function AdminQuizResults() {
     const { id, quizId } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
+    const { setPageHeader } = useOutletContext<any>() || {};
+    const quizTitle = location.state?.quizTitle || 'Memuat...';
+
     const [searchTerm, setSearchTerm] = useState('');
     const [attempts, setAttempts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        if (setPageHeader) {
+            setPageHeader({
+                title: 'Hasil Kuis Peserta',
+                description: quizTitle,
+            });
+        }
         if (quizId) {
             fetchAttempts();
         }
-    }, [quizId]);
+    }, [quizId, quizTitle, setPageHeader]);
 
     const fetchAttempts = async () => {
         try {
@@ -45,16 +55,11 @@ export function AdminQuizResults() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-4">
-                    <Button variant="ghost" onClick={() => navigate(`/admin/events/${id}/lms`)} className="text-gray-500">
-                        <ArrowLeft className="w-5 h-5" />
-                    </Button>
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-900">Hasil Kuis Peserta</h1>
-                        <p className="text-gray-500 text-sm">Lihat riwayat percobaan ujian peserta</p>
-                    </div>
-                </div>
+            <div className="flex items-center justify-between mb-4">
+                <Button variant="ghost" onClick={() => navigate(`/admin/events/${id}/lms`)} className="text-gray-500">
+                    <ArrowLeft className="w-5 h-5 mr-2" />
+                    Kembali ke Kelas
+                </Button>
             </div>
 
             <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col sm:flex-row gap-4">

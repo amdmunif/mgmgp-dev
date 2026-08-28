@@ -660,7 +660,7 @@ class LmsController
 
     public function getAllQuizAttempts($quizId) {
         try {
-            $query = "SELECT a.*, u.full_name as user_name 
+            $query = "SELECT a.*, p.nama as user_name 
                       FROM lms_quiz_attempts a 
                       INNER JOIN (
                           SELECT user_id, MAX(started_at) as max_started_at
@@ -668,7 +668,7 @@ class LmsController
                           WHERE quiz_id = :qid1
                           GROUP BY user_id
                       ) latest ON a.user_id = latest.user_id AND a.started_at = latest.max_started_at
-                      LEFT JOIN users u ON a.user_id = u.id 
+                      LEFT JOIN profiles p ON a.user_id = p.id 
                       WHERE a.quiz_id = :qid2 
                       ORDER BY a.started_at DESC";
             $stmt = $this->conn->prepare($query);
