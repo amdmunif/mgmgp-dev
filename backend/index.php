@@ -195,14 +195,12 @@ if ($resource === 'news') {
         }
     } elseif ($action === 'assignments') {
         if ($_SERVER['REQUEST_METHOD'] === 'GET' && $subAction) {
-            if (strpos($subAction, 'all-submissions/') === 0) {
+            if ($subAction === 'all-submissions' && isset($uri_parts[3])) {
                 // GET /lms/assignments/all-submissions/:assignmentId
-                $assignmentId = str_replace('all-submissions/', '', $subAction);
-                echo $controller->getAllAssignmentSubmissions($assignmentId);
-            } elseif (strpos($subAction, 'my-submission/') === 0) {
+                echo $controller->getAllAssignmentSubmissions($uri_parts[3]);
+            } elseif ($subAction === 'my-submission' && isset($uri_parts[3])) {
                 // GET /lms/assignments/my-submission/:assignmentId
-                $assignmentId = str_replace('my-submission/', '', $subAction);
-                echo $controller->getAssignmentSubmission($assignmentId, $userId);
+                echo $controller->getAssignmentSubmission($uri_parts[3], $userId);
             }
         } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($subAction === 'submit') {
@@ -218,10 +216,9 @@ if ($resource === 'news') {
             if ($subAction === 'summary') {
                 // GET /lms/progress/summary
                 echo $controller->getProgressSummary($userId);
-            } elseif (strpos($subAction, 'event/') === 0) {
+            } elseif ($subAction === 'event' && isset($uri_parts[3])) {
                 // GET /lms/progress/event/:eventId
-                $eventId = str_replace('event/', '', $subAction);
-                echo $controller->getEventProgress($eventId, $userId);
+                echo $controller->getEventProgress($uri_parts[3], $userId);
             }
         } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($subAction === 'mark') {

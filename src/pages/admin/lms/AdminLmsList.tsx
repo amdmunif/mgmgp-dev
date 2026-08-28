@@ -85,7 +85,7 @@ export function AdminLmsList() {
                                         onClick={() => navigate(`/admin/events/${event.id}/lms`)}
                                         className="w-full bg-blue-50 hover:bg-blue-600 text-blue-700 hover:text-white font-semibold transition-colors h-10"
                                     >
-                                        Kelola Kurikulum <ChevronRight className="w-4 h-4 ml-1" />
+                                        Kelola Kelas <ChevronRight className="w-4 h-4 ml-1" />
                                     </Button>
                                 </div>
                             </div>

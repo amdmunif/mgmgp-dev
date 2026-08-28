@@ -47,6 +47,7 @@ import { AdminEventDetail } from './pages/admin/events/AdminEventDetail';
 import { AdminEventLms } from './pages/admin/events/AdminEventLms';
 import { AdminQuizBuilder } from './pages/admin/events/AdminQuizBuilder';
 import { AdminAssignmentGrader } from './pages/admin/events/AdminAssignmentGrader';
+import { AdminAssignmentDashboard } from './pages/admin/events/AdminAssignmentDashboard';
 import { AdminQuizResults } from './pages/admin/events/AdminQuizResults';
 import { AdminLmsList } from './pages/admin/lms/AdminLmsList';
 import { CreateEvent } from './pages/admin/events/CreateEvent';
@@ -252,6 +253,7 @@ function App() {
           <Route path="events/:id/lms/quiz/:quizId" element={<AdminQuizBuilder />} />
           <Route path="events/:id/lms/quiz-results/:quizId" element={<AdminQuizResults />} />
           <Route path="events/:id/lms/assignment/:assignmentId" element={<AdminAssignmentGrader />} />
+          <Route path="events/:id/lms/assignments-report" element={<AdminAssignmentDashboard />} />
           <Route path="events/:id/print-attendance" element={<AdminEventAttendancePrint />} />
         
           {/* Finances Route */}

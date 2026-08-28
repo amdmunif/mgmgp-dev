@@ -12,6 +12,55 @@ class LmsController
     {
         $this->db = new Database();
         $this->conn = $this->db->getConnection();
+        $this->ensureTablesExist();
+    }
+
+    private function ensureTablesExist() {
+        try {
+            $this->conn->exec("
+                CREATE TABLE IF NOT EXISTS lms_user_progress (
+                    id VARCHAR(36) PRIMARY KEY,
+                    user_id VARCHAR(36) NOT NULL,
+                    event_id VARCHAR(36) NOT NULL,
+                    item_type VARCHAR(20) NOT NULL,
+                    item_id VARCHAR(36) NOT NULL,
+                    is_completed TINYINT(1) DEFAULT 0,
+                    completed_at TIMESTAMP NULL,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    UNIQUE KEY unique_user_item (user_id, item_id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+            ");
+            
+            $this->conn->exec("
+                CREATE TABLE IF NOT EXISTS lms_assignment_submissions (
+                    id VARCHAR(36) PRIMARY KEY,
+                    assignment_id VARCHAR(36) NOT NULL,
+                    user_id VARCHAR(36) NOT NULL,
+                    content_url TEXT,
+                    text_content TEXT,
+                    score DECIMAL(5,2) DEFAULT NULL,
+                    feedback TEXT,
+                    submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    graded_at TIMESTAMP NULL,
+                    UNIQUE KEY unique_submission (assignment_id, user_id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+            ");
+
+            $this->conn->exec("
+                CREATE TABLE IF NOT EXISTS lms_quiz_attempts (
+                    id VARCHAR(36) PRIMARY KEY,
+                    quiz_id VARCHAR(36) NOT NULL,
+                    user_id VARCHAR(36) NOT NULL,
+                    started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    finished_at TIMESTAMP NULL,
+                    answers JSON DEFAULT NULL,
+                    total_score DECIMAL(5,2) DEFAULT 0,
+                    is_passed TINYINT(1) DEFAULT 0
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+            ");
+        } catch (\PDOException $e) {
+            // Silently ignore if lacking permissions, etc.
+        }
     }
 
     // ==========================================

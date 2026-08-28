@@ -59,12 +59,16 @@ export function LmsViewer() {
                 console.error('Failed to load event title', e);
             }
 
-            const fetchedTopics = await lmsService.getTopicsByEvent(eId);
-            const progress = await lmsService.getEventProgress(eId);
+            const fetchedTopicsRaw = await lmsService.getTopicsByEvent(eId);
+            const progressRaw = await lmsService.getEventProgress(eId);
+            
+            const fetchedTopics = Array.isArray(fetchedTopicsRaw) ? fetchedTopicsRaw : [];
+            const progress = Array.isArray(progressRaw) ? progressRaw : [];
             
             const fullTopics: LmsTopic[] = [];
             for (const topic of fetchedTopics) {
-                const materials = await lmsService.getMaterialsByTopic(topic.id);
+                const materialsRaw = await lmsService.getMaterialsByTopic(topic.id);
+                const materials = Array.isArray(materialsRaw) ? materialsRaw : [];
                 fullTopics.push({
                     id: topic.id,
                     title: topic.title,

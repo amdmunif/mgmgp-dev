@@ -209,15 +209,21 @@ export function AdminEventLms() {
         <div className="space-y-6">
             <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
                 <div className="flex items-center gap-4">
-                    <Button variant="ghost" onClick={() => navigate(`/admin/events/${id}`)} className="text-gray-500 p-2 h-auto">
+                    <Button variant="ghost" onClick={() => navigate(`/admin/lms`)} className="text-gray-500 p-2 h-auto">
                         <ArrowLeft className="w-5 h-5" />
                     </Button>
                     <span className="font-medium text-gray-700">Daftar Topik ({topics.length})</span>
                 </div>
-                <Button onClick={() => handleOpenTopicModal()} className="bg-blue-600 hover:bg-blue-700">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Tambah Topik
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" onClick={() => navigate(`/admin/events/${id}/lms/assignments-report`)} className="hidden md:flex">
+                        <CheckSquare className="w-4 h-4 mr-2" />
+                        Laporan Penugasan
+                    </Button>
+                    <Button onClick={() => handleOpenTopicModal()} className="bg-blue-600 hover:bg-blue-700">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Tambah Topik
+                    </Button>
+                </div>
             </div>
 
             <div className="space-y-4">

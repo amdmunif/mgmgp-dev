@@ -22,7 +22,7 @@ export function AdminQuizResults() {
         try {
             setLoading(true);
             const data = await lmsService.getAllQuizAttempts(quizId!);
-            setAttempts(data);
+            setAttempts(Array.isArray(data) ? data : []);
         } catch (error) {
             toast.error("Gagal memuat hasil kuis");
         } finally {

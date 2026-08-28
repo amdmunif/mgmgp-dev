@@ -339,9 +339,18 @@ export function AdminLayout() {
                         );
                     })}
 
+                    <Link
+                        to="/member"
+                        className="md:hidden flex items-center gap-3 px-5 py-3.5 w-full text-purple-400 hover:bg-purple-500/10 rounded-2xl mt-8 mb-2 transition-all duration-300 border border-transparent hover:border-purple-500/20 group"
+                        onClick={() => setIsSidebarOpen(false)}
+                    >
+                        <User className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+                        <span className="font-black text-[11px] uppercase tracking-[0.2em]">Area Anggota</span>
+                    </Link>
+
                     <button
                         onClick={handleLogout}
-                        className="md:hidden flex items-center gap-3 px-5 py-3.5 w-full text-red-500 hover:bg-red-500/10 rounded-2xl mt-8 transition-all duration-300 border border-transparent hover:border-red-500/20 group"
+                        className="md:hidden flex items-center gap-3 px-5 py-3.5 w-full text-red-500 hover:bg-red-500/10 rounded-2xl transition-all duration-300 border border-transparent hover:border-red-500/20 group"
                     >
                         <LogOut className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
                         <span className="font-black text-[11px] uppercase tracking-[0.2em]">Logout Sistem</span>
