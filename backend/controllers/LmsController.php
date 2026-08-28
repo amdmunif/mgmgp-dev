@@ -576,7 +576,7 @@ class LmsController
             $isPassed = $score >= (float)$quiz['passing_score'] ? 1 : 0;
             
             $attemptId = Helper::uuid();
-            $insAtt = $this->conn->prepare("INSERT INTO lms_quiz_attempts (id, user_id, quiz_id, finished_at, total_score, is_passed) VALUES (:id, :uid, :qid, NOW(), :score, :passed)");
+            $insAtt = $this->conn->prepare("INSERT INTO lms_quiz_attempts (id, user_id, quiz_id, status, finished_at, total_score, is_passed) VALUES (:id, :uid, :qid, 'completed', NOW(), :score, :passed)");
             $insAtt->execute([
                 ':id' => $attemptId,
                 ':uid' => $userId,
@@ -585,7 +585,7 @@ class LmsController
                 ':passed' => $isPassed
             ]);
             
-            $insAns = $this->conn->prepare("INSERT INTO lms_quiz_answers (id, attempt_id, question_id, selected_option_id, is_correct, points_earned) VALUES (:id, :aid, :qid, :oid, :is_correct, :points_earned)");
+            $insAns = $this->conn->prepare("INSERT INTO lms_quiz_answers (id, attempt_id, question_id, selected_option_id, is_correct, score_awarded) VALUES (:id, :aid, :qid, :oid, :is_correct, :score_awarded)");
             foreach ($processedAnswers as $pa) {
                 $insAns->execute([
                     ':id' => Helper::uuid(),
@@ -593,7 +593,7 @@ class LmsController
                     ':qid' => $pa['q_id'],
                     ':oid' => $pa['o_id'],
                     ':is_correct' => $pa['is_correct'],
-                    ':points_earned' => $pa['points_earned']
+                    ':score_awarded' => $pa['points_earned']
                 ]);
             }
             
