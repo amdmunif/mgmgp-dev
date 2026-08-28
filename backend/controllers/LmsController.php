@@ -512,9 +512,10 @@ class LmsController
             $stmt = $this->conn->prepare($q);
             $stmt->execute([':qid' => $quizId, ':uid' => $userId]);
             $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-            error_log("getQuizAttempts DEBUG: quizId=$quizId, userId=$userId, count=" . count($res) . "\n", 3, __DIR__ . "/../../../my_debug.log");
+            error_log("getQuizAttempts DEBUG: quizId=$quizId, userId=$userId, count=" . count($res) . "\n", 3, "/Users/ahmadmunif/Documents/web/mgmp-v2/my_debug.log");
             return json_encode($res);
         } catch (\PDOException $e) {
+            error_log("getQuizAttempts EXCEPTION: " . $e->getMessage() . "\n", 3, "/Users/ahmadmunif/Documents/web/mgmp-v2/my_debug.log");
             http_response_code(500);
             return json_encode(["message" => "Database error: " . $e->getMessage()]);
         }
@@ -587,7 +588,7 @@ class LmsController
                 ':passed' => $isPassed
             ]);
             
-            error_log("submitQuizAttempt DEBUG: inserted attemptId=$attemptId for quizId=$quizId, userId=$userId\n", 3, __DIR__ . "/../../../my_debug.log");
+            error_log("submitQuizAttempt DEBUG: inserted attemptId=$attemptId for quizId=$quizId, userId=$userId\n", 3, "/Users/ahmadmunif/Documents/web/mgmp-v2/my_debug.log");
             
             $insAns = $this->conn->prepare("INSERT INTO lms_quiz_answers (id, attempt_id, question_id, selected_option_id, is_correct, score_awarded) VALUES (:id, :aid, :qid, :oid, :is_correct, :score_awarded)");
             foreach ($processedAnswers as $pa) {
