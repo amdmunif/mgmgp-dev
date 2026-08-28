@@ -124,12 +124,7 @@ export function AdminAssignmentDashboard() {
 
     return (
         <div className="space-y-6">
-            <div className="mb-6">
-                <Button variant="outline" onClick={() => navigate(`/admin/events/${id}/lms`)} className="bg-white text-gray-700 hover:bg-gray-100 shadow-sm">
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Kembali ke Kelas
-                </Button>
-            </div>
+
 
             {!gradebook?.participants || gradebook.participants.length === 0 ? (
                 <div className="text-center py-16 bg-white border border-gray-100 rounded-xl flex flex-col items-center">
@@ -138,14 +133,18 @@ export function AdminAssignmentDashboard() {
                     <p className="text-gray-500 text-sm">Belum ada peserta yang mendaftar di acara/kelas ini.</p>
                 </div>
             ) : (
-                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-                    <DataTable 
-                        data={gradebook.participants} 
-                        columns={buildColumns()} 
-                        searchKeys={['nama', 'asal_sekolah']}
-                        pageSize={15}
-                    />
-                </div>
+                <DataTable 
+                    data={gradebook.participants} 
+                    columns={buildColumns()} 
+                    searchKeys={['nama', 'asal_sekolah']}
+                    pageSize={15}
+                    filterContent={
+                        <Button variant="outline" onClick={() => navigate(`/admin/events/${id}/lms`)} className="bg-white text-gray-700 hover:bg-gray-100 shadow-sm">
+                            <ArrowLeft className="w-4 h-4 mr-2" />
+                            Kembali ke Kelas
+                        </Button>
+                    }
+                />
             )}
         </div>
     );
