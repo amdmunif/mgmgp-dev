@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Loader2, Users } from 'lucide-react';
+import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
+import { ArrowLeft, Loader2, Users, BookOpen } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { lmsService } from '../../../services/lmsService';
 import { toast } from 'react-hot-toast';
@@ -8,14 +8,22 @@ import { toast } from 'react-hot-toast';
 export function AdminAssignmentDashboard() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { setPageHeader } = useOutletContext<any>() || {};
     const [loading, setLoading] = useState(true);
     const [gradebook, setGradebook] = useState<any>(null);
 
     useEffect(() => {
+        if (setPageHeader) {
+            setPageHeader({
+                title: 'Buku Nilai (Gradebook)',
+                description: 'Daftar nilai seluruh peserta dari semua kuis dan penugasan di kelas ini',
+                icon: <BookOpen className="w-6 h-6" />
+            });
+        }
         if (id) {
             loadGradebook();
         }
-    }, [id]);
+    }, [id, setPageHeader]);
 
     const loadGradebook = async () => {
         try {
@@ -34,14 +42,11 @@ export function AdminAssignmentDashboard() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center gap-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-                <Button variant="ghost" onClick={() => navigate(`/admin/events/${id}/lms`)} className="text-gray-500 p-2 h-auto">
-                    <ArrowLeft className="w-5 h-5" />
+            <div className="mb-6">
+                <Button variant="outline" onClick={() => navigate(`/admin/events/${id}/lms`)} className="bg-white text-gray-700 hover:bg-gray-100 shadow-sm">
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Kembali ke Kelas
                 </Button>
-                <div>
-                    <h1 className="font-bold text-lg text-gray-800">Buku Nilai (Gradebook)</h1>
-                    <p className="text-sm text-gray-500">Daftar nilai seluruh peserta dari semua kuis dan penugasan di kelas ini</p>
-                </div>
             </div>
 
             {!gradebook?.participants || gradebook.participants.length === 0 ? (
@@ -76,18 +81,9 @@ export function AdminAssignmentDashboard() {
                                 {gradebook.participants.map((p: any) => (
                                     <tr key={p.user_id} className="hover:bg-gray-50 transition-colors">
                                         <td className="py-4 px-6">
-                                            <div className="flex items-center gap-3">
-                                                {p.foto_profile ? (
-                                                    <img src={p.foto_profile} alt={p.nama} className="w-8 h-8 rounded-full object-cover" />
-                                                ) : (
-                                                    <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs">
-                                                        {p.nama?.charAt(0) || '?'}
-                                                    </div>
-                                                )}
-                                                <div>
-                                                    <div className="font-medium text-gray-900">{p.nama}</div>
-                                                    <div className="text-xs text-gray-500">{p.asal_sekolah || 'Asal sekolah tidak diketahui'}</div>
-                                                </div>
+                                            <div>
+                                                <div className="font-medium text-gray-900">{p.nama}</div>
+                                                <div className="text-xs text-gray-500 mt-0.5">{p.asal_sekolah || 'Asal sekolah tidak diketahui'}</div>
                                             </div>
                                         </td>
                                         
