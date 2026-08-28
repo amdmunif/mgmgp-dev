@@ -4,6 +4,7 @@ import { ArrowLeft, Loader2, Users, BookOpen } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { lmsService } from '../../../services/lmsService';
 import { toast } from 'react-hot-toast';
+import { DataTable } from '../../../components/ui/DataTable';
 
 export function AdminAssignmentDashboard() {
     const { id } = useParams();
@@ -40,6 +41,87 @@ export function AdminAssignmentDashboard() {
 
     if (loading) return <div className="p-8 text-center flex items-center justify-center gap-2"><Loader2 className="w-5 h-5 animate-spin" /> Memuat daftar nilai peserta...</div>;
 
+    const buildColumns = () => {
+        if (!gradebook) return [];
+        
+        const columns: any[] = [
+            {
+                header: 'Nama Peserta',
+                accessorKey: 'nama',
+                cell: (p: any) => (
+                    <div>
+                        <div className="font-medium text-gray-900">{p.nama}</div>
+                        <div className="text-xs text-gray-500 mt-0.5">{p.asal_sekolah || 'Asal sekolah tidak diketahui'}</div>
+                    </div>
+                ),
+                className: 'min-w-[200px]'
+            }
+        ];
+
+        gradebook.quizzes.forEach((q: any) => {
+            columns.push({
+                header: (
+                    <div className="text-center">
+                        <div className="text-xs text-blue-600 mb-1">Kuis</div>
+                        {q.title}
+                    </div>
+                ),
+                cell: (p: any) => {
+                    const quizScore = p.quizzes.find((x: any) => x.quiz_id === q.id)?.score;
+                    return (
+                        <div className="text-center font-medium">
+                            {quizScore !== null && quizScore !== undefined ? (
+                                <span className="text-gray-900">{quizScore}</span>
+                            ) : (
+                                <span className="text-gray-400">-</span>
+                            )}
+                        </div>
+                    );
+                },
+                className: 'text-center whitespace-nowrap'
+            });
+        });
+
+        gradebook.assignments.forEach((a: any) => {
+            columns.push({
+                header: (
+                    <div className="text-center">
+                        <div className="text-xs text-green-600 mb-1">Tugas</div>
+                        {a.title}
+                    </div>
+                ),
+                cell: (p: any) => {
+                    const asgScore = p.assignments.find((x: any) => x.assignment_id === a.id)?.score;
+                    return (
+                        <div className="text-center font-medium">
+                            {asgScore !== null && asgScore !== undefined ? (
+                                <span className="text-gray-900">{asgScore}</span>
+                            ) : (
+                                <span className="text-gray-400">-</span>
+                            )}
+                        </div>
+                    );
+                },
+                className: 'text-center whitespace-nowrap'
+            });
+        });
+
+        columns.push({
+            header: <div className="text-center">Rerata Akhir</div>,
+            accessorKey: 'average_score',
+            cell: (p: any) => (
+                <div className="text-center font-bold">
+                    <span className={p.average_score >= 70 ? 'text-green-600' : p.average_score > 0 ? 'text-orange-500' : 'text-gray-400'}>
+                        {p.average_score > 0 ? p.average_score.toFixed(2) : '-'}
+                    </span>
+                </div>
+            ),
+            className: 'text-center bg-gray-50/50 min-w-[120px]'
+        });
+
+        return columns;
+    };
+
     return (
         <div className="space-y-6">
             <div className="mb-6">
@@ -57,69 +139,12 @@ export function AdminAssignmentDashboard() {
                 </div>
             ) : (
                 <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm">
-                            <thead className="bg-gray-50 text-gray-700 font-medium border-b border-gray-200">
-                                <tr>
-                                    <th className="py-4 px-6 font-semibold min-w-[200px]">Nama Peserta</th>
-                                    {gradebook.quizzes.map((q: any) => (
-                                        <th key={q.id} className="py-4 px-6 font-semibold whitespace-nowrap text-center">
-                                            <div className="text-xs text-blue-600 mb-1">Kuis</div>
-                                            {q.title}
-                                        </th>
-                                    ))}
-                                    {gradebook.assignments.map((a: any) => (
-                                        <th key={a.id} className="py-4 px-6 font-semibold whitespace-nowrap text-center">
-                                            <div className="text-xs text-green-600 mb-1">Tugas</div>
-                                            {a.title}
-                                        </th>
-                                    ))}
-                                    <th className="py-4 px-6 font-semibold text-center bg-gray-100 min-w-[120px]">Rerata Akhir</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {gradebook.participants.map((p: any) => (
-                                    <tr key={p.user_id} className="hover:bg-gray-50 transition-colors">
-                                        <td className="py-4 px-6">
-                                            <div>
-                                                <div className="font-medium text-gray-900">{p.nama}</div>
-                                                <div className="text-xs text-gray-500 mt-0.5">{p.asal_sekolah || 'Asal sekolah tidak diketahui'}</div>
-                                            </div>
-                                        </td>
-                                        
-                                        {/* Quiz Scores */}
-                                        {p.quizzes.map((q: any) => (
-                                            <td key={q.quiz_id} className="py-4 px-6 text-center font-medium">
-                                                {q.score !== null ? (
-                                                    <span className="text-gray-900">{q.score}</span>
-                                                ) : (
-                                                    <span className="text-gray-400">-</span>
-                                                )}
-                                            </td>
-                                        ))}
-                                        
-                                        {/* Assignment Scores */}
-                                        {p.assignments.map((a: any) => (
-                                            <td key={a.assignment_id} className="py-4 px-6 text-center font-medium">
-                                                {a.score !== null ? (
-                                                    <span className="text-gray-900">{a.score}</span>
-                                                ) : (
-                                                    <span className="text-gray-400">-</span>
-                                                )}
-                                            </td>
-                                        ))}
-
-                                        {/* Final Average */}
-                                        <td className="py-4 px-6 text-center font-bold bg-gray-50/50">
-                                            <span className={p.average_score >= 70 ? 'text-green-600' : p.average_score > 0 ? 'text-orange-500' : 'text-gray-400'}>
-                                                {p.average_score > 0 ? p.average_score.toFixed(2) : '-'}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                    <DataTable 
+                        data={gradebook.participants} 
+                        columns={buildColumns()} 
+                        searchKeys={['nama', 'asal_sekolah']}
+                        pageSize={15}
+                    />
                 </div>
             )}
         </div>
