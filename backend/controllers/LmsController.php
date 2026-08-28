@@ -511,7 +511,9 @@ class LmsController
             $q = "SELECT * FROM lms_quiz_attempts WHERE quiz_id = :qid AND user_id = :uid ORDER BY started_at DESC";
             $stmt = $this->conn->prepare($q);
             $stmt->execute([':qid' => $quizId, ':uid' => $userId]);
-            return json_encode($stmt->fetchAll(\PDO::FETCH_ASSOC));
+            $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            error_log("getQuizAttempts DEBUG: quizId=$quizId, userId=$userId, count=" . count($res) . "\n", 3, __DIR__ . "/../../../my_debug.log");
+            return json_encode($res);
         } catch (\PDOException $e) {
             http_response_code(500);
             return json_encode(["message" => "Database error: " . $e->getMessage()]);
@@ -584,6 +586,8 @@ class LmsController
                 ':score' => $score,
                 ':passed' => $isPassed
             ]);
+            
+            error_log("submitQuizAttempt DEBUG: inserted attemptId=$attemptId for quizId=$quizId, userId=$userId\n", 3, __DIR__ . "/../../../my_debug.log");
             
             $insAns = $this->conn->prepare("INSERT INTO lms_quiz_answers (id, attempt_id, question_id, selected_option_id, is_correct, score_awarded) VALUES (:id, :aid, :qid, :oid, :is_correct, :score_awarded)");
             foreach ($processedAnswers as $pa) {
