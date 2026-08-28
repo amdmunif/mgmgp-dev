@@ -511,11 +511,8 @@ class LmsController
             $q = "SELECT * FROM lms_quiz_attempts WHERE quiz_id = :qid AND user_id = :uid ORDER BY started_at DESC";
             $stmt = $this->conn->prepare($q);
             $stmt->execute([':qid' => $quizId, ':uid' => $userId]);
-            $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-            error_log("getQuizAttempts DEBUG: quizId=$quizId, userId=$userId, count=" . count($res) . "\n", 3, "/Users/ahmadmunif/Documents/web/mgmp-v2/my_debug.log");
-            return json_encode($res);
+            return json_encode($stmt->fetchAll(\PDO::FETCH_ASSOC));
         } catch (\PDOException $e) {
-            error_log("getQuizAttempts EXCEPTION: " . $e->getMessage() . "\n", 3, "/Users/ahmadmunif/Documents/web/mgmp-v2/my_debug.log");
             http_response_code(500);
             return json_encode(["message" => "Database error: " . $e->getMessage()]);
         }
@@ -588,8 +585,6 @@ class LmsController
                 ':passed' => $isPassed
             ]);
             
-            error_log("submitQuizAttempt DEBUG: inserted attemptId=$attemptId for quizId=$quizId, userId=$userId\n", 3, "/Users/ahmadmunif/Documents/web/mgmp-v2/my_debug.log");
-            
             $insAns = $this->conn->prepare("INSERT INTO lms_quiz_answers (id, attempt_id, question_id, selected_option_id, is_correct, score_awarded) VALUES (:id, :aid, :qid, :oid, :is_correct, :score_awarded)");
             foreach ($processedAnswers as $pa) {
                 $insAns->execute([
@@ -621,9 +616,9 @@ class LmsController
 
     public function getAllAssignmentSubmissions($assignmentId) {
         try {
-            $query = "SELECT s.*, u.full_name as user_name 
+            $query = "SELECT s.*, p.nama as user_name 
                       FROM lms_assignment_submissions s 
-                      LEFT JOIN users u ON s.user_id = u.id 
+                      LEFT JOIN profiles p ON s.user_id = p.id 
                       WHERE s.assignment_id = :aid 
                       ORDER BY s.submitted_at DESC";
             $stmt = $this->conn->prepare($query);

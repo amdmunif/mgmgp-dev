@@ -172,13 +172,13 @@ if ($resource === 'news') {
         }
     } elseif ($action === 'quizzes') {
         if ($_SERVER['REQUEST_METHOD'] === 'GET' && $subAction) {
-            if (strpos($subAction, 'all-attempts/') === 0) {
+            if ($subAction === 'all-attempts') {
                 // GET /lms/quizzes/all-attempts/:quizId
-                $quizId = str_replace('all-attempts/', '', $subAction);
+                $quizId = isset($uri_parts[3]) ? $uri_parts[3] : '';
                 echo $controller->getAllQuizAttempts($quizId);
-            } elseif (strpos($subAction, 'my-attempts/') === 0) {
+            } elseif ($subAction === 'my-attempts') {
                 // GET /lms/quizzes/my-attempts/:quizId
-                $quizId = str_replace('my-attempts/', '', $subAction);
+                $quizId = isset($uri_parts[3]) ? $uri_parts[3] : '';
                 echo $controller->getQuizAttempts($quizId, $userId);
             } else {
                 // GET /lms/quizzes/:materialId

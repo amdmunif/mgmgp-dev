@@ -377,7 +377,7 @@ export function LmsViewer() {
                             </div>
                         </div>
                     ) : activeItem?.type === 'assignment' ? (
-                        <div className="w-full mx-auto bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+                        <div className="w-full mx-auto bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col shrink-0 mb-20">
                             <div className="p-8 border-b border-gray-100">
                                 <p className="text-gray-500 text-sm mb-2">Penugasan</p>
                                 <h2 className="text-3xl font-bold text-gray-900 mb-6">{activeItem.title}</h2>
