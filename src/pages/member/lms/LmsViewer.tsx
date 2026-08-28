@@ -366,12 +366,20 @@ export function LmsViewer() {
                                     </table>
                                 </div>
                                 
-                                <div className="mt-8 flex justify-end">
+                                <div className="mt-8 flex justify-end items-center gap-4">
+                                    {quizData?.max_attempts > 0 && (
+                                        <p className="text-sm text-gray-500">
+                                            Sisa percobaan: <span className="font-bold text-gray-900">{Math.max(0, quizData.max_attempts - quizAttempts.length)}</span> dari {quizData.max_attempts}
+                                        </p>
+                                    )}
                                     <Button 
                                         onClick={() => navigate(`/member/lms/classroom/${eventId}/quiz/${activeItem.id}`)}
-                                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                                        disabled={quizData?.max_attempts > 0 && quizAttempts.length >= quizData.max_attempts}
+                                        className="bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-300 disabled:text-gray-500"
                                     >
-                                        Mulai / Ulangi Ujian
+                                        {quizData?.max_attempts > 0 && quizAttempts.length >= quizData.max_attempts 
+                                            ? "Jatah Ujian Habis" 
+                                            : "Mulai / Ulangi Ujian"}
                                     </Button>
                                 </div>
                             </div>

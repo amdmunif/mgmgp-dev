@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, FileText, Search, ExternalLink, X, Loader2 } from 'lucide-react';
+import { useParams, useNavigate, useLocation, useOutletContext } from 'react-router-dom';
+import { ArrowLeft, CheckCircle2, FileText, Search, ExternalLink, X, Loader2, CheckSquare } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { cn } from '../../../lib/utils';
 import { toast } from 'react-hot-toast';
@@ -9,6 +9,10 @@ import { lmsService } from '../../../services/lmsService';
 export function AdminAssignmentGrader() {
     const { id, assignmentId } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
+    const { setPageHeader } = useOutletContext<any>() || {};
+    const assignmentTitle = location.state?.assignmentTitle || 'Memuat...';
+
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('all'); // all | pending | graded
     
@@ -22,10 +26,17 @@ export function AdminAssignmentGrader() {
     const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
+        if (setPageHeader) {
+            setPageHeader({
+                title: 'Penilaian Tugas',
+                description: assignmentTitle,
+                icon: <CheckSquare className="w-6 h-6" />
+            });
+        }
         if (assignmentId) {
             fetchSubmissions();
         }
-    }, [assignmentId]);
+    }, [assignmentId, assignmentTitle, setPageHeader]);
 
     const fetchSubmissions = async () => {
         try {
@@ -81,16 +92,11 @@ export function AdminAssignmentGrader() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-4">
-                    <Button variant="ghost" onClick={() => navigate(`/admin/events/${id}/lms`)} className="text-gray-500">
-                        <ArrowLeft className="w-5 h-5" />
-                    </Button>
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-900">Penilaian Tugas</h1>
-                        <p className="text-gray-500 text-sm">Tugas 1: Praktik Membuat Prompt</p>
-                    </div>
-                </div>
+            <div className="flex items-center justify-between mb-4">
+                <Button variant="ghost" onClick={() => navigate(`/admin/events/${id}/lms`)} className="text-gray-500">
+                    <ArrowLeft className="w-5 h-5 mr-2" />
+                    Kembali ke Kelas
+                </Button>
             </div>
 
             {/* Filters */}

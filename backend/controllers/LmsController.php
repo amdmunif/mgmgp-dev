@@ -800,12 +800,12 @@ public function getEventGradebook($eventId) {
     $quizzes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     // 3. Get all assignments for this event
-    $qAssignments = "SELECT a.id, a.title FROM lms_assignments a 
+    $qAssignments = "SELECT a.id, a.title FROM lms_materials a 
                      JOIN lms_topics t ON a.topic_id = t.id 
-                     WHERE t.event_id = :eid ORDER BY a.order_num ASC";
+                     WHERE t.event_id = :eid AND a.type = 'assignment' ORDER BY a.order_num ASC";
     $stmt = $this->conn->prepare($qAssignments);
     $stmt->execute([':eid' => $eventId]);
-    $assignments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $assignments = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
     // 4. Get quiz scores (latest attempt for each user & quiz)
     // We can fetch all attempts and filter in PHP since it's simpler.
@@ -831,12 +831,12 @@ public function getEventGradebook($eventId) {
     // 5. Get assignment scores
     $qAssignmentScores = "SELECT s.user_id, s.assignment_id, s.score 
                           FROM lms_assignment_submissions s
-                          JOIN lms_assignments a ON s.assignment_id = a.id
+                          JOIN lms_materials a ON s.assignment_id = a.id
                           JOIN lms_topics t ON a.topic_id = t.id
-                          WHERE t.event_id = :eid";
+                          WHERE t.event_id = :eid AND a.type = 'assignment'";
     $stmt = $this->conn->prepare($qAssignmentScores);
     $stmt->execute([':eid' => $eventId]);
-    $allAssignmentSubs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $allAssignmentSubs = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
     $assignmentScores = [];
     foreach ($allAssignmentSubs as $sub) {
