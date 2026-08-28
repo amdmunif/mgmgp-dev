@@ -576,7 +576,7 @@ class LmsController
             $isPassed = $score >= (float)$quiz['passing_score'] ? 1 : 0;
             
             $attemptId = Helper::uuid();
-            $insAtt = $this->conn->prepare("INSERT INTO lms_quiz_attempts (id, user_id, quiz_id, status, finished_at, total_score, is_passed) VALUES (:id, :uid, :qid, 'completed', NOW(), :score, :passed)");
+            $insAtt = $this->conn->prepare("INSERT INTO lms_quiz_attempts (id, user_id, quiz_id, finished_at, total_score, is_passed) VALUES (:id, :uid, :qid, NOW(), :score, :passed)");
             $insAtt->execute([
                 ':id' => $attemptId,
                 ':uid' => $userId,
