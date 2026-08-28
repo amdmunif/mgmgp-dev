@@ -409,5 +409,327 @@ class LmsController
             return json_encode(["message" => "Error: " . $e->getMessage()]);
         }
     }
+
+    public function getAssignmentSubmission($assignmentId, $userId) {
+        try {
+            $query = "SELECT * FROM lms_assignment_submissions WHERE assignment_id = :aid AND user_id = :uid LIMIT 1";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':aid', $assignmentId);
+            $stmt->bindParam(':uid', $userId);
+            $stmt->execute();
+            return json_encode($stmt->fetch(\PDO::FETCH_ASSOC) ?: null);
+        } catch (\PDOException $e) {
+            http_response_code(500);
+            return json_encode(["message" => "Database error: " . $e->getMessage()]);
+        }
+    }
+
+    public function submitAssignment($data, $userId, $userName) {
+        if (!$userId) {
+            http_response_code(401);
+            return json_encode(["message" => "Unauthorized"]);
+        }
+        try {
+            $assignmentId = $data['assignment_id'] ?? '';
+            $contentUrl = $data['content_url'] ?? '';
+            $textContent = $data['text_content'] ?? '';
+
+            $chk = $this->conn->prepare("SELECT id FROM lms_assignment_submissions WHERE assignment_id = :aid AND user_id = :uid LIMIT 1");
+            $chk->execute([':aid' => $assignmentId, ':uid' => $userId]);
+            $existing = $chk->fetch();
+
+            if ($existing) {
+                $q = "UPDATE lms_assignment_submissions SET content_url = :url, text_content = :txt, submitted_at = NOW() WHERE id = :id";
+                $s = $this->conn->prepare($q);
+                $s->execute([':url' => $contentUrl, ':txt' => $textContent, ':id' => $existing['id']]);
+                $id = $existing['id'];
+            } else {
+                $id = Helper::uuid();
+                $q = "INSERT INTO lms_assignment_submissions (id, assignment_id, user_id, content_url, text_content, submitted_at) VALUES (:id, :aid, :uid, :url, :txt, NOW())";
+                $s = $this->conn->prepare($q);
+                $s->execute([':id' => $id, ':aid' => $assignmentId, ':uid' => $userId, ':url' => $contentUrl, ':txt' => $textContent]);
+            }
+            $this->_autoMarkProgress($assignmentId, 'assignment', $userId);
+            return json_encode(["message" => "Berhasil dikumpulkan", "id" => $id]);
+        } catch (\PDOException $e) {
+            http_response_code(500);
+            return json_encode(["message" => "Database error: " . $e->getMessage()]);
+        }
+    }
+
+    public function getQuizAttempts($quizId, $userId) {
+        try {
+            $q = "SELECT * FROM lms_quiz_attempts WHERE quiz_id = :qid AND user_id = :uid ORDER BY started_at DESC";
+            $stmt = $this->conn->prepare($q);
+            $stmt->execute([':qid' => $quizId, ':uid' => $userId]);
+            return json_encode($stmt->fetchAll(\PDO::FETCH_ASSOC));
+        } catch (\PDOException $e) {
+            http_response_code(500);
+            return json_encode(["message" => "Database error: " . $e->getMessage()]);
+        }
+    }
+
+    public function submitQuizAttempt($data, $userId, $userName) {
+        if (!$userId) {
+            http_response_code(401);
+            return json_encode(["message" => "Unauthorized"]);
+        }
+        try {
+            $this->conn->beginTransaction();
+            $quizId = $data['quiz_id'] ?? '';
+            $answers = $data['answers'] ?? [];
+            
+            $stmt = $this->conn->prepare("SELECT * FROM lms_quizzes WHERE id = :id");
+            $stmt->execute([':id' => $quizId]);
+            $quiz = $stmt->fetch();
+            if (!$quiz) throw new \Exception("Quiz not found");
+            
+            $qStmt = $this->conn->prepare("SELECT * FROM lms_quiz_questions WHERE quiz_id = :qid");
+            $qStmt->execute([':qid' => $quizId]);
+            $questions = $qStmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            $oStmt = $this->conn->prepare("SELECT * FROM lms_quiz_options WHERE question_id IN (SELECT id FROM lms_quiz_questions WHERE quiz_id = :qid)");
+            $oStmt->execute([':qid' => $quizId]);
+            $options = $oStmt->fetchAll(\PDO::FETCH_ASSOC);
+            
+            $totalPoints = 0;
+            $earnedPoints = 0;
+            $processedAnswers = [];
+            
+            foreach ($questions as $q) {
+                $p = (float)($q['points'] ?? 1);
+                $totalPoints += $p;
+                
+                $selectedOptId = $answers[$q['id']] ?? null;
+                $isCorrect = 0;
+                $pointsEarned = 0;
+                
+                foreach ($options as $opt) {
+                    if ($opt['question_id'] === $q['id'] && $opt['is_correct']) {
+                        if ($selectedOptId === $opt['id']) {
+                            $isCorrect = 1;
+                            $pointsEarned = $p;
+                            $earnedPoints += $p;
+                        }
+                        break;
+                    }
+                }
+                
+                $processedAnswers[] = [
+                    'q_id' => $q['id'],
+                    'o_id' => $selectedOptId,
+                    'is_correct' => $isCorrect,
+                    'points_earned' => $pointsEarned
+                ];
+            }
+            
+            $score = $totalPoints > 0 ? round(($earnedPoints / $totalPoints) * 100) : 0;
+            $isPassed = $score >= (float)$quiz['passing_score'] ? 1 : 0;
+            
+            $attemptId = Helper::uuid();
+            $insAtt = $this->conn->prepare("INSERT INTO lms_quiz_attempts (id, user_id, quiz_id, status, finished_at, total_score, is_passed) VALUES (:id, :uid, :qid, 'completed', NOW(), :score, :passed)");
+            $insAtt->execute([
+                ':id' => $attemptId,
+                ':uid' => $userId,
+                ':qid' => $quizId,
+                ':score' => $score,
+                ':passed' => $isPassed
+            ]);
+            
+            $insAns = $this->conn->prepare("INSERT INTO lms_quiz_answers (id, attempt_id, question_id, selected_option_id, is_correct, points_earned) VALUES (:id, :aid, :qid, :oid, :is_correct, :points_earned)");
+            foreach ($processedAnswers as $pa) {
+                $insAns->execute([
+                    ':id' => Helper::uuid(),
+                    ':aid' => $attemptId,
+                    ':qid' => $pa['q_id'],
+                    ':oid' => $pa['o_id'],
+                    ':is_correct' => $pa['is_correct'],
+                    ':points_earned' => $pa['points_earned']
+                ]);
+            }
+            
+            $this->_autoMarkProgress($quizId, 'quiz', $userId);
+
+            $this->conn->commit();
+            return json_encode([
+                "message" => "Berhasil disimpan",
+                "score" => $score,
+                "earned_points" => $earnedPoints,
+                "total_points" => $totalPoints,
+                "is_passed" => $isPassed
+            ]);
+        } catch (\Throwable $e) {
+            $this->conn->rollBack();
+            http_response_code(500);
+            return json_encode(["message" => "Error: " . $e->getMessage()]);
+        }
+    }
+
+    public function getAllAssignmentSubmissions($assignmentId) {
+        try {
+            $query = "SELECT s.*, u.full_name as user_name 
+                      FROM lms_assignment_submissions s 
+                      LEFT JOIN users u ON s.user_id = u.id 
+                      WHERE s.assignment_id = :aid 
+                      ORDER BY s.submitted_at DESC";
+            $stmt = $this->conn->prepare($query);
+            $stmt->execute([':aid' => $assignmentId]);
+            return json_encode($stmt->fetchAll(\PDO::FETCH_ASSOC));
+        } catch (\PDOException $e) {
+            http_response_code(500);
+            return json_encode(["message" => "Database error: " . $e->getMessage()]);
+        }
+    }
+
+    public function gradeAssignment($data, $graderId) {
+        if (!$graderId) {
+            http_response_code(401);
+            return json_encode(["message" => "Unauthorized"]);
+        }
+        try {
+            $submissionId = $data['submission_id'] ?? '';
+            $score = $data['score'] ?? null;
+            $feedback = $data['feedback'] ?? '';
+            
+            $q = "UPDATE lms_assignment_submissions 
+                  SET score = :score, feedback = :feedback, graded_at = NOW(), graded_by = :graderId 
+                  WHERE id = :id";
+            $stmt = $this->conn->prepare($q);
+            $stmt->execute([
+                ':score' => $score !== '' ? (float)$score : null,
+                ':feedback' => $feedback,
+                ':graderId' => $graderId,
+                ':id' => $submissionId
+            ]);
+            
+            return json_encode(["message" => "Penilaian berhasil disimpan"]);
+        } catch (\PDOException $e) {
+            http_response_code(500);
+            return json_encode(["message" => "Database error: " . $e->getMessage()]);
+        }
+    }
+
+    public function getAllQuizAttempts($quizId) {
+        try {
+            $query = "SELECT a.*, u.full_name as user_name 
+                      FROM lms_quiz_attempts a 
+                      INNER JOIN (
+                          SELECT user_id, MAX(started_at) as max_started_at
+                          FROM lms_quiz_attempts
+                          WHERE quiz_id = :qid1
+                          GROUP BY user_id
+                      ) latest ON a.user_id = latest.user_id AND a.started_at = latest.max_started_at
+                      LEFT JOIN users u ON a.user_id = u.id 
+                      WHERE a.quiz_id = :qid2 
+                      ORDER BY a.started_at DESC";
+            $stmt = $this->conn->prepare($query);
+            $stmt->execute([':qid1' => $quizId, ':qid2' => $quizId]);
+            return json_encode($stmt->fetchAll(\PDO::FETCH_ASSOC));
+        } catch (\PDOException $e) {
+            http_response_code(500);
+            return json_encode(["message" => "Database error: " . $e->getMessage()]);
+        }
+    }
+
+    public function getProgressSummary($userId)
+    {
+        try {
+            $query = "SELECT 
+                        t.event_id,
+                        (SELECT COUNT(*) FROM lms_materials m2 INNER JOIN lms_topics t2 ON m2.topic_id = t2.id WHERE t2.event_id = t.event_id) as total_items,
+                        (SELECT COUNT(*) FROM lms_user_progress p WHERE p.event_id = t.event_id AND p.user_id = :uid) as completed_items
+                      FROM lms_topics t
+                      GROUP BY t.event_id";
+            
+            $stmt = $this->conn->prepare($query);
+            $stmt->execute([':uid' => $userId]);
+            $results = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            $summary = [];
+            foreach ($results as $row) {
+                $total = (int)$row['total_items'];
+                $completed = (int)$row['completed_items'];
+                $percent = $total > 0 ? round(($completed / $total) * 100) : 0;
+                $summary[$row['event_id']] = $percent;
+            }
+
+            return json_encode($summary);
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            return json_encode(["message" => "Error: " . $e->getMessage()]);
+        }
+    }
+
+    public function getEventProgress($eventId, $userId)
+    {
+        try {
+            $query = "SELECT item_id FROM lms_user_progress WHERE event_id = :eid AND user_id = :uid AND is_completed = 1";
+            $stmt = $this->conn->prepare($query);
+            $stmt->execute([':eid' => $eventId, ':uid' => $userId]);
+            $results = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            
+            $completedItems = array_column($results, 'item_id');
+            return json_encode($completedItems);
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            return json_encode(["message" => "Error: " . $e->getMessage()]);
+        }
+    }
+
+    public function markProgress($data, $userId)
+    {
+        try {
+            $eventId = $data['event_id'] ?? '';
+            $itemType = $data['item_type'] ?? 'material';
+            $itemId = $data['item_id'] ?? '';
+            
+            if (!$eventId || !$itemId) {
+                http_response_code(400);
+                return json_encode(["message" => "Missing parameters"]);
+            }
+
+            // check if exists
+            $check = $this->conn->prepare("SELECT id FROM lms_user_progress WHERE user_id = :uid AND item_type = :itype AND item_id = :iid");
+            $check->execute([
+                ':uid' => $userId,
+                ':itype' => $itemType,
+                ':iid' => $itemId
+            ]);
+            
+            if ($check->rowCount() == 0) {
+                $id = Helper::uuid();
+                $ins = $this->conn->prepare("INSERT INTO lms_user_progress (id, user_id, event_id, item_type, item_id, is_completed, completed_at) VALUES (:id, :uid, :eid, :itype, :iid, 1, NOW())");
+                $ins->execute([
+                    ':id' => $id,
+                    ':uid' => $userId,
+                    ':eid' => $eventId,
+                    ':itype' => $itemType,
+                    ':iid' => $itemId
+                ]);
+            }
+            return json_encode(["message" => "Progress marked"]);
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            return json_encode(["message" => "Error: " . $e->getMessage()]);
+        }
+    }
+
+    private function _autoMarkProgress($itemId, $itemType, $userId) {
+        try {
+            $q = "SELECT t.event_id FROM lms_materials m INNER JOIN lms_topics t ON m.topic_id = t.id WHERE m.id = :id";
+            $stmt = $this->conn->prepare($q);
+            $stmt->execute([':id' => $itemId]);
+            $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+            if ($row && $row['event_id']) {
+                $this->markProgress([
+                    'event_id' => $row['event_id'],
+                    'item_type' => $itemType,
+                    'item_id' => $itemId
+                ], $userId);
+            }
+        } catch (\Throwable $e) {
+            // ignore
+        }
+    }
 }
 ?>

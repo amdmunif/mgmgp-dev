@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
+import { Toaster } from 'react-hot-toast';
 import { Home } from './pages/public/Home';
 import { Layout } from './components/layout/Layout';
 import { News } from './pages/public/News';
@@ -46,6 +47,7 @@ import { AdminEventDetail } from './pages/admin/events/AdminEventDetail';
 import { AdminEventLms } from './pages/admin/events/AdminEventLms';
 import { AdminQuizBuilder } from './pages/admin/events/AdminQuizBuilder';
 import { AdminAssignmentGrader } from './pages/admin/events/AdminAssignmentGrader';
+import { AdminQuizResults } from './pages/admin/events/AdminQuizResults';
 import { AdminLmsList } from './pages/admin/lms/AdminLmsList';
 import { CreateEvent } from './pages/admin/events/CreateEvent';
 import { AdminEventAttendancePrint } from './pages/admin/events/AdminEventAttendancePrint';
@@ -109,8 +111,10 @@ function App() {
   }, []);
 
   return (
-    <Router>
-      <Routes>
+    <>
+      <Toaster position="top-center" />
+      <Router>
+        <Routes>
         <Route path="/maintenance" element={<Maintenance />} />
 
         {/* Public Routes - Wrapped in Layout */}
@@ -246,6 +250,7 @@ function App() {
           <Route path="lms" element={<AdminLmsList />} />
           <Route path="events/:id/lms" element={<AdminEventLms />} />
           <Route path="events/:id/lms/quiz/:quizId" element={<AdminQuizBuilder />} />
+          <Route path="events/:id/lms/quiz-results/:quizId" element={<AdminQuizResults />} />
           <Route path="events/:id/lms/assignment/:assignmentId" element={<AdminAssignmentGrader />} />
           <Route path="events/:id/print-attendance" element={<AdminEventAttendancePrint />} />
         
@@ -277,7 +282,8 @@ function App() {
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </Router>
+      </Router>
+    </>
   );
 }
 

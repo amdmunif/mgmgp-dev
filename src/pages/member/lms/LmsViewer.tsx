@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronDown, ChevronRight, PlayCircle, FileText, CheckCircle, ArrowLeft, Menu, X, CheckSquare, Trophy, Loader2 } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { cn } from '../../../lib/utils';
@@ -27,6 +27,8 @@ interface LmsTopic {
 export function LmsViewer() {
     const { eventId } = useParams();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const urlMaterialId = searchParams.get('materialId');
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [expandedTopics, setExpandedTopics] = useState<string[]>([]);
     const [activeMaterial, setActiveMaterial] = useState<string>('');
@@ -34,6 +36,11 @@ export function LmsViewer() {
     const [loading, setLoading] = useState(true);
     const [eventTitle, setEventTitle] = useState('Kelas LMS');
     const [quizData, setQuizData] = useState<any>(null);
+    const [assignmentData, setAssignmentData] = useState<any>(null);
+    const [submissionUrl, setSubmissionUrl] = useState('');
+    const [submissionText, setSubmissionText] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [quizAttempts, setQuizAttempts] = useState<any[]>([]);
 
     useEffect(() => {
         if (eventId) {
@@ -53,6 +60,7 @@ export function LmsViewer() {
             }
 
             const fetchedTopics = await lmsService.getTopicsByEvent(eId);
+            const progress = await lmsService.getEventProgress(eId);
             
             const fullTopics: LmsTopic[] = [];
             for (const topic of fetchedTopics) {
@@ -67,7 +75,7 @@ export function LmsViewer() {
                         url: m.url,
                         content: m.content,
                         duration: m.duration ? `${m.duration} Menit` : '',
-                        is_completed: false // default for now, until backend progress tracking is built
+                        is_completed: progress.includes(m.id)
                     }))
                 });
             }
@@ -75,9 +83,24 @@ export function LmsViewer() {
             setTopics(fullTopics);
             
             if (fullTopics.length > 0) {
-                setExpandedTopics([fullTopics[0].id]);
-                if (fullTopics[0].items.length > 0) {
-                    setActiveMaterial(fullTopics[0].items[0].id);
+                // Determine which topic contains the urlMaterialId
+                let activeTopicId = fullTopics[0].id;
+                let initialMaterialId = fullTopics[0].items.length > 0 ? fullTopics[0].items[0].id : '';
+
+                if (urlMaterialId) {
+                    for (const t of fullTopics) {
+                        const found = t.items.find(i => i.id === urlMaterialId);
+                        if (found) {
+                            activeTopicId = t.id;
+                            initialMaterialId = urlMaterialId;
+                            break;
+                        }
+                    }
+                }
+
+                setExpandedTopics([activeTopicId]);
+                if (initialMaterialId) {
+                    setActiveMaterial(initialMaterialId);
                 }
             }
         } catch (error) {
@@ -119,6 +142,9 @@ export function LmsViewer() {
                 try {
                     const data = await lmsService.getQuizByMaterialId(activeItem.id);
                     setQuizData(data);
+                    
+                    const attempts = await lmsService.getQuizAttempts(activeItem.id);
+                    setQuizAttempts(attempts || []);
                 } catch (error) {
                     console.error('Failed to load quiz data', error);
                 }
@@ -126,17 +152,62 @@ export function LmsViewer() {
             fetchQuizData();
         } else {
             setQuizData(null);
+            setQuizAttempts([]);
+        }
+
+        if (activeItem?.type === 'assignment' && activeItem.id) {
+            const fetchAssignmentData = async () => {
+                try {
+                    const data = await lmsService.getAssignmentSubmission(activeItem.id);
+                    setAssignmentData(data);
+                    if (data) {
+                        setSubmissionUrl(data.content_url || '');
+                        setSubmissionText(data.text_content || '');
+                    } else {
+                        setSubmissionUrl('');
+                        setSubmissionText('');
+                    }
+                } catch (error) {
+                    console.error('Failed to load assignment submission', error);
+                }
+            };
+            fetchAssignmentData();
+        } else {
+            setAssignmentData(null);
+            setSubmissionUrl('');
+            setSubmissionText('');
         }
     }, [activeItem?.id, activeItem?.type]);
 
-    const handleMarkComplete = () => {
-        setTopics(prevTopics => prevTopics.map(topic => ({
-            ...topic,
-            items: topic.items.map(item => 
-                item.id === activeMaterial ? { ...item, is_completed: true } : item
-            )
-        })));
-        toast.success("Berhasil menandai materi sebagai selesai!");
+    const handleAssignmentSubmit = async () => {
+        if (!activeItem?.id) return;
+        try {
+            setIsSubmitting(true);
+            await lmsService.submitAssignment(activeItem.id, submissionUrl, submissionText);
+            toast.success("Berhasil mengumpulkan jawaban!");
+            const data = await lmsService.getAssignmentSubmission(activeItem.id);
+            setAssignmentData(data);
+        } catch (e) {
+            toast.error("Gagal mengumpulkan tugas.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleMarkComplete = async () => {
+        if (!activeItem || !eventId) return;
+        try {
+            await lmsService.markProgress(eventId, activeItem.type, activeItem.id);
+            setTopics(prevTopics => prevTopics.map(topic => ({
+                ...topic,
+                items: topic.items.map(item => 
+                    item.id === activeMaterial ? { ...item, is_completed: true } : item
+                )
+            })));
+            toast.success("Berhasil menandai materi sebagai selesai!");
+        } catch (error) {
+            toast.error("Gagal menyimpan progres");
+        }
     };
 
     const getNavigation = () => {
@@ -227,20 +298,34 @@ export function LmsViewer() {
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-100">
-                                            <tr>
-                                                <td className="py-4 px-4 text-gray-900 whitespace-nowrap">Belum Dikerjakan</td>
-                                                <td className="py-4 px-4 text-gray-600">-</td>
-                                                <td className="py-4 px-4 text-gray-600">-</td>
-                                                <td className="py-4 px-4 text-gray-600">-</td>
-                                                <td className="py-4 px-4 text-gray-600">-</td>
-                                                <td className="py-4 px-4 text-gray-900 font-medium whitespace-nowrap">-</td>
-                                                <td className="py-4 px-4">
-                                                    <span className="px-2.5 py-1 bg-gray-100 text-gray-700 rounded-md text-xs font-semibold">Belum Mulai</span>
-                                                </td>
-                                                <td className="py-4 px-4">
-                                                    <Button variant="outline" size="sm" className="h-8" disabled>Rincian</Button>
-                                                </td>
-                                            </tr>
+                                            {quizAttempts.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan={8} className="py-8 px-4 text-center text-gray-500 whitespace-nowrap">Belum ada percobaan kuis.</td>
+                                                </tr>
+                                            ) : (
+                                                quizAttempts.map((attempt) => (
+                                                    <tr key={attempt.id}>
+                                                        <td className="py-4 px-4 text-gray-900 whitespace-nowrap">
+                                                            {new Date(attempt.started_at).toLocaleString('id-ID')}
+                                                        </td>
+                                                        <td className="py-4 px-4 text-gray-600">{quizData?.questions?.length || 0}</td>
+                                                        <td className="py-4 px-4 text-gray-600">{quizData?.questions?.reduce((acc: number, q: any) => acc + (q.points || 1), 0) || 0}</td>
+                                                        <td className="py-4 px-4 text-gray-600">-</td>
+                                                        <td className="py-4 px-4 text-gray-600">-</td>
+                                                        <td className="py-4 px-4 text-gray-900 font-medium whitespace-nowrap">{attempt.total_score}</td>
+                                                        <td className="py-4 px-4">
+                                                            {attempt.is_passed ? (
+                                                                <span className="px-2.5 py-1 bg-green-100 text-green-700 rounded-md text-xs font-semibold">Lulus</span>
+                                                            ) : (
+                                                                <span className="px-2.5 py-1 bg-red-100 text-red-700 rounded-md text-xs font-semibold">Tidak Lulus</span>
+                                                            )}
+                                                        </td>
+                                                        <td className="py-4 px-4">
+                                                            <Button variant="outline" size="sm" className="h-8" disabled>Rincian</Button>
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            )}
                                         </tbody>
                                     </table>
                                 </div>
@@ -278,20 +363,74 @@ export function LmsViewer() {
                             </div>
                             
                             <div className="p-8 bg-white border-b border-gray-100">
-                                <div className="bg-gray-50 rounded-xl border border-gray-200 p-6 text-center text-gray-500">
-                                    Belum ada tugas yang dikumpulkan.
-                                </div>
+                                {assignmentData ? (
+                                    <div className="bg-green-50 rounded-xl border border-green-200 p-6 text-green-800">
+                                        <div className="flex items-center gap-2 mb-4">
+                                            <CheckCircle className="w-5 h-5 text-green-600" />
+                                            <span className="font-semibold text-lg">Tugas telah dikumpulkan</span>
+                                        </div>
+                                        <div className="text-sm space-y-2">
+                                            <p><span className="font-medium">Waktu Pengumpulan:</span> {new Date(assignmentData.submitted_at).toLocaleString('id-ID')}</p>
+                                            {assignmentData.score !== null && (
+                                                <p><span className="font-medium">Nilai:</span> <span className="text-lg font-bold">{assignmentData.score}</span> / 100</p>
+                                            )}
+                                            {assignmentData.feedback && (
+                                                <div className="mt-4 p-4 bg-white rounded-lg border border-green-100">
+                                                    <span className="font-medium text-green-900 block mb-1">Catatan Pengajar:</span>
+                                                    <p className="text-gray-700">{assignmentData.feedback}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="bg-gray-50 rounded-xl border border-gray-200 p-6 text-center text-gray-500">
+                                        Belum ada tugas yang dikumpulkan.
+                                    </div>
+                                )}
                             </div>
 
                             <div className="p-8 bg-white">
-                                <h3 className="font-bold text-gray-900 mb-4">Keterangan Tugas / Instruksi</h3>
+                                <h3 className="font-bold text-gray-900 mb-4">Instruksi Tugas</h3>
                                 <div 
-                                    className="prose prose-sm prose-blue max-w-none text-gray-700"
+                                    className="prose prose-sm prose-blue max-w-none text-gray-700 mb-8"
                                     dangerouslySetInnerHTML={{ __html: activeItem.content || '<p>Tidak ada instruksi khusus untuk penugasan ini.</p>' }}
                                 />
                                 
+                                <div className="space-y-4 max-w-2xl">
+                                    <h3 className="font-bold text-gray-900 border-b pb-2">Lembar Jawaban</h3>
+                                    
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Tautan Lampiran (Google Drive, Docs, dll) (Opsional)</label>
+                                        <input
+                                            type="url"
+                                            value={submissionUrl}
+                                            onChange={(e) => setSubmissionUrl(e.target.value)}
+                                            placeholder="https://..."
+                                            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Catatan / Jawaban Teks</label>
+                                        <textarea
+                                            value={submissionText}
+                                            onChange={(e) => setSubmissionText(e.target.value)}
+                                            rows={5}
+                                            placeholder="Ketik jawaban Anda di sini..."
+                                            className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                                        />
+                                    </div>
+                                </div>
+                                
                                 <div className="mt-8 flex gap-3">
-                                    <Button className="bg-blue-900 hover:bg-blue-800 text-white rounded-md">Unggah Jawaban (Segera Hadir)</Button>
+                                    <Button 
+                                        onClick={handleAssignmentSubmit}
+                                        disabled={isSubmitting || (!submissionUrl && !submissionText)}
+                                        className="bg-blue-900 hover:bg-blue-800 text-white rounded-md"
+                                    >
+                                        {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                                        Kirim Jawaban Tugas
+                                    </Button>
                                 </div>
                             </div>
                         </div>

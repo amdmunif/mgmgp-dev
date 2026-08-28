@@ -3,6 +3,7 @@ import { MonitorPlay, ChevronRight, Loader2 } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { contentManagementService } from '../../../services/contentManagementService';
+import { lmsService } from '../../../services/lmsService';
 import { getFileUrl } from '../../../lib/api';
 import type { Event } from '../../../types';
 
@@ -10,6 +11,7 @@ export function LmsList() {
     const navigate = useNavigate();
     const { setPageHeader } = useOutletContext<any>();
     const [events, setEvents] = useState<Event[]>([]);
+    const [progressData, setProgressData] = useState<Record<string, number>>({});
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -28,6 +30,14 @@ export function LmsList() {
             // Mengambil semua data acara, lalu memfilter yang memiliki fitur LMS
             const data = await contentManagementService.getAllEvents();
             setEvents(data.filter((e: any) => Number(e.has_lms) === 1 || e.has_lms === true));
+            
+            // Ambil progress riil
+            try {
+                const summary = await lmsService.getProgressSummary();
+                setProgressData(summary);
+            } catch (err) {
+                console.error('Failed to load progress summary', err);
+            }
         } catch (error) {
             console.error('Failed to load events:', error);
         } finally {
@@ -48,8 +58,7 @@ export function LmsList() {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {events.map(event => {
-                        // Dummy progress logic since we don't have the user's progress from API yet
-                        const percent: number = 0; 
+                        const percent: number = progressData[event.id] || 0; 
                         
                         return (
                             <div key={event.id} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex flex-col group hover:shadow-md transition-shadow">
@@ -79,7 +88,7 @@ export function LmsList() {
                                                 style={{ width: `${percent}%` }}
                                             />
                                         </div>
-                                        <p className="text-[10px] text-gray-400 text-right">0 materi terselesaikan</p>
+                                        <p className="text-[10px] text-gray-400 text-right">Lanjutkan progres untuk mendapatkan sertifikat</p>
                                     </div>
 
                                     <Button 

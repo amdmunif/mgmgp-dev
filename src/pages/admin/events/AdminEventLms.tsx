@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
-import { ArrowLeft, Plus, Video, FileText, CheckSquare, Pencil, Trash2, GripVertical, FileQuestion, X } from 'lucide-react';
+import { ArrowLeft, Plus, Video, FileText, CheckSquare, Pencil, Trash2, GripVertical, FileQuestion, X, Eye } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { RichTextEditor } from '../../../components/ui/RichTextEditor';
 import { lmsService } from '../../../services/lmsService';
@@ -256,14 +256,32 @@ export function AdminEventLms() {
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-2">
-                                                {material.type === 'quiz' && (
+                                                {material.type === 'assignment' && (
                                                     <Button 
-                                                        onClick={() => navigate(`/admin/events/${id}/lms/quiz/${material.id}?topic_id=${topic.id}`)}
+                                                        onClick={() => navigate(`/admin/events/${id}/lms/assignment/${material.id}`)}
                                                         size="sm" 
-                                                        className="h-7 text-xs bg-purple-600 hover:bg-purple-700 text-white"
+                                                        className="h-7 text-xs bg-green-600 hover:bg-green-700 text-white"
                                                     >
-                                                        <FileQuestion className="w-3 h-3 mr-1" /> Kelola Soal
+                                                        <CheckSquare className="w-3 h-3 mr-1" /> Cek Penugasan
                                                     </Button>
+                                                )}
+                                                {material.type === 'quiz' && (
+                                                    <>
+                                                        <Button 
+                                                            onClick={() => navigate(`/admin/events/${id}/lms/quiz/${material.id}?topic_id=${topic.id}`)}
+                                                            size="sm" 
+                                                            className="h-7 text-xs bg-purple-600 hover:bg-purple-700 text-white"
+                                                        >
+                                                            <FileQuestion className="w-3 h-3 mr-1" /> Kelola Soal
+                                                        </Button>
+                                                        <Button 
+                                                            onClick={() => navigate(`/admin/events/${id}/lms/quiz-results/${material.id}`)}
+                                                            size="sm" 
+                                                            className="h-7 text-xs bg-indigo-600 hover:bg-indigo-700 text-white"
+                                                        >
+                                                            <Eye className="w-3 h-3 mr-1" /> Hasil
+                                                        </Button>
+                                                    </>
                                                 )}
                                                 <Button 
                                                     onClick={() => handleOpenMaterialModal(topic.id, material)} 

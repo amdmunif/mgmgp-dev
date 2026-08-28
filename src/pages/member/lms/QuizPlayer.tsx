@@ -12,6 +12,8 @@ export function QuizPlayer() {
 
     const [started, setStarted] = useState(false);
     const [submitted, setSubmitted] = useState(false);
+    const [submittingQuiz, setSubmittingQuiz] = useState(false);
+    const [quizResult, setQuizResult] = useState<any>(null);
     const [currentQuestion, setCurrentQuestion] = useState(0);
     const [answers, setAnswers] = useState<Record<string, string>>({});
     const [timeLeft, setTimeLeft] = useState(0);
@@ -85,30 +87,26 @@ export function QuizPlayer() {
         executeSubmit();
     };
 
-    const executeSubmit = () => {
-        setSubmitted(true);
-        setStarted(false);
-        toast.success("Kuis berhasil diselesaikan!");
+    const executeSubmit = async () => {
+        try {
+            setSubmittingQuiz(true);
+            const res = await lmsService.submitQuizAttempt(quizId!, answers);
+            setQuizResult(res.data || res); // Depending on axios interceptor
+            setSubmitted(true);
+            setStarted(false);
+            toast.success("Kuis berhasil diselesaikan!");
+        } catch (error) {
+            toast.error("Gagal mengirim hasil kuis.");
+        } finally {
+            setSubmittingQuiz(false);
+        }
     };
 
-    if (loading) return <div className="min-h-screen bg-gray-50 flex items-center justify-center"><Loader2 className="w-10 h-10 animate-spin text-blue-500" /></div>;
+    if (loading || submittingQuiz) return <div className="min-h-screen bg-gray-50 flex items-center justify-center"><Loader2 className="w-10 h-10 animate-spin text-blue-500" /></div>;
 
-    if (submitted) {
-        let correctCount = 0;
-        let totalPoints = 0;
-        let earnedPoints = 0;
-        
-        questions.forEach((q: any) => {
-            const p = q.points || 1;
-            totalPoints += p;
-            const correctOption = q.options?.find((o: any) => o.is_correct);
-            if (correctOption && answers[q.id] === correctOption.id) {
-                correctCount++;
-                earnedPoints += p;
-            }
-        });
-
-        const score = totalPoints > 0 ? Math.round((earnedPoints / totalPoints) * 100) : 0;
+    if (submitted && quizResult) {
+        const score = quizResult.score || 0;
+        const isPassed = quizResult.is_passed;
         
         return (
             <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
@@ -119,13 +117,15 @@ export function QuizPlayer() {
                     <h1 className="text-2xl font-bold text-gray-900 mb-2">Ujian Selesai!</h1>
                     <p className="text-gray-500 mb-6">Terima kasih telah mengerjakan {quizData?.title || 'ujian ini'}.</p>
                     
-                    <div className="bg-gray-50 p-6 rounded-xl border border-gray-100 mb-8">
-                        <div className="text-sm text-gray-500 font-medium mb-1">Nilai Anda</div>
-                        <div className="text-5xl font-black text-gray-900">{score}</div>
-                        <div className="text-sm text-gray-500 mt-2">Menjawab benar {correctCount} dari {questions.length} soal</div>
+                    <div className={`p-6 rounded-xl border mb-8 ${isPassed ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'}`}>
+                        <div className="text-sm font-medium mb-1">Nilai Anda</div>
+                        <div className="text-5xl font-black mb-2">{score}</div>
+                        <div className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${isPassed ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}`}>
+                            {isPassed ? 'LULUS' : 'TIDAK LULUS'}
+                        </div>
                     </div>
 
-                    <Button onClick={() => navigate(`/member/lms/classroom/${eventId}`)} className="w-full h-12 text-lg">
+                    <Button onClick={() => navigate(`/member/lms/classroom/${eventId}?materialId=${quizId}`)} className="w-full h-12 text-lg">
                         Kembali ke Ruang Kelas
                     </Button>
                 </div>

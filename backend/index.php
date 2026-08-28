@@ -172,11 +172,62 @@ if ($resource === 'news') {
         }
     } elseif ($action === 'quizzes') {
         if ($_SERVER['REQUEST_METHOD'] === 'GET' && $subAction) {
-            // GET /lms/quizzes/:materialId
-            echo $controller->getQuizByMaterialId($subAction);
+            if (strpos($subAction, 'all-attempts/') === 0) {
+                // GET /lms/quizzes/all-attempts/:quizId
+                $quizId = str_replace('all-attempts/', '', $subAction);
+                echo $controller->getAllQuizAttempts($quizId);
+            } elseif (strpos($subAction, 'my-attempts/') === 0) {
+                // GET /lms/quizzes/my-attempts/:quizId
+                $quizId = str_replace('my-attempts/', '', $subAction);
+                echo $controller->getQuizAttempts($quizId, $userId);
+            } else {
+                // GET /lms/quizzes/:materialId
+                echo $controller->getQuizByMaterialId($subAction);
+            }
         } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'PUT') {
-            // POST /lms/quizzes
-            echo $controller->saveQuiz($input, $userId, $userName);
+            if ($subAction === 'submit') {
+                // POST /lms/quizzes/submit
+                echo $controller->submitQuizAttempt($input, $userId, $userName);
+            } else {
+                // POST /lms/quizzes
+                echo $controller->saveQuiz($input, $userId, $userName);
+            }
+        }
+    } elseif ($action === 'assignments') {
+        if ($_SERVER['REQUEST_METHOD'] === 'GET' && $subAction) {
+            if (strpos($subAction, 'all-submissions/') === 0) {
+                // GET /lms/assignments/all-submissions/:assignmentId
+                $assignmentId = str_replace('all-submissions/', '', $subAction);
+                echo $controller->getAllAssignmentSubmissions($assignmentId);
+            } elseif (strpos($subAction, 'my-submission/') === 0) {
+                // GET /lms/assignments/my-submission/:assignmentId
+                $assignmentId = str_replace('my-submission/', '', $subAction);
+                echo $controller->getAssignmentSubmission($assignmentId, $userId);
+            }
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if ($subAction === 'submit') {
+                // POST /lms/assignments/submit
+                echo $controller->submitAssignment($input, $userId, $userName);
+            } elseif ($subAction === 'grade') {
+                // POST /lms/assignments/grade
+                echo $controller->gradeAssignment($input, $userId);
+            }
+        }
+    } elseif ($action === 'progress') {
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            if ($subAction === 'summary') {
+                // GET /lms/progress/summary
+                echo $controller->getProgressSummary($userId);
+            } elseif (strpos($subAction, 'event/') === 0) {
+                // GET /lms/progress/event/:eventId
+                $eventId = str_replace('event/', '', $subAction);
+                echo $controller->getEventProgress($eventId, $userId);
+            }
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if ($subAction === 'mark') {
+                // POST /lms/progress/mark
+                echo $controller->markProgress($input, $userId);
+            }
         }
     }
 } elseif ($resource === 'events') {
