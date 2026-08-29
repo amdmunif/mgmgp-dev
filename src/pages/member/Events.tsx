@@ -138,81 +138,100 @@ export function MemberEvents() {
                                 const canRegisterPremium = !isEventPremium || isPremium;
 
                                 return (
-                                    <div key={event.id} className={cn(
-                                        "bg-white p-6 rounded-xl shadow-sm border transition-all flex flex-col md:flex-row gap-6 relative overflow-hidden",
-                                        isEventPremium ? "border-amber-200" : "border-gray-100 hover:border-primary-100"
-                                    )}>
-                                        {isEventPremium && (
-                                            <div className="absolute top-0 right-0 bg-amber-100 text-amber-700 text-xs font-bold px-3 py-1 rounded-bl-xl flex items-center gap-1">
-                                                <Crown className="w-3 h-3" /> PREMIUM ONLY
+                                <div key={event.id} className={cn(
+                                    "bg-white rounded-2xl border transition-all flex flex-col relative overflow-hidden group/card",
+                                    isEventPremium ? "border-amber-200 hover:border-amber-300 hover:shadow-md" : "border-gray-100 hover:border-blue-200 hover:shadow-md"
+                                )}>
+                                    {/* Corner Status Badges */}
+                                    <div className="absolute top-0 right-0 z-10 flex">
+                                        {event.is_premium === 1 && (
+                                            <div className="bg-amber-400 text-amber-900 text-[10px] font-bold px-3 py-1.5 flex items-center gap-1 shadow-sm">
+                                                <Crown className="w-3 h-3" /> PRO
                                             </div>
                                         )}
-
-                                        <div className="flex-1">
-                                            <Link to={`/events/${event.id}`} className="block group">
-                                                <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-primary-600 transition-colors">
-                                                    {event.title}
-                                                </h3>
-                                            </Link>
-
-                                            <div className="flex flex-wrap gap-4 text-sm text-gray-500 mb-4">
-                                                <div className="flex items-center gap-1.5">
-                                                    <Calendar className="w-4 h-4" />
-                                                    <span>{format(new Date(event.date), 'EEEE, dd MMMM yyyy (HH:mm)', { locale: id })} WIB</span>
-                                                </div>
-                                                <div className="flex items-center gap-1.5">
-                                                    <MapPin className="w-4 h-4" />
-                                                    <span>{event.location}</span>
-                                                </div>
+                                        {event.participation_status === 'registered' || event.participation_status === 'attended' ? (
+                                            <div className="bg-green-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-bl-xl shadow-sm tracking-wider">
+                                                TERDAFTAR
                                             </div>
+                                        ) : (!isRegistrationOpen || isDeadlinePassed || isQuotaFull) ? (
+                                            <div className="bg-red-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-bl-xl shadow-sm tracking-wider">
+                                                DITUTUP
+                                            </div>
+                                        ) : (
+                                            <div className="bg-blue-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-bl-xl shadow-sm tracking-wider">
+                                                BUKA
+                                            </div>
+                                        )}
+                                    </div>
 
-                                            <p className="text-gray-600 line-clamp-2 mb-4">
-                                                {stripHtml(event.description)}
-                                            </p>
+                                    {/* Main Content Area */}
+                                    <div className="p-6 flex-1">
+                                        <Link to={`/member/events/${event.id}`} className="block mb-4 pr-16">
+                                            <h3 className="text-xl font-bold text-gray-900 group-hover/card:text-blue-600 transition-colors line-clamp-2 leading-snug">
+                                                {event.title}
+                                            </h3>
+                                        </Link>
+                                        
+                                        <div className="flex flex-col gap-2.5 text-sm text-gray-500 mb-5">
+                                            <div className="flex items-start gap-2.5">
+                                                <Calendar className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
+                                                <span className="leading-tight">{format(new Date(event.date), 'EEEE, dd MMMM yyyy (HH:mm)', { locale: id })} WIB</span>
+                                            </div>
+                                            <div className="flex items-start gap-2.5">
+                                                <MapPin className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
+                                                <span className="line-clamp-2 leading-tight">{event.location}</span>
+                                            </div>
                                         </div>
-                                        <div className="flex flex-col justify-center items-end min-w-[150px] gap-2">
-                                            <Link to={`/member/events/${event.id}`} className="w-full md:w-auto">
-                                                <Button variant="outline" className="w-full">
-                                                    Lihat Detail
+
+                                        <p className="text-gray-600 line-clamp-2 text-sm leading-relaxed">
+                                            {stripHtml(event.description)}
+                                        </p>
+                                    </div>
+
+                                    {/* Footer / Actions Area */}
+                                    <div className="px-6 py-4 bg-gray-50/50 border-t border-gray-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                        <div className="flex items-center">
+                                            {event.quota && (
+                                                <span className="text-xs font-medium text-gray-500 bg-white px-2.5 py-1 rounded-md border border-gray-100 shadow-sm">
+                                                    Sisa Kuota: <strong className="text-blue-600">{Number(event.quota) - Number(event.participants_count || 0)}</strong>
+                                                </span>
+                                            )}
+                                        </div>
+                                        
+                                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                                            <Link to={`/member/events/${event.id}`} className="flex-1 sm:flex-none">
+                                                <Button variant="ghost" size="sm" className="w-full sm:w-auto text-blue-600 hover:text-blue-800 hover:bg-blue-50">
+                                                    Detail
                                                 </Button>
                                             </Link>
-
-                                            {event.participation_status === 'registered' ? (
-                                                <div className="flex items-center gap-2 text-green-600 font-medium bg-green-50 px-4 py-2 rounded-lg w-full justify-center">
-                                                    <CheckCircle className="w-5 h-5" />
-                                                    Terdaftar
-                                                </div>
-                                            ) : event.participation_status === 'attended' ? (
-                                                <div className="flex items-center gap-2 text-blue-600 font-medium bg-blue-50 px-4 py-2 rounded-lg w-full justify-center">
-                                                    <CheckCircle className="w-5 h-5" />
-                                                    Hadir
-                                                </div>
-                                            ) : (
-                                                !isRegistrationOpen || isDeadlinePassed ? (
-                                                    <Button disabled className="w-full md:w-auto bg-gray-200 text-gray-500 border-gray-200">
-                                                        Pendaftaran Ditutup
-                                                    </Button>
-                                                ) : canRegisterPremium ? (
-                                                    <Button
-                                                        onClick={() => handleRegister(event.id)}
-                                                        disabled={processingId === event.id}
-                                                        className="w-full md:w-auto"
-                                                    >
-                                                        {processingId === event.id ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                                                        Daftar Sekarang
-                                                    </Button>
-                                                ) : (
-                                                    <Button
-                                                        onClick={() => navigate('/member/upgrade')}
-                                                        className="bg-amber-500 hover:bg-amber-600 text-white w-full md:w-auto"
-                                                    >
-                                                        <Lock className="w-4 h-4 mr-2" />
-                                                        Upgrade Premium
-                                                    </Button>
-                                                )
+                                            
+                                            {!(event.participation_status === 'registered' || event.participation_status === 'attended') && (
+                                                isRegistrationOpen && !isDeadlinePassed && !isQuotaFull ? (
+                                                    canRegisterPremium ? (
+                                                        <Button
+                                                            size="sm"
+                                                            onClick={() => handleRegister(event.id)}
+                                                            disabled={processingId === event.id}
+                                                            className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white shadow-sm px-6"
+                                                        >
+                                                            {processingId === event.id ? <Loader2 className="w-3 h-3 animate-spin mr-1.5" /> : null}
+                                                            Daftar
+                                                        </Button>
+                                                    ) : (
+                                                        <Button
+                                                            size="sm"
+                                                            onClick={() => navigate('/member/upgrade')}
+                                                            className="flex-1 sm:flex-none bg-amber-500 hover:bg-amber-600 text-white shadow-sm px-5"
+                                                        >
+                                                            <Lock className="w-3 h-3 mr-1.5" />
+                                                            Premium
+                                                        </Button>
+                                                    )
+                                                ) : null
                                             )}
                                         </div>
                                     </div>
+                                </div>
                                 )
                             })
                         )

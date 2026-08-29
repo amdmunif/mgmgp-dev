@@ -305,30 +305,75 @@ export function LmsViewer() {
 
                 {/* Content Area */}
                 <div className="flex-1 bg-gray-50 overflow-y-auto p-4 md:p-8">
-                    {!activeMaterial ? (
                         <div className="w-full max-w-4xl mx-auto flex flex-col h-full">
-                            <div className="bg-white p-8 md:p-12 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center">
-                                <div className="w-24 h-24 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-6">
-                                    <BookOpen className="w-12 h-12" />
+                            <div className="bg-white p-8 md:p-10 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
+                                <div className="flex items-center gap-4 mb-8 pb-6 border-b border-gray-100">
+                                    <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center shrink-0">
+                                        <BookOpen className="w-8 h-8" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Selamat Datang di Kelas LMS!</h2>
+                                        <p className="text-gray-500">Pilih materi pembelajaran di bawah ini untuk memulai.</p>
+                                    </div>
                                 </div>
-                                <h2 className="text-3xl font-bold text-gray-900 mb-4">Selamat Datang di Kelas LMS!</h2>
-                                <p className="text-gray-600 mb-8 max-w-2xl text-lg">
-                                    Silakan pilih topik dan materi di menu samping untuk mulai belajar. 
-                                    Anda dapat melacak progres dan menyelesaikan tugas untuk mendapatkan sertifikat.
-                                </p>
-                                <Button 
-                                    size="lg" 
-                                    className="bg-blue-600 hover:bg-blue-700 font-bold"
-                                    onClick={() => {
-                                        if (topics.length > 0 && topics[0].items.length > 0) {
-                                            const firstId = topics[0].items[0].id;
-                                            setActiveMaterial(firstId);
-                                            setExpandedTopics([topics[0].id]);
-                                        }
-                                    }}
-                                >
-                                    Mulai Belajar Sekarang <PlayCircle className="w-5 h-5 ml-2" />
-                                </Button>
+                                
+                                <div className="space-y-6">
+                                    {topics.map((topic, idx) => (
+                                        <div key={topic.id} className="bg-gray-50/50 rounded-xl border border-gray-100 overflow-hidden">
+                                            <div className="bg-gray-100/80 px-5 py-3 border-b border-gray-200">
+                                                <h3 className="font-bold text-gray-800">Bagian {idx + 1}: {topic.title}</h3>
+                                            </div>
+                                            <div className="divide-y divide-gray-100">
+                                                {topic.items.map((item, itemIdx) => (
+                                                    <button
+                                                        key={item.id}
+                                                        onClick={() => {
+                                                            setActiveMaterial(item.id);
+                                                            if (!expandedTopics.includes(topic.id)) {
+                                                                setExpandedTopics(prev => [...prev, topic.id]);
+                                                            }
+                                                        }}
+                                                        className="w-full text-left px-5 py-4 flex items-center justify-between hover:bg-white transition-colors group"
+                                                    >
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center shadow-sm group-hover:border-blue-300 group-hover:text-blue-600 transition-colors">
+                                                                {item.is_completed ? (
+                                                                    <CheckCircle className="w-4 h-4 text-green-500" />
+                                                                ) : (
+                                                                    <span className="text-xs font-semibold text-gray-400 group-hover:text-blue-600">{itemIdx + 1}</span>
+                                                                )}
+                                                            </div>
+                                                            <div>
+                                                                <p className="font-medium text-gray-700 group-hover:text-blue-700">{item.title}</p>
+                                                                <div className="flex items-center gap-2 mt-1 text-xs text-gray-400">
+                                                                    {item.type === 'video' && <PlayCircle className="w-3 h-3" />}
+                                                                    {item.type === 'pdf' && <FileText className="w-3 h-3" />}
+                                                                    {item.type === 'quiz' && <CheckSquare className="w-3 h-3" />}
+                                                                    <span className="capitalize">{item.type}</span>
+                                                                    {item.duration && (
+                                                                        <>
+                                                                            <span className="w-1 h-1 rounded-full bg-gray-300" />
+                                                                            <span>{item.duration}</span>
+                                                                        </>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-blue-500 transition-colors" />
+                                                    </button>
+                                                ))}
+                                                {topic.items.length === 0 && (
+                                                    <div className="px-5 py-4 text-sm text-gray-500 text-center">Belum ada materi di bagian ini.</div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {topics.length === 0 && (
+                                        <div className="text-center py-12 text-gray-500">
+                                            Belum ada materi yang tersedia.
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     ) : activeItem?.type === 'quiz' ? (
@@ -554,9 +599,9 @@ export function LmsViewer() {
                                     </a>
                                 )}
                             </div>
-                            <div className="w-full bg-black md:bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative flex flex-col mb-6">
+                            <div className="w-full bg-black md:bg-white rounded-2xl shadow-sm border border-gray-100 relative flex flex-col mb-6">
                                 {activeItem?.type === 'video' ? (
-                                    <div className="w-full relative bg-black flex items-center justify-center" style={{ aspectRatio: '16/9', maxHeight: '75vh' }}>
+                                    <div className="w-full relative bg-black flex items-center justify-center rounded-2xl overflow-hidden" style={{ aspectRatio: '16/9' }}>
                                         {activeItem.url?.includes('youtube.com') || activeItem.url?.includes('youtu.be') ? (
                                             <iframe
                                                 className="absolute inset-0 w-full h-full border-0"

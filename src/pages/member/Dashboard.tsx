@@ -71,15 +71,14 @@ export function MemberDashboard() {
                     }
                 }
 
-                // Load Events
-                import('../../services/eventService').then(async m => {
-                    const events = await m.eventService.getUpcomingEvents();
-                    setUpcomingEvents(events?.slice(0, 3) || []); // Take top 3
-                });
-
-                // Load Stats
-                const dashboardStats = await statsService.getOverview();
+                // Run independent queries concurrently to speed up loading
+                const [dashboardStats, events] = await Promise.all([
+                    statsService.getOverview(),
+                    import('../../services/eventService').then(m => m.eventService.getUpcomingEvents())
+                ]);
+                
                 setStats(dashboardStats);
+                setUpcomingEvents(events?.slice(0, 3) || []);
 
             } catch (e) {
                 console.error("Failed to load dashboard", e);
@@ -220,7 +219,11 @@ export function MemberDashboard() {
                                                         const isDeadlinePassed = event.registration_deadline ? new Date(parsedDeadline!) < new Date() : false;
                                                         const isQuotaFull = event.quota ? Number(event.participants_count || 0) >= Number(event.quota) : false;
                                                         const isOpen = Number(event.is_registration_open) === 1 && !isDeadlinePassed && !isQuotaFull;
-                                                        return !isOpen && (
+                                                        return isOpen ? (
+                                                            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-700 border border-green-200">
+                                                                BUKA
+                                                            </span>
+                                                        ) : (
                                                             <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700 border border-red-200">
                                                                 DITUTUP
                                                             </span>

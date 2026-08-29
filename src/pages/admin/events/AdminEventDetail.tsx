@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { contentManagementService } from '../../../services/contentManagementService';
-import { ArrowLeft, Calendar, MapPin, Users, CheckCircle, XCircle, Trash2, Printer, QrCode, X, MonitorPlay, Trophy } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, CheckCircle, XCircle, Trash2, Printer, QrCode, X, MonitorPlay, Trophy, UserCheck, UserMinus } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { api, getFileUrl } from '../../../lib/api';
 import { lmsService } from '../../../services/lmsService';
@@ -444,76 +444,91 @@ export function AdminEventDetail() {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                    <button
-                        onClick={() => navigate('/admin/events')}
-                        className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                    >
-                        <ArrowLeft className="w-6 h-6" />
-                    </button>
-                    <div>
-                        <h1 className="text-2xl font-bold">{event.title}</h1>
-                        <div className="flex items-center gap-4 text-gray-500 mt-1">
-                            <span className="flex items-center gap-1">
-                                <Calendar className="w-4 h-4" />
-                                {formatDate(event.date)}
-                            </span>
-                            <span className="flex items-center gap-1">
-                                <MapPin className="w-4 h-4" />
-                                {event.location}
-                            </span>
+            <div className="flex flex-col gap-6">
+                {/* Header Row */}
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                    <div className="flex items-start gap-4">
+                        <button
+                            onClick={() => navigate('/admin/events')}
+                            className="p-2 hover:bg-gray-100 rounded-full transition-colors mt-1 shrink-0"
+                        >
+                            <ArrowLeft className="w-6 h-6" />
+                        </button>
+                        <div>
+                            <h1 className="text-2xl font-bold text-gray-900">{event.title}</h1>
+                            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 mt-2">
+                                <span className="flex items-center gap-1.5">
+                                    <Calendar className="w-4 h-4 text-blue-500" />
+                                    {formatDate(event.date)}
+                                </span>
+                                <span className="flex items-center gap-1.5">
+                                    <MapPin className="w-4 h-4 text-blue-500" />
+                                    {event.location}
+                                </span>
+                            </div>
+                            
+                            <div className="flex flex-wrap gap-3 mt-6">
+                                <Button 
+                                    onClick={() => navigate(`/admin/events/${id}/print-attendance`)}
+                                    className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
+                                >
+                                    <Printer className="w-4 h-4 mr-2" />
+                                    Cetak Daftar Hadir
+                                </Button>
+                                <Button 
+                                    onClick={() => setShowQR(true)}
+                                    variant="outline"
+                                    className="border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+                                >
+                                    <QrCode className="w-4 h-4 mr-2" />
+                                    Buka QR Absensi
+                                </Button>
+                                {event?.has_lms && (
+                                    <Button 
+                                        onClick={() => navigate(`/admin/events/${id}/lms`)}
+                                        className="bg-purple-600 hover:bg-purple-700 text-white shadow-sm"
+                                    >
+                                        <MonitorPlay className="w-4 h-4 mr-2" />
+                                        Kelola Materi LMS
+                                    </Button>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="flex gap-4">
-                    <div className="px-4 py-2 bg-blue-50 rounded-lg border border-blue-100 text-center min-w-[100px]">
-                        <div className="text-xl font-bold text-blue-600">
-                            {participants.length} {event.quota ? `/ ${event.quota}` : ''}
+                {/* Stats Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p className="text-sm font-medium text-gray-500 mb-1">Total Peserta</p>
+                            <p className="text-2xl font-bold text-gray-900">{participants.length} <span className="text-lg text-gray-400 font-normal">{event.quota ? `/ ${event.quota}` : ''}</span></p>
                         </div>
-                        <div className="text-xs text-blue-800 font-medium">TOTAL PESERTA</div>
+                        <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center shrink-0">
+                            <Users className="w-6 h-6" />
+                        </div>
                     </div>
-                    <div className="px-4 py-2 bg-green-50 rounded-lg border border-green-100 text-center min-w-[100px]">
-                        <div className="text-xl font-bold text-green-600">
-                            {participants.filter(p => Number(p.is_hadir) === 1).length}
+                    
+                    <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p className="text-sm font-medium text-gray-500 mb-1">Hadir</p>
+                            <p className="text-2xl font-bold text-green-600">{participants.filter(p => Number(p.is_hadir) === 1).length}</p>
                         </div>
-                        <div className="text-xs text-green-800 font-medium">HADIR</div>
+                        <div className="w-12 h-12 bg-green-50 text-green-600 rounded-2xl flex items-center justify-center shrink-0">
+                            <UserCheck className="w-6 h-6" />
+                        </div>
                     </div>
-                    <div className="px-4 py-2 bg-red-50 rounded-lg border border-red-100 text-center min-w-[100px]">
-                        <div className="text-xl font-bold text-red-600">
-                            {participants.filter(p => Number(p.is_hadir) === 0).length}
+
+                    <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p className="text-sm font-medium text-gray-500 mb-1">Tidak Hadir</p>
+                            <p className="text-2xl font-bold text-red-600">{participants.filter(p => Number(p.is_hadir) === 0).length}</p>
                         </div>
-                        <div className="text-xs text-red-800 font-medium">TIDAK HADIR</div>
+                        <div className="w-12 h-12 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center shrink-0">
+                            <UserMinus className="w-6 h-6" />
+                        </div>
                     </div>
                 </div>
-            </div>
-
-            <div className="flex flex-wrap gap-3">
-                <Button 
-                    onClick={() => navigate(`/admin/events/${id}/print-attendance`)}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white"
-                >
-                    <Printer className="w-4 h-4 mr-2" />
-                    Cetak Daftar Hadir
-                </Button>
-                <Button 
-                    onClick={() => setShowQR(true)}
-                    variant="outline"
-                    className="border-indigo-600 text-indigo-600 hover:bg-indigo-50"
-                >
-                    <QrCode className="w-4 h-4 mr-2" />
-                    Buka QR Absensi
-                </Button>
-                {event?.has_lms ? (
-                    <Button 
-                        onClick={() => navigate(`/admin/events/${id}/lms`)}
-                        className="bg-purple-600 hover:bg-purple-700 text-white"
-                    >
-                        <MonitorPlay className="w-4 h-4 mr-2" />
-                        Kelola Materi LMS
-                    </Button>
-                ) : null}
             </div>
 
 
