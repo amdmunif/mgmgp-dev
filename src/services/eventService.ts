@@ -39,6 +39,7 @@ export interface EventParticipant {
     payment_status?: 'free' | 'pending' | 'waiting_confirmation' | 'confirmed' | 'rejected';
     payment_proof_url?: string;
     payment_date?: string;
+    is_approved?: number | boolean;
     registered_at: string;
     events?: {
         title: string;

@@ -208,20 +208,30 @@ export function MemberDashboard() {
                                                 <span className="block text-lg font-bold">{new Date(event.date).getDate()}</span>
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <h3 className="font-bold text-gray-900 flex flex-wrap items-center gap-1.5">
+                                                <h3 className="font-bold text-gray-900 flex flex-wrap items-center gap-1.5 mb-1">
                                                     <span className="line-clamp-2">{event.title}</span>
                                                     {event.is_premium === 1 && (
                                                         <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-yellow-100 text-yellow-700 border border-yellow-200">
                                                             PRO
                                                         </span>
                                                     )}
-                                                    {(!Number(event.is_registration_open) || (event.registration_deadline && new Date(event.registration_deadline) < new Date())) && (
-                                                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700 border border-red-200">
-                                                            DITUTUP
-                                                        </span>
-                                                    )}
+                                                    {(() => {
+                                                        const isDeadlinePassed = event.registration_deadline ? new Date(event.registration_deadline) < new Date() : false;
+                                                        const isQuotaFull = event.quota ? (event.participants_count || 0) >= event.quota : false;
+                                                        const isOpen = Number(event.is_registration_open) === 1 && !isDeadlinePassed && !isQuotaFull;
+                                                        return !isOpen && (
+                                                            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700 border border-red-200">
+                                                                DITUTUP
+                                                            </span>
+                                                        );
+                                                    })()}
                                                 </h3>
-                                                <p className="text-xs text-gray-500 mb-2 line-clamp-1">{event.location}</p>
+                                                <div className="flex flex-col gap-0.5 mb-3">
+                                                    <p className="text-xs text-gray-500 flex items-center gap-1"><MapPin className="w-3 h-3" /> {event.location}</p>
+                                                    {event.quota && (
+                                                        <p className="text-[10px] font-medium text-blue-600">Sisa Kuota: {event.quota - (event.participants_count || 0)} dari {event.quota}</p>
+                                                    )}
+                                                </div>
                                                 <Link to={`/member/events/${event.id}`}>
                                                     <Button size="sm" variant="outline" className="w-full text-xs h-8">Lihat Detail</Button>
                                                 </Link>

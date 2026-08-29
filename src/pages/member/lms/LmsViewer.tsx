@@ -125,9 +125,8 @@ export function LmsViewer() {
             setTopics(fullTopics);
             
             if (fullTopics.length > 0) {
-                // Determine which topic contains the urlMaterialId
                 let activeTopicId = fullTopics[0].id;
-                let initialMaterialId = fullTopics[0].items.length > 0 ? fullTopics[0].items[0].id : '';
+                let initialMaterialId = '';
 
                 if (urlMaterialId) {
                     for (const t of fullTopics) {
@@ -138,11 +137,12 @@ export function LmsViewer() {
                             break;
                         }
                     }
-                    setExpandedTopics([activeTopicId]);
-                    setActiveMaterial(initialMaterialId);
-                } else {
-                    // Default to overview mode
-                    setActiveMaterial('');
+                }
+                
+                setExpandedTopics([activeTopicId]);
+                setActiveMaterial(initialMaterialId);
+                if (initialMaterialId) {
+                    handleMaterialClick(initialMaterialId, fullTopics);
                 }
             }
         } catch (error) {
@@ -278,6 +278,9 @@ export function LmsViewer() {
                 {/* Header for content */}
                 <div className="bg-primary-900 text-white p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
+                        <button onClick={() => navigate('/member/lms')} className="p-2 hover:bg-white/10 rounded mr-2" title="Kembali ke Daftar Kelas">
+                            <ArrowLeft className="w-5 h-5" />
+                        </button>
                         <button onClick={() => setSidebarOpen(!sidebarOpen)} className="md:hidden p-1 hover:bg-white/10 rounded">
                             <Menu className="w-5 h-5" />
                         </button>
@@ -302,8 +305,35 @@ export function LmsViewer() {
                 </div>
 
                 {/* Content Area */}
-                <div className="flex-1 bg-gray-50 p-6 md:p-10 overflow-y-auto relative flex flex-col min-h-0">
-                    {activeItem?.type === 'quiz' ? (
+                <div className="flex-1 bg-gray-50 overflow-y-auto p-4 md:p-8">
+                    {!activeMaterial ? (
+                        <div className="w-full max-w-4xl mx-auto flex flex-col h-full">
+                            <div className="bg-white p-8 md:p-12 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center">
+                                <div className="w-24 h-24 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-6">
+                                    <BookOpen className="w-12 h-12" />
+                                </div>
+                                <h2 className="text-3xl font-bold text-gray-900 mb-4">Selamat Datang di Kelas LMS!</h2>
+                                <p className="text-gray-600 mb-8 max-w-2xl text-lg">
+                                    Silakan pilih topik dan materi di menu samping untuk mulai belajar. 
+                                    Anda dapat melacak progres dan menyelesaikan tugas untuk mendapatkan sertifikat.
+                                </p>
+                                <Button 
+                                    size="lg" 
+                                    className="bg-blue-600 hover:bg-blue-700 font-bold"
+                                    onClick={() => {
+                                        if (topics.length > 0 && topics[0].items.length > 0) {
+                                            const firstId = topics[0].items[0].id;
+                                            setActiveMaterial(firstId);
+                                            setExpandedTopics([topics[0].id]);
+                                            handleMaterialClick(firstId, topics);
+                                        }
+                                    }}
+                                >
+                                    Mulai Belajar Sekarang <PlayCircle className="w-5 h-5 ml-2" />
+                                </Button>
+                            </div>
+                        </div>
+                    ) : activeItem?.type === 'quiz' ? (
                         <div className="w-full mx-auto bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
                             <div className="p-8 border-b border-gray-100">
                                 <p className="text-gray-500 text-sm mb-2">Kuis</p>
@@ -526,9 +556,9 @@ export function LmsViewer() {
                                     </a>
                                 )}
                             </div>
-                            <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative flex flex-col">
+                            <div className="w-full bg-black md:bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative flex flex-col mb-6">
                                 {activeItem?.type === 'video' ? (
-                                    <div className="w-full aspect-video bg-black relative flex items-center justify-center">
+                                    <div className="w-full relative bg-black flex items-center justify-center" style={{ aspectRatio: '16/9', maxHeight: '75vh' }}>
                                         {activeItem.url?.includes('youtube.com') || activeItem.url?.includes('youtu.be') ? (
                                             <iframe
                                                 className="absolute inset-0 w-full h-full border-0"
@@ -538,14 +568,14 @@ export function LmsViewer() {
                                             />
                                         ) : (
                                             <video 
-                                                className="absolute inset-0 w-full h-full"
+                                                className="absolute inset-0 w-full h-full object-contain"
                                                 controls 
                                                 src={activeItem.url} 
                                             />
                                         )}
                                     </div>
                                 ) : activeItem?.type === 'pdf' || activeItem?.type === 'link' ? (
-                                    <div className="w-full aspect-video bg-gray-50 relative flex items-center justify-center">
+                                    <div className="w-full relative bg-gray-50 flex items-center justify-center" style={{ height: '75vh', minHeight: '500px' }}>
                                         <iframe 
                                             src={getEmbedUrl(activeItem.url)} 
                                             className="absolute inset-0 w-full h-full border-0"

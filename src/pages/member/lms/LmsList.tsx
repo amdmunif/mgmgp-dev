@@ -37,7 +37,8 @@ export function LmsList() {
                     date: item.events?.date || '',
                     location: item.events?.location || '',
                     image_url: item.events?.image_url,
-                    has_lms: 1
+                    has_lms: 1,
+                    is_approved: item.is_approved
                 }));
             
             setEvents(lmsEvents as any);
@@ -102,12 +103,21 @@ export function LmsList() {
                                         <p className="text-[10px] text-gray-400 text-right">Lanjutkan progres untuk mendapatkan sertifikat</p>
                                     </div>
 
-                                    <Button 
-                                        className="w-full" 
-                                        onClick={() => navigate(`/member/lms/classroom/${event.id}`)}
-                                    >
-                                        Masuk Kelas <ChevronRight className="w-4 h-4 ml-1" />
-                                    </Button>
+                                    {Number((event as any).is_approved) === 1 ? (
+                                        <Button 
+                                            className="w-full" 
+                                            onClick={() => navigate(`/member/lms/classroom/${event.id}`)}
+                                        >
+                                            Masuk Kelas <ChevronRight className="w-4 h-4 ml-1" />
+                                        </Button>
+                                    ) : (
+                                        <Button 
+                                            className="w-full bg-gray-200 text-gray-500 hover:bg-gray-200 cursor-not-allowed" 
+                                            disabled
+                                        >
+                                            Menunggu Konfirmasi Admin
+                                        </Button>
+                                    )}
                                 </div>
                             </div>
                         );

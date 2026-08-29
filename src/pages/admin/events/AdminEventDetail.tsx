@@ -4,6 +4,7 @@ import { contentManagementService } from '../../../services/contentManagementSer
 import { ArrowLeft, Calendar, MapPin, Users, CheckCircle, XCircle, Trash2, Printer, QrCode, X, MonitorPlay, Trophy } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { api, getFileUrl } from '../../../lib/api';
+import { lmsService } from '../../../services/lmsService';
 import { DataTable } from '../../../components/ui/DataTable';
 import { Button } from '../../../components/ui/button';
 
@@ -21,6 +22,8 @@ interface Participant {
     payment_status?: string;
     payment_proof_url?: string;
     payment_date?: string;
+    is_approved?: number | boolean;
+    lms_score?: number | string;
 }
 
 interface EventDetail {
@@ -61,8 +64,23 @@ export function AdminEventDetail() {
                 contentManagementService.getEventById(eventId),
                 contentManagementService.getEventParticipants(eventId)
             ]);
+            
+            let mergedParticipants = participantsData;
+            if (eventData && Number(eventData.has_lms) === 1) {
+                try {
+                    const gradebook = await lmsService.getEventGradebook(eventId);
+                    const scoreMap = new Map(gradebook.participants?.map((p: any) => [p.user_id, p.average_score]));
+                    mergedParticipants = participantsData.map((p: any) => ({
+                        ...p,
+                        lms_score: scoreMap.get(p.user_id)
+                    }));
+                } catch (e) {
+                    console.error("Gagal mengambil nilai lms", e);
+                }
+            }
+            
             setEvent(eventData as unknown as EventDetail);
-            setParticipants(participantsData);
+            setParticipants(mergedParticipants);
         } catch (error) {
             console.error('Error loading event data:', error);
             toast.error('Gagal memuat data event');
@@ -158,11 +176,24 @@ export function AdminEventDetail() {
 
         try {
             await contentManagementService.deleteParticipant(id, userId);
-            setParticipants(current => current.filter(p => p.user_id !== userId));
+            setParticipants(participants.filter(p => p.user_id !== userId));
             toast.success('Peserta berhasil dihapus');
         } catch (error) {
-            console.error('Failed to delete participant:', error);
             toast.error('Gagal menghapus peserta');
+        }
+    };
+
+    const handleLmsApproveUpdate = async (userId: string, currentStatus: number | boolean | undefined) => {
+        if (!id) return;
+        const newStatus = Number(currentStatus) === 1 ? 0 : 1;
+        try {
+            await api.post(`/events/${id}/approve-lms`, { user_id: userId, is_approved: newStatus });
+            setParticipants(participants.map(p =>
+                p.user_id === userId ? { ...p, is_approved: newStatus } : p
+            ));
+            toast.success(newStatus ? 'Akses LMS Diberikan' : 'Akses LMS Dicabut');
+        } catch (error) {
+            toast.error('Gagal memperbarui status akses LMS');
         }
     };
 
@@ -213,7 +244,8 @@ export function AdminEventDetail() {
         return result;
     }, [participants, filterStatus]);
 
-    const columns = useMemo(() => [
+    const columns = useMemo(() => {
+        const cols = [
         {
             header: (
                 <input
@@ -287,11 +319,10 @@ export function AdminEventDetail() {
             },
             className: "text-center"
         },
-        {
+        event?.is_paid ? {
             header: "Pembayaran",
             accessorKey: "payment_status" as keyof Participant,
             cell: (item: Participant) => {
-                if (!event?.is_paid) return <span className="text-gray-400 text-xs">-</span>;
                 
                 const statusMap: any = {
                     'free': { label: 'Gratis', color: 'bg-gray-100 text-gray-800' },
@@ -323,7 +354,29 @@ export function AdminEventDetail() {
                 );
             },
             className: "text-center"
-        },
+        } : null,
+        event?.has_lms ? {
+            header: "LMS",
+            accessorKey: "lms_score",
+            cell: (item: Participant) => (
+                <div className="flex flex-col items-center gap-2">
+                    <span className="text-xs font-semibold text-gray-700">
+                        Skor: {item.lms_score !== null && item.lms_score !== undefined ? Number(item.lms_score).toFixed(1) : '-'}
+                    </span>
+                    <button
+                        onClick={() => handleLmsApproveUpdate(item.user_id, item.is_approved)}
+                        className={`px-2 py-1 inline-flex text-[10px] leading-4 font-bold rounded-md transition-colors ${Number(item.is_approved) === 1
+                            ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                            : 'bg-red-100 text-red-700 hover:bg-red-200 border border-red-200'
+                            }`}
+                        title="Klik untuk mengubah akses LMS"
+                    >
+                        {Number(item.is_approved) === 1 ? 'Akses LMS: ON' : 'Akses LMS: OFF (Konfirmasi)'}
+                    </button>
+                </div>
+            ),
+            className: "text-center"
+        } : null,
         {
             header: "Aksi",
             cell: (item: Participant) => {
@@ -382,7 +435,9 @@ export function AdminEventDetail() {
             },
             className: "text-center"
         }
-    ], [participants, selectedIds]);
+    ].filter(Boolean);
+    return cols;
+    }, [participants, selectedIds, event]);
 
     if (loading) return <div className="p-8 text-center">Memuat...</div>;
     if (!event) return <div className="p-8 text-center">Event tidak ditemukan</div>;

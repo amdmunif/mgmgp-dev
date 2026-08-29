@@ -596,7 +596,7 @@ class ContentController
     public function getEventParticipants($eventId)
     {
         // Fetch participants with user details
-        $query = "SELECT ep.*, p.nama, u.email, p.foto_profile, p.asal_sekolah,
+        $query = "SELECT ep.*, p.nama, u.email, p.foto_profile, p.asal_sekolah, ep.is_approved,
                          (SELECT COUNT(*) FROM event_attendances ea WHERE ea.event_id = ep.event_id AND ea.user_id = ep.user_id) as attendance_count
                   FROM event_participants ep
                   LEFT JOIN profiles p ON ep.user_id = p.id
@@ -620,10 +620,26 @@ class ContentController
         $stmt->bindParam(':uid', $userId);
 
         if ($stmt->execute()) {
-            return json_encode(["message" => "Status updated"]);
+            return json_encode(["message" => "Success"]);
         }
         http_response_code(500);
-        return json_encode(["message" => "Failed to update status"]);
+        return json_encode(["message" => "Failed to update participant status"]);
+    }
+
+    public function approveLms($eventId, $userId, $isApproved)
+    {
+        $isApproved = (int)$isApproved;
+        $query = "UPDATE event_participants SET is_approved = :is_approved WHERE event_id = :eid AND user_id = :uid";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':is_approved', $isApproved, PDO::PARAM_INT);
+        $stmt->bindParam(':eid', $eventId);
+        $stmt->bindParam(':uid', $userId);
+        
+        if ($stmt->execute()) {
+            return json_encode(["message" => "Success"]);
+        }
+        http_response_code(500);
+        return json_encode(["message" => "Failed to update LMS access"]);
     }
 
     public function updateParticipantPassed($eventId, $userId, $isPassed)

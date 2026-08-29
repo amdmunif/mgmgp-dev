@@ -320,9 +320,18 @@ if ($resource === 'news') {
                 http_response_code(401);
                 echo json_encode(["message" => "Unauthorized"]);
             }
+        } elseif ($action && $subAction === 'approve-lms') {
+            $targetUserId = $input['user_id'] ?? null;
+            $isApproved = $input['is_approved'] ?? 0;
+            if ($targetUserId && in_array($userRole, ['Admin', 'Pengurus']))
+                echo $controller->approveLms($action, $targetUserId, $isApproved);
+            else {
+                http_response_code(403);
+                echo json_encode(["message" => "Forbidden"]);
+            }
         } elseif ($action && $subAction === 'confirm-payment') {
             $targetUserId = $input['user_id'] ?? null;
-            if ($targetUserId && $userRole === 'Admin')
+            if ($targetUserId && in_array($userRole, ['Admin', 'Pengurus']))
                 echo $controller->confirmPayment($action, $targetUserId, $userId);
             else {
                 http_response_code(403);
@@ -330,7 +339,7 @@ if ($resource === 'news') {
             }
         } elseif ($action && $subAction === 'reject-payment') {
             $targetUserId = $input['user_id'] ?? null;
-            if ($targetUserId && $userRole === 'Admin')
+            if ($targetUserId && in_array($userRole, ['Admin', 'Pengurus']))
                 echo $controller->rejectPayment($action, $targetUserId);
             else {
                 http_response_code(403);
@@ -342,7 +351,7 @@ if ($resource === 'news') {
             $status = $input['status'] ?? 'registered';
 
             // Check admin role
-            if ($userRole === 'Admin')
+            if (in_array($userRole, ['Admin', 'Pengurus']))
                 echo $controller->updateParticipantsBulk($action, $userIds, $status);
             else {
                 http_response_code(403);
@@ -554,7 +563,7 @@ if ($resource === 'news') {
 
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         if ($action === 'duplicates') {
-            if ($userRole === 'Admin') {
+            if (in_array($userRole, ['Admin', 'Pengurus'])) {
                 echo $controller->getDuplicates();
             } else {
                 http_response_code(403);
@@ -564,14 +573,14 @@ if ($resource === 'news') {
             echo $controller->getAll();
         }
     } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'merge') {
-        if ($userRole === 'Admin') {
+        if (in_array($userRole, ['Admin', 'Pengurus'])) {
             echo $controller->mergeDuplicate($input);
         } else {
             http_response_code(403);
             echo json_encode(["message" => "Forbidden"]);
         }
     } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($uri_parts[2]) && $uri_parts[2] === 'reset-password') {
-        if ($userRole === 'Admin') {
+        if (in_array($userRole, ['Admin', 'Pengurus'])) {
             echo $controller->resetPassword($action, $input);
         } else {
             http_response_code(403);
@@ -788,7 +797,7 @@ if ($resource === 'news') {
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         if ($action === 'settings') {
             echo $training->getSettings();
-        } elseif ($action === 'registrations' && $userRole === 'Admin') {
+        } elseif ($action === 'registrations' && in_array($userRole, ['Admin', 'Pengurus'])) {
             echo $training->getRegistrations();
         } else {
             http_response_code(403);
@@ -797,7 +806,7 @@ if ($resource === 'news') {
     } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($action === 'register') {
             echo $training->register($input);
-        } elseif ($action === 'settings' && $userRole === 'Admin') {
+        } elseif ($action === 'settings' && in_array($userRole, ['Admin', 'Pengurus'])) {
             echo $training->updateSettings($input);
         } else {
             http_response_code(404);
@@ -807,22 +816,22 @@ if ($resource === 'news') {
 } elseif ($resource === 'finances') {
     $controller = new FinanceController();
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-        if ($action === 'summary' && $userRole === 'Admin') {
+        if ($action === 'summary' && in_array($userRole, ['Admin', 'Pengurus'])) {
             echo $controller->getSummary();
-        } elseif ($action === 'transactions' && $userRole === 'Admin') {
+        } elseif ($action === 'transactions' && in_array($userRole, ['Admin', 'Pengurus'])) {
             echo $controller->getTransactions();
         } else {
             http_response_code(403);
             echo json_encode(["message" => "Forbidden"]);
         }
     } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        if ($action === 'add' && $userRole === 'Admin') {
+        if ($action === 'add' && in_array($userRole, ['Admin', 'Pengurus'])) {
             echo $controller->addTransaction($input, $userId, $userName);
         } else {
             http_response_code(403);
             echo json_encode(["message" => "Forbidden"]);
         }
-    } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action && $userRole === 'Admin') {
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action && in_array($userRole, ['Admin', 'Pengurus'])) {
         echo $controller->deleteTransaction($action, $userId, $userName);
     }
 } elseif ($resource === 'projects') {
@@ -851,7 +860,7 @@ if ($resource === 'news') {
             echo $controller->getPublicProjects();
         } elseif ($action === 'my' && $userId) {
             echo $controller->getMyProjects($userId);
-        } elseif ($action === 'all' && $userRole === 'Admin') {
+        } elseif ($action === 'all' && in_array($userRole, ['Admin', 'Pengurus'])) {
             echo $controller->getAllProjects();
         } else {
             http_response_code($userId ? 403 : 401);
@@ -865,9 +874,9 @@ if ($resource === 'news') {
             echo json_encode(["message" => "Unauthorized"]);
         }
     } elseif ($_SERVER['REQUEST_METHOD'] === 'PUT' && $action) {
-        if ($userId && $userRole !== 'Admin') {
+        if ($userId && !in_array($userRole, ['Admin', 'Pengurus'])) {
             echo $controller->updateProject($action, $userId, $input);
-        } elseif ($userRole === 'Admin' && isset($input['status'])) {
+        } elseif (in_array($userRole, ['Admin', 'Pengurus']) && isset($input['status'])) {
             // Admin updating status
             echo $controller->updateStatus($action, $input['status']);
         } else {

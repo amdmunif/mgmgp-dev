@@ -122,15 +122,21 @@ export function AdminEvents() {
                             Tak Terbatas
                         </div>
                     )}
-                    {item.is_registration_open ? (
-                        <div className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded w-fit">
-                            Pendaftaran Buka
-                        </div>
-                    ) : (
-                        <div className="text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded w-fit">
-                            Pendaftaran Tutup
-                        </div>
-                    )}
+                    {(() => {
+                        const isDeadlinePassed = item.registration_deadline ? new Date(item.registration_deadline) < new Date() : false;
+                        const isQuotaFull = item.quota ? (item.participants_count || 0) >= item.quota : false;
+                        const isOpen = item.is_registration_open && !isDeadlinePassed && !isQuotaFull;
+
+                        return isOpen ? (
+                            <div className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded w-fit">
+                                Pendaftaran Buka
+                            </div>
+                        ) : (
+                            <div className="text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded w-fit" title={isDeadlinePassed ? "Melewati Deadline" : isQuotaFull ? "Kuota Penuh" : "Ditutup Manual"}>
+                                Pendaftaran Tutup
+                            </div>
+                        );
+                    })()}
                 </div>
             )
         },
