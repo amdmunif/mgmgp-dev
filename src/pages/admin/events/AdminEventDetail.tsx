@@ -435,7 +435,7 @@ export function AdminEventDetail() {
             },
             className: "text-center"
         }
-    ].filter(Boolean);
+    ].filter(Boolean) as any[];
     return cols;
     }, [participants, selectedIds, event]);
 

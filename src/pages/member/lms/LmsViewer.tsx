@@ -142,7 +142,6 @@ export function LmsViewer() {
                 setExpandedTopics([activeTopicId]);
                 setActiveMaterial(initialMaterialId);
                 if (initialMaterialId) {
-                    handleMaterialClick(initialMaterialId, fullTopics);
                 }
             }
         } catch (error) {
@@ -325,7 +324,6 @@ export function LmsViewer() {
                                             const firstId = topics[0].items[0].id;
                                             setActiveMaterial(firstId);
                                             setExpandedTopics([topics[0].id]);
-                                            handleMaterialClick(firstId, topics);
                                         }
                                     }}
                                 >

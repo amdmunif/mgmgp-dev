@@ -153,6 +153,9 @@ CREATE TABLE `events` (
   `is_paid` tinyint(1) DEFAULT 0,
   `price` decimal(10,2) DEFAULT 0.00,
   `registration_deadline` datetime DEFAULT NULL,
+  `attendance_deadline` datetime DEFAULT NULL,
+  `has_lms` tinyint(1) DEFAULT 0,
+  `quota` int(11) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`)
@@ -162,6 +165,8 @@ CREATE TABLE `event_participants` (
   `event_id` char(36) NOT NULL,
   `user_id` char(36) NOT NULL,
   `is_hadir` tinyint(1) DEFAULT 0,
+  `is_approved` tinyint(1) DEFAULT 0,
+  `is_passed` tinyint(1) DEFAULT 0,
   `tugas_submitted` tinyint(1) DEFAULT 0,
   `task_url` text DEFAULT NULL,
   `payment_status` enum('free','pending','waiting_confirmation','confirmed','rejected') DEFAULT 'free',

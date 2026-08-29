@@ -33,6 +33,13 @@ CREATE TABLE events (
   certificate_url TEXT,
   certificate_template TEXT,
   is_registration_open BOOLEAN DEFAULT true,
+  is_premium BOOLEAN DEFAULT false,
+  is_paid BOOLEAN DEFAULT false,
+  price DECIMAL(10,2) DEFAULT 0.00,
+  registration_deadline TIMESTAMPTZ,
+  attendance_deadline TIMESTAMPTZ,
+  has_lms BOOLEAN DEFAULT false,
+  quota INT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -41,8 +48,13 @@ CREATE TABLE event_participants (
   event_id UUID REFERENCES events(id) ON DELETE CASCADE,
   user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
   is_hadir BOOLEAN DEFAULT false,
+  is_approved BOOLEAN DEFAULT false,
+  is_passed BOOLEAN DEFAULT false,
   tugas_submitted BOOLEAN DEFAULT false,
   task_url TEXT,
+  payment_status VARCHAR(50) DEFAULT 'free',
+  payment_proof_url TEXT,
+  payment_date TIMESTAMPTZ,
   registered_at TIMESTAMPTZ DEFAULT NOW(),
   PRIMARY KEY (event_id, user_id)
 );
