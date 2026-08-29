@@ -136,6 +136,7 @@ export function MemberEvents() {
                                 const isRegistrationOpen = Number(event.is_registration_open) === 1;
                                 const isDeadlinePassed = event.registration_deadline ? new Date(event.registration_deadline) < new Date() : false;
                                 const canRegisterPremium = !isEventPremium || isPremium;
+                                const isQuotaFull = (event as any).quota ? Number((event as any).participants_count || 0) >= Number((event as any).quota) : false;
 
                                 return (
                                 <div key={event.id} className={cn(
@@ -191,9 +192,9 @@ export function MemberEvents() {
                                     {/* Footer / Actions Area */}
                                     <div className="px-6 py-4 bg-gray-50/50 border-t border-gray-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                         <div className="flex items-center">
-                                            {event.quota && (
+                                            {(event as any).quota && (
                                                 <span className="text-xs font-medium text-gray-500 bg-white px-2.5 py-1 rounded-md border border-gray-100 shadow-sm">
-                                                    Sisa Kuota: <strong className="text-blue-600">{Number(event.quota) - Number(event.participants_count || 0)}</strong>
+                                                    Sisa Kuota: <strong className="text-blue-600">{Number((event as any).quota) - Number((event as any).participants_count || 0)}</strong>
                                                 </span>
                                             )}
                                         </div>

@@ -305,6 +305,7 @@ export function LmsViewer() {
 
                 {/* Content Area */}
                 <div className="flex-1 bg-gray-50 overflow-y-auto p-4 md:p-8">
+                    {!activeItem ? (
                         <div className="w-full max-w-4xl mx-auto flex flex-col h-full">
                             <div className="bg-white p-8 md:p-10 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
                                 <div className="flex items-center gap-4 mb-8 pb-6 border-b border-gray-100">
