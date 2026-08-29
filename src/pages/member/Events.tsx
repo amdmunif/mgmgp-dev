@@ -251,7 +251,7 @@ export function MemberEvents() {
                                         </span>
 
                                         {/* Certificate Download */}
-                                        {item.status === 'attended' && item.events?.certificate_url && (
+                                        {Number(item.is_passed) === 1 && item.events?.certificate_url && (
                                             <a
                                                 href={item.events.certificate_url}
                                                 target="_blank"

@@ -152,14 +152,16 @@ class ContentController
     {
         try {
             $id = Helper::uuid();
-            $query = "INSERT INTO events (id, title, description, date, location, image_url, is_registration_open, is_premium, is_paid, price, registration_deadline, attendance_deadline, quota, has_lms, created_at) 
-                      VALUES (:id, :title, :description, :date, :location, :image_url, :is_registration_open, :is_premium, :is_paid, :price, :registration_deadline, :attendance_deadline, :quota, :has_lms, NOW())";
+            $query = "INSERT INTO events (id, title, description, date, total_days, location, image_url, is_registration_open, is_premium, is_paid, price, registration_deadline, attendance_deadline, quota, has_lms, created_at) 
+                      VALUES (:id, :title, :description, :date, :total_days, :location, :image_url, :is_registration_open, :is_premium, :is_paid, :price, :registration_deadline, :attendance_deadline, :quota, :has_lms, NOW())";
 
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':id', $id);
             $stmt->bindParam(':title', $data['title']);
             $stmt->bindParam(':description', $data['description']);
             $stmt->bindParam(':date', $data['date']);
+            $total_days = isset($data['total_days']) ? (int)$data['total_days'] : 1;
+            $stmt->bindParam(':total_days', $total_days, PDO::PARAM_INT);
             $stmt->bindParam(':location', $data['location']);
             $stmt->bindParam(':image_url', $data['image_url']);
             $isReg = $data['is_registration_open'] ?? 1;
@@ -322,6 +324,7 @@ class ContentController
                         title = :title, 
                         description = :description, 
                         date = :date, 
+                        total_days = :total_days,
                         location = :location, 
                         image_url = :image_url, 
                         is_registration_open = :is_registration_open,
@@ -339,6 +342,8 @@ class ContentController
             $stmt->bindParam(':title', $data['title']);
             $stmt->bindParam(':description', $data['description']);
             $stmt->bindParam(':date', $data['date']);
+            $total_days = isset($data['total_days']) ? (int)$data['total_days'] : 1;
+            $stmt->bindParam(':total_days', $total_days, PDO::PARAM_INT);
             $stmt->bindParam(':location', $data['location']);
             $stmt->bindParam(':image_url', $data['image_url']);
             $isReg = $data['is_registration_open'] ?? 1;
@@ -589,7 +594,8 @@ class ContentController
     public function getEventParticipants($eventId)
     {
         // Fetch participants with user details
-        $query = "SELECT ep.*, p.nama, u.email, p.foto_profile, p.asal_sekolah 
+        $query = "SELECT ep.*, p.nama, u.email, p.foto_profile, p.asal_sekolah,
+                         (SELECT COUNT(*) FROM event_attendances ea WHERE ea.event_id = ep.event_id AND ea.user_id = ep.user_id) as attendance_count
                   FROM event_participants ep
                   LEFT JOIN profiles p ON ep.user_id = p.id
                   LEFT JOIN users u ON ep.user_id = u.id
@@ -711,7 +717,7 @@ class ContentController
         }
 
         // 1.5 Check attendance deadline
-        $checkEvent = "SELECT attendance_deadline FROM events WHERE id = :eid";
+        $checkEvent = "SELECT attendance_deadline, total_days FROM events WHERE id = :eid";
         $stmtEvent = $this->conn->prepare($checkEvent);
         $stmtEvent->execute([':eid' => $eventId]);
         $eventData = $stmtEvent->fetch(PDO::FETCH_ASSOC);
@@ -725,13 +731,29 @@ class ContentController
             }
         }
 
-        // 2. Mark as attended
-        $updateQuery = "UPDATE event_participants SET is_hadir = 1 WHERE event_id = :eid AND user_id = :uid";
-        $updateStmt = $this->conn->prepare($updateQuery);
-        $updateStmt->bindParam(':eid', $eventId);
-        $updateStmt->bindParam(':uid', $userId);
+        // 2. Check if already attended today
+        $today = date('Y-m-d');
+        $checkDaily = "SELECT id FROM event_attendances WHERE event_id = :eid AND user_id = :uid AND attended_date = :today";
+        $stmtDaily = $this->conn->prepare($checkDaily);
+        $stmtDaily->execute([':eid' => $eventId, ':uid' => $userId, ':today' => $today]);
+        if ($stmtDaily->rowCount() > 0) {
+            http_response_code(400);
+            return json_encode(["message" => "Anda sudah melakukan absensi untuk hari ini."]);
+        }
 
-        if ($updateStmt->execute()) {
+        // 3. Mark as attended for today
+        $attId = Helper::uuid();
+        $insertAtt = "INSERT INTO event_attendances (id, event_id, user_id, attended_date) VALUES (:id, :eid, :uid, :today)";
+        $stmtInsAtt = $this->conn->prepare($insertAtt);
+        
+        if ($stmtInsAtt->execute([':id' => $attId, ':eid' => $eventId, ':uid' => $userId, ':today' => $today])) {
+            // Also update event_participants is_hadir = 1 for backwards compatibility
+            $updateQuery = "UPDATE event_participants SET is_hadir = 1 WHERE event_id = :eid AND user_id = :uid";
+            $updateStmt = $this->conn->prepare($updateQuery);
+            $updateStmt->bindParam(':eid', $eventId);
+            $updateStmt->bindParam(':uid', $userId);
+            $updateStmt->execute();
+
             $stmtTitle = $this->conn->prepare("SELECT title FROM events WHERE id = :eid");
             $stmtTitle->bindParam(':eid', $eventId);
             $stmtTitle->execute();
@@ -739,13 +761,19 @@ class ContentController
             $targetLog = !empty($eventTitle) ? $eventTitle : $eventId;
             Helper::log($this->conn, $userId, 'Member', 'SELF_ATTENDANCE', $targetLog);
             
-            // Send Notification
-            $stmtUser = $this->conn->prepare("SELECT p.nama, u.email FROM profiles p JOIN users u ON p.id = u.id WHERE p.id = :uid");
-            $stmtUser->execute([':uid' => $userId]);
-            $user = $stmtUser->fetch(PDO::FETCH_ASSOC);
-            
-            if ($user && $eventTitle) {
-                Mailer::sendEventAttendance($user['email'], $user['nama'], $eventTitle);
+            // Send Notification (only once per day, or maybe just first time)
+            $stmtCount = $this->conn->prepare("SELECT COUNT(*) FROM event_attendances WHERE event_id = :eid AND user_id = :uid");
+            $stmtCount->execute([':eid' => $eventId, ':uid' => $userId]);
+            $count = $stmtCount->fetchColumn();
+
+            if ($count == 1) { // Only send email on first attendance
+                $stmtUser = $this->conn->prepare("SELECT p.nama, u.email FROM profiles p JOIN users u ON p.id = u.id WHERE p.id = :uid");
+                $stmtUser->execute([':uid' => $userId]);
+                $user = $stmtUser->fetch(PDO::FETCH_ASSOC);
+                
+                if ($user && $eventTitle) {
+                    Mailer::sendEventAttendance($user['email'], $user['nama'], $eventTitle);
+                }
             }
 
             return json_encode(["message" => "Attendance marked successfully"]);
@@ -762,16 +790,19 @@ class ContentController
             return json_encode(["message" => "Invalid user IDs"]);
         }
 
-        $isHadir = ($status === 'attended') ? 1 : 0;
-
-        // Construct placeholders for IN clause
         $placeholders = implode(',', array_fill(0, count($userIds), '?'));
 
-        $query = "UPDATE event_participants SET is_hadir = ? WHERE event_id = ? AND user_id IN ($placeholders)";
-        $stmt = $this->conn->prepare($query);
-
-        // Bind parameters: is_hadir, eventId, ...userIds
-        $params = array_merge([$isHadir, $eventId], $userIds);
+        if ($status === 'passed' || $status === 'not_passed') {
+            $isPassed = ($status === 'passed') ? 1 : 0;
+            $query = "UPDATE event_participants SET is_passed = ? WHERE event_id = ? AND user_id IN ($placeholders)";
+            $stmt = $this->conn->prepare($query);
+            $params = array_merge([$isPassed, $eventId], $userIds);
+        } else {
+            $isHadir = ($status === 'attended') ? 1 : 0;
+            $query = "UPDATE event_participants SET is_hadir = ? WHERE event_id = ? AND user_id IN ($placeholders)";
+            $stmt = $this->conn->prepare($query);
+            $params = array_merge([$isHadir, $eventId], $userIds);
+        }
 
         if ($stmt->execute($params)) {
             Helper::log($this->conn, 0, 'Admin', 'BULK_ATTENDANCE_UPDATE', "Event ID: $eventId, Count: " . count($userIds));

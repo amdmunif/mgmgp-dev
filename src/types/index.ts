@@ -27,6 +27,7 @@ export interface Event {
     title: string;
     description: string;
     date: string;
+    total_days?: number;
     location: string;
     image_url: string;
     is_registration_open: boolean | number;

@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
-import { ArrowLeft, Loader2, Users, BookOpen } from 'lucide-react';
+import { ArrowLeft, Loader2, Users, BookOpen, FileText, FileSpreadsheet, Printer } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { lmsService } from '../../../services/lmsService';
 import { toast } from 'react-hot-toast';
 import { DataTable } from '../../../components/ui/DataTable';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 export function AdminAssignmentDashboard() {
     const { id } = useParams();
@@ -58,12 +61,15 @@ export function AdminAssignmentDashboard() {
             }
         ];
 
-        gradebook.quizzes.forEach((q: any) => {
+        gradebook.quizzes.forEach((q: any, i: number) => {
+            const isPreTest = q.title.toLowerCase().includes('pre-test') || q.title.toLowerCase().includes('pre test');
+            const isPostTest = q.title.toLowerCase().includes('post-test') || q.title.toLowerCase().includes('post test');
+            const shortTitle = isPreTest ? 'Pre-Test' : isPostTest ? 'Post-Test' : `K${i + 1}`;
+            
             columns.push({
                 header: (
-                    <div className="text-center">
-                        <div className="text-xs text-blue-600 mb-1">Kuis</div>
-                        {q.title}
+                    <div className="text-center" title={q.title}>
+                        <div className="text-xs font-semibold text-blue-700">{shortTitle}</div>
                     </div>
                 ),
                 cell: (p: any) => {
@@ -82,12 +88,13 @@ export function AdminAssignmentDashboard() {
             });
         });
 
-        gradebook.assignments.forEach((a: any) => {
+        gradebook.assignments.forEach((a: any, i: number) => {
+            const shortTitle = `T${i + 1}`;
+            
             columns.push({
                 header: (
-                    <div className="text-center">
-                        <div className="text-xs text-green-600 mb-1">Tugas</div>
-                        {a.title}
+                    <div className="text-center" title={a.title}>
+                        <div className="text-xs font-semibold text-green-700">{shortTitle}</div>
                     </div>
                 ),
                 cell: (p: any) => {
@@ -122,6 +129,101 @@ export function AdminAssignmentDashboard() {
         return columns;
     };
 
+    const getExportData = () => {
+        if (!gradebook) return { head: [], body: [] };
+        const head = ['Nama Peserta', 'Asal Sekolah'];
+        gradebook.quizzes.forEach((q: any, i: number) => {
+            const isPreTest = q.title.toLowerCase().includes('pre-test') || q.title.toLowerCase().includes('pre test');
+            const isPostTest = q.title.toLowerCase().includes('post-test') || q.title.toLowerCase().includes('post test');
+            head.push(isPreTest ? 'Pre-Test' : isPostTest ? 'Post-Test' : `K${i + 1}`);
+        });
+        gradebook.assignments.forEach((_a: any, i: number) => {
+            head.push(`T${i + 1}`);
+        });
+        head.push('Rata-rata');
+
+        const body = gradebook.participants.map((p: any) => {
+            const row = [p.nama, p.asal_sekolah || '-'];
+            gradebook.quizzes.forEach((q: any) => {
+                const score = p.quizzes.find((x: any) => x.quiz_id === q.id)?.score;
+                row.push(score !== null && score !== undefined ? score : '-');
+            });
+            gradebook.assignments.forEach((a: any) => {
+                const score = p.assignments.find((x: any) => x.assignment_id === a.id)?.score;
+                row.push(score !== null && score !== undefined ? score : '-');
+            });
+            row.push(p.average_score > 0 ? p.average_score.toFixed(2) : '-');
+            return row;
+        });
+
+        return { head: [head], body };
+    };
+
+    const exportToExcel = () => {
+        const { head, body } = getExportData();
+        const ws = XLSX.utils.aoa_to_sheet([...head, ...body]);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Nilai");
+        XLSX.writeFile(wb, "Daftar_Nilai_Peserta.xlsx");
+    };
+
+    const exportToPDF = () => {
+        const { head, body } = getExportData();
+        const doc = new jsPDF('landscape');
+        doc.text("Daftar Nilai Peserta", 14, 15);
+        (doc as any).autoTable({
+            head: head,
+            body: body,
+            startY: 20,
+            theme: 'grid',
+            styles: { fontSize: 8 },
+            headStyles: { fillColor: [41, 128, 185] },
+        });
+        doc.save("Daftar_Nilai_Peserta.pdf");
+    };
+
+    const handlePrint = () => {
+        const { head, body } = getExportData();
+        let printContent = `
+            <html>
+            <head>
+                <title>Cetak Daftar Nilai</title>
+                <style>
+                    body { font-family: sans-serif; padding: 20px; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; }
+                    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+                    th:first-child, td:first-child { text-align: left; }
+                    th { background-color: #f3f4f6; }
+                    h2 { text-align: center; }
+                </style>
+            </head>
+            <body>
+                <h2>Daftar Nilai Peserta</h2>
+                <table>
+                    <thead>
+                        <tr>${head[0].map((h: string) => `<th>${h}</th>`).join('')}</tr>
+                    </thead>
+                    <tbody>
+                        ${body.map((row: any[]) => `
+                            <tr>${row.map((cell: any) => `<td>${cell}</td>`).join('')}</tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </body>
+            </html>
+        `;
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            printWindow.focus();
+            setTimeout(() => {
+                printWindow.print();
+                printWindow.close();
+            }, 250);
+        }
+    };
+
     return (
         <div className="space-y-6">
 
@@ -139,10 +241,22 @@ export function AdminAssignmentDashboard() {
                     searchKeys={['nama', 'asal_sekolah']}
                     pageSize={15}
                     filterContent={
-                        <Button variant="outline" onClick={() => navigate(`/admin/events/${id}/lms`)} className="bg-white text-gray-700 hover:bg-gray-100 shadow-sm">
-                            <ArrowLeft className="w-4 h-4 mr-2" />
-                            Kembali ke Kelas
-                        </Button>
+                        <div className="flex flex-wrap items-center gap-2">
+                            <Button size="sm" variant="outline" onClick={handlePrint} className="text-gray-700 hover:bg-gray-100">
+                                <Printer className="w-4 h-4 mr-1.5" /> Print
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={exportToPDF} className="text-red-600 border-red-200 hover:bg-red-50">
+                                <FileText className="w-4 h-4 mr-1.5" /> PDF
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={exportToExcel} className="text-green-600 border-green-200 hover:bg-green-50">
+                                <FileSpreadsheet className="w-4 h-4 mr-1.5" /> Excel
+                            </Button>
+                            <div className="h-6 w-px bg-gray-200 mx-1 hidden sm:block"></div>
+                            <Button size="sm" variant="outline" onClick={() => navigate(`/admin/events/${id}/lms`)} className="bg-white text-gray-700 hover:bg-gray-100 shadow-sm">
+                                <ArrowLeft className="w-4 h-4 mr-1.5" />
+                                Kembali
+                            </Button>
+                        </div>
                     }
                 />
             )}

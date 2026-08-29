@@ -13,6 +13,7 @@ interface EventForm {
     description: string;
     date: string;
     time: string;
+    total_days: number;
     location: string;
     image_url: string;
     is_registration_open: boolean;
@@ -61,6 +62,7 @@ export function CreateEvent() {
             const dateObj = new Date(data.date);
             setValue('date', dateObj.toISOString().split('T')[0]);
             setValue('time', dateObj.toTimeString().slice(0, 5));
+            setValue('total_days', data.total_days || 1);
 
             setValue('location', data.location);
             setValue('image_url', data.image_url);
@@ -153,12 +155,13 @@ export function CreateEvent() {
             const eventData = {
                 ...data,
                 date: fullDate, // Send combined datetime
+                total_days: Number(data.total_days) || 1,
+                registration_deadline: formattedDeadline,
                 description,
                 is_registration_open: data.is_registration_open ? 1 : 0,
                 is_premium: data.is_premium ? 1 : 0,
                 is_paid: data.is_paid ? 1 : 0,
                 price: data.price,
-                registration_deadline: formattedDeadline,
                 attendance_deadline: formattedAttDeadline,
                 quota: data.quota || undefined,
                 has_lms: data.has_lms ? 1 : 0
@@ -217,10 +220,10 @@ export function CreateEvent() {
                                     {errors.title && <span className="text-xs text-red-500 mt-1">{errors.title.message}</span>}
                                 </div>
 
-                                {/* Date & Time */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* Date, Time & Total Days */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Tanggal</label>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Tanggal Mulai</label>
                                         <div className="relative">
                                             <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                                             <input
@@ -237,6 +240,20 @@ export function CreateEvent() {
                                             {...register('time', { required: 'Waktu wajib diisi' })}
                                             className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                         />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Jumlah Hari Kegiatan</label>
+                                        <div className="relative">
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                defaultValue={1}
+                                                {...register('total_days', { required: 'Jumlah hari wajib diisi', min: 1 })}
+                                                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            />
+                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">Hari</span>
+                                        </div>
+                                        {errors.total_days && <span className="text-xs text-red-500 mt-1">Minimal 1 hari</span>}
                                     </div>
                                 </div>
 

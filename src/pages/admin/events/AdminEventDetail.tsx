@@ -15,6 +15,8 @@ interface Participant {
     status: string;
     registered_at: string;
     is_hadir: number;
+    is_passed?: number | boolean;
+    attendance_count?: number;
     asal_sekolah?: string;
     payment_status?: string;
     payment_proof_url?: string;
@@ -31,6 +33,7 @@ interface EventDetail {
     is_registration_open: boolean;
     is_paid: boolean;
     has_lms?: boolean | number;
+    total_days?: number;
 }
 
 export function AdminEventDetail() {
@@ -40,7 +43,7 @@ export function AdminEventDetail() {
     const [participants, setParticipants] = useState<Participant[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
-    const [filterStatus, setFilterStatus] = useState<'all' | 'attended' | 'not_attended'>('all');
+    const [filterStatus, setFilterStatus] = useState<'all' | 'attended' | 'not_attended' | 'passed' | 'not_passed'>('all');
     const [showQR, setShowQR] = useState(false);
 
     useEffect(() => {
@@ -111,11 +114,17 @@ export function AdminEventDetail() {
 
             // Optimistic update
             const isAttended = status === 'attended';
-            setParticipants(current => current.map(p =>
-                selectedIds.includes(p.user_id)
-                    ? { ...p, status: status, is_hadir: isAttended ? 1 : 0 }
-                    : p
-            ));
+            const isPassed = status === 'passed';
+            
+            setParticipants(current => current.map(p => {
+                if (selectedIds.includes(p.user_id)) {
+                    if (status === 'passed' || status === 'not_passed') {
+                        return { ...p, is_passed: isPassed ? 1 : 0 };
+                    }
+                    return { ...p, status: status, is_hadir: isAttended ? 1 : 0 };
+                }
+                return p;
+            }));
             setSelectedIds([]); // Clear selection after action
         } catch (error) {
             console.error('Bulk update failed:', error);
@@ -172,6 +181,10 @@ export function AdminEventDetail() {
             result = result.filter(p => Number(p.is_hadir) === 1);
         } else if (filterStatus === 'not_attended') {
             result = result.filter(p => Number(p.is_hadir) === 0);
+        } else if (filterStatus === 'passed') {
+            result = result.filter(p => Number(p.is_passed) === 1);
+        } else if (filterStatus === 'not_passed') {
+            result = result.filter(p => Number(p.is_passed) === 0);
         }
 
         // Sort by registered_at ascending (oldest first)
@@ -231,16 +244,24 @@ export function AdminEventDetail() {
             className: "hidden sm:table-cell"
         },
         {
-            header: "Status",
-            accessorKey: "status" as keyof Participant,
+            header: "Kehadiran",
+            accessorKey: "attendance_count" as keyof Participant,
+            cell: (item: Participant) => (
+                <span className="text-sm font-semibold text-gray-700">{item.attendance_count || 0} / {event?.total_days || 1} Hari</span>
+            ),
+            className: "text-center"
+        },
+        {
+            header: "Kelulusan",
+            accessorKey: "is_passed" as keyof Participant,
             cell: (item: Participant) => {
-                const isPresent = Number(item.is_hadir) === 1;
+                const isPassed = Number(item.is_passed) === 1;
                 return (
-                    <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${isPresent
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800'
+                    <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${isPassed
+                        ? 'bg-blue-100 text-blue-800'
+                        : 'bg-gray-100 text-gray-800'
                         }`}>
-                        {isPresent ? 'Hadir' : 'Tidak Hadir'}
+                        {isPassed ? 'Lulus' : 'Belum'}
                     </span>
                 );
             },
@@ -423,19 +444,38 @@ export function AdminEventDetail() {
                                 className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                             >
                                 <option value="all">Semua Status</option>
-                                <option value="attended">Hadir</option>
-                                <option value="not_attended">Tidak Hadir</option>
+                                <option value="passed">Lulus</option>
+                                <option value="not_passed">Belum Lulus</option>
+                                <option value="attended">Hadir (Selesai Hari)</option>
+                                <option value="not_attended">Belum Hadir</option>
                             </select>
 
                             {selectedIds.length > 0 && (
                                 <div className="flex gap-2">
                                     <Button
                                         size="sm"
-                                        className="bg-green-600 hover:bg-green-700 text-white"
+                                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                                        onClick={() => handleBulkUpdate('passed')}
+                                    >
+                                        <CheckCircle className="w-4 h-4 mr-1" />
+                                        Tandai Lulus ({selectedIds.length})
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="text-gray-600 border-gray-200 hover:bg-gray-50"
+                                        onClick={() => handleBulkUpdate('not_passed')}
+                                    >
+                                        <XCircle className="w-4 h-4 mr-1" />
+                                        Batal Lulus ({selectedIds.length})
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        className="bg-green-600 hover:bg-green-700 text-white ml-4"
                                         onClick={() => handleBulkUpdate('attended')}
                                     >
                                         <CheckCircle className="w-4 h-4 mr-1" />
-                                        Tandai Hadir ({selectedIds.length})
+                                        Set Hadir ({selectedIds.length})
                                     </Button>
                                     <Button
                                         size="sm"
@@ -444,7 +484,7 @@ export function AdminEventDetail() {
                                         onClick={() => handleBulkUpdate('registered')}
                                     >
                                         <XCircle className="w-4 h-4 mr-1" />
-                                        Batal Absen ({selectedIds.length})
+                                        Set Belum Hadir ({selectedIds.length})
                                     </Button>
                                 </div>
                             )}

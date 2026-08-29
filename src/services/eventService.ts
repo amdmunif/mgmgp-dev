@@ -5,6 +5,7 @@ export interface Event {
     title: string;
     description: string;
     date: string;
+    total_days?: number;
     location: string;
     image_url?: string;
     materials_url?: string;
@@ -32,6 +33,7 @@ export interface EventParticipant {
     status: 'registered' | 'attended' | 'cancelled'; // Mapped from backend column
     // is_hadir & tugas_submitted might be legacy or part of status now
     is_hadir?: boolean;
+    is_passed?: number | boolean;
     tugas_submitted?: boolean;
     task_url?: string;
     payment_status?: 'free' | 'pending' | 'waiting_confirmation' | 'confirmed' | 'rejected';

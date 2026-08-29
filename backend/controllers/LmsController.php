@@ -662,18 +662,23 @@ class LmsController
         try {
             $query = "SELECT a.*, p.nama as user_name 
                       FROM lms_quiz_attempts a 
-                      INNER JOIN (
-                          SELECT user_id, MAX(started_at) as max_started_at
-                          FROM lms_quiz_attempts
-                          WHERE quiz_id = :qid1
-                          GROUP BY user_id
-                      ) latest ON a.user_id = latest.user_id AND a.started_at = latest.max_started_at
                       LEFT JOIN profiles p ON a.user_id = p.id 
-                      WHERE a.quiz_id = :qid2 
-                      ORDER BY a.started_at DESC";
+                      WHERE a.quiz_id = :qid 
+                      ORDER BY a.total_score DESC, a.started_at DESC";
             $stmt = $this->conn->prepare($query);
-            $stmt->execute([':qid1' => $quizId, ':qid2' => $quizId]);
-            return json_encode($stmt->fetchAll(\PDO::FETCH_ASSOC));
+            $stmt->execute([':qid' => $quizId]);
+            $attempts = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            $bestAttempts = [];
+            $seenUsers = [];
+            foreach ($attempts as $attempt) {
+                if (!isset($seenUsers[$attempt['user_id']])) {
+                    $bestAttempts[] = $attempt;
+                    $seenUsers[$attempt['user_id']] = true;
+                }
+            }
+
+            return json_encode($bestAttempts);
         } catch (\PDOException $e) {
             http_response_code(500);
             return json_encode(["message" => "Database error: " . $e->getMessage()]);
@@ -814,10 +819,10 @@ public function getEventGradebook($eventId) {
                     JOIN lms_quizzes q ON qa.quiz_id = q.id
                     JOIN lms_topics t ON q.topic_id = t.id
                     WHERE t.event_id = :eid
-                    ORDER BY qa.started_at DESC";
+                    ORDER BY qa.total_score DESC, qa.started_at DESC";
     $stmt = $this->conn->prepare($qQuizScores);
     $stmt->execute([':eid' => $eventId]);
-    $allQuizAttempts = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $allQuizAttempts = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
     // Group quiz attempts (latest only)
     $quizScores = [];

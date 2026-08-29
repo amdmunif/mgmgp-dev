@@ -6,6 +6,7 @@ import { cn } from '../../../lib/utils';
 import { toast } from 'react-hot-toast';
 import { lmsService } from '../../../services/lmsService';
 import { contentManagementService } from '../../../services/contentManagementService';
+import { eventService } from '../../../services/eventService';
 
 // Mock Data Types
 interface LmsMaterial {
@@ -68,6 +69,7 @@ export function LmsViewer() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [quizAttempts, setQuizAttempts] = useState<any[]>([]);
+    const [isPassed, setIsPassed] = useState(false);
 
     useEffect(() => {
         if (eventId) {
@@ -84,6 +86,15 @@ export function LmsViewer() {
                 if (ev && ev.title) setEventTitle(ev.title);
             } catch (e) {
                 console.error('Failed to load event title', e);
+            }
+            
+            try {
+                const part = await eventService.getParticipation(eId);
+                if (part && Number(part.is_passed) === 1) {
+                    setIsPassed(true);
+                }
+            } catch (e) {
+                console.error('Failed to load participation status', e);
             }
 
             const fetchedTopicsRaw = await lmsService.getTopicsByEvent(eId);
@@ -279,7 +290,7 @@ export function LmsViewer() {
                                 <div className="h-full bg-green-400 transition-all duration-500" style={{ width: `${progressPercent}%` }} />
                             </div>
                         </div>
-                        {progressPercent === 100 && (
+                        {isPassed && (
                             <Button size="sm" className="bg-yellow-500 hover:bg-yellow-600 text-yellow-950 font-bold hidden md:flex items-center">
                                 <Trophy className="w-4 h-4 mr-2" /> Unduh Sertifikat
                             </Button>
@@ -624,7 +635,7 @@ export function LmsViewer() {
                                 <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
                                     <div className="h-full bg-blue-600 transition-all duration-500" style={{ width: `${progressPercent}%` }} />
                                 </div>
-                                {progressPercent === 100 && (
+                                {isPassed && (
                                     <Button size="sm" className="w-full mt-3 bg-yellow-500 hover:bg-yellow-600 text-yellow-950 font-bold">
                                         <Trophy className="w-4 h-4 mr-2" /> Unduh Sertifikat
                                     </Button>
