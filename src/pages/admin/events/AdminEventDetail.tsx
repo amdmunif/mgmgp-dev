@@ -97,7 +97,7 @@ export function AdminEventDetail() {
             await contentManagementService.updateParticipantStatus(id, userId, newStatus);
             const updatedParticipants = participants.map(p =>
                 p.user_id === userId
-                    ? { ...p, status: newStatus, is_hadir: !isAttended ? 1 : 0 }
+                    ? { ...p, status: newStatus, is_hadir: !isAttended ? 1 : 0, attendance_count: !isAttended ? (event?.total_days || 1) : 0 }
                     : p
             );
             setParticipants(updatedParticipants);
@@ -159,7 +159,12 @@ export function AdminEventDetail() {
                     if (status === 'passed' || status === 'not_passed') {
                         return { ...p, is_passed: isPassed ? 1 : 0 };
                     }
-                    return { ...p, status: status, is_hadir: isAttended ? 1 : 0 };
+                    return { 
+                        ...p, 
+                        status: status, 
+                        is_hadir: isAttended ? 1 : 0,
+                        attendance_count: isAttended ? (event?.total_days || 1) : 0
+                    };
                 }
                 return p;
             }));

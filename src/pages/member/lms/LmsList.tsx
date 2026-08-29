@@ -27,8 +27,17 @@ export function LmsList() {
 
     const loadData = async () => {
         try {
-            // Mengambil riwayat event user, lalu memfilter yang memiliki fitur LMS
-            const history = await eventService.getMyHistory();
+            setLoading(true);
+
+            // Fetch history and progress concurrently
+            const [historyRes, summaryRes] = await Promise.allSettled([
+                eventService.getMyHistory(),
+                lmsService.getProgressSummary()
+            ]);
+
+            const history = historyRes.status === 'fulfilled' ? historyRes.value : [];
+            const summary = summaryRes.status === 'fulfilled' ? summaryRes.value : {};
+
             const lmsEvents = history
                 .filter(item => Number(item.events?.has_lms) === 1)
                 .map(item => ({
@@ -42,16 +51,10 @@ export function LmsList() {
                 }));
             
             setEvents(lmsEvents as any);
+            setProgressData(summary);
             
-            // Ambil progress riil
-            try {
-                const summary = await lmsService.getProgressSummary();
-                setProgressData(summary);
-            } catch (err) {
-                console.error('Failed to load progress summary', err);
-            }
         } catch (error) {
-            console.error('Failed to load events:', error);
+            console.error('Failed to load LMS list:', error);
         } finally {
             setLoading(false);
         }

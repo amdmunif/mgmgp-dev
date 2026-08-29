@@ -81,36 +81,36 @@ export function LmsViewer() {
         try {
             setLoading(true);
             
-            try {
-                const ev = await contentManagementService.getEventById(eId);
-                if (ev && ev.title) setEventTitle(ev.title);
-            } catch (e) {
-                console.error('Failed to load event title', e);
-            }
-            
-            try {
-                const part = await eventService.getParticipation(eId);
-                if (part && Number(part.is_passed) === 1) {
-                    setIsPassed(true);
-                }
-            } catch (e) {
-                console.error('Failed to load participation status', e);
-            }
+            // Parallelize independent top-level fetches
+            const [evRes, partRes, fetchedTopicsRaw, progressRaw] = await Promise.allSettled([
+                contentManagementService.getEventById(eId),
+                eventService.getParticipation(eId),
+                lmsService.getTopicsByEvent(eId),
+                lmsService.getEventProgress(eId)
+            ]);
 
-            const fetchedTopicsRaw = await lmsService.getTopicsByEvent(eId);
-            const progressRaw = await lmsService.getEventProgress(eId);
+            if (evRes.status === 'fulfilled' && evRes.value?.title) setEventTitle(evRes.value.title);
+            if (partRes.status === 'fulfilled' && partRes.value && Number(partRes.value.is_passed) === 1) setIsPassed(true);
+
+            const fetchedTopics = (fetchedTopicsRaw.status === 'fulfilled' && Array.isArray(fetchedTopicsRaw.value)) ? fetchedTopicsRaw.value : [];
+            const progress = (progressRaw.status === 'fulfilled' && Array.isArray(progressRaw.value)) ? progressRaw.value : [];
             
-            const fetchedTopics = Array.isArray(fetchedTopicsRaw) ? fetchedTopicsRaw : [];
-            const progress = Array.isArray(progressRaw) ? progressRaw : [];
-            
-            const fullTopics: LmsTopic[] = [];
-            for (const topic of fetchedTopics) {
-                const materialsRaw = await lmsService.getMaterialsByTopic(topic.id);
-                const materials = Array.isArray(materialsRaw) ? materialsRaw : [];
-                fullTopics.push({
+            // Fetch all materials concurrently
+            const materialsPromises = fetchedTopics.map(topic => 
+                lmsService.getMaterialsByTopic(topic.id)
+                  .then(mats => ({ topicId: topic.id, materials: Array.isArray(mats) ? mats : [] }))
+                  .catch(() => ({ topicId: topic.id, materials: [] }))
+            );
+
+            const materialsResults = await Promise.all(materialsPromises);
+            const materialsMap = new Map(materialsResults.map(m => [m.topicId, m.materials]));
+
+            const fullTopics: LmsTopic[] = fetchedTopics.map(topic => {
+                const materials = materialsMap.get(topic.id) || [];
+                return {
                     id: topic.id,
                     title: topic.title,
-                    items: materials.map(m => ({
+                    items: materials.map((m: any) => ({
                         id: m.id,
                         title: m.title,
                         type: m.type as any,
@@ -119,8 +119,8 @@ export function LmsViewer() {
                         duration: m.duration ? `${m.duration} Menit` : '',
                         is_completed: progress.includes(m.id)
                     }))
-                });
-            }
+                };
+            });
 
             setTopics(fullTopics);
             
@@ -313,7 +313,7 @@ export function LmsViewer() {
                                         <BookOpen className="w-8 h-8" />
                                     </div>
                                     <div>
-                                        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Selamat Datang di Kelas LMS!</h2>
+                                        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Selamat Datang di Kelas {eventTitle}!</h2>
                                         <p className="text-gray-500">Pilih materi pembelajaran di bawah ini untuk memulai.</p>
                                     </div>
                                 </div>
