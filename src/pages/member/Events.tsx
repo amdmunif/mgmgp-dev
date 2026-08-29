@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Button } from '../../components/ui/button';
-import { Loader2, Calendar, MapPin, CheckCircle, Crown, Lock, Clock } from 'lucide-react';
+import { Calendar, MapPin, CheckCircle, Crown, Clock, Loader2 } from 'lucide-react';
 import { eventService } from '../../services/eventService';
-import { authService } from '../../services/authService';
 import type { EventParticipant } from '../../services/eventService';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { cn, stripHtml } from '../../lib/utils';
-import { useNavigate, Link, useOutletContext } from 'react-router-dom';
+import { Link, useOutletContext } from 'react-router-dom';
 
 type EventWithStatus = {
     id: string;
@@ -22,14 +21,11 @@ type EventWithStatus = {
 }
 
 export function MemberEvents() {
-    const navigate = useNavigate();
     const { setPageHeader } = useOutletContext<any>();
     const [activeTab, setActiveTab] = useState<'upcoming' | 'history'>('upcoming');
     const [loading, setLoading] = useState(true);
     const [upcomingEvents, setUpcomingEvents] = useState<EventWithStatus[]>([]);
     const [history, setHistory] = useState<EventParticipant[]>([]);
-    const [processingId, setProcessingId] = useState<string | null>(null);
-    const [isPremium, setIsPremium] = useState(false);
 
     useEffect(() => {
         setPageHeader({
@@ -46,12 +42,6 @@ export function MemberEvents() {
     async function loadData() {
         setLoading(true);
         try {
-            // Check premium status
-            const { profile } = await authService.getCurrentUser() || {};
-            if (profile?.premium_until && new Date(profile.premium_until) > new Date()) {
-                setIsPremium(true);
-            }
-
             if (activeTab === 'upcoming') {
                 const data = await eventService.getUpcomingEvents();
                 setUpcomingEvents(data || []);
@@ -66,21 +56,7 @@ export function MemberEvents() {
         }
     }
 
-    async function handleRegister(eventId: string) {
-        if (!confirm('Apakah Anda yakin ingin mendaftar ke acara ini?')) return;
-        setProcessingId(eventId);
-        try {
-            await eventService.joinEvent(eventId);
-            await loadData(); // Reload to update status
-            alert('Berhasil mendaftar!');
-        } catch (error: any) {
-            alert('Gagal mendaftar: ' + error.message);
-        } finally {
-            setProcessingId(null);
-        }
-    }
-
-
+    // handleRegister function removed since registration is now handled in event details
 
     // async function handleCancel(eventId: string) {
     //     if(!confirm('Batalkan pendaftaran?')) return;
@@ -131,110 +107,86 @@ export function MemberEvents() {
                         upcomingEvents.length === 0 ? (
                             <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-xl">Belum ada agenda kegiatan mendatang.</div>
                         ) : (
-                            upcomingEvents.map(event => {
-                                const isEventPremium = Number(event.is_premium) === 1;
-                                const isRegistrationOpen = Number(event.is_registration_open) === 1;
-                                const isDeadlinePassed = event.registration_deadline ? new Date(event.registration_deadline) < new Date() : false;
-                                const canRegisterPremium = !isEventPremium || isPremium;
-                                const isQuotaFull = (event as any).quota ? Number((event as any).participants_count || 0) >= Number((event as any).quota) : false;
+                            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                                {upcomingEvents.map(event => {
+                                    const isEventPremium = Number(event.is_premium) === 1;
+                                    const isRegistrationOpen = Number(event.is_registration_open) === 1;
+                                    const isDeadlinePassed = event.registration_deadline ? new Date(event.registration_deadline) < new Date() : false;
+                                    const isQuotaFull = (event as any).quota ? Number((event as any).participants_count || 0) >= Number((event as any).quota) : false;
 
-                                return (
-                                <div key={event.id} className={cn(
-                                    "bg-white rounded-2xl border transition-all flex flex-col relative overflow-hidden group/card",
-                                    isEventPremium ? "border-amber-200 hover:border-amber-300 hover:shadow-md" : "border-gray-100 hover:border-blue-200 hover:shadow-md"
-                                )}>
-                                    {/* Corner Status Badges */}
-                                    <div className="absolute top-0 right-0 z-10 flex">
-                                        {event.is_premium === 1 && (
-                                            <div className="bg-amber-400 text-amber-900 text-[10px] font-bold px-3 py-1.5 flex items-center gap-1 shadow-sm">
-                                                <Crown className="w-3 h-3" /> PRO
-                                            </div>
-                                        )}
-                                        {event.participation_status === 'registered' || event.participation_status === 'attended' ? (
-                                            <div className="bg-green-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-bl-xl shadow-sm tracking-wider">
-                                                TERDAFTAR
-                                            </div>
-                                        ) : (!isRegistrationOpen || isDeadlinePassed || isQuotaFull) ? (
-                                            <div className="bg-red-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-bl-xl shadow-sm tracking-wider">
-                                                DITUTUP
-                                            </div>
-                                        ) : (
-                                            <div className="bg-blue-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-bl-xl shadow-sm tracking-wider">
-                                                BUKA
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Main Content Area */}
-                                    <div className="p-6 flex-1">
-                                        <Link to={`/member/events/${event.id}`} className="block mb-4 pr-16">
-                                            <h3 className="text-xl font-bold text-gray-900 group-hover/card:text-blue-600 transition-colors line-clamp-2 leading-snug">
-                                                {event.title}
-                                            </h3>
-                                        </Link>
-                                        
-                                        <div className="flex flex-col gap-2.5 text-sm text-gray-500 mb-5">
-                                            <div className="flex items-start gap-2.5">
-                                                <Calendar className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
-                                                <span className="leading-tight">{format(new Date(event.date), 'EEEE, dd MMMM yyyy (HH:mm)', { locale: id })} WIB</span>
-                                            </div>
-                                            <div className="flex items-start gap-2.5">
-                                                <MapPin className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
-                                                <span className="line-clamp-2 leading-tight">{event.location}</span>
-                                            </div>
-                                        </div>
-
-                                        <p className="text-gray-600 line-clamp-2 text-sm leading-relaxed">
-                                            {stripHtml(event.description)}
-                                        </p>
-                                    </div>
-
-                                    {/* Footer / Actions Area */}
-                                    <div className="px-6 py-4 bg-gray-50/50 border-t border-gray-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                        <div className="flex items-center">
-                                            {(event as any).quota && (
-                                                <span className="text-xs font-medium text-gray-500 bg-white px-2.5 py-1 rounded-md border border-gray-100 shadow-sm">
-                                                    Sisa Kuota: <strong className="text-blue-600">{Number((event as any).quota) - Number((event as any).participants_count || 0)}</strong>
-                                                </span>
+                                    return (
+                                    <div key={event.id} className={cn(
+                                        "bg-white rounded-2xl border transition-all flex flex-col relative overflow-hidden group/card",
+                                        isEventPremium ? "border-amber-200 hover:border-amber-300 hover:shadow-md" : "border-gray-100 hover:border-blue-200 hover:shadow-md"
+                                    )}>
+                                        {/* Corner Status Badges */}
+                                        <div className="absolute top-0 right-0 z-10 flex">
+                                            {event.is_premium === 1 && (
+                                                <div className="bg-amber-400 text-amber-900 text-[10px] font-bold px-3 py-1.5 flex items-center gap-1 shadow-sm">
+                                                    <Crown className="w-3 h-3" /> PRO
+                                                </div>
+                                            )}
+                                            {event.participation_status === 'registered' || event.participation_status === 'attended' ? (
+                                                <div className="bg-green-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-bl-xl shadow-sm tracking-wider">
+                                                    TERDAFTAR
+                                                </div>
+                                            ) : (!isRegistrationOpen || isDeadlinePassed || isQuotaFull) ? (
+                                                <div className="bg-red-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-bl-xl shadow-sm tracking-wider">
+                                                    DITUTUP
+                                                </div>
+                                            ) : (
+                                                <div className="bg-blue-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-bl-xl shadow-sm tracking-wider">
+                                                    BUKA
+                                                </div>
                                             )}
                                         </div>
-                                        
-                                        <div className="flex items-center gap-2 w-full sm:w-auto">
-                                            <Link to={`/member/events/${event.id}`} className="flex-1 sm:flex-none">
-                                                <Button variant="ghost" size="sm" className="w-full sm:w-auto text-blue-600 hover:text-blue-800 hover:bg-blue-50">
-                                                    Detail
-                                                </Button>
+
+                                        {/* Main Content Area */}
+                                        <div className="p-6 flex-1">
+                                            <Link to={`/member/events/${event.id}`} className="block mb-4 pr-16">
+                                                <h3 className="text-xl font-bold text-gray-900 group-hover/card:text-blue-600 transition-colors line-clamp-2 leading-snug">
+                                                    {event.title}
+                                                </h3>
                                             </Link>
                                             
-                                            {!(event.participation_status === 'registered' || event.participation_status === 'attended') && (
-                                                isRegistrationOpen && !isDeadlinePassed && !isQuotaFull ? (
-                                                    canRegisterPremium ? (
-                                                        <Button
-                                                            size="sm"
-                                                            onClick={() => handleRegister(event.id)}
-                                                            disabled={processingId === event.id}
-                                                            className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white shadow-sm px-6"
-                                                        >
-                                                            {processingId === event.id ? <Loader2 className="w-3 h-3 animate-spin mr-1.5" /> : null}
-                                                            Daftar
-                                                        </Button>
-                                                    ) : (
-                                                        <Button
-                                                            size="sm"
-                                                            onClick={() => navigate('/member/upgrade')}
-                                                            className="flex-1 sm:flex-none bg-amber-500 hover:bg-amber-600 text-white shadow-sm px-5"
-                                                        >
-                                                            <Lock className="w-3 h-3 mr-1.5" />
-                                                            Premium
-                                                        </Button>
-                                                    )
-                                                ) : null
-                                            )}
+                                            <div className="flex flex-col gap-2.5 text-sm text-gray-500 mb-5">
+                                                <div className="flex items-start gap-2.5">
+                                                    <Calendar className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
+                                                    <span className="leading-tight">{format(new Date(event.date), 'EEEE, dd MMMM yyyy (HH:mm)', { locale: id })} WIB</span>
+                                                </div>
+                                                <div className="flex items-start gap-2.5">
+                                                    <MapPin className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
+                                                    <span className="line-clamp-2 leading-tight">{event.location}</span>
+                                                </div>
+                                            </div>
+
+                                            <p className="text-gray-600 line-clamp-2 text-sm leading-relaxed">
+                                                {stripHtml(event.description)}
+                                            </p>
+                                        </div>
+
+                                        {/* Footer / Actions Area */}
+                                        <div className="px-6 py-4 bg-gray-50/50 border-t border-gray-50 flex flex-row items-center justify-between gap-4">
+                                            <div className="flex items-center">
+                                                {(event as any).quota && (
+                                                    <span className="text-xs font-medium text-gray-500 bg-white px-2.5 py-1 rounded-md border border-gray-100 shadow-sm">
+                                                        Sisa Kuota: <strong className="text-blue-600">{Number((event as any).quota) - Number((event as any).participants_count || 0)} / {(event as any).quota}</strong>
+                                                    </span>
+                                                )}
+                                            </div>
+                                            
+                                            <div className="flex items-center gap-2">
+                                                <Link to={`/member/events/${event.id}`}>
+                                                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm px-6">
+                                                        Lihat Detail
+                                                    </Button>
+                                                </Link>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                )
-                            })
+                                    )
+                                })}
+                            </div>
                         )
                     )}
 

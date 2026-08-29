@@ -531,6 +531,7 @@ class ContentController
         // e.* will include is_premium IF it exists.
         // Synthesize participation_status from is_hadir since 'status' column does not exist
         $query = "SELECT e.*, 
+                  (SELECT COUNT(*) FROM event_participants WHERE event_id = e.id) as participants_count,
                   CASE 
                     WHEN ep.is_hadir = 1 THEN 'attended'
                     WHEN ep.user_id IS NOT NULL THEN 'registered'

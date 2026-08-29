@@ -445,18 +445,18 @@ export function AdminEventDetail() {
     return (
         <div className="space-y-6">
             <div className="flex flex-col gap-6">
-                {/* Header Row */}
-                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                {/* Header & Stats - Minimalist Layout */}
+                <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
                     <div className="flex items-start gap-4">
                         <button
                             onClick={() => navigate('/admin/events')}
-                            className="p-2 hover:bg-gray-100 rounded-full transition-colors mt-1 shrink-0"
+                            className="p-2 hover:bg-gray-100 rounded-full transition-colors mt-0.5 shrink-0 text-gray-500"
                         >
-                            <ArrowLeft className="w-6 h-6" />
+                            <ArrowLeft className="w-5 h-5" />
                         </button>
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-900">{event.title}</h1>
-                            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 mt-2">
+                            <h1 className="text-2xl font-bold text-gray-900 leading-tight mb-2">{event.title}</h1>
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-600">
                                 <span className="flex items-center gap-1.5">
                                     <Calendar className="w-4 h-4 text-blue-500" />
                                     {formatDate(event.date)}
@@ -465,68 +465,57 @@ export function AdminEventDetail() {
                                     <MapPin className="w-4 h-4 text-blue-500" />
                                     {event.location}
                                 </span>
+                                
+                                {/* Inline Stats Divider */}
+                                <span className="hidden sm:inline text-gray-300">|</span>
+                                
+                                {/* Inline Stats */}
+                                <span className="flex items-center gap-1.5">
+                                    <Users className="w-4 h-4 text-gray-400" />
+                                    <strong>{participants.length}</strong> {event.quota ? `/ ${event.quota}` : ''} Peserta
+                                </span>
+                                <span className="flex items-center gap-1.5 text-green-600">
+                                    <UserCheck className="w-4 h-4" />
+                                    <strong>{participants.filter(p => Number(p.is_hadir) === 1).length}</strong> Hadir
+                                </span>
+                                <span className="flex items-center gap-1.5 text-red-600">
+                                    <UserMinus className="w-4 h-4" />
+                                    <strong>{participants.filter(p => Number(p.is_hadir) === 0).length}</strong> Tidak Hadir
+                                </span>
                             </div>
-                            
-                            <div className="flex flex-wrap gap-3 mt-6">
-                                <Button 
-                                    onClick={() => navigate(`/admin/events/${id}/print-attendance`)}
-                                    className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
-                                >
-                                    <Printer className="w-4 h-4 mr-2" />
-                                    Cetak Daftar Hadir
-                                </Button>
-                                <Button 
-                                    onClick={() => setShowQR(true)}
-                                    variant="outline"
-                                    className="border-indigo-200 text-indigo-700 hover:bg-indigo-50"
-                                >
-                                    <QrCode className="w-4 h-4 mr-2" />
-                                    Buka QR Absensi
-                                </Button>
-                                {event?.has_lms && (
-                                    <Button 
-                                        onClick={() => navigate(`/admin/events/${id}/lms`)}
-                                        className="bg-purple-600 hover:bg-purple-700 text-white shadow-sm"
-                                    >
-                                        <MonitorPlay className="w-4 h-4 mr-2" />
-                                        Kelola Materi LMS
-                                    </Button>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Stats Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
-                        <div>
-                            <p className="text-sm font-medium text-gray-500 mb-1">Total Peserta</p>
-                            <p className="text-2xl font-bold text-gray-900">{participants.length} <span className="text-lg text-gray-400 font-normal">{event.quota ? `/ ${event.quota}` : ''}</span></p>
-                        </div>
-                        <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center shrink-0">
-                            <Users className="w-6 h-6" />
                         </div>
                     </div>
                     
-                    <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
-                        <div>
-                            <p className="text-sm font-medium text-gray-500 mb-1">Hadir</p>
-                            <p className="text-2xl font-bold text-green-600">{participants.filter(p => Number(p.is_hadir) === 1).length}</p>
-                        </div>
-                        <div className="w-12 h-12 bg-green-50 text-green-600 rounded-2xl flex items-center justify-center shrink-0">
-                            <UserCheck className="w-6 h-6" />
-                        </div>
-                    </div>
-
-                    <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
-                        <div>
-                            <p className="text-sm font-medium text-gray-500 mb-1">Tidak Hadir</p>
-                            <p className="text-2xl font-bold text-red-600">{participants.filter(p => Number(p.is_hadir) === 0).length}</p>
-                        </div>
-                        <div className="w-12 h-12 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center shrink-0">
-                            <UserMinus className="w-6 h-6" />
-                        </div>
+                    {/* Action Buttons on the Right */}
+                    <div className="flex flex-wrap items-center gap-2 pl-12 xl:pl-0 shrink-0">
+                        <Button 
+                            onClick={() => navigate(`/admin/events/${id}/print-attendance`)}
+                            variant="outline"
+                            size="sm"
+                            className="border-gray-200 text-gray-700 hover:bg-gray-50 shadow-sm h-9"
+                        >
+                            <Printer className="w-4 h-4 mr-2" />
+                            Cetak
+                        </Button>
+                        <Button 
+                            onClick={() => setShowQR(true)}
+                            variant="outline"
+                            size="sm"
+                            className="border-indigo-200 text-indigo-700 hover:bg-indigo-50 shadow-sm h-9"
+                        >
+                            <QrCode className="w-4 h-4 mr-2" />
+                            QR Absensi
+                        </Button>
+                        {event?.has_lms && (
+                            <Button 
+                                onClick={() => navigate(`/admin/events/${id}/lms`)}
+                                size="sm"
+                                className="bg-purple-600 hover:bg-purple-700 text-white shadow-sm h-9"
+                            >
+                                <MonitorPlay className="w-4 h-4 mr-2" />
+                                Kelola LMS
+                            </Button>
+                        )}
                     </div>
                 </div>
             </div>

@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate, useOutletContext } from 'react-router-dom';
 import {
     BookOpen, Gamepad2, Terminal, Crown,
-    ArrowRight, Lock, LayoutDashboard, Calendar, Eye, X, MapPin
+    ArrowRight, Lock, LayoutDashboard, Calendar, Eye, X, MapPin, ChevronRight
 } from 'lucide-react';
 import { authService } from '../../services/authService';
 import { statsService } from '../../services/statsService';
 import { premiumService } from '../../services/premiumService';
 import { settingsService } from '../../services/settingsService';
+import { eventService } from '../../services/eventService';
 import { Button } from '../../components/ui/button';
 
 export function MemberDashboard() {
@@ -40,10 +41,14 @@ export function MemberDashboard() {
     useEffect(() => {
         const loadDashboard = async () => {
             try {
-                // Determine user
-                const { user: authUser, profile: userProfile } = await authService.getCurrentUser() || {};
-                const currentUser = userProfile || authUser;
+                // Fire ALL independent requests in parallel to avoid slow waterfall
+                const [userRes, dashboardStats, eventsRes] = await Promise.all([
+                    authService.getCurrentUser(),
+                    statsService.getOverview(),
+                    eventService.getUpcomingEvents()
+                ]);
 
+                const currentUser = userRes?.profile || userRes?.user;
                 if (!currentUser) {
                     navigate('/login');
                     return;
@@ -55,7 +60,11 @@ export function MemberDashboard() {
                 const isPremiumActive = userWithPremium?.premium_until && new Date(userWithPremium.premium_until) > new Date();
                 setIsPremium(!!isPremiumActive);
 
-                // Load Premium Info if active
+                setStats(dashboardStats);
+                setUpcomingEvents(eventsRes?.slice(0, 3) || []);
+
+                // Load Premium Info separately without blocking the main render if possible, 
+                // but since we want to set it, we do it after or alongside if we didn't depend on user
                 if (isPremiumActive) {
                     try {
                         const [req, settings, banks] = await Promise.all([
@@ -70,15 +79,6 @@ export function MemberDashboard() {
                         console.error("Failed to load premium details", e);
                     }
                 }
-
-                // Run independent queries concurrently to speed up loading
-                const [dashboardStats, events] = await Promise.all([
-                    statsService.getOverview(),
-                    import('../../services/eventService').then(m => m.eventService.getUpcomingEvents())
-                ]);
-                
-                setStats(dashboardStats);
-                setUpcomingEvents(events?.slice(0, 3) || []);
 
             } catch (e) {
                 console.error("Failed to load dashboard", e);
@@ -199,50 +199,69 @@ export function MemberDashboard() {
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                         {upcomingEvents.length > 0 ? (
                             <div className="divide-y divide-gray-100">
-                                {upcomingEvents.map((event) => (
-                                    <div key={event.id} className="p-4 hover:bg-gray-50 transition-colors">
-                                        <div className="flex items-start gap-3">
-                                            <div className="w-12 text-center bg-blue-50 text-blue-700 rounded-lg p-1 shrink-0">
-                                                <span className="block text-xs font-bold uppercase">{new Date(event.date).toLocaleString('id-ID', { month: 'short' })}</span>
-                                                <span className="block text-lg font-bold">{new Date(event.date).getDate()}</span>
+                                {upcomingEvents.map((event) => {
+                                    const parsedDeadline = event.registration_deadline?.includes(' ') ? event.registration_deadline.replace(' ', 'T') : event.registration_deadline;
+                                    const isDeadlinePassed = event.registration_deadline ? new Date(parsedDeadline!) < new Date() : false;
+                                    const isQuotaFull = event.quota ? Number(event.participants_count || 0) >= Number(event.quota) : false;
+                                    const isOpen = Number(event.is_registration_open) === 1 && !isDeadlinePassed && !isQuotaFull;
+
+                                    return (
+                                        <div key={event.id} className="p-4 hover:bg-gray-50 transition-colors group/item flex flex-col relative overflow-hidden">
+                                            {/* Corner Status Badge */}
+                                            <div className="absolute top-0 right-0 z-10 flex">
+                                                {event.participation_status === 'registered' || event.participation_status === 'attended' ? (
+                                                    <div className="bg-green-500 text-white text-[9px] font-bold px-2 py-1 rounded-bl-lg shadow-sm">
+                                                        TERDAFTAR
+                                                    </div>
+                                                ) : (!isOpen) ? (
+                                                    <div className="bg-red-500 text-white text-[9px] font-bold px-2 py-1 rounded-bl-lg shadow-sm">
+                                                        DITUTUP
+                                                    </div>
+                                                ) : (
+                                                    <div className="bg-blue-500 text-white text-[9px] font-bold px-2 py-1 rounded-bl-lg shadow-sm">
+                                                        BUKA
+                                                    </div>
+                                                )}
                                             </div>
-                                            <div className="flex-1 min-w-0">
-                                                <h3 className="font-bold text-gray-900 flex flex-wrap items-center gap-1.5 mb-1">
-                                                    <span className="line-clamp-2">{event.title}</span>
-                                                    {event.is_premium === 1 && (
-                                                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-yellow-100 text-yellow-700 border border-yellow-200">
-                                                            PRO
-                                                        </span>
-                                                    )}
-                                                    {(() => {
-                                                        const parsedDeadline = event.registration_deadline?.includes(' ') ? event.registration_deadline.replace(' ', 'T') : event.registration_deadline;
-                                                        const isDeadlinePassed = event.registration_deadline ? new Date(parsedDeadline!) < new Date() : false;
-                                                        const isQuotaFull = event.quota ? Number(event.participants_count || 0) >= Number(event.quota) : false;
-                                                        const isOpen = Number(event.is_registration_open) === 1 && !isDeadlinePassed && !isQuotaFull;
-                                                        return isOpen ? (
-                                                            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-700 border border-green-200">
-                                                                BUKA
+
+                                            <div className="flex items-start gap-3">
+                                                <div className="w-12 text-center bg-blue-50 text-blue-700 rounded-lg p-1 shrink-0 border border-blue-100">
+                                                    <span className="block text-[10px] font-bold uppercase">{new Date(event.date).toLocaleString('id-ID', { month: 'short' })}</span>
+                                                    <span className="block text-lg font-bold">{new Date(event.date).getDate()}</span>
+                                                </div>
+                                                <div className="flex-1 min-w-0 pr-14">
+                                                    <h3 className="font-bold text-gray-900 group-hover/item:text-blue-600 transition-colors line-clamp-2 leading-snug mb-1">
+                                                        {event.title}
+                                                        {event.is_premium === 1 && (
+                                                            <span className="ml-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-700 border border-amber-200 align-middle">
+                                                                PRO
                                                             </span>
-                                                        ) : (
-                                                            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700 border border-red-200">
-                                                                DITUTUP
-                                                            </span>
-                                                        );
-                                                    })()}
-                                                </h3>
-                                                <div className="flex flex-col gap-0.5 mb-3">
-                                                    <p className="text-xs text-gray-500 flex items-center gap-1"><MapPin className="w-3 h-3" /> {event.location}</p>
+                                                        )}
+                                                    </h3>
+                                                    <p className="text-xs text-gray-500 flex items-center gap-1 mb-2">
+                                                        <MapPin className="w-3 h-3 shrink-0" /> <span className="line-clamp-1">{event.location}</span>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            
+                                            {/* Footer of the mini card */}
+                                            <div className="mt-2 pt-3 flex items-center justify-between border-t border-gray-100/60">
+                                                <div>
                                                     {event.quota && (
-                                                        <p className="text-[10px] font-medium text-blue-600">Sisa Kuota: {Number(event.quota) - Number(event.participants_count || 0)} dari {event.quota}</p>
+                                                        <span className="text-[10px] font-medium text-gray-500 bg-white px-2 py-1 rounded border border-gray-100 shadow-sm">
+                                                            Sisa Kuota: <strong className="text-blue-600">{Number(event.quota) - Number(event.participants_count || 0)}</strong>
+                                                        </span>
                                                     )}
                                                 </div>
                                                 <Link to={`/member/events/${event.id}`}>
-                                                    <Button size="sm" variant="outline" className="w-full text-xs h-8">Lihat Detail</Button>
+                                                    <span className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center px-2 py-1 rounded hover:bg-blue-50 transition-colors">
+                                                        Detail <ChevronRight className="w-3 h-3 ml-0.5" />
+                                                    </span>
                                                 </Link>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         ) : (
                             <div className="p-8 text-center text-gray-500">
