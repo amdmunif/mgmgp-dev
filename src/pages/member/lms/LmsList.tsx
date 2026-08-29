@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { MonitorPlay, ChevronRight, Loader2 } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { contentManagementService } from '../../../services/contentManagementService';
 import { lmsService } from '../../../services/lmsService';
+import { eventService } from '../../../services/eventService';
 import { getFileUrl } from '../../../lib/api';
 import type { Event } from '../../../types';
 
@@ -27,9 +27,20 @@ export function LmsList() {
 
     const loadData = async () => {
         try {
-            // Mengambil semua data acara, lalu memfilter yang memiliki fitur LMS
-            const data = await contentManagementService.getAllEvents();
-            setEvents(data.filter((e: any) => Number(e.has_lms) === 1 || e.has_lms === true));
+            // Mengambil riwayat event user, lalu memfilter yang memiliki fitur LMS
+            const history = await eventService.getMyHistory();
+            const lmsEvents = history
+                .filter(item => Number(item.events?.has_lms) === 1)
+                .map(item => ({
+                    id: item.event_id,
+                    title: item.events?.title || '',
+                    date: item.events?.date || '',
+                    location: item.events?.location || '',
+                    image_url: item.events?.image_url,
+                    has_lms: 1
+                }));
+            
+            setEvents(lmsEvents as any);
             
             // Ambil progress riil
             try {

@@ -110,6 +110,31 @@ export function AdminEvents() {
             )
         },
         {
+            header: "Status & Kuota",
+            cell: (item: Event) => (
+                <div className="flex flex-col gap-1">
+                    {item.quota ? (
+                        <div className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded w-fit">
+                            Kuota: {item.participants_count || 0} / {item.quota}
+                        </div>
+                    ) : (
+                        <div className="text-xs font-medium text-gray-500 bg-gray-50 px-2 py-1 rounded w-fit">
+                            Tak Terbatas
+                        </div>
+                    )}
+                    {item.is_registration_open ? (
+                        <div className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded w-fit">
+                            Pendaftaran Buka
+                        </div>
+                    ) : (
+                        <div className="text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded w-fit">
+                            Pendaftaran Tutup
+                        </div>
+                    )}
+                </div>
+            )
+        },
+        {
             header: "Aksi",
             cell: (item: Event) => (
                 <div className="flex items-center justify-end gap-2">

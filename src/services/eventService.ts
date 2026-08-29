@@ -46,6 +46,8 @@ export interface EventParticipant {
         location: string;
         certificate_url?: string;
         tasks_url?: string;
+        has_lms?: boolean | number;
+        image_url?: string;
     };
 }
 

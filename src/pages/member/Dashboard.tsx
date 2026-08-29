@@ -208,8 +208,8 @@ export function MemberDashboard() {
                                                 <span className="block text-lg font-bold">{new Date(event.date).getDate()}</span>
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <h3 className="font-bold text-gray-900 truncate flex items-center gap-2">
-                                                    {event.title}
+                                                <h3 className="font-bold text-gray-900 flex flex-wrap items-center gap-1.5">
+                                                    <span className="line-clamp-2">{event.title}</span>
                                                     {event.is_premium === 1 && (
                                                         <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-yellow-100 text-yellow-700 border border-yellow-200">
                                                             PRO

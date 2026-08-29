@@ -182,7 +182,7 @@ export function MemberLayout() {
                             <BookOpen className="w-5 h-5" />
                         </div>
                     )}
-                    <span className="font-bold text-lg text-primary-900">MGMP Anggota</span>
+                    <span className="font-bold text-lg text-primary-900">MGMP Informatika</span>
 
                     <button onClick={() => setIsSidebarOpen(false)} className="md:hidden text-gray-500 hover:bg-gray-100 p-1 rounded ml-auto">
                         <X className="w-5 h-5" />
@@ -271,7 +271,7 @@ export function MemberLayout() {
                                         <BookOpen className="w-5 h-5" />
                                     </div>
                                 )}
-                                <span className="font-bold text-lg text-primary-900">MGMP Anggota</span>
+                                <span className="font-bold text-lg text-primary-900">MGMP Informatika</span>
                             </div>
                         )}
                     </div>

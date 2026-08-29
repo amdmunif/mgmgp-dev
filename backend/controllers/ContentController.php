@@ -103,11 +103,11 @@ class ContentController
     // --- EVENTS ---
     public function getEvents($isAdmin = false)
     {
-        $query = "SELECT * FROM events";
+        $query = "SELECT e.*, (SELECT COUNT(*) FROM event_participants WHERE event_id = e.id) as participants_count FROM events e";
         if (!$isAdmin) {
-            $query .= " WHERE is_registration_open = 1";
+            $query .= " WHERE e.is_registration_open = 1";
         }
-        $query .= " ORDER BY date DESC";
+        $query .= " ORDER BY e.date DESC";
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
         return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
@@ -115,9 +115,9 @@ class ContentController
 
     public function getEventDetail($id, $isAdmin = false)
     {
-        $query = "SELECT * FROM events WHERE id = :id";
+        $query = "SELECT e.*, (SELECT COUNT(*) FROM event_participants WHERE event_id = e.id) as participants_count FROM events e WHERE e.id = :id";
         if (!$isAdmin) {
-            $query .= " AND is_registration_open = 1";
+            $query .= " AND e.is_registration_open = 1";
         }
         
         $stmt = $this->conn->prepare($query);
@@ -557,7 +557,7 @@ class ContentController
 
     public function getMyHistory($userId)
     {
-        $query = "SELECT ep.*, e.title, e.date, e.location, e.tasks_url as event_tasks_url, e.certificate_url 
+        $query = "SELECT ep.*, e.title, e.date, e.location, e.tasks_url as event_tasks_url, e.certificate_url, e.has_lms, e.image_url 
                   FROM event_participants ep 
                   JOIN events e ON ep.event_id = e.id 
                   WHERE ep.user_id = :uid 
@@ -584,7 +584,9 @@ class ContentController
                     'date' => $row['date'],
                     'location' => $row['location'],
                     'certificate_url' => $row['certificate_url'] ?? null,
-                    'tasks_url' => $row['event_tasks_url'] ?? null
+                    'tasks_url' => $row['event_tasks_url'] ?? null,
+                    'has_lms' => $row['has_lms'],
+                    'image_url' => $row['image_url']
                 ]
             ];
         }

@@ -34,6 +34,7 @@ interface EventDetail {
     is_paid: boolean;
     has_lms?: boolean | number;
     total_days?: number;
+    quota?: number;
 }
 
 export function AdminEventDetail() {
@@ -413,7 +414,9 @@ export function AdminEventDetail() {
 
                 <div className="flex gap-4">
                     <div className="px-4 py-2 bg-blue-50 rounded-lg border border-blue-100 text-center min-w-[100px]">
-                        <div className="text-xl font-bold text-blue-600">{participants.length}</div>
+                        <div className="text-xl font-bold text-blue-600">
+                            {participants.length} {event.quota ? `/ ${event.quota}` : ''}
+                        </div>
                         <div className="text-xs text-blue-800 font-medium">TOTAL PESERTA</div>
                     </div>
                     <div className="px-4 py-2 bg-green-50 rounded-lg border border-green-100 text-center min-w-[100px]">

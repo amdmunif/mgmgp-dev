@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { ChevronDown, ChevronRight, PlayCircle, FileText, CheckCircle, ArrowLeft, Menu, X, CheckSquare, Trophy, Loader2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, PlayCircle, FileText, CheckCircle, ArrowLeft, Menu, X, CheckSquare, Trophy, Loader2, BookOpen } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { cn } from '../../../lib/utils';
 import { toast } from 'react-hot-toast';
@@ -138,11 +138,11 @@ export function LmsViewer() {
                             break;
                         }
                     }
-                }
-
-                setExpandedTopics([activeTopicId]);
-                if (initialMaterialId) {
+                    setExpandedTopics([activeTopicId]);
                     setActiveMaterial(initialMaterialId);
+                } else {
+                    // Default to overview mode
+                    setActiveMaterial('');
                 }
             }
         } catch (error) {
@@ -526,33 +526,33 @@ export function LmsViewer() {
                                     </a>
                                 )}
                             </div>
-                            <div className="w-full flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative flex flex-col min-h-[400px]">
+                            <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative flex flex-col">
                                 {activeItem?.type === 'video' ? (
-                                    <div className="w-full h-full bg-black relative flex-1 flex items-center justify-center min-h-[400px]">
-                                        <div className="w-full aspect-video relative max-w-[1200px]">
-                                            {activeItem.url?.includes('youtube.com') || activeItem.url?.includes('youtu.be') ? (
-                                                <iframe
-                                                    className="absolute inset-0 w-full h-full border-0"
-                                                    src={getEmbedUrl(activeItem.url)}
-                                                    allowFullScreen
-                                                    title={activeItem.title}
-                                                />
-                                            ) : (
-                                                <video 
-                                                    className="absolute inset-0 w-full h-full"
-                                                    controls 
-                                                    src={activeItem.url} 
-                                                />
-                                            )}
-                                        </div>
+                                    <div className="w-full aspect-video bg-black relative flex items-center justify-center">
+                                        {activeItem.url?.includes('youtube.com') || activeItem.url?.includes('youtu.be') ? (
+                                            <iframe
+                                                className="absolute inset-0 w-full h-full border-0"
+                                                src={getEmbedUrl(activeItem.url)}
+                                                allowFullScreen
+                                                title={activeItem.title}
+                                            />
+                                        ) : (
+                                            <video 
+                                                className="absolute inset-0 w-full h-full"
+                                                controls 
+                                                src={activeItem.url} 
+                                            />
+                                        )}
                                     </div>
                                 ) : activeItem?.type === 'pdf' || activeItem?.type === 'link' ? (
-                                    <iframe 
-                                        src={getEmbedUrl(activeItem.url)} 
-                                        className="w-full h-full flex-1 min-h-[600px] bg-gray-50 border-0"
-                                        title={activeItem.title}
-                                        allowFullScreen
-                                    />
+                                    <div className="w-full aspect-video bg-gray-50 relative flex items-center justify-center">
+                                        <iframe 
+                                            src={getEmbedUrl(activeItem.url)} 
+                                            className="absolute inset-0 w-full h-full border-0"
+                                            title={activeItem.title}
+                                            allowFullScreen
+                                        />
+                                    </div>
                                 ) : activeItem?.type === 'text' ? (
                                     <div className="p-8 md:p-12 prose prose-blue max-w-none w-full overflow-y-auto" dangerouslySetInnerHTML={{ __html: activeItem.content || '' }} />
                                 ) : (
@@ -608,10 +608,11 @@ export function LmsViewer() {
                 sidebarOpen ? "w-80 translate-x-0" : "w-80 -translate-x-full md:w-0 md:border-none"
             )}>
                 {/* Brand / Top Area */}
-                <div className="h-16 border-b border-gray-100 flex items-center px-4 bg-white sticky top-0 z-10 flex-shrink-0">
-                    <Button variant="ghost" size="sm" onClick={() => navigate('/member/lms')} className="text-gray-600 hover:text-gray-900 -ml-2">
-                        <ArrowLeft className="w-4 h-4 mr-2" /> Kembali
-                    </Button>
+                <div className="h-16 border-b border-gray-100 flex items-center px-6 bg-white sticky top-0 z-10 flex-shrink-0 gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white shrink-0">
+                        <BookOpen className="w-5 h-5" />
+                    </div>
+                    <span className="font-bold text-lg text-gray-900">LMS MGMP</span>
                 </div>
 
                 <div className="p-4 bg-gray-50/50 border-b border-gray-100 flex-shrink-0">
