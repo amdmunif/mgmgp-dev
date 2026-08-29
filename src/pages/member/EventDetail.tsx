@@ -148,7 +148,9 @@ export function MemberEventDetail() {
 
     const isEventPremium = Number(event.is_premium) === 1;
     const isRegistrationOpen = Number(event.is_registration_open) === 1;
-    const isDeadlinePassed = event.registration_deadline ? new Date(event.registration_deadline) < new Date() : false;
+    const parsedDeadline = event.registration_deadline?.includes(' ') ? event.registration_deadline.replace(' ', 'T') : event.registration_deadline;
+    const isDeadlinePassed = event.registration_deadline ? new Date(parsedDeadline!) < new Date() : false;
+    const isQuotaFull = event.quota ? Number(event.participants_count || 0) >= Number(event.quota) : false;
     const canRegisterPremium = !isEventPremium || isPremium;
 
     // Determine status badge color/text
@@ -366,17 +368,17 @@ export function MemberEventDetail() {
                                     </div>
                                 ) : (
                                     <div className="space-y-4">
-                                        {!isRegistrationOpen || isDeadlinePassed ? (
+                                        {!isRegistrationOpen || isDeadlinePassed || isQuotaFull ? (
                                             <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 text-center">
                                                 <div className="w-12 h-12 bg-gray-100 text-gray-500 rounded-full flex items-center justify-center mx-auto mb-3">
                                                     <FileText className="w-6 h-6" />
                                                 </div>
-                                                <h4 className="font-bold text-gray-700 mb-1">Pendaftaran Ditutup</h4>
+                                                <h4 className="font-bold text-gray-700 mb-1">{isQuotaFull ? 'Kuota Penuh' : 'Pendaftaran Ditutup'}</h4>
                                                 <p className="text-xs text-gray-500 mb-4">
-                                                    Mohon maaf, pendaftaran untuk acara ini sudah ditutup.
+                                                    {isQuotaFull ? 'Mohon maaf, kuota pendaftaran untuk acara ini sudah penuh.' : 'Mohon maaf, pendaftaran untuk acara ini sudah ditutup.'}
                                                 </p>
                                                 <Button disabled className="w-full bg-gray-200 text-gray-500 border-gray-200">
-                                                    Pendaftaran Ditutup
+                                                    {isQuotaFull ? 'Kuota Penuh' : 'Pendaftaran Ditutup'}
                                                 </Button>
                                             </div>
                                         ) : !canRegisterPremium ? (
@@ -406,7 +408,7 @@ export function MemberEventDetail() {
                                                 <div className="flex items-center justify-between text-sm py-2 border-b border-gray-100 mb-2">
                                                     <span className="text-gray-500">Kuota Tersedia</span>
                                                     <span className="font-bold text-gray-900">
-                                                        {event.quota ? `${(event.quota - (event.participants_count || 0))} dari ${event.quota} kursi` : 'Tak Terbatas'}
+                                                        {event.quota ? `${(Number(event.quota) - Number(event.participants_count || 0))} dari ${event.quota} kursi` : 'Tak Terbatas'}
                                                     </span>
                                                 </div>
 

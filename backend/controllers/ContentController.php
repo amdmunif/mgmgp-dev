@@ -579,6 +579,8 @@ class ContentController
                 'tugas_submitted' => $row['tugas_submitted'] ?? 0,
                 'task_url' => $row['task_url'] ?? null,
                 'registered_at' => $row['registered_at'],
+                'is_approved' => $row['is_approved'] ?? 0,
+                'is_passed' => $row['is_passed'] ?? 0,
                 'events' => [
                     'title' => $row['title'],
                     'date' => $row['date'],

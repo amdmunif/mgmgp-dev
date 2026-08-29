@@ -185,7 +185,7 @@ export function EventDetail() {
                                         <p className="text-sm text-gray-500">Kuota Peserta</p>
                                         <p className="font-medium text-gray-900">
                                             {event.participants_count || 0} / {event.quota} terdaftar
-                                            {(event.quota - (event.participants_count || 0)) <= 0 && (
+                                            {(Number(event.quota) - Number(event.participants_count || 0)) <= 0 && (
                                                 <span className="text-red-600 ml-2">(Penuh)</span>
                                             )}
                                         </p>
@@ -222,9 +222,9 @@ export function EventDetail() {
                                     </div>
                                 )}
                             </div>
-                        ) : (Number(event.is_registration_open) !== 1 || (event.registration_deadline && new Date(event.registration_deadline) < new Date()) || (event.quota && (event.participants_count || 0) >= event.quota)) ? (
+                        ) : (Number(event.is_registration_open) !== 1 || (event.registration_deadline && new Date(event.registration_deadline.includes(' ') ? event.registration_deadline.replace(' ', 'T') : event.registration_deadline) < new Date()) || (event.quota && Number(event.participants_count || 0) >= Number(event.quota))) ? (
                             <div className="bg-red-50 text-red-700 p-4 rounded-lg text-center font-medium">
-                                {(event.quota && (event.participants_count || 0) >= event.quota) ? 'Kuota Pendaftaran Penuh' : 'Pendaftaran Telah Ditutup'}
+                                {(event.quota && Number(event.participants_count || 0) >= Number(event.quota)) ? 'Kuota Pendaftaran Penuh' : 'Pendaftaran Telah Ditutup'}
                             </div>
                         ) : isAuthenticated ? (
                             (() => {

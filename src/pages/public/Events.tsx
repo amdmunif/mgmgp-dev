@@ -95,8 +95,9 @@ export function Events() {
                             </div>
                             <div className="flex items-center justify-between mt-4">
                                 {(() => {
-                                    const isDeadlinePassed = event.registration_deadline ? new Date(event.registration_deadline) < new Date() : false;
-                                    const isQuotaFull = event.quota ? (event.participants_count || 0) >= event.quota : false;
+                                    const parsedDeadline = event.registration_deadline?.includes(' ') ? event.registration_deadline.replace(' ', 'T') : event.registration_deadline;
+                                    const isDeadlinePassed = event.registration_deadline ? new Date(parsedDeadline!) < new Date() : false;
+                                    const isQuotaFull = event.quota ? Number(event.participants_count || 0) >= Number(event.quota) : false;
                                     const isOpen = Number(event.is_registration_open) === 1 && !isDeadlinePassed && !isQuotaFull;
                                     return (
                                         <div className="flex flex-col gap-1">
@@ -105,7 +106,7 @@ export function Events() {
                                             </span>
                                             {event.quota ? (
                                                 <span className={`text-xs font-medium ${isQuotaFull ? 'text-red-600' : 'text-blue-600'}`}>
-                                                    {isQuotaFull ? 'Kuota Penuh' : `Sisa Kuota: ${event.quota - (event.participants_count || 0)} dari ${event.quota}`}
+                                                    {isQuotaFull ? 'Kuota Penuh' : `Sisa Kuota: ${Number(event.quota) - Number(event.participants_count || 0)} dari ${event.quota}`}
                                                 </span>
                                             ) : null}
                                         </div>

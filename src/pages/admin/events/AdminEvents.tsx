@@ -124,9 +124,10 @@ export function AdminEvents() {
                     )}
                     {(() => {
                         const deadline = item.registration_deadline || item.date;
-                        const isDeadlinePassed = deadline ? new Date(deadline) < new Date() : false;
-                        const isQuotaFull = item.quota ? (item.participants_count || 0) >= item.quota : false;
-                        const isOpen = item.is_registration_open && !isDeadlinePassed && !isQuotaFull;
+                        const parsedDeadline = deadline.includes(' ') ? deadline.replace(' ', 'T') : deadline;
+                        const isDeadlinePassed = deadline ? new Date(parsedDeadline) < new Date() : false;
+                        const isQuotaFull = item.quota ? Number(item.participants_count || 0) >= Number(item.quota) : false;
+                        const isOpen = Number(item.is_registration_open) === 1 && !isDeadlinePassed && !isQuotaFull;
 
                         return isOpen ? (
                             <div className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded w-fit">

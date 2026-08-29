@@ -216,8 +216,9 @@ export function MemberDashboard() {
                                                         </span>
                                                     )}
                                                     {(() => {
-                                                        const isDeadlinePassed = event.registration_deadline ? new Date(event.registration_deadline) < new Date() : false;
-                                                        const isQuotaFull = event.quota ? (event.participants_count || 0) >= event.quota : false;
+                                                        const parsedDeadline = event.registration_deadline?.includes(' ') ? event.registration_deadline.replace(' ', 'T') : event.registration_deadline;
+                                                        const isDeadlinePassed = event.registration_deadline ? new Date(parsedDeadline!) < new Date() : false;
+                                                        const isQuotaFull = event.quota ? Number(event.participants_count || 0) >= Number(event.quota) : false;
                                                         const isOpen = Number(event.is_registration_open) === 1 && !isDeadlinePassed && !isQuotaFull;
                                                         return !isOpen && (
                                                             <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700 border border-red-200">
@@ -229,7 +230,7 @@ export function MemberDashboard() {
                                                 <div className="flex flex-col gap-0.5 mb-3">
                                                     <p className="text-xs text-gray-500 flex items-center gap-1"><MapPin className="w-3 h-3" /> {event.location}</p>
                                                     {event.quota && (
-                                                        <p className="text-[10px] font-medium text-blue-600">Sisa Kuota: {event.quota - (event.participants_count || 0)} dari {event.quota}</p>
+                                                        <p className="text-[10px] font-medium text-blue-600">Sisa Kuota: {Number(event.quota) - Number(event.participants_count || 0)} dari {event.quota}</p>
                                                     )}
                                                 </div>
                                                 <Link to={`/member/events/${event.id}`}>
