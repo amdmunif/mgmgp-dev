@@ -123,7 +123,8 @@ export function AdminEvents() {
                         </div>
                     )}
                     {(() => {
-                        const isDeadlinePassed = item.registration_deadline ? new Date(item.registration_deadline) < new Date() : false;
+                        const deadline = item.registration_deadline || item.date;
+                        const isDeadlinePassed = deadline ? new Date(deadline) < new Date() : false;
                         const isQuotaFull = item.quota ? (item.participants_count || 0) >= item.quota : false;
                         const isOpen = item.is_registration_open && !isDeadlinePassed && !isQuotaFull;
 

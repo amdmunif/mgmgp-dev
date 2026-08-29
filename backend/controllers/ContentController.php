@@ -595,18 +595,23 @@ class ContentController
 
     public function getEventParticipants($eventId)
     {
-        // Fetch participants with user details
-        $query = "SELECT ep.*, p.nama, u.email, p.foto_profile, p.asal_sekolah, ep.is_approved,
-                         (SELECT COUNT(*) FROM event_attendances ea WHERE ea.event_id = ep.event_id AND ea.user_id = ep.user_id) as attendance_count
-                  FROM event_participants ep
-                  LEFT JOIN profiles p ON ep.user_id = p.id
-                  LEFT JOIN users u ON ep.user_id = u.id
-                  WHERE ep.event_id = :eid
-                  ORDER BY ep.registered_at DESC";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':eid', $eventId);
-        $stmt->execute();
-        return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+        try {
+            // Fetch participants with user details
+            $query = "SELECT ep.*, p.nama, u.email, p.foto_profile, p.asal_sekolah, ep.is_approved,
+                             (SELECT COUNT(*) FROM event_attendances ea WHERE ea.event_id = ep.event_id AND ea.user_id = ep.user_id) as attendance_count
+                      FROM event_participants ep
+                      LEFT JOIN profiles p ON ep.user_id = p.id
+                      LEFT JOIN users u ON ep.user_id = u.id
+                      WHERE ep.event_id = :eid
+                      ORDER BY ep.registered_at DESC";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':eid', $eventId);
+            $stmt->execute();
+            return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+        } catch (PDOException $e) {
+            http_response_code(500);
+            return json_encode(["error" => "Database error: " . $e->getMessage()]);
+        }
     }
 
     public function updateParticipantStatus($eventId, $userId, $status)
