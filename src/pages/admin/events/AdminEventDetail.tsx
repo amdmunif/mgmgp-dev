@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { contentManagementService } from '../../../services/contentManagementService';
-import { ArrowLeft, Calendar, MapPin, Users, CheckCircle, XCircle, Trash2, Printer, QrCode, X, MonitorPlay, Trophy, UserCheck, UserMinus } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, CheckCircle, XCircle, Trash2, Printer, QrCode, X, MonitorPlay, Trophy, UserCheck, UserMinus, Search } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { api, getFileUrl } from '../../../lib/api';
 import { lmsService } from '../../../services/lmsService';
@@ -48,6 +48,7 @@ export function AdminEventDetail() {
     const [loading, setLoading] = useState(true);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [filterStatus, setFilterStatus] = useState<'all' | 'attended' | 'not_attended' | 'passed' | 'not_passed'>('all');
+    const [searchQuery, setSearchQuery] = useState('');
     const [showQR, setShowQR] = useState(false);
     const [selectedQRDay, setSelectedQRDay] = useState<number>(1);
 
@@ -234,20 +235,30 @@ export function AdminEventDetail() {
 
         // Filter
         if (filterStatus === 'attended') {
-            result = result.filter(p => Number(p.is_hadir) === 1);
+            result = result.filter(p => Number(p.is_hadir) === 1 || Number(p.attendance_count) > 0);
         } else if (filterStatus === 'not_attended') {
-            result = result.filter(p => Number(p.is_hadir) === 0);
+            result = result.filter(p => Number(p.is_hadir) === 0 && (!p.attendance_count || Number(p.attendance_count) === 0));
         } else if (filterStatus === 'passed') {
             result = result.filter(p => Number(p.is_passed) === 1);
         } else if (filterStatus === 'not_passed') {
             result = result.filter(p => Number(p.is_passed) === 0);
         }
 
+        // Search
+        if (searchQuery) {
+            const query = searchQuery.toLowerCase();
+            result = result.filter(p => 
+                (p.nama && p.nama.toLowerCase().includes(query)) ||
+                (p.email && p.email.toLowerCase().includes(query)) ||
+                (p.asal_sekolah && p.asal_sekolah.toLowerCase().includes(query))
+            );
+        }
+
         // Sort by registered_at ascending (oldest first)
         result.sort((a, b) => new Date(a.registered_at).getTime() - new Date(b.registered_at).getTime());
 
         return result;
-    }, [participants, filterStatus]);
+    }, [participants, filterStatus, searchQuery]);
 
     const columns = useMemo(() => {
         const cols = [
@@ -303,9 +314,17 @@ export function AdminEventDetail() {
         {
             header: "Kehadiran",
             accessorKey: "attendance_count" as keyof Participant,
-            cell: (item: Participant) => (
-                <span className="text-sm font-semibold text-gray-700">{item.attendance_count || 0} / {event?.total_days || 1} Hari</span>
-            ),
+            cell: (item: Participant) => {
+                const count = item.attendance_count || 0;
+                const total = event?.total_days || 1;
+                const isManual = Number(item.is_hadir) === 1 && count >= total;
+                return (
+                    <div className="flex flex-col items-center">
+                        <span className="text-sm font-semibold text-gray-700">{count} / {total} Hari</span>
+                        {isManual && <span className="text-[10px] text-green-600">(Manual)</span>}
+                    </div>
+                );
+            },
             className: "text-center"
         },
         {
@@ -392,9 +411,10 @@ export function AdminEventDetail() {
                         <button
                             onClick={() => handleStatusUpdate(item.user_id, Number(item.is_hadir))}
                             className={`inline-flex items-center gap-1 px-3 py-1 rounded-md text-xs font-medium transition-colors ${isPresent
-                                ? 'text-gray-700 bg-gray-50 hover:bg-gray-100'
-                                : 'text-blue-700 bg-blue-50 hover:bg-blue-100'
+                                ? 'text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200'
+                                : 'text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200'
                                 }`}
+                            title={isPresent ? "Batalkan Kehadiran Manual" : "Tandai Hadir Penuh"}
                         >
                             {isPresent ? <XCircle className="w-3 h-3" /> : <CheckCircle className="w-3 h-3" />}
                             {isPresent ? 'Batal' : 'Absen'}
@@ -481,11 +501,11 @@ export function AdminEventDetail() {
                                 </span>
                                 <span className="flex items-center gap-1.5 text-green-600">
                                     <UserCheck className="w-4 h-4" />
-                                    <strong>{participants.filter(p => Number(p.is_hadir) === 1).length}</strong> Hadir
+                                    <strong>{participants.filter(p => Number(p.is_hadir) === 1 || Number(p.attendance_count) > 0).length}</strong> Hadir
                                 </span>
                                 <span className="flex items-center gap-1.5 text-red-600">
                                     <UserMinus className="w-4 h-4" />
-                                    <strong>{participants.filter(p => Number(p.is_hadir) === 0).length}</strong> Tidak Hadir
+                                    <strong>{participants.filter(p => Number(p.is_hadir) === 0 && (!p.attendance_count || Number(p.attendance_count) === 0)).length}</strong> Tidak Hadir
                                 </span>
                             </div>
                         </div>
@@ -529,12 +549,22 @@ export function AdminEventDetail() {
             {/* Participants List */}
             <div className="space-y-4">
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                        <h2 className="text-lg font-bold flex items-center gap-2">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                        <h2 className="text-lg font-bold flex items-center gap-2 whitespace-nowrap">
                             <Users className="w-5 h-5 text-gray-600" />
                             Daftar Peserta
                         </h2>
-                        <div className="flex flex-wrap items-center gap-3">
+                        <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 w-full md:w-auto justify-end">
+                            <div className="relative flex-1 sm:flex-none sm:w-64">
+                                <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Cari nama, email, sekolah..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white"
+                                />
+                            </div>
                             <select
                                 value={filterStatus}
                                 onChange={(e) => setFilterStatus(e.target.value as any)}
@@ -591,7 +621,7 @@ export function AdminEventDetail() {
                     <DataTable
                         columns={columns}
                         data={processedParticipants}
-                        searchKeys={['nama', 'email', 'asal_sekolah']}
+                        searchKeys={[]}
                         pageSize={10}
                     />
                 </div>

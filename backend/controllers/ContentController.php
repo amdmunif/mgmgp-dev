@@ -795,13 +795,6 @@ class ContentController
         $stmtInsAtt = $this->conn->prepare($insertAtt);
         
         if ($stmtInsAtt->execute([':id' => $attId, ':eid' => $eventId, ':uid' => $userId, ':today' => $today])) {
-            // Also update event_participants is_hadir = 1 for backwards compatibility
-            $updateQuery = "UPDATE event_participants SET is_hadir = 1 WHERE event_id = :eid AND user_id = :uid";
-            $updateStmt = $this->conn->prepare($updateQuery);
-            $updateStmt->bindParam(':eid', $eventId);
-            $updateStmt->bindParam(':uid', $userId);
-            $updateStmt->execute();
-
             $stmtTitle = $this->conn->prepare("SELECT title FROM events WHERE id = :eid");
             $stmtTitle->bindParam(':eid', $eventId);
             $stmtTitle->execute();
