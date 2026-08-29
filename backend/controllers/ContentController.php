@@ -624,6 +624,21 @@ class ContentController
         return json_encode(["message" => "Failed to update status"]);
     }
 
+    public function updateParticipantPassed($eventId, $userId, $isPassed)
+    {
+        $query = "UPDATE event_participants SET is_passed = :is_passed WHERE event_id = :eid AND user_id = :uid";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':is_passed', $isPassed, PDO::PARAM_INT);
+        $stmt->bindParam(':eid', $eventId);
+        $stmt->bindParam(':uid', $userId);
+
+        if ($stmt->execute()) {
+            return json_encode(["message" => "Kelulusan diupdate"]);
+        }
+        http_response_code(500);
+        return json_encode(["message" => "Gagal update kelulusan"]);
+    }
+
     public function confirmPayment($eventId, $userId, $adminId)
     {
         // First check if it's already confirmed
@@ -702,7 +717,7 @@ class ContentController
         return json_encode(["message" => "Failed to reject payment"]);
     }
 
-    public function markSelfAttendance($eventId, $userId)
+    public function markSelfAttendance($eventId, $userId, $day = 1)
     {
         // 1. Verify user is registered
         $checkQuery = "SELECT * FROM event_participants WHERE event_id = :eid AND user_id = :uid";
@@ -741,6 +756,10 @@ class ContentController
             return json_encode(["message" => "Anda sudah melakukan absensi untuk hari ini."]);
         }
 
+        // Check if day parameter is valid (optional security check for multi-day events)
+        // If event is multi-day, ideally the day they scan should match the event schedule,
+        // but since we only track the current date, we just allow one scan per day.
+        
         // 3. Mark as attended for today
         $attId = Helper::uuid();
         $insertAtt = "INSERT INTO event_attendances (id, event_id, user_id, attended_date) VALUES (:id, :eid, :uid, :today)";

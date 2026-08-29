@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { contentManagementService } from '../../services/contentManagementService';
 import { CheckCircle, XCircle } from 'lucide-react';
 import { Button } from '../../components/ui/button';
@@ -10,6 +10,8 @@ export function EventAttend() {
     const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'unauthorized'>('loading');
     const [message, setMessage] = useState('');
 
+    const [searchParams] = useSearchParams();
+    
     useEffect(() => {
         const token = localStorage.getItem('access_token');
         if (!token) {
@@ -18,15 +20,17 @@ export function EventAttend() {
         }
 
         if (id) {
-            markAttendance(id);
+            const dayStr = searchParams.get('day');
+            const day = dayStr ? parseInt(dayStr) : 1;
+            markAttendance(id, day);
         }
-    }, [id]);
+    }, [id, searchParams]);
 
-    const markAttendance = async (eventId: string) => {
+    const markAttendance = async (eventId: string, day: number) => {
         try {
-            await contentManagementService.markSelfAttendance(eventId);
+            await contentManagementService.markSelfAttendance(eventId, day);
             setStatus('success');
-            setMessage('Absensi berhasil! Terima kasih atas kehadiran Anda.');
+            setMessage(`Absensi Hari ${day} berhasil! Terima kasih atas kehadiran Anda.`);
         } catch (error: any) {
             setStatus('error');
             setMessage(error.message || 'Gagal melakukan absensi. Pastikan Anda sudah terdaftar di acara ini.');

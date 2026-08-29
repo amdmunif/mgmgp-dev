@@ -6,7 +6,7 @@ import { lmsService } from '../../../services/lmsService';
 import { toast } from 'react-hot-toast';
 import { DataTable } from '../../../components/ui/DataTable';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 
 export function AdminAssignmentDashboard() {
@@ -171,7 +171,7 @@ export function AdminAssignmentDashboard() {
         const { head, body } = getExportData();
         const doc = new jsPDF('landscape');
         doc.text("Daftar Nilai Peserta", 14, 15);
-        (doc as any).autoTable({
+        autoTable(doc, {
             head: head,
             body: body,
             startY: 20,

@@ -85,6 +85,19 @@ $action = isset($uri_parts[1]) ? $uri_parts[1] : null;
 // Get JSON input
 $input = json_decode(file_get_contents("php://input"), true);
 
+// Polyfill for getallheaders if not exists (e.g., Nginx/FastCGI)
+if (!function_exists('getallheaders')) {
+    function getallheaders() {
+        $headers = [];
+        foreach ($_SERVER as $name => $value) {
+            if (substr($name, 0, 5) == 'HTTP_') {
+                $headers[str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))))] = $value;
+            }
+        }
+        return $headers;
+    }
+}
+
 // Auth Check (Global)
 $headers = getallheaders();
 $authHeader = isset($headers['Authorization']) ? $headers['Authorization'] : (isset($headers['authorization']) ? $headers['authorization'] : '');
@@ -237,7 +250,7 @@ if ($resource === 'news') {
 
     // Auth Check
     $headers = getallheaders();
-    $authHeader = isset($headers['Authorization']) ? $headers['Authorization'] : '';
+    $authHeader = isset($headers['Authorization']) ? $headers['Authorization'] : (isset($headers['authorization']) ? $headers['authorization'] : '');
     $token = str_replace('Bearer ', '', $authHeader);
     $userId = null;
     if ($token) {
@@ -283,8 +296,10 @@ if ($resource === 'news') {
                 echo json_encode(["message" => "Unauthorized"]);
             }
         } elseif ($action && $subAction === 'attend') {
+            // POST /events/:id/attend
+            $day = $input['day'] ?? 1;
             if ($userId)
-                echo $controller->markSelfAttendance($action, $userId);
+                echo $controller->markSelfAttendance($action, $userId, $day);
             else {
                 http_response_code(401);
                 echo json_encode(["message" => "Unauthorized"]);
@@ -348,7 +363,14 @@ if ($resource === 'news') {
             $targetUserId = isset($uri_parts[3]) ? $uri_parts[3] : null;
 
             if ($targetUserId) {
-                echo $controller->updateParticipantStatus($action, $targetUserId, $input['status']);
+                if (isset($input['is_passed'])) {
+                    echo $controller->updateParticipantPassed($action, $targetUserId, $input['is_passed']);
+                } elseif (isset($input['status'])) {
+                    echo $controller->updateParticipantStatus($action, $targetUserId, $input['status']);
+                } else {
+                    http_response_code(400);
+                    echo json_encode(["message" => "Parameter tidak lengkap"]);
+                }
             } else {
                 http_response_code(400);
                 echo json_encode(["message" => "User ID required"]);
@@ -568,7 +590,7 @@ if ($resource === 'news') {
 
     // AUTH CHECK
     $headers = getallheaders();
-    $authHeader = isset($headers['Authorization']) ? $headers['Authorization'] : '';
+    $authHeader = isset($headers['Authorization']) ? $headers['Authorization'] : (isset($headers['authorization']) ? $headers['authorization'] : '');
     $token = str_replace('Bearer ', '', $authHeader);
     $userId = null;
     if ($token) {
@@ -665,7 +687,7 @@ if ($resource === 'news') {
 
     // AUTH CHECK
     $headers = getallheaders();
-    $authHeader = isset($headers['Authorization']) ? $headers['Authorization'] : '';
+    $authHeader = isset($headers['Authorization']) ? $headers['Authorization'] : (isset($headers['authorization']) ? $headers['authorization'] : '');
     $token = str_replace('Bearer ', '', $authHeader);
     $userId = null;
     $userRole = null;
@@ -723,7 +745,7 @@ if ($resource === 'news') {
         // Better: Decode token.
 
         $headers = getallheaders();
-        $authHeader = isset($headers['Authorization']) ? $headers['Authorization'] : '';
+        $authHeader = isset($headers['Authorization']) ? $headers['Authorization'] : (isset($headers['authorization']) ? $headers['authorization'] : '');
         $token = str_replace('Bearer ', '', $authHeader);
 
         if ($token) {
@@ -808,7 +830,7 @@ if ($resource === 'news') {
 
     // Re-verify token because some endpoints need auth
     $headers = getallheaders();
-    $authHeader = isset($headers['Authorization']) ? $headers['Authorization'] : '';
+    $authHeader = isset($headers['Authorization']) ? $headers['Authorization'] : (isset($headers['authorization']) ? $headers['authorization'] : '');
     $token = str_replace('Bearer ', '', $authHeader);
     $userId = null;
     $userRole = null;

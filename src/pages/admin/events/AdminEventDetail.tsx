@@ -1,9 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { contentManagementService } from '../../../services/contentManagementService';
-import { ArrowLeft, Calendar, MapPin, Users, CheckCircle, XCircle, Trash2, Printer, QrCode, X, MonitorPlay } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, CheckCircle, XCircle, Trash2, Printer, QrCode, X, MonitorPlay, Trophy } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { getFileUrl } from '../../../lib/api';
+import { api, getFileUrl } from '../../../lib/api';
 import { DataTable } from '../../../components/ui/DataTable';
 import { Button } from '../../../components/ui/button';
 
@@ -45,6 +45,7 @@ export function AdminEventDetail() {
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [filterStatus, setFilterStatus] = useState<'all' | 'attended' | 'not_attended' | 'passed' | 'not_passed'>('all');
     const [showQR, setShowQR] = useState(false);
+    const [selectedQRDay, setSelectedQRDay] = useState<number>(1);
 
     useEffect(() => {
         if (id) {
@@ -84,6 +85,24 @@ export function AdminEventDetail() {
             toast.success(!isAttended ? 'Peserta ditandai hadir' : 'Absensi dibatalkan');
         } catch (error) {
             toast.error('Gagal memperbarui status');
+        }
+    };
+
+    const handlePassedUpdate = async (userId: string, currentIsPassed: number | boolean | undefined) => {
+        if (!id) return;
+        const isPassed = Number(currentIsPassed) === 1;
+        const newPassedStatus = isPassed ? 0 : 1;
+        try {
+            await api.put(`/events/${id}/participants/${userId}`, { is_passed: newPassedStatus });
+            const updatedParticipants = participants.map(p =>
+                p.user_id === userId
+                    ? { ...p, is_passed: newPassedStatus }
+                    : p
+            );
+            setParticipants(updatedParticipants);
+            toast.success(!isPassed ? 'Peserta ditandai LULUS' : 'Kelulusan dibatalkan');
+        } catch (error) {
+            toast.error('Gagal memperbarui kelulusan');
         }
     };
 
@@ -322,6 +341,17 @@ export function AdminEventDetail() {
                             {isPresent ? 'Batal' : 'Absen'}
                         </button>
                         <button
+                            onClick={() => handlePassedUpdate(item.user_id, item.is_passed)}
+                            className={`inline-flex items-center gap-1 px-3 py-1 rounded-md text-xs font-medium transition-colors ml-2 ${Number(item.is_passed) === 1
+                                ? 'text-green-700 bg-green-50 hover:bg-green-100'
+                                : 'text-gray-700 bg-gray-50 hover:bg-gray-100'
+                                }`}
+                            title="Tandai Lulus / Tidak Lulus"
+                        >
+                            <Trophy className="w-3 h-3" />
+                            {Number(item.is_passed) === 1 ? 'Lulus' : 'Tdk Lulus'}
+                        </button>
+                        <button
                             onClick={() => handleDeleteParticipant(item.user_id, item.nama)}
                             className="inline-flex items-center gap-1 px-3 py-1 rounded-md text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100 ml-2"
                             title="Hapus Peserta"
@@ -513,18 +543,39 @@ export function AdminEventDetail() {
                         
                         <div className="text-center mt-2">
                             <h3 className="text-xl font-bold text-gray-900">QR Code Absensi</h3>
-                            <p className="text-sm text-gray-500 mt-1 mb-6">Scan QR Code ini untuk melakukan absensi otomatis.</p>
+                            <p className="text-sm text-gray-500 mt-1 mb-4">Scan QR Code ini untuk melakukan absensi otomatis.</p>
+                            
+                            {(event?.total_days || 1) > 1 && (
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Pilih Hari:</label>
+                                    <div className="flex flex-wrap justify-center gap-2">
+                                        {Array.from({ length: event!.total_days || 1 }, (_, i) => i + 1).map(day => (
+                                            <button
+                                                key={day}
+                                                onClick={() => setSelectedQRDay(day)}
+                                                className={`px-3 py-1 text-sm rounded-full transition-colors ${
+                                                    selectedQRDay === day
+                                                        ? 'bg-blue-600 text-white'
+                                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                }`}
+                                            >
+                                                Hari {day}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                             
                             <div className="bg-gray-50 p-4 rounded-xl inline-block border border-gray-200">
                                 <img 
-                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(window.location.origin + '/events/' + id + '/attend')}`}
-                                    alt="QR Code Absensi"
+                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(window.location.origin + '/events/' + id + '/attend' + ((event?.total_days || 1) > 1 ? `?day=${selectedQRDay}` : ''))}`}
+                                    alt={`QR Code Absensi Hari ${selectedQRDay}`}
                                     className="w-48 h-48 object-contain"
                                 />
                             </div>
                             
                             <p className="text-xs text-blue-600 font-medium mt-6 break-all">
-                                {window.location.origin}/events/{id}/attend
+                                {window.location.origin}/events/{id}/attend{(event?.total_days || 1) > 1 ? `?day=${selectedQRDay}` : ''}
                             </p>
                         </div>
                     </div>

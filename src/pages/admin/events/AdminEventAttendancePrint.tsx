@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { contentManagementService } from '../../../services/contentManagementService';
 import { settingsService } from '../../../services/settingsService';
@@ -142,7 +142,11 @@ export function AdminEventAttendancePrint() {
                             <th className="w-8 text-center py-2">No</th>
                             <th className="py-2 px-3">Nama Lengkap</th>
                             <th className="py-2 px-3">Asal Instansi / Sekolah</th>
-                            <th className="w-48 text-center py-2" colSpan={2}>Tanda Tangan</th>
+                            {Array.from({ length: event.total_days || 1 }).map((_, i) => (
+                                <th key={i} className="w-48 text-center py-2" colSpan={2}>
+                                    Tanda Tangan {(event.total_days || 1) > 1 ? `Hari ${i + 1}` : ''}
+                                </th>
+                            ))}
                         </tr>
                     </thead>
                     <tbody>
@@ -152,25 +156,33 @@ export function AdminEventAttendancePrint() {
                                 <td className="text-center">{index + 1}.</td>
                                 <td className="px-3 font-semibold">{p.nama}</td>
                                 <td className="px-3">{p.asal_sekolah || "-"}</td>
-                                <td className="w-24 border-r-0" style={{verticalAlign:'bottom', paddingBottom:'4px'}}>
-                                    <span className="text-[9px] text-gray-400">{index % 2 === 0 ? `${index + 1}.` : ""}</span>
-                                </td>
-                                <td className="w-24 border-l-0" style={{verticalAlign:'bottom', paddingBottom:'4px'}}>
-                                    <span className="text-[9px] text-gray-400">{index % 2 !== 0 ? `${index + 1}.` : ""}</span>
-                                </td>
+                                {Array.from({ length: event.total_days || 1 }).map((_, dayIndex) => (
+                                    <React.Fragment key={dayIndex}>
+                                        <td className="w-24 border-r-0" style={{verticalAlign:'bottom', paddingBottom:'4px'}}>
+                                            <span className="text-[9px] text-gray-400">{index % 2 === 0 ? `${index + 1}.` : ""}</span>
+                                        </td>
+                                        <td className="w-24 border-l-0" style={{verticalAlign:'bottom', paddingBottom:'4px'}}>
+                                            <span className="text-[9px] text-gray-400">{index % 2 !== 0 ? `${index + 1}.` : ""}</span>
+                                        </td>
+                                    </React.Fragment>
+                                ))}
                             </tr>
                         ))
                             : [...Array(20)].map((_, i) => (
-                                <tr key={i} className="signature-row">
+                                <tr key={i} className="signature-row h-10">
                                     <td className="text-center">{i + 1}.</td>
                                     <td></td>
                                     <td></td>
-                                    <td className="w-24 border-r-0" style={{verticalAlign:'bottom', paddingBottom:'4px'}}>
-                                        <span className="text-[9px] text-gray-400">{i % 2 === 0 ? `${i + 1}.` : ""}</span>
-                                    </td>
-                                    <td className="w-24 border-l-0" style={{verticalAlign:'bottom', paddingBottom:'4px'}}>
-                                        <span className="text-[9px] text-gray-400">{i % 2 !== 0 ? `${i + 1}.` : ""}</span>
-                                    </td>
+                                    {Array.from({ length: event.total_days || 1 }).map((_, dayIndex) => (
+                                        <React.Fragment key={dayIndex}>
+                                            <td className="w-24 border-r-0" style={{verticalAlign:'bottom', paddingBottom:'4px'}}>
+                                                <span className="text-[9px] text-gray-400">{i % 2 === 0 ? `${i + 1}.` : ""}</span>
+                                            </td>
+                                            <td className="w-24 border-l-0" style={{verticalAlign:'bottom', paddingBottom:'4px'}}>
+                                                <span className="text-[9px] text-gray-400">{i % 2 !== 0 ? `${i + 1}.` : ""}</span>
+                                            </td>
+                                        </React.Fragment>
+                                    ))}
                                 </tr>
                             ))
                         }
