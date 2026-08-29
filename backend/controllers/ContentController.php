@@ -601,10 +601,7 @@ class ContentController
         try {
             // Fetch participants with user details
             $query = "SELECT ep.*, p.nama, u.email, p.foto_profile, p.asal_sekolah, ep.is_approved,
-                             CASE 
-                               WHEN ep.is_hadir = 1 THEN (SELECT IFNULL(total_days, 1) FROM events WHERE id = ep.event_id)
-                               ELSE (SELECT COUNT(*) FROM event_attendances ea WHERE ea.event_id = ep.event_id AND ea.user_id = ep.user_id)
-                             END as attendance_count
+                             (SELECT COUNT(*) FROM event_attendances ea WHERE ea.event_id = ep.event_id AND ea.user_id = ep.user_id) as attendance_count
                       FROM event_participants ep
                       LEFT JOIN profiles p ON ep.user_id = p.id
                       LEFT JOIN users u ON ep.user_id = u.id
@@ -631,6 +628,7 @@ class ContentController
         $stmt->bindParam(':uid', $userId);
 
         if ($stmt->execute()) {
+            $this->syncAttendances($eventId, [$userId], $isHadir);
             return json_encode(["message" => "Success"]);
         }
         http_response_code(500);
@@ -846,6 +844,9 @@ class ContentController
         }
 
         if ($stmt->execute($params)) {
+            if ($status === 'attended' || $status === 'registered') {
+                $this->syncAttendances($eventId, $userIds, $isHadir);
+            }
             Helper::log($this->conn, 0, 'Admin', 'BULK_ATTENDANCE_UPDATE', "Event ID: $eventId, Count: " . count($userIds));
             return json_encode(["message" => "Bulk update successful"]);
         }
@@ -867,6 +868,53 @@ class ContentController
 
         http_response_code(500);
         return json_encode(["message" => "Failed to remove participant"]);
+    }
+
+    private function syncAttendances($eventId, $userIds, $isHadir)
+    {
+        if (empty($userIds)) return;
+
+        if (!$isHadir) {
+            // Delete all attendances for these users
+            $placeholders = implode(',', array_fill(0, count($userIds), '?'));
+            $delQ = "DELETE FROM event_attendances WHERE event_id = ? AND user_id IN ($placeholders)";
+            $delStmt = $this->conn->prepare($delQ);
+            $delStmt->execute(array_merge([$eventId], $userIds));
+            return;
+        }
+
+        // Generate missing attendances up to total_days
+        $evtQ = "SELECT IFNULL(total_days, 1) as total_days, date FROM events WHERE id = :eid";
+        $evtStmt = $this->conn->prepare($evtQ);
+        $evtStmt->execute([':eid' => $eventId]);
+        $evt = $evtStmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($evt) {
+            $totalDays = (int)$evt['total_days'];
+            $startDate = $evt['date'];
+
+            foreach ($userIds as $userId) {
+                $countQ = "SELECT COUNT(*) FROM event_attendances WHERE event_id = :eid AND user_id = :uid";
+                $countStmt = $this->conn->prepare($countQ);
+                $countStmt->execute([':eid' => $eventId, ':uid' => $userId]);
+                $existingCount = (int)$countStmt->fetchColumn();
+
+                for ($i = $existingCount; $i < $totalDays; $i++) {
+                    $attDate = date('Y-m-d', strtotime($startDate . " + $i days"));
+                    
+                    $checkQ = "SELECT id FROM event_attendances WHERE event_id = :eid AND user_id = :uid AND DATE(attended_date) = :adate";
+                    $checkStmt = $this->conn->prepare($checkQ);
+                    $checkStmt->execute([':eid' => $eventId, ':uid' => $userId, ':adate' => $attDate]);
+                    
+                    if ($checkStmt->rowCount() == 0) {
+                        $attId = Helper::uuid();
+                        $ins = "INSERT INTO event_attendances (id, event_id, user_id, attended_date) VALUES (:id, :eid, :uid, :adate)";
+                        $insStmt = $this->conn->prepare($ins);
+                        $insStmt->execute([':id' => $attId, ':eid' => $eventId, ':uid' => $userId, ':adate' => $attDate]);
+                    }
+                }
+            }
+        }
     }
 }
 ?>

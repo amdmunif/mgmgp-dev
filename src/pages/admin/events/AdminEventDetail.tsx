@@ -531,7 +531,7 @@ export function AdminEventDetail() {
                             <QrCode className="w-4 h-4 mr-2" />
                             QR Absensi
                         </Button>
-                        {event?.has_lms && (
+                        {!!event?.has_lms && (
                             <Button 
                                 onClick={() => navigate(`/admin/events/${id}/lms`)}
                                 size="sm"
