@@ -37,19 +37,21 @@ export function Home() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [newsRes, eventsRes, statsRes] = await Promise.all([
+                const [newsRes, eventsRes, statsRes] = await Promise.allSettled([
                     api.get<NewsArticle[]>('/news'),
                     api.get<Event[]>('/events'),
                     api.get<any>('/stats')
                 ]);
 
-                setNews(newsRes.slice(0, 3));
-                setEvents(eventsRes.slice(0, 3));
-                setStats({
-                    members: statsRes.members || 0,
-                    materials: statsRes.materials || 0,
-                    events: statsRes.events || 0
-                });
+                if (newsRes.status === 'fulfilled') setNews(newsRes.value.slice(0, 3));
+                if (eventsRes.status === 'fulfilled') setEvents(eventsRes.value.slice(0, 3));
+                if (statsRes.status === 'fulfilled') {
+                    setStats({
+                        members: statsRes.value.members || 0,
+                        materials: statsRes.value.materials || 0,
+                        events: statsRes.value.events || 0
+                    });
+                }
             } catch (error) {
                 console.error('Error fetching landing data:', error);
             } finally {
@@ -229,9 +231,24 @@ export function Home() {
                                 <div>
                                     <div className="flex items-center gap-4 text-sm text-gray-500 mb-2">
                                         <span className="flex items-center gap-1"><MapPin className="w-4 h-4" /> {event.location}</span>
-                                        <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${event.is_registration_open ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                            {event.is_registration_open ? 'Pendaftaran Buka' : 'Ditutup'}
-                                        </span>
+                                        {(() => {
+                                            const parsedDeadline = event.registration_deadline?.includes(' ') ? event.registration_deadline.replace(' ', 'T') : event.registration_deadline;
+                                            const isDeadlinePassed = event.registration_deadline ? new Date(parsedDeadline!) < new Date() : false;
+                                            const isQuotaFull = event.quota ? Number(event.participants_count || 0) >= Number(event.quota) : false;
+                                            const isOpen = Number(event.is_registration_open) === 1 && !isDeadlinePassed && !isQuotaFull;
+                                            return (
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${isOpen ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                        {isOpen ? 'Pendaftaran Buka' : 'Pendaftaran Tutup'}
+                                                    </span>
+                                                    {event.quota ? (
+                                                        <span className={`text-xs font-medium ${isQuotaFull ? 'text-red-600' : 'text-blue-600'}`}>
+                                                            {isQuotaFull ? 'Kuota Penuh' : `Sisa Kuota: ${Number(event.quota) - Number(event.participants_count || 0)} dari ${event.quota}`}
+                                                        </span>
+                                                    ) : null}
+                                                </div>
+                                            );
+                                        })()}
                                     </div>
                                     <h3 className="text-2xl font-bold text-gray-900 mb-2 group-hover:text-primary-600 transition-colors">
                                         <Link to={`/events/${event.id}`}>{event.title}</Link>

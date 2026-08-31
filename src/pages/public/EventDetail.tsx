@@ -1,7 +1,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { api, getFileUrl } from '../../lib/api';
-import { formatDate } from '../../lib/utils';
+import { formatDate, formatTime } from '../../lib/utils';
 import { Button } from '../../components/ui/button';
 import { Calendar, MapPin, ArrowLeft, Clock, Share2, Lock, Loader2, DollarSign, Users } from 'lucide-react';
 import { authService } from '../../services/authService';
@@ -101,8 +101,8 @@ export function EventDetail() {
         );
     }
 
-    const startTime = "08:00";
-    const endTime = "16:00 WIB";
+    const startTime = formatTime(event.date);
+    const endTime = "Selesai WIB";
 
     return (
         <div className="bg-gray-50 min-h-screen pb-16">

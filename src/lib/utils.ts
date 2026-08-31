@@ -14,11 +14,20 @@ export function formatCurrency(amount: number) {
 }
 
 export function formatDate(date: string | Date) {
+    const parsedDate = typeof date === 'string' && date.includes(' ') ? date.replace(' ', 'T') : date;
     return new Intl.DateTimeFormat("id-ID", {
         day: "numeric",
         month: "long",
         year: "numeric",
-    }).format(new Date(date));
+    }).format(new Date(parsedDate));
+}
+
+export function formatTime(date: string | Date) {
+    const parsedDate = typeof date === 'string' && date.includes(' ') ? date.replace(' ', 'T') : date;
+    return new Intl.DateTimeFormat("id-ID", {
+        hour: "2-digit",
+        minute: "2-digit",
+    }).format(new Date(parsedDate));
 }
 
 export function stripHtml(html: string) {

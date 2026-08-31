@@ -209,28 +209,35 @@ export function MemberEventDetail() {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 p-4 bg-gray-50/80 rounded-xl border border-gray-100">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2.5 bg-white rounded-lg shadow-sm text-primary-600">
-                                        <Calendar className="w-5 h-5" />
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-gray-500 font-medium uppercase">Tanggal</p>
-                                        <p className="text-sm font-semibold text-gray-900">
-                                            {format(new Date(event.date), 'EEEE, dd MMMM yyyy', { locale: id })}
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2.5 bg-white rounded-lg shadow-sm text-primary-600">
-                                        <Clock className="w-5 h-5" />
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-gray-500 font-medium uppercase">Waktu</p>
-                                        <p className="text-sm font-semibold text-gray-900">
-                                            {format(new Date(event.date), 'HH:mm', { locale: id })} WIB - Selesai
-                                        </p>
-                                    </div>
-                                </div>
+                                {(() => {
+                                    const parsedDate = event.date.includes(' ') ? event.date.replace(' ', 'T') : event.date;
+                                    return (
+                                        <>
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2.5 bg-white rounded-lg shadow-sm text-primary-600">
+                                                    <Calendar className="w-5 h-5" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-gray-500 font-medium uppercase">Tanggal</p>
+                                                    <p className="text-sm font-semibold text-gray-900">
+                                                        {format(new Date(parsedDate), 'EEEE, dd MMMM yyyy', { locale: id })}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2.5 bg-white rounded-lg shadow-sm text-primary-600">
+                                                    <Clock className="w-5 h-5" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-gray-500 font-medium uppercase">Waktu</p>
+                                                    <p className="text-sm font-semibold text-gray-900">
+                                                        {format(new Date(parsedDate), 'HH:mm', { locale: id })} WIB - Selesai
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </>
+                                    );
+                                })()}
                                 <div className="flex items-center gap-3 md:col-span-2">
                                     <div className="p-2.5 bg-white rounded-lg shadow-sm text-primary-600">
                                         <MapPin className="w-5 h-5" />

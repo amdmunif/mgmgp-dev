@@ -377,3 +377,36 @@ CREATE TABLE `finance_transactions` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 COMMIT;
+
+--
+-- 11. Training & Registration System
+--
+
+CREATE TABLE IF NOT EXISTS `training_settings` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `event_name` VARCHAR(255) NOT NULL,
+  `event_date` TIMESTAMP NOT NULL,
+  `price_regular` DECIMAL(10,2) NOT NULL,
+  `price_premium` DECIMAL(10,2) NOT NULL,
+  `description` TEXT,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `training_registrations` (
+  `id` CHAR(36) PRIMARY KEY,
+  `registration_code` VARCHAR(50) NOT NULL UNIQUE,
+  `nama_lengkap` VARCHAR(255) NOT NULL,
+  `email` VARCHAR(255) NOT NULL,
+  `no_wa` VARCHAR(20) NOT NULL,
+  `asal_sekolah` VARCHAR(255) NOT NULL,
+  `user_id` CHAR(36) DEFAULT NULL,
+  `is_premium` TINYINT(1) DEFAULT 0,
+  `total_payment` DECIMAL(10,2) NOT NULL,
+  `payment_status` ENUM('pending', 'paid', 'cancelled') DEFAULT 'pending',
+  `registered_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Insert initial dummy settings
+INSERT IGNORE INTO `training_settings` (`id`, `event_name`, `event_date`, `price_regular`, `price_premium`, `description`) 
+VALUES (1, 'Pelatihan Perdana MGMP', '2026-10-10 08:00:00', 100000, 50000, 'Ini adalah pengaturan pelatihan publik default');
