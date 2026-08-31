@@ -20,6 +20,10 @@ export const lmsService = {
         return await api.delete(`/lms/topics/${id}`);
     },
 
+    reorderTopics: async (items: { id: string, order_num: number }[]): Promise<any> => {
+        return await api.post('/lms/topics/reorder', items);
+    },
+
     // Materi
     getMaterialsByTopic: async (topicId: string): Promise<LmsMaterial[]> => {
         const response: any = await api.get(`/lms/materials/${topicId}`);
@@ -36,6 +40,10 @@ export const lmsService = {
 
     deleteMaterial: async (id: string): Promise<any> => {
         return await api.delete(`/lms/materials/${id}`);
+    },
+
+    reorderMaterials: async (items: { id: string, order_num: number }[]): Promise<any> => {
+        return await api.post('/lms/materials/reorder', items);
     },
 
     // Kuis

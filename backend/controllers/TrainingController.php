@@ -91,7 +91,8 @@ class TrainingController
                   event_date = :event_date, 
                   price_regular = :price_regular, 
                   price_premium = :price_premium, 
-                  description = :description 
+                  description = :description,
+                  is_open = :is_open
                   ORDER BY id DESC LIMIT 1";
                   
         $stmt = $this->conn->prepare($query);
@@ -101,6 +102,8 @@ class TrainingController
         $stmt->bindParam(':price_regular', $data['price_regular']);
         $stmt->bindParam(':price_premium', $data['price_premium']);
         $stmt->bindParam(':description', $data['description']);
+        $isOpen = isset($data['is_open']) ? (int)$data['is_open'] : 0;
+        $stmt->bindParam(':is_open', $isOpen, PDO::PARAM_INT);
 
         if ($stmt->execute()) {
             return json_encode(["message" => "Pengaturan berhasil disimpan"]);

@@ -183,6 +183,8 @@ export interface LmsMaterial {
     url?: string;
     duration?: number;
     order_num: number;
+    available_at?: string | null;
+    deadline_at?: string | null;
     created_at?: string;
 }
 

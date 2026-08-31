@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { ChevronDown, ChevronRight, PlayCircle, FileText, CheckCircle, ArrowLeft, Menu, X, CheckSquare, Trophy, Loader2, BookOpen } from 'lucide-react';
+import { ChevronDown, ChevronRight, PlayCircle, FileText, CheckCircle, ArrowLeft, Menu, X, CheckSquare, Trophy, Loader2, BookOpen, LayoutDashboard, Lock } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { cn } from '../../../lib/utils';
 import { toast } from 'react-hot-toast';
@@ -17,6 +17,10 @@ interface LmsMaterial {
     is_completed: boolean;
     url?: string;
     content?: string;
+    available_at?: string | null;
+    deadline_at?: string | null;
+    is_locked?: boolean;
+    lock_reason?: string;
 }
 
 interface LmsTopic {
@@ -105,20 +109,55 @@ export function LmsViewer() {
             const materialsResults = await Promise.all(materialsPromises);
             const materialsMap = new Map(materialsResults.map(m => [m.topicId, m.materials]));
 
+            let waterfallLocked = false;
+            
             const fullTopics: LmsTopic[] = fetchedTopics.map(topic => {
                 const materials = materialsMap.get(topic.id) || [];
                 return {
                     id: topic.id,
                     title: topic.title,
-                    items: materials.map((m: any) => ({
-                        id: m.id,
-                        title: m.title,
-                        type: m.type as any,
-                        url: m.url,
-                        content: m.content,
-                        duration: m.duration ? `${m.duration} Menit` : '',
-                        is_completed: progress.includes(m.id)
-                    }))
+                    items: materials.map((m: any) => {
+                        const isCompleted = progress.includes(m.id);
+                        
+                        let isLocked = false;
+                        let lockReason = '';
+
+                        // 1. Availability check (Waktu Tampil)
+                        if (m.available_at) {
+                            const availableDate = new Date(m.available_at);
+                            if (new Date() < availableDate) {
+                                isLocked = true;
+                                lockReason = `Tersedia pada: ${availableDate.toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}`;
+                            }
+                        }
+
+                        // 2. Waterfall check
+                        if (!isLocked && waterfallLocked) {
+                            isLocked = true;
+                            lockReason = 'Selesaikan materi sebelumnya terlebih dahulu';
+                        }
+
+                        // Update waterfall status for NEXT items
+                        // If this item is not completed and it is NOT a locked-by-time item (or even if it is),
+                        // subsequent items should be locked by waterfall.
+                        if (!isCompleted) {
+                            waterfallLocked = true;
+                        }
+
+                        return {
+                            id: m.id,
+                            title: m.title,
+                            type: m.type as any,
+                            url: m.url,
+                            content: m.content,
+                            available_at: m.available_at,
+                            deadline_at: m.deadline_at,
+                            duration: m.duration ? `${m.duration} Menit` : '',
+                            is_completed: isCompleted,
+                            is_locked: isLocked,
+                            lock_reason: lockReason
+                        };
+                    })
                 };
             });
 
@@ -158,7 +197,8 @@ export function LmsViewer() {
         );
     };
 
-    const getIcon = (type: string, isCompleted: boolean) => {
+    const getIcon = (type: string, isCompleted: boolean, isLocked?: boolean) => {
+        if (isLocked) return <Lock className="w-4 h-4 text-gray-400 flex-shrink-0" />;
         if (isCompleted) return <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />;
         switch (type) {
             case 'video': return <PlayCircle className="w-4 h-4 text-gray-400 flex-shrink-0" />;
@@ -277,7 +317,7 @@ export function LmsViewer() {
                 {/* Header for content */}
                 <div className="bg-primary-900 text-white p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <button onClick={() => navigate('/member/lms')} className="p-2 hover:bg-white/10 rounded mr-2" title="Kembali ke Daftar Kelas">
+                        <button onClick={() => activeItem ? setActiveMaterial('') : navigate('/member/lms')} className="p-2 hover:bg-white/10 rounded mr-2" title={activeItem ? "Kembali ke Dashboard Kelas" : "Kembali ke Daftar Kelas"}>
                             <ArrowLeft className="w-5 h-5" />
                         </button>
                         <button onClick={() => setSidebarOpen(!sidebarOpen)} className="md:hidden p-1 hover:bg-white/10 rounded">
@@ -304,10 +344,10 @@ export function LmsViewer() {
                 </div>
 
                 {/* Content Area */}
-                <div className="flex-1 bg-gray-50 overflow-y-auto p-4 md:p-8">
+                <div className={cn("flex-1 overflow-y-auto", !activeItem ? "bg-white" : "bg-gray-50 p-4 md:p-8")}>
                     {!activeItem ? (
-                        <div className="w-full max-w-4xl mx-auto flex flex-col h-full">
-                            <div className="bg-white p-8 md:p-10 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
+                        <div className="w-full h-full flex flex-col p-6 md:p-10">
+                            <div className="w-full max-w-7xl mx-auto flex flex-col">
                                 <div className="flex items-center gap-4 mb-8 pb-6 border-b border-gray-100">
                                     <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center shrink-0">
                                         <BookOpen className="w-8 h-8" />
@@ -329,17 +369,29 @@ export function LmsViewer() {
                                                     <button
                                                         key={item.id}
                                                         onClick={() => {
+                                                            if (item.is_locked) {
+                                                                toast.error(item.lock_reason || "Materi terkunci");
+                                                                return;
+                                                            }
                                                             setActiveMaterial(item.id);
                                                             if (!expandedTopics.includes(topic.id)) {
                                                                 setExpandedTopics(prev => [...prev, topic.id]);
                                                             }
                                                         }}
-                                                        className="w-full text-left px-5 py-4 flex items-center justify-between hover:bg-white transition-colors group"
+                                                        className={cn(
+                                                            "w-full text-left px-5 py-4 flex items-center justify-between transition-colors group",
+                                                            item.is_locked ? "opacity-70 bg-gray-50 cursor-not-allowed" : "hover:bg-white cursor-pointer"
+                                                        )}
                                                     >
                                                         <div className="flex items-center gap-4">
-                                                            <div className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center shadow-sm group-hover:border-blue-300 group-hover:text-blue-600 transition-colors">
+                                                            <div className={cn(
+                                                                "w-8 h-8 rounded-full border flex items-center justify-center shadow-sm transition-colors",
+                                                                item.is_locked ? "bg-gray-100 border-gray-200" : "bg-white border-gray-200 group-hover:border-blue-300 group-hover:text-blue-600"
+                                                            )}>
                                                                 {item.is_completed ? (
                                                                     <CheckCircle className="w-4 h-4 text-green-500" />
+                                                                ) : item.is_locked ? (
+                                                                    <Lock className="w-4 h-4 text-gray-400" />
                                                                 ) : (
                                                                     <span className="text-xs font-semibold text-gray-400 group-hover:text-blue-600">{itemIdx + 1}</span>
                                                                 )}
@@ -358,6 +410,9 @@ export function LmsViewer() {
                                                                         </>
                                                                     )}
                                                                 </div>
+                                                                {item.is_locked && (
+                                                                    <p className="text-xs text-red-500 mt-1">{item.lock_reason}</p>
+                                                                )}
                                                             </div>
                                                         </div>
                                                         <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-blue-500 transition-colors" />
@@ -452,20 +507,28 @@ export function LmsViewer() {
                                 </div>
                                 
                                 <div className="mt-8 flex justify-end items-center gap-4">
-                                    {quizData?.max_attempts > 0 && (
-                                        <p className="text-sm text-gray-500">
-                                            Sisa percobaan: <span className="font-bold text-gray-900">{Math.max(0, quizData.max_attempts - quizAttempts.length)}</span> dari {quizData.max_attempts}
-                                        </p>
+                                    {activeItem?.deadline_at && new Date(activeItem.deadline_at) < new Date() ? (
+                                        <div className="text-sm font-bold text-red-600 bg-red-50 px-4 py-2 rounded-lg border border-red-100">
+                                            Batas Waktu Telah Lewat ({new Date(activeItem.deadline_at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })})
+                                        </div>
+                                    ) : (
+                                        <>
+                                            {quizData?.max_attempts > 0 && (
+                                                <p className="text-sm text-gray-500">
+                                                    Sisa percobaan: <span className="font-bold text-gray-900">{Math.max(0, quizData.max_attempts - quizAttempts.length)}</span> dari {quizData.max_attempts}
+                                                </p>
+                                            )}
+                                            <Button 
+                                                onClick={() => navigate(`/member/lms/classroom/${eventId}/quiz/${activeItem.id}`)}
+                                                disabled={quizData?.max_attempts > 0 && quizAttempts.length >= quizData.max_attempts}
+                                                className="bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-300 disabled:text-gray-500"
+                                            >
+                                                {quizData?.max_attempts > 0 && quizAttempts.length >= quizData.max_attempts 
+                                                    ? "Jatah Ujian Habis" 
+                                                    : "Mulai / Ulangi Ujian"}
+                                            </Button>
+                                        </>
                                     )}
-                                    <Button 
-                                        onClick={() => navigate(`/member/lms/classroom/${eventId}/quiz/${activeItem.id}`)}
-                                        disabled={quizData?.max_attempts > 0 && quizAttempts.length >= quizData.max_attempts}
-                                        className="bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-300 disabled:text-gray-500"
-                                    >
-                                        {quizData?.max_attempts > 0 && quizAttempts.length >= quizData.max_attempts 
-                                            ? "Jatah Ujian Habis" 
-                                            : "Mulai / Ulangi Ujian"}
-                                    </Button>
                                 </div>
                             </div>
                         </div>
@@ -478,7 +541,9 @@ export function LmsViewer() {
                                 <div className="flex flex-wrap items-center gap-x-8 gap-y-4 py-4 border-t border-b border-gray-100 text-sm">
                                     <div className="flex items-center gap-2">
                                         <span className="text-gray-500">Batas Waktu:</span>
-                                        <span className="font-semibold text-gray-900">Sesuai jadwal pengajar</span>
+                                        <span className={cn("font-semibold", activeItem?.deadline_at && new Date(activeItem.deadline_at) < new Date() ? "text-red-600" : "text-gray-900")}>
+                                            {activeItem?.deadline_at ? new Date(activeItem.deadline_at).toLocaleString('id-ID', { dateStyle: 'full', timeStyle: 'short' }) : "Sesuai jadwal pengajar"}
+                                        </span>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <span className="text-gray-500">Nilai Maksimal:</span>
@@ -526,12 +591,18 @@ export function LmsViewer() {
                                 />
                                 <div className="mt-8 flex gap-3">
                                     {!isFormOpen ? (
-                                        <Button 
-                                            onClick={() => setIsFormOpen(true)}
-                                            className="bg-blue-600 hover:bg-blue-700 text-white rounded-md"
-                                        >
-                                            Mulai Pengumpulan Tugas
-                                        </Button>
+                                        activeItem?.deadline_at && new Date(activeItem.deadline_at) < new Date() ? (
+                                            <div className="text-sm font-bold text-red-600 bg-red-50 px-4 py-3 rounded-lg border border-red-100 w-full text-center">
+                                                Batas waktu pengumpulan tugas telah lewat.
+                                            </div>
+                                        ) : (
+                                            <Button 
+                                                onClick={() => setIsFormOpen(true)}
+                                                className="bg-blue-600 hover:bg-blue-700 text-white rounded-md"
+                                            >
+                                                {assignmentData ? "Edit Pengumpulan Tugas" : "Mulai Pengumpulan Tugas"}
+                                            </Button>
+                                        )
                                     ) : (
                                         <div className="w-full">
                                             <div className="space-y-4 max-w-2xl bg-gray-50 p-6 rounded-xl border border-gray-200">
@@ -693,6 +764,20 @@ export function LmsViewer() {
                     <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Konten Kelas</h2>
                 </div>
 
+                {/* Dashboard Menu Item */}
+                <div className="border-b border-gray-100 flex-shrink-0">
+                    <button
+                        onClick={() => setActiveMaterial('')}
+                        className={cn(
+                            "w-full text-left px-5 py-4 flex items-center gap-3 transition-colors",
+                            activeMaterial === '' ? "bg-blue-50/50 text-blue-700 font-bold border-l-4 border-blue-600" : "hover:bg-gray-50 text-gray-700 font-medium border-l-4 border-transparent"
+                        )}
+                    >
+                        <LayoutDashboard className="w-5 h-5" />
+                        <span>Dashboard Kelas</span>
+                    </button>
+                </div>
+
                 {/* Topics Accordion */}
                 <div className="flex-1 overflow-y-auto">
                     {loading ? (
@@ -741,13 +826,19 @@ export function LmsViewer() {
                                             return (
                                                 <button
                                                     key={item.id}
-                                                    onClick={() => setActiveMaterial(item.id)}
+                                                    onClick={() => {
+                                                        if (item.is_locked) {
+                                                            toast.error(item.lock_reason || "Materi terkunci");
+                                                            return;
+                                                        }
+                                                        setActiveMaterial(item.id);
+                                                    }}
                                                     className={cn(
-                                                        "w-full text-left px-4 py-3 pl-8 flex items-start gap-3 transition-colors group",
-                                                        isActive ? "bg-blue-50/50" : "hover:bg-gray-50"
+                                                        "w-full text-left px-4 py-3 pl-8 flex items-start gap-3 transition-colors group relative",
+                                                        isActive ? "bg-blue-50/50" : (item.is_locked ? "opacity-70 bg-gray-50/50 cursor-not-allowed" : "hover:bg-gray-50")
                                                     )}
                                                 >
-                                                    <div className="mt-0.5">{getIcon(item.type, item.is_completed)}</div>
+                                                    <div className="mt-0.5">{getIcon(item.type, item.is_completed, item.is_locked)}</div>
                                                     <div className="flex-1 min-w-0 pr-2">
                                                         <span className={cn(
                                                             "text-sm block truncate",
@@ -755,8 +846,11 @@ export function LmsViewer() {
                                                         )}>
                                                             {item.title}
                                                         </span>
+                                                        {item.is_locked && (
+                                                            <span className="text-[10px] text-red-500 block leading-tight mt-0.5">{item.lock_reason}</span>
+                                                        )}
                                                     </div>
-                                                    <span className="text-[10px] font-medium text-gray-400 mt-0.5">{item.duration}</span>
+                                                    {!item.is_locked && <span className="text-[10px] font-medium text-gray-400 mt-0.5">{item.duration}</span>}
                                                 </button>
                                             )
                                         })}

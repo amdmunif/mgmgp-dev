@@ -14,20 +14,32 @@ export function formatCurrency(amount: number) {
 }
 
 export function formatDate(date: string | Date) {
-    const parsedDate = typeof date === 'string' && date.includes(' ') ? date.replace(' ', 'T') : date;
+    let parsedDate: Date;
+    if (typeof date === 'string') {
+        // Replace dashes with slashes for safe Safari parsing as local time
+        parsedDate = new Date(date.replace(/-/g, '/').replace('T', ' '));
+    } else {
+        parsedDate = date;
+    }
     return new Intl.DateTimeFormat("id-ID", {
         day: "numeric",
         month: "long",
         year: "numeric",
-    }).format(new Date(parsedDate));
+    }).format(parsedDate);
 }
 
 export function formatTime(date: string | Date) {
-    const parsedDate = typeof date === 'string' && date.includes(' ') ? date.replace(' ', 'T') : date;
+    let parsedDate: Date;
+    if (typeof date === 'string') {
+        // Replace dashes with slashes for safe Safari parsing as local time
+        parsedDate = new Date(date.replace(/-/g, '/').replace('T', ' '));
+    } else {
+        parsedDate = date;
+    }
     return new Intl.DateTimeFormat("id-ID", {
         hour: "2-digit",
         minute: "2-digit",
-    }).format(new Date(parsedDate));
+    }).format(parsedDate);
 }
 
 export function stripHtml(html: string) {

@@ -317,11 +317,11 @@ export function AdminEventDetail() {
             cell: (item: Participant) => {
                 const count = item.attendance_count || 0;
                 const total = event?.total_days || 1;
-                const isManual = Number(item.is_hadir) === 1 && count >= total;
+                const isManual = Number(item.is_hadir) === 1;
                 return (
                     <div className="flex flex-col items-center">
                         <span className="text-sm font-semibold text-gray-700">{count} / {total} Hari</span>
-                        {isManual && <span className="text-[10px] text-green-600">(Manual)</span>}
+                        {isManual && <span className="text-[10px] text-green-600">(Hadir Manual)</span>}
                     </div>
                 );
             },
@@ -549,12 +549,12 @@ export function AdminEventDetail() {
             {/* Participants List */}
             <div className="space-y-4">
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                    <div className="flex flex-row flex-wrap items-center justify-between gap-4 mb-6">
                         <h2 className="text-lg font-bold flex items-center gap-2 whitespace-nowrap">
                             <Users className="w-5 h-5 text-gray-600" />
                             Daftar Peserta
                         </h2>
-                        <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 w-full md:w-auto justify-end">
+                        <div className="flex flex-row flex-wrap items-center gap-3 justify-end">
                             <div className="relative flex-1 sm:flex-none sm:w-64">
                                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
                                 <input

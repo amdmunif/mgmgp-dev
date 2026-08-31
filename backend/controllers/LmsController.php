@@ -175,6 +175,29 @@ class LmsController
             return json_encode(["message" => "Error: " . $e->getMessage()]);
         }
     }
+    public function reorderTopics($items, $userId, $userName)
+    {
+        try {
+            $this->conn->beginTransaction();
+            $stmt = $this->conn->prepare("UPDATE lms_topics SET order_num = :order_num WHERE id = :id");
+            foreach ($items as $item) {
+                $stmt->execute([
+                    ':id' => $item['id'],
+                    ':order_num' => (int)$item['order_num']
+                ]);
+            }
+            $this->conn->commit();
+            
+            Helper::log($this->conn, $userId, $userName, 'REORDER_LMS_TOPICS', 'Reordered topics');
+            return json_encode(["message" => "Topics reordered successfully"]);
+        } catch (\Throwable $e) {
+            if ($this->conn->inTransaction()) {
+                $this->conn->rollBack();
+            }
+            http_response_code(500);
+            return json_encode(["message" => "Error: " . $e->getMessage()]);
+        }
+    }
 
     // ==========================================
     // MATERIALS
@@ -199,8 +222,8 @@ class LmsController
     {
         try {
             $id = Helper::uuid();
-            $query = "INSERT INTO lms_materials (id, topic_id, title, type, content, url, duration, order_num, created_at) 
-                      VALUES (:id, :topic_id, :title, :type, :content, :url, :duration, :order_num, NOW())";
+            $query = "INSERT INTO lms_materials (id, topic_id, title, type, content, url, duration, order_num, available_at, deadline_at, created_at) 
+                      VALUES (:id, :topic_id, :title, :type, :content, :url, :duration, :order_num, :available_at, :deadline_at, NOW())";
             
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':id', $id);
@@ -215,6 +238,11 @@ class LmsController
             $stmt->bindParam(':duration', $duration, PDO::PARAM_INT);
             $orderNum = isset($data['order_num']) ? (int)$data['order_num'] : 0;
             $stmt->bindParam(':order_num', $orderNum, PDO::PARAM_INT);
+            
+            $availableAt = !empty($data['available_at']) ? $data['available_at'] : null;
+            $stmt->bindParam(':available_at', $availableAt);
+            $deadlineAt = !empty($data['deadline_at']) ? $data['deadline_at'] : null;
+            $stmt->bindParam(':deadline_at', $deadlineAt);
             
             if ($stmt->execute()) {
                 $stmtGet = $this->conn->prepare("SELECT * FROM lms_materials WHERE id = :id");
@@ -242,7 +270,9 @@ class LmsController
                         content = :content,
                         url = :url,
                         duration = :duration,
-                        order_num = :order_num
+                        order_num = :order_num,
+                        available_at = :available_at,
+                        deadline_at = :deadline_at
                       WHERE id = :id";
                       
             $stmt = $this->conn->prepare($query);
@@ -257,6 +287,11 @@ class LmsController
             $stmt->bindParam(':duration', $duration, PDO::PARAM_INT);
             $orderNum = isset($data['order_num']) ? (int)$data['order_num'] : 0;
             $stmt->bindParam(':order_num', $orderNum, PDO::PARAM_INT);
+            
+            $availableAt = !empty($data['available_at']) ? $data['available_at'] : null;
+            $stmt->bindParam(':available_at', $availableAt);
+            $deadlineAt = !empty($data['deadline_at']) ? $data['deadline_at'] : null;
+            $stmt->bindParam(':deadline_at', $deadlineAt);
 
             if ($stmt->execute()) {
                 Helper::log($this->conn, $userId, $userName, 'UPDATE_LMS_MATERIAL', $data['title']);
@@ -299,6 +334,29 @@ class LmsController
             http_response_code(500);
             return json_encode(["message" => "Failed to delete material"]);
         } catch (\Throwable $e) {
+            http_response_code(500);
+            return json_encode(["message" => "Error: " . $e->getMessage()]);
+        }
+    }
+    public function reorderMaterials($items, $userId, $userName)
+    {
+        try {
+            $this->conn->beginTransaction();
+            $stmt = $this->conn->prepare("UPDATE lms_materials SET order_num = :order_num WHERE id = :id");
+            foreach ($items as $item) {
+                $stmt->execute([
+                    ':id' => $item['id'],
+                    ':order_num' => (int)$item['order_num']
+                ]);
+            }
+            $this->conn->commit();
+            
+            Helper::log($this->conn, $userId, $userName, 'REORDER_LMS_MATERIALS', 'Reordered materials');
+            return json_encode(["message" => "Materials reordered successfully"]);
+        } catch (\Throwable $e) {
+            if ($this->conn->inTransaction()) {
+                $this->conn->rollBack();
+            }
             http_response_code(500);
             return json_encode(["message" => "Error: " . $e->getMessage()]);
         }

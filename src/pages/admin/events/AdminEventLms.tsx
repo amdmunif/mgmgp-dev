@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
-import { ArrowLeft, Plus, Video, FileText, CheckSquare, Pencil, Trash2, GripVertical, FileQuestion, X, Eye } from 'lucide-react';
+import { ArrowLeft, Plus, Video, FileText, CheckSquare, Pencil, Trash2, FileQuestion, X, Eye, ChevronUp, ChevronDown } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { RichTextEditor } from '../../../components/ui/RichTextEditor';
 import { lmsService } from '../../../services/lmsService';
@@ -35,7 +35,9 @@ export function AdminEventLms() {
         type: 'video',
         url: '',
         content: '',
-        duration: ''
+        duration: '',
+        available_at: '',
+        deadline_at: ''
     });
 
     useEffect(() => {
@@ -140,6 +142,35 @@ export function AdminEventLms() {
         }
     };
 
+    const handleMoveTopic = async (index: number, direction: 'up' | 'down') => {
+        if (direction === 'up' && index === 0) return;
+        if (direction === 'down' && index === topics.length - 1) return;
+
+        const newTopics = [...topics];
+        const swapIndex = direction === 'up' ? index - 1 : index + 1;
+        
+        // Swap items
+        const temp = newTopics[index];
+        newTopics[index] = newTopics[swapIndex];
+        newTopics[swapIndex] = temp;
+
+        // Reassign order_num
+        const updatedItems = newTopics.map((t, i) => ({
+            id: t.id,
+            order_num: i + 1
+        }));
+
+        setTopics(newTopics); // Optimistic UI update
+
+        try {
+            await lmsService.reorderTopics(updatedItems);
+            toast.success("Urutan topik berhasil diperbarui");
+        } catch (error) {
+            toast.error("Gagal memperbarui urutan");
+            if (id) loadData(id); // Revert on failure
+        }
+    };
+
     // --- MATERIAL HANDLERS ---
 
     const handleOpenMaterialModal = (topicId: string, material?: LmsMaterial) => {
@@ -151,11 +182,13 @@ export function AdminEventLms() {
                 type: material.type,
                 url: material.url || '',
                 content: material.content || '',
-                duration: material.duration ? material.duration.toString() : ''
+                duration: material.duration ? material.duration.toString() : '',
+                available_at: material.available_at ? material.available_at.substring(0, 16) : '',
+                deadline_at: material.deadline_at ? material.deadline_at.substring(0, 16) : ''
             });
         } else {
             setEditingMaterial(null);
-            setMaterialForm({ title: '', type: 'video', url: '', content: '', duration: '' });
+            setMaterialForm({ title: '', type: 'video', url: '', content: '', duration: '', available_at: '', deadline_at: '' });
         }
         setIsMaterialModalOpen(true);
     };
@@ -174,7 +207,9 @@ export function AdminEventLms() {
                 url: materialForm.url,
                 content: materialForm.content,
                 duration: materialForm.duration ? parseInt(materialForm.duration) : 0,
-                order_num: editingMaterial ? editingMaterial.order_num : (materials[activeTopicId]?.length || 0) + 1
+                order_num: editingMaterial ? editingMaterial.order_num : (materials[activeTopicId]?.length || 0) + 1,
+                available_at: materialForm.available_at ? new Date(materialForm.available_at).toISOString().slice(0, 19).replace('T', ' ') : null,
+                deadline_at: materialForm.deadline_at ? new Date(materialForm.deadline_at).toISOString().slice(0, 19).replace('T', ' ') : null
             };
 
             if (editingMaterial) {
@@ -200,6 +235,40 @@ export function AdminEventLms() {
         } catch (error) {
             toast.error("Gagal menghapus materi");
             console.error(error);
+        }
+    };
+
+    const handleMoveMaterial = async (topicId: string, index: number, direction: 'up' | 'down') => {
+        const topicMaterials = materials[topicId];
+        if (!topicMaterials) return;
+        if (direction === 'up' && index === 0) return;
+        if (direction === 'down' && index === topicMaterials.length - 1) return;
+
+        const newMaterials = [...topicMaterials];
+        const swapIndex = direction === 'up' ? index - 1 : index + 1;
+        
+        // Swap items
+        const temp = newMaterials[index];
+        newMaterials[index] = newMaterials[swapIndex];
+        newMaterials[swapIndex] = temp;
+
+        // Reassign order_num
+        const updatedItems = newMaterials.map((m, i) => ({
+            id: m.id,
+            order_num: i + 1
+        }));
+
+        setMaterials({
+            ...materials,
+            [topicId]: newMaterials
+        });
+
+        try {
+            await lmsService.reorderMaterials(updatedItems);
+            toast.success("Urutan materi berhasil diperbarui");
+        } catch (error) {
+            toast.error("Gagal memperbarui urutan");
+            if (id) loadData(id);
         }
     };
 
@@ -232,7 +301,14 @@ export function AdminEventLms() {
                         {/* Topic Header */}
                         <div className="bg-gray-50 p-4 border-b border-gray-200 flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <GripVertical className="w-5 h-5 text-gray-400 cursor-move" />
+                                <div className="flex flex-col items-center justify-center">
+                                    <button onClick={() => handleMoveTopic(topics.indexOf(topic), 'up')} disabled={topics.indexOf(topic) === 0} className="text-gray-400 hover:text-blue-600 disabled:opacity-30 disabled:hover:text-gray-400 p-0.5">
+                                        <ChevronUp className="w-4 h-4" />
+                                    </button>
+                                    <button onClick={() => handleMoveTopic(topics.indexOf(topic), 'down')} disabled={topics.indexOf(topic) === topics.length - 1} className="text-gray-400 hover:text-blue-600 disabled:opacity-30 disabled:hover:text-gray-400 p-0.5">
+                                        <ChevronDown className="w-4 h-4" />
+                                    </button>
+                                </div>
                                 <h2 className="font-bold text-lg text-gray-800">{topic.title}</h2>
                             </div>
                             <div className="flex items-center gap-2">
@@ -252,7 +328,14 @@ export function AdminEventLms() {
                                     {materials[topic.id].map((material) => (
                                         <div key={material.id} className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-lg hover:border-blue-100 hover:shadow-sm transition-all group">
                                             <div className="flex items-center gap-3">
-                                                <GripVertical className="w-4 h-4 text-gray-300 cursor-move opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                <div className="flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <button onClick={() => handleMoveMaterial(topic.id, materials[topic.id].indexOf(material), 'up')} disabled={materials[topic.id].indexOf(material) === 0} className="text-gray-400 hover:text-blue-600 disabled:opacity-30 disabled:hover:text-gray-400 p-0.5">
+                                                        <ChevronUp className="w-3 h-3" />
+                                                    </button>
+                                                    <button onClick={() => handleMoveMaterial(topic.id, materials[topic.id].indexOf(material), 'down')} disabled={materials[topic.id].indexOf(material) === materials[topic.id].length - 1} className="text-gray-400 hover:text-blue-600 disabled:opacity-30 disabled:hover:text-gray-400 p-0.5">
+                                                        <ChevronDown className="w-3 h-3" />
+                                                    </button>
+                                                </div>
                                                 <div className="w-8 h-8 rounded-md bg-gray-50 flex items-center justify-center border border-gray-100">
                                                     {getIcon(material.type)}
                                                 </div>
@@ -411,6 +494,34 @@ export function AdminEventLms() {
                                     />
                                 </div>
                             )}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 border-t border-gray-100 pt-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Waktu Tampil (Opsional)
+                                    </label>
+                                    <p className="text-xs text-gray-500 mb-2">Kosongkan jika ingin materi langsung bisa diakses.</p>
+                                    <input 
+                                        type="datetime-local"
+                                        value={materialForm.available_at}
+                                        onChange={(e) => setMaterialForm({...materialForm, available_at: e.target.value})}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                    />
+                                </div>
+                                {['quiz', 'assignment'].includes(materialForm.type) && (
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Batas Waktu / Deadline (Opsional)
+                                        </label>
+                                        <p className="text-xs text-gray-500 mb-2">Batas akhir peserta mengerjakan kuis/tugas.</p>
+                                        <input 
+                                            type="datetime-local"
+                                            value={materialForm.deadline_at}
+                                            onChange={(e) => setMaterialForm({...materialForm, deadline_at: e.target.value})}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                        />
+                                    </div>
+                                )}
+                            </div>
                         </div>
                         <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
                             <Button variant="outline" onClick={() => setIsMaterialModalOpen(false)}>Batal</Button>

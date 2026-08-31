@@ -628,7 +628,6 @@ class ContentController
         $stmt->bindParam(':uid', $userId);
 
         if ($stmt->execute()) {
-            $this->syncAttendances($eventId, [$userId], $isHadir);
             return json_encode(["message" => "Success"]);
         }
         http_response_code(500);
@@ -844,9 +843,6 @@ class ContentController
         }
 
         if ($stmt->execute($params)) {
-            if ($status === 'attended' || $status === 'registered') {
-                $this->syncAttendances($eventId, $userIds, $isHadir);
-            }
             Helper::log($this->conn, 0, 'Admin', 'BULK_ATTENDANCE_UPDATE', "Event ID: $eventId, Count: " . count($userIds));
             return json_encode(["message" => "Bulk update successful"]);
         }

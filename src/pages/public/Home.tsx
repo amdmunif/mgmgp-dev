@@ -239,7 +239,7 @@ export function Home() {
                                             return (
                                                 <div className="flex items-center gap-2">
                                                     <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${isOpen ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                                        {isOpen ? 'Pendaftaran Buka' : 'Pendaftaran Tutup'}
+                                                        {isOpen ? 'Pendaftaran Buka' : (isQuotaFull ? 'Kuota Pendaftaran Penuh' : 'Pendaftaran Telah Ditutup')}
                                                     </span>
                                                     {event.quota ? (
                                                         <span className={`text-xs font-medium ${isQuotaFull ? 'text-red-600' : 'text-blue-600'}`}>

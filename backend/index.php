@@ -55,6 +55,11 @@ if (isset($uri_parts[0]) && $uri_parts[0] === 'migrate-db') {
     exit();
 }
 
+if (isset($uri_parts[0]) && $uri_parts[0] === 'migrate-training') {
+    include_once 'migrate_training_browser.php';
+    exit();
+}
+
 if (isset($uri_parts[0]) && $uri_parts[0] === 'migrate-reset') {
     include_once 'migrate_reset_password_browser.php';
     exit();
@@ -160,8 +165,12 @@ if ($resource === 'news') {
             // GET /lms/topics/:eventId
             echo $controller->getTopicsByEvent($subAction);
         } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // POST /lms/topics
-            echo $controller->createTopic($input, $userId, $userName);
+            if ($subAction === 'reorder') {
+                echo $controller->reorderTopics($input, $userId, $userName);
+            } else {
+                // POST /lms/topics
+                echo $controller->createTopic($input, $userId, $userName);
+            }
         } elseif ($_SERVER['REQUEST_METHOD'] === 'PUT' && $subAction) {
             // PUT /lms/topics/:id
             echo $controller->updateTopic($subAction, $input, $userId, $userName);
@@ -174,8 +183,12 @@ if ($resource === 'news') {
             // GET /lms/materials/:topicId
             echo $controller->getMaterialsByTopic($subAction);
         } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // POST /lms/materials
-            echo $controller->createMaterial($input, $userId, $userName);
+            if ($subAction === 'reorder') {
+                echo $controller->reorderMaterials($input, $userId, $userName);
+            } else {
+                // POST /lms/materials
+                echo $controller->createMaterial($input, $userId, $userName);
+            }
         } elseif ($_SERVER['REQUEST_METHOD'] === 'PUT' && $subAction) {
             // PUT /lms/materials/:id
             echo $controller->updateMaterial($subAction, $input, $userId, $userName);
