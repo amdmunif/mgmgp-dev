@@ -346,8 +346,8 @@ export function LmsViewer() {
                 {/* Content Area */}
                 <div className={cn("flex-1 overflow-y-auto", !activeItem ? "bg-white" : "bg-gray-50 p-4 md:p-8")}>
                     {!activeItem ? (
-                        <div className="w-full h-full flex flex-col p-6 md:p-10">
-                            <div className="w-full max-w-7xl mx-auto flex flex-col">
+                        <div className="w-full min-h-full flex flex-col p-6 md:p-10">
+                            <div className="w-full max-w-7xl mx-auto flex flex-col flex-1">
                                 <div className="flex items-center gap-4 mb-8 pb-6 border-b border-gray-100">
                                     <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center shrink-0">
                                         <BookOpen className="w-8 h-8" />
@@ -430,6 +430,10 @@ export function LmsViewer() {
                                         </div>
                                     )}
                                 </div>
+                            </div>
+                            
+                            <div className="mt-12 pt-6 border-t border-gray-200 text-center text-sm text-gray-500 pb-4 shrink-0">
+                                &copy; {new Date().getFullYear()} LMS MGMP. Hak Cipta Dilindungi.
                             </div>
                         </div>
                     ) : activeItem?.type === 'quiz' ? (
