@@ -160,6 +160,9 @@ export function AdminEventDetail() {
                     if (status === 'passed' || status === 'not_passed') {
                         return { ...p, is_passed: isPassed ? 1 : 0 };
                     }
+                    if (status === 'approve_lms' || status === 'revoke_lms') {
+                        return { ...p, is_approved: status === 'approve_lms' ? 1 : 0 };
+                    }
                     return { 
                         ...p, 
                         status: status, 
@@ -613,6 +616,27 @@ export function AdminEventDetail() {
                                         <XCircle className="w-4 h-4 mr-1" />
                                         Set Belum Hadir ({selectedIds.length})
                                     </Button>
+                                    {!!event?.has_lms && (
+                                        <>
+                                            <Button
+                                                size="sm"
+                                                className="bg-purple-600 hover:bg-purple-700 text-white ml-4"
+                                                onClick={() => handleBulkUpdate('approve_lms')}
+                                            >
+                                                <CheckCircle className="w-4 h-4 mr-1" />
+                                                Buka Akses LMS ({selectedIds.length})
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                className="text-purple-600 border-purple-200 hover:bg-purple-50"
+                                                onClick={() => handleBulkUpdate('revoke_lms')}
+                                            >
+                                                <XCircle className="w-4 h-4 mr-1" />
+                                                Tutup Akses LMS ({selectedIds.length})
+                                            </Button>
+                                        </>
+                                    )}
                                 </div>
                             )}
                         </div>

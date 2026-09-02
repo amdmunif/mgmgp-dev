@@ -70,6 +70,7 @@ class ProjectController
         $stmt->bindParam(':image_url', $imageUrl);
 
         if ($stmt->execute()) {
+            Helper::log($this->conn, $userId, 'Member', 'CREATE_PROJECT', "Title: $title", 'Peserta');
             return json_encode(["message" => "Project submitted successfully"]);
         }
         http_response_code(500);
@@ -97,6 +98,7 @@ class ProjectController
         $stmt->bindParam(':user_id', $userId);
 
         if ($stmt->execute()) {
+            Helper::log($this->conn, $userId, 'Member', 'UPDATE_PROJECT', "Project ID: $id", 'Peserta');
             return json_encode(["message" => "Project updated successfully"]);
         }
         http_response_code(500);
@@ -112,6 +114,7 @@ class ProjectController
         $stmt->bindParam(':user_id', $userId);
 
         if ($stmt->execute()) {
+            Helper::log($this->conn, $userId, 'Member', 'DELETE_PROJECT', "Project ID: $id", 'Peserta');
             return json_encode(["message" => "Project deleted successfully"]);
         }
         http_response_code(500);
@@ -132,6 +135,7 @@ class ProjectController
         $stmt->bindParam(':id', $id);
 
         if ($stmt->execute()) {
+            Helper::log($this->conn, 0, 'Admin', 'VALIDATE_PROJECT', "Project ID: $id, Status: $status");
             return json_encode(["message" => "Status updated successfully"]);
         }
         http_response_code(500);

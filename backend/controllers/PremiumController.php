@@ -135,6 +135,7 @@ class PremiumController
             }
 
             $this->conn->commit();
+            Helper::log($this->conn, 0, 'Admin', 'APPROVE_PREMIUM', "User: $userId");
 
             // Fetch user info for email
             $stmtUser = $this->conn->prepare("SELECT p.nama, u.email FROM profiles p JOIN users u ON p.id = u.id WHERE p.id = :id");
@@ -164,6 +165,7 @@ class PremiumController
         $stmt->bindParam(':id', $id);
 
         if ($stmt->execute()) {
+            Helper::log($this->conn, 0, 'Admin', 'REJECT_PREMIUM', "Request ID: $id");
             return json_encode(["message" => "Rejected successfully"]);
         }
 
@@ -199,6 +201,7 @@ class PremiumController
             if ($userRow && $userRow['email']) {
                 Mailer::sendPremiumUpgradeRequest($userRow['email'], $userRow['nama']);
             }
+            Helper::log($this->conn, $userId, 'User', 'CREATE_PREMIUM_REQUEST', "Request ID: $id");
 
             return json_encode(["message" => "Request submitted successfully"]);
         }
@@ -258,6 +261,7 @@ class PremiumController
         $stmtUp->bindParam(':id', $userId);
 
         if ($stmtUp->execute()) {
+            Helper::log($this->conn, $userId, 'Admin', 'EXTEND_PREMIUM', "User: $userId, New Expiry: $newExpiry");
             return json_encode(["message" => "Extended successfully", "new_expiry" => $newExpiry]);
         }
 
@@ -274,6 +278,7 @@ class PremiumController
         $stmt->bindParam(':id', $userId);
 
         if ($stmt->execute()) {
+            Helper::log($this->conn, $userId, 'Admin', 'REVOKE_PREMIUM', "User: $userId");
             return json_encode(["message" => "Subscription revoked"]);
         }
 
@@ -288,6 +293,7 @@ class PremiumController
         $stmt->bindParam(':id', $id);
 
         if ($stmt->execute()) {
+            Helper::log($this->conn, 0, 'Admin', 'DELETE_PREMIUM_REQUEST', "Request ID: $id");
             return json_encode(["message" => "Request deleted successfully"]);
         }
 

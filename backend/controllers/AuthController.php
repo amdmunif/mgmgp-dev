@@ -70,6 +70,9 @@ class AuthController
                 // Notify admin
                 Mailer::sendAdminNewMemberNotification($nama, $email);
 
+                // Log Activity
+                Helper::log($this->conn, $userId, $nama, 'REGISTER_USER', 'System', 'Peserta');
+
                 return json_encode([
                     "message" => "Registration successful.",
                     "user" => [
@@ -142,6 +145,9 @@ class AuthController
                 if (empty($row['last_data_update']) || strtotime($row['last_data_update']) < strtotime($targetDate) || $row['mengajar_tahun_ini'] == 0 || !$is_profile_complete) {
                     $needs_update = true;
                 }
+
+                // Log Activity
+                Helper::log($this->conn, $row['id'], $row['nama'], 'LOGIN', 'System', 'Peserta');
 
                 return json_encode([
                     "user" => [
@@ -250,6 +256,9 @@ class AuthController
         $stmt->bindParam(':mengajar_tahun_ini', $mengajar_tahun_ini, PDO::PARAM_INT);
 
         if ($stmt->execute()) {
+            // Log Activity
+            Helper::log($this->conn, $id, $data['nama'], 'UPDATE_PROFILE', 'System', 'Peserta');
+
             return $this->getProfile($id);
         }
 
@@ -276,6 +285,9 @@ class AuthController
             http_response_code(404);
             return json_encode(["message" => "Email not found."]);
         }
+        
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $userId = $row['id'];
 
         $token = bin2hex(random_bytes(32));
         // Use database time for expiry to match NOW() used in verification
@@ -290,6 +302,9 @@ class AuthController
         if ($stmtUpd->execute()) {
             // Send Email Template via Mailer
             if (Mailer::sendResetPassword($email, $token)) {
+                // Log Activity
+                Helper::log($this->conn, $userId, 'Unknown', 'FORGOT_PASSWORD', 'System', 'Peserta');
+                
                 return json_encode(["message" => "Reset link sent to your email."]);
             } else {
                 return json_encode(["message" => "Failed to send email. Contact admin. Token generated though."]);
@@ -312,13 +327,17 @@ class AuthController
         }
 
         // Verify token
-        $query = "SELECT id FROM users WHERE email = :email AND reset_token = :token AND reset_token_expiry > NOW()";
+        $query = "SELECT u.id, p.nama FROM users u LEFT JOIN profiles p ON u.id = p.id WHERE u.email = :email AND u.reset_token = :token AND u.reset_token_expiry > NOW()";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':email', $email);
         $stmt->bindParam(':token', $token);
         $stmt->execute();
 
         if ($stmt->rowCount() > 0) {
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            $userId = $row['id'];
+            $userName = $row['nama'] ?? 'Unknown';
+
             $passwordHash = password_hash($newPassword, PASSWORD_BCRYPT);
 
             $update = "UPDATE users SET password_hash = :password, reset_token = NULL, reset_token_expiry = NULL WHERE email = :email";
@@ -327,6 +346,9 @@ class AuthController
             $stmtUpd->bindParam(':email', $email);
 
             if ($stmtUpd->execute()) {
+                // Log Activity
+                Helper::log($this->conn, $userId, $userName, 'RESET_PASSWORD', 'System', 'Peserta');
+
                 return json_encode(["message" => "Password successfully updated. You can now login."]);
             }
         }

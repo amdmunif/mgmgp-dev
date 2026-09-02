@@ -62,6 +62,10 @@ class TrainingController
             // Send email confirmation (Invoice)
             Mailer::sendTrainingInvoice($data['email'], $data['nama_lengkap'], $code, $price, $settings['event_name']);
 
+            // Log activity
+            $logUserId = $userId ? $userId : $id;
+            Helper::log($this->conn, $logUserId, $data['nama_lengkap'], 'REGISTER_TRAINING', 'Training: ' . $code, 'Peserta');
+
             return json_encode([
                 "message" => "Pendaftaran berhasil, silakan cek email untuk instruksi pembayaran.",
                 "registration_code" => $code,
@@ -106,6 +110,8 @@ class TrainingController
         $stmt->bindParam(':is_open', $isOpen, PDO::PARAM_INT);
 
         if ($stmt->execute()) {
+            // We assume admin user is doing this, but we don't have user context in this method signature easily. Use generic Admin.
+            Helper::log($this->conn, 'SYSTEM', 'Admin', 'UPDATE_TRAINING_SETTINGS', 'Training Settings');
             return json_encode(["message" => "Pengaturan berhasil disimpan"]);
         }
         

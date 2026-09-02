@@ -303,6 +303,7 @@ CREATE TABLE `audit_logs` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `user_id` char(36) DEFAULT NULL,
   `user_name` varchar(255) DEFAULT NULL,
+  `role` varchar(50) DEFAULT 'Admin',
   `action` varchar(255) NOT NULL,
   `target` text DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),

@@ -449,7 +449,7 @@ class ContentController
             }
 
             $targetLog = !empty($eventTitle) ? $eventTitle : $eventId;
-            Helper::log($this->conn, $userId, 'Member', 'JOIN_EVENT', $targetLog);
+            Helper::log($this->conn, $userId, 'Member', 'JOIN_EVENT', $targetLog, 'Peserta');
             return json_encode(["message" => "Joined successfully"]);
         }
         http_response_code(500);
@@ -478,6 +478,7 @@ class ContentController
             if ($userData && $eventTitle) {
                 Mailer::sendEventPaymentProofUploaded($userData['email'], $userData['nama'], $eventTitle);
             }
+            Helper::log($this->conn, $userId, 'Member', 'UPLOAD_PAYMENT', "Event: $eventTitle");
             return json_encode(["message" => "Payment proof uploaded successfully"]);
         }
         
@@ -517,6 +518,7 @@ class ContentController
             if ($user && $eventTitle) {
                 Mailer::sendTaskSubmitted($user['email'], $user['nama'], $eventTitle);
             }
+            Helper::log($this->conn, $userId, 'Member', 'SUBMIT_TASK', "Event: $eventTitle");
             return json_encode(["message" => "Task submitted"]);
         }
         http_response_code(500);
@@ -628,6 +630,7 @@ class ContentController
         $stmt->bindParam(':uid', $userId);
 
         if ($stmt->execute()) {
+            Helper::log($this->conn, 0, 'Admin', 'UPDATE_PARTICIPANT_STATUS', "Event ID: $eventId, User ID: $userId, Status: $status");
             return json_encode(["message" => "Success"]);
         }
         http_response_code(500);
@@ -644,6 +647,7 @@ class ContentController
         $stmt->bindParam(':uid', $userId);
         
         if ($stmt->execute()) {
+            Helper::log($this->conn, 0, 'Admin', 'APPROVE_LMS_ACCESS', "Event ID: $eventId, User ID: $userId, Approved: $isApproved");
             return json_encode(["message" => "Success"]);
         }
         http_response_code(500);
@@ -659,6 +663,7 @@ class ContentController
         $stmt->bindParam(':uid', $userId);
 
         if ($stmt->execute()) {
+            Helper::log($this->conn, 0, 'Admin', 'UPDATE_PARTICIPANT_PASSED', "Event ID: $eventId, User ID: $userId, Passed: $isPassed");
             return json_encode(["message" => "Kelulusan diupdate"]);
         }
         http_response_code(500);
@@ -712,6 +717,7 @@ class ContentController
             if ($userData && $userData['email']) {
                 Mailer::sendEventPaymentConfirmed($userData['email'], $userData['nama'], $userData['event_title']);
             }
+            Helper::log($this->conn, $adminId, 'Admin', 'CONFIRM_PAYMENT', "Event ID: $eventId, User ID: $userId");
 
             return json_encode(["message" => "Payment confirmed and logged to finance"]);
         }
@@ -719,7 +725,7 @@ class ContentController
         return json_encode(["message" => "Failed to confirm payment"]);
     }
 
-    public function rejectPayment($eventId, $userId)
+    public function rejectPayment($eventId, $userId, $adminId)
     {
         $query = "UPDATE event_participants SET payment_status = 'rejected' WHERE event_id = :eid AND user_id = :uid";
         $stmt = $this->conn->prepare($query);
@@ -736,6 +742,7 @@ class ContentController
             if ($userData && $userData['email']) {
                 Mailer::sendEventPaymentRejected($userData['email'], $userData['nama'], $userData['event_title']);
             }
+            Helper::log($this->conn, $adminId, 'Admin', 'REJECT_PAYMENT', "Event ID: $eventId, User ID: $userId");
 
             return json_encode(["message" => "Payment rejected"]);
         }
@@ -797,7 +804,7 @@ class ContentController
             $stmtTitle->execute();
             $eventTitle = $stmtTitle->fetchColumn();
             $targetLog = !empty($eventTitle) ? $eventTitle : $eventId;
-            Helper::log($this->conn, $userId, 'Member', 'SELF_ATTENDANCE', $targetLog);
+            Helper::log($this->conn, $userId, 'Member', 'SELF_ATTENDANCE', $targetLog, 'Peserta');
             
             // Send Notification (only once per day, or maybe just first time)
             $stmtCount = $this->conn->prepare("SELECT COUNT(*) FROM event_attendances WHERE event_id = :eid AND user_id = :uid");
@@ -821,7 +828,7 @@ class ContentController
         return json_encode(["message" => "Failed to mark attendance"]);
     }
 
-    public function updateParticipantsBulk($eventId, $userIds, $status)
+    public function updateParticipantsBulk($eventId, $userIds, $status, $adminId)
     {
         if (!is_array($userIds) || empty($userIds)) {
             http_response_code(400);
@@ -835,6 +842,11 @@ class ContentController
             $query = "UPDATE event_participants SET is_passed = ? WHERE event_id = ? AND user_id IN ($placeholders)";
             $stmt = $this->conn->prepare($query);
             $params = array_merge([$isPassed, $eventId], $userIds);
+        } else if ($status === 'approve_lms' || $status === 'revoke_lms') {
+            $isApproved = ($status === 'approve_lms') ? 1 : 0;
+            $query = "UPDATE event_participants SET is_approved = ? WHERE event_id = ? AND user_id IN ($placeholders)";
+            $stmt = $this->conn->prepare($query);
+            $params = array_merge([$isApproved, $eventId], $userIds);
         } else {
             $isHadir = ($status === 'attended') ? 1 : 0;
             $query = "UPDATE event_participants SET is_hadir = ? WHERE event_id = ? AND user_id IN ($placeholders)";
@@ -843,7 +855,7 @@ class ContentController
         }
 
         if ($stmt->execute($params)) {
-            Helper::log($this->conn, 0, 'Admin', 'BULK_ATTENDANCE_UPDATE', "Event ID: $eventId, Count: " . count($userIds));
+            Helper::log($this->conn, $adminId, 'Admin', 'BULK_UPDATE_PARTICIPANTS', "Event ID: $eventId, Status: $status, Count: " . count($userIds));
             return json_encode(["message" => "Bulk update successful"]);
         }
 
@@ -851,7 +863,7 @@ class ContentController
         return json_encode(["message" => "Failed to update participants"]);
     }
 
-    public function deleteParticipant($eventId, $userId)
+    public function deleteParticipant($eventId, $userId, $adminId)
     {
         $query = "DELETE FROM event_participants WHERE event_id = :eid AND user_id = :uid";
         $stmt = $this->conn->prepare($query);
@@ -859,6 +871,7 @@ class ContentController
         $stmt->bindParam(':uid', $userId);
 
         if ($stmt->execute()) {
+            Helper::log($this->conn, $adminId, 'Admin', 'DELETE_PARTICIPANT', "Event ID: $eventId, User ID: $userId");
             return json_encode(["message" => "Participant removed successfully"]);
         }
 
