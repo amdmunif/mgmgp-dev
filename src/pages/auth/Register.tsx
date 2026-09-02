@@ -192,6 +192,19 @@ export function Register() {
                             <p className="text-sm">{serverError}</p>
                         </div>
                     )}
+                    {Object.keys(errors).length > 0 && (
+                        <div className="mx-6 sm:mx-10 mt-8 p-4 bg-orange-50 border border-orange-100 rounded-xl flex items-start text-orange-700 animate-in slide-in-from-top-2">
+                            <AlertCircle className="w-5 h-5 mr-3 mt-0.5 flex-shrink-0" />
+                            <div className="text-sm">
+                                <p className="font-semibold mb-1">Ada isian yang belum tepat:</p>
+                                <ul className="list-disc pl-4 space-y-1">
+                                    {Object.values(errors).map((error, idx) => (
+                                        <li key={idx}>{error?.message as string}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+                    )}
 
                     <form onSubmit={handleSubmit(onSubmit, (errors) => console.log("Validation Errors:", errors))} className="p-6 md:p-10">
                         {/* Step 1: Identitas */}
@@ -337,6 +350,9 @@ export function Register() {
                                             )}
                                         </div>
                                     </div>
+                                    {errors.foto_profil && (
+                                        <p className="form-error mt-2 text-red-500 text-sm">{errors.foto_profil.message as string}</p>
+                                    )}
                                 </div>
                             </div>
                         </div>
