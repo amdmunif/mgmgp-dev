@@ -42,7 +42,7 @@ const menuGroups = [
         title: "Pengguna",
         items: [
             { icon: Users, label: 'Data Anggota', path: '/admin/users' },
-            { icon: UserCheck, label: 'Kontributor', path: '/admin/contributors' },
+            { icon: UserCheck, label: 'Kontributor', path: '/admin/contributors', adminOnly: true },
             { icon: Crown, label: 'Langganan Premium', path: '/admin/premium' },
         ]
     },
@@ -73,7 +73,7 @@ const menuGroups = [
         title: "Sistem & Alat",
         items: [
             { icon: FileText, label: 'Generator Surat', path: '/admin/letters' },
-            { icon: Globe, label: 'Pengaturan Web', path: '/admin/web-settings' },
+            { icon: Globe, label: 'Pengaturan Web', path: '/admin/web-settings', adminOnly: true },
             { icon: Settings, label: 'Pengaturan Akun', path: '/admin/settings' },
         ]
     }
@@ -291,7 +291,9 @@ export function AdminLayout() {
                                     "space-y-1 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden px-1",
                                     isExpanded ? "max-h-[600px] opacity-100 mt-2" : "max-h-0 opacity-0 mt-0"
                                 )}>
-                                    {group.items.map((item) => {
+                                    {group.items.map((item: any) => {
+                                        if (item.adminOnly && user?.role !== 'Admin' && user?.role !== 'Super Admin') return null;
+
                                         const isActive = location.pathname === item.path;
                                         return (
                                             <Link

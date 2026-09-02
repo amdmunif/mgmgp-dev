@@ -554,9 +554,19 @@ if ($resource === 'news') {
     include_once './controllers/SettingsController.php';
     $controller = new SettingsController();
     if ($action === 'logo' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-        echo $controller->uploadLogo();
+        if (!in_array($userRole, ['Admin', 'Super Admin'])) {
+            http_response_code(403);
+            echo json_encode(["message" => "Forbidden - Admin Only"]);
+        } else {
+            echo $controller->uploadLogo();
+        }
     } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        echo $controller->updateSettings($input, $userId, $userName);
+        if (!in_array($userRole, ['Admin', 'Super Admin'])) {
+            http_response_code(403);
+            echo json_encode(["message" => "Forbidden - Admin Only"]);
+        } else {
+            echo $controller->updateSettings($input, $userId, $userName);
+        }
     } else {
         echo $controller->getSettings();
     }
@@ -719,6 +729,9 @@ if ($resource === 'news') {
         if ($payload && isset($payload['sub'])) {
             $userId = $payload['sub'];
             $userRole = ucfirst(strtolower($payload['role'] ?? 'Anggota'));
+            if (in_array(strtolower($payload['role'] ?? ''), ['admin', 'super admin'])) {
+                $userRole = 'Admin';
+            }
         }
     }
 
@@ -736,7 +749,7 @@ if ($resource === 'news') {
         // Admin Only
         if ($userRole !== 'Admin') {
             http_response_code(403);
-            echo json_encode(["message" => "Forbidden"]);
+            echo json_encode(["message" => "Forbidden - Access requires Admin role"]);
         } else {
             echo $controller->getAllApplications();
         }
@@ -898,7 +911,7 @@ if ($resource === 'news') {
         }
     } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action) {
         if ($userId) {
-            echo $controller->deleteProject($action, $userId);
+            echo $controller->deleteProject($action, $userId, $userRole);
         } else {
             http_response_code(401);
             echo json_encode(["message" => "Unauthorized"]);

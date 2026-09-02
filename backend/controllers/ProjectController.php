@@ -106,12 +106,18 @@ class ProjectController
     }
 
     // Member: Delete their project
-    public function deleteProject($id, $userId)
+    public function deleteProject($id, $userId, $userRole = 'Member')
     {
-        $query = "DELETE FROM member_projects WHERE id = :id AND user_id = :user_id";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':id', $id);
-        $stmt->bindParam(':user_id', $userId);
+        if (in_array($userRole, ['Admin', 'Pengurus'])) {
+            $query = "DELETE FROM member_projects WHERE id = :id";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':id', $id);
+        } else {
+            $query = "DELETE FROM member_projects WHERE id = :id AND user_id = :user_id";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':id', $id);
+            $stmt->bindParam(':user_id', $userId);
+        }
 
         if ($stmt->execute()) {
             Helper::log($this->conn, $userId, 'Member', 'DELETE_PROJECT', "Project ID: $id", 'Peserta');
