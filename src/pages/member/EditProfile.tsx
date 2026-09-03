@@ -6,6 +6,7 @@ import { getFileUrl } from '../../lib/api';
 import { settingsService } from '../../services/settingsService';
 import { Button } from '../../components/ui/button';
 import { useOutletContext } from 'react-router-dom';
+import { ChangePasswordForm } from '../../components/member/ChangePasswordForm';
 
 export function EditProfile() {
     const { setPageHeader } = useOutletContext<any>();
@@ -401,6 +402,8 @@ export function EditProfile() {
                     </div>
                 </form>
             </div>
+            
+            <ChangePasswordForm />
         </div>
     );
 }

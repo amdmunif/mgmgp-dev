@@ -24,7 +24,8 @@ import {
     ImageIcon,
     Target,
     Wallet,
-    ListChecks
+    ListChecks,
+    Mail
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { getFileUrl } from '../../lib/api';
@@ -73,6 +74,7 @@ const menuGroups = [
         title: "Sistem & Alat",
         items: [
             { icon: FileText, label: 'Generator Surat', path: '/admin/letters' },
+            { icon: Mail, label: 'Email Logs', path: '/admin/email-logs', adminOnly: true },
             { icon: Globe, label: 'Pengaturan Web', path: '/admin/web-settings', adminOnly: true },
             { icon: Settings, label: 'Pengaturan Akun', path: '/admin/settings' },
         ]

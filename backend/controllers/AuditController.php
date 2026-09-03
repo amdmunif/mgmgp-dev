@@ -25,5 +25,14 @@ class AuditController
         $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
         return json_encode($logs);
     }
+
+    public function getEmailLogs()
+    {
+        $query = "SELECT * FROM email_logs ORDER BY created_at DESC LIMIT 500";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return json_encode($logs);
+    }
 }
 ?>

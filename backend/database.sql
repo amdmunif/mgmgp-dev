@@ -412,3 +412,12 @@ CREATE TABLE IF NOT EXISTS `training_registrations` (
 -- Insert initial dummy settings
 INSERT IGNORE INTO `training_settings` (`id`, `event_name`, `event_date`, `price_regular`, `price_premium`, `description`) 
 VALUES (1, 'Pelatihan Perdana MGMP', '2026-10-10 08:00:00', 100000, 50000, 'Ini adalah pengaturan pelatihan publik default');
+
+CREATE TABLE IF NOT EXISTS `email_logs` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `recipient_email` VARCHAR(255) NOT NULL,
+  `subject` VARCHAR(255) NOT NULL,
+  `status` ENUM('success', 'failed') NOT NULL,
+  `error_message` TEXT,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

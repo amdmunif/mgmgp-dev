@@ -70,6 +70,7 @@ import { AuditLogs } from './pages/admin/AuditLogs';
 import { CPManager } from './pages/admin/curriculum/CPManager';
 import { TPManager } from './pages/admin/curriculum/TPManager';
 import { ValidateProjects } from './pages/admin/ValidateProjects';
+import { EmailLogs } from './pages/admin/EmailLogs';
 
 // Member Feature Pages
 import { CPTP } from './pages/member/CPTP';
@@ -279,6 +280,7 @@ function App() {
           <Route path="contributors" element={<VerificationList />} />
           <Route path="projects" element={<ValidateProjects />} />
           <Route path="logs" element={<AuditLogs />} />
+          <Route path="email-logs" element={<EmailLogs />} />
         </Route>
 
         {/* Fallback */}

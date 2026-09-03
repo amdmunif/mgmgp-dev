@@ -356,5 +356,49 @@ class AuthController
         http_response_code(400);
         return json_encode(["message" => "Invalid or expired token."]);
     }
+
+    public function changePassword($userId, $data)
+    {
+        $oldPassword = $data['old_password'] ?? '';
+        $newPassword = $data['new_password'] ?? '';
+
+        if (!$oldPassword || !$newPassword) {
+            http_response_code(400);
+            return json_encode(["message" => "Password lama dan password baru harus diisi."]);
+        }
+
+        // Get current password hash
+        $query = "SELECT password_hash FROM users WHERE id = :id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':id', $userId);
+        $stmt->execute();
+
+        if ($stmt->rowCount() > 0) {
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (password_verify($oldPassword, $row['password_hash'])) {
+                $passwordHash = password_hash($newPassword, PASSWORD_BCRYPT);
+
+                $update = "UPDATE users SET password_hash = :password WHERE id = :id";
+                $stmtUpd = $this->conn->prepare($update);
+                $stmtUpd->bindParam(':password', $passwordHash);
+                $stmtUpd->bindParam(':id', $userId);
+
+                if ($stmtUpd->execute()) {
+                    // Log Activity
+                    Helper::log($this->conn, $userId, 'Unknown', 'CHANGE_PASSWORD', 'System', 'Peserta');
+                    return json_encode(["message" => "Password berhasil diubah."]);
+                } else {
+                    http_response_code(500);
+                    return json_encode(["message" => "Gagal mengubah password."]);
+                }
+            } else {
+                http_response_code(400);
+                return json_encode(["message" => "Password lama salah."]);
+            }
+        }
+
+        http_response_code(404);
+        return json_encode(["message" => "User tidak ditemukan."]);
+    }
 }
 ?>

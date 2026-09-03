@@ -486,8 +486,13 @@ if ($resource === 'news') {
 } elseif ($resource === 'logs') {
     include_once './controllers/AuditController.php';
     $controller = new AuditController();
-    if ($_SERVER['REQUEST_METHOD'] === 'GET')
-        echo $controller->getAll();
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        if ($action === 'emails') {
+            echo $controller->getEmailLogs();
+        } else {
+            echo $controller->getAll();
+        }
+    }
 } elseif ($resource === 'references') {
     $controller = new ResourceController();
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
@@ -773,6 +778,13 @@ if ($resource === 'news') {
         echo $auth->forgotPassword($input);
     } elseif ($action === 'reset-password' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         echo $auth->resetPassword($input);
+    } elseif ($action === 'change-password' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        if ($userId) {
+            echo $auth->changePassword($userId, $input);
+        } else {
+            http_response_code(401);
+            echo json_encode(["message" => "Unauthorized"]);
+        }
     } elseif ($action === 'profile') {
         // Need to extract User ID from Token (Middleware replacement)
         // For now, allow passing ID or check Authorization header decoding

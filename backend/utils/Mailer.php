@@ -9,7 +9,30 @@ class Mailer
         $headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";
         $headers .= "From: MGMP Informatika <noreply@" . (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'mgmpinformatika.com') . ">" . "\r\n";
 
-        return mail($to, $subject, $htmlContent, $headers);
+        $result = mail($to, $subject, $htmlContent, $headers);
+        
+        // Log to database
+        try {
+            include_once __DIR__ . '/../config/database.php';
+            $db = new Database();
+            $conn = $db->getConnection();
+            if ($conn) {
+                $status = $result ? 'success' : 'failed';
+                $errorMsg = $result ? null : (error_get_last()['message'] ?? 'Unknown error');
+                
+                $query = "INSERT INTO email_logs (recipient_email, subject, status, error_message) VALUES (:email, :subject, :status, :error)";
+                $stmt = $conn->prepare($query);
+                $stmt->bindParam(':email', $to);
+                $stmt->bindParam(':subject', $subject);
+                $stmt->bindParam(':status', $status);
+                $stmt->bindParam(':error', $errorMsg);
+                $stmt->execute();
+            }
+        } catch (Exception $e) {
+            // Silently fail logging if DB is not available
+        }
+
+        return $result;
     }
 
     private static function getBaseTemplate($title, $bodyContent)
