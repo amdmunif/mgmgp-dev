@@ -232,6 +232,41 @@ export function EventDetail() {
                                 const userStr = localStorage.getItem('user_data');
                                 const user = userStr ? JSON.parse(userStr) : {};
                                 const isPremiumUser = user.premium_until && new Date(user.premium_until) > new Date();
+                                const isActive = user.is_active === 1 || user.is_active === true;
+                                const isProfileComplete = user.is_profile_complete === true;
+
+                                if (!isActive) {
+                                    return (
+                                        <div className="space-y-3">
+                                            <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+                                                <Lock className="w-8 h-8 text-red-500 mx-auto mb-2" />
+                                                <h4 className="font-bold text-red-800">Menunggu Konfirmasi</h4>
+                                                <p className="text-sm text-red-700 mb-3">
+                                                    Akun Anda belum diverifikasi oleh admin. Silakan tunggu konfirmasi untuk mendaftar kegiatan.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    );
+                                }
+
+                                if (!isProfileComplete) {
+                                    return (
+                                        <div className="space-y-3">
+                                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+                                                <Users className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
+                                                <h4 className="font-bold text-yellow-800">Lengkapi Profil</h4>
+                                                <p className="text-sm text-yellow-700 mb-3">
+                                                    Silakan lengkapi data profil Anda (Asal Sekolah, No HP, dll) terlebih dahulu sebelum mendaftar.
+                                                </p>
+                                                <Link to="/member/profile">
+                                                    <Button className="w-full bg-yellow-600 hover:bg-yellow-700 text-white">
+                                                        Lengkapi Profil Sekarang
+                                                    </Button>
+                                                </Link>
+                                            </div>
+                                        </div>
+                                    );
+                                }
 
                                 if (isPremiumEvent && !isPremiumUser) {
                                     return (

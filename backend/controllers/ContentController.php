@@ -385,6 +385,27 @@ class ContentController
         $stmtEvent->execute();
         $event = $stmtEvent->fetch(PDO::FETCH_ASSOC);
 
+        // Validate Profile Completion & Active Status
+        $stmtProfile = $this->conn->prepare("SELECT is_active, nama, asal_sekolah, no_hp FROM profiles WHERE id = :uid");
+        $stmtProfile->bindParam(':uid', $userId);
+        $stmtProfile->execute();
+        $userProfileStatus = $stmtProfile->fetch(PDO::FETCH_ASSOC);
+
+        if (!$userProfileStatus) {
+            http_response_code(400);
+            return json_encode(["message" => "Profil pengguna tidak ditemukan."]);
+        }
+
+        if (!$userProfileStatus['is_active']) {
+            http_response_code(403);
+            return json_encode(["message" => "Akun Anda belum dikonfirmasi oleh Admin. Silakan tunggu konfirmasi untuk mendaftar kegiatan."]);
+        }
+
+        if (empty($userProfileStatus['nama']) || empty($userProfileStatus['asal_sekolah']) || empty($userProfileStatus['no_hp'])) {
+            http_response_code(403);
+            return json_encode(["message" => "Silakan lengkapi data profil Anda (Nama, Asal Sekolah, No HP) terlebih dahulu sebelum mendaftar kegiatan."]);
+        }
+
         if ($event && $event['is_premium'] == 1) {
             $stmtUser = $this->conn->prepare("SELECT premium_until FROM profiles WHERE id = :uid");
             $stmtUser->bindParam(':uid', $userId);
