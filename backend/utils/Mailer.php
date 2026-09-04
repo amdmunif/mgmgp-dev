@@ -186,7 +186,7 @@ class Mailer
 
     public static function sendAdminNewMemberNotification($namaMember, $emailMember)
     {
-        $adminEmail = 'admin@mgmpinformatika.com';
+        $adminEmail = 'mgmpinformatikawsb@gmail.com';
         $loginLink = "https://" . (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'mgmpinformatika.com') . "/admin/users";
         $title = "Pendaftar Baru Menunggu Verifikasi";
         $body = "
