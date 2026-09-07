@@ -597,22 +597,8 @@ if ($resource === 'news') {
                 http_response_code(403);
                 echo json_encode(["message" => "Forbidden"]);
             }
-        } elseif ($action === 'schools-audit') {
-            if (in_array($userRole, ['Admin', 'Pengurus'])) {
-                echo $controller->getSchoolsAudit();
-            } else {
-                http_response_code(403);
-                echo json_encode(["message" => "Forbidden"]);
-            }
         } else {
             echo $controller->getAll();
-        }
-    } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'schools-standardize') {
-        if (in_array($userRole, ['Admin', 'Pengurus'])) {
-            echo $controller->standardizeSchools();
-        } else {
-            http_response_code(403);
-            echo json_encode(["message" => "Forbidden"]);
         }
     } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'merge') {
         if (in_array($userRole, ['Admin', 'Pengurus'])) {

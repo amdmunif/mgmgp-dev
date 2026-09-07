@@ -25,7 +25,8 @@ import {
     Target,
     Wallet,
     ListChecks,
-    Mail
+    Mail,
+    School
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { getFileUrl } from '../../lib/api';
@@ -43,6 +44,7 @@ const menuGroups = [
         title: "Pengguna",
         items: [
             { icon: Users, label: 'Data Anggota', path: '/admin/users' },
+            { icon: School, label: 'Kelola Sekolah', path: '/admin/schools', adminOnly: true },
             { icon: UserCheck, label: 'Kontributor', path: '/admin/contributors', adminOnly: true },
             { icon: Crown, label: 'Langganan Premium', path: '/admin/premium' },
         ]

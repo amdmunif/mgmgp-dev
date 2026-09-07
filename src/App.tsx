@@ -55,6 +55,7 @@ import { AdminEventAttendancePrint } from './pages/admin/events/AdminEventAttend
 import { AdminMemberDetailPrint } from './pages/admin/AdminMemberDetailPrint';
 import { AdminFinances } from './pages/admin/finances/AdminFinances';
 import { AdminMembers } from './pages/admin/Members';
+import { AdminSchools } from './pages/admin/AdminSchools';
 import { AdminGames } from './pages/admin/games/AdminGames';
 import { CreateGame } from './pages/admin/games/CreateGame';
 import { AdminPrompts } from './pages/admin/prompts/AdminPrompts';
@@ -228,6 +229,7 @@ function App() {
           <Route index element={<DashboardOverview />} />
           <Route path="stats" element={<AdminStats />} />
           <Route path="users" element={<AdminMembers />} />
+          <Route path="schools" element={<AdminSchools />} />
           <Route path="contributors" element={<VerificationList />} />
           <Route path="letters" element={<AdminLetters />} />
           <Route path="letters/create" element={<CreateLetter />} />
