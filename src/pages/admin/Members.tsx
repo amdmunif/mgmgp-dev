@@ -57,6 +57,7 @@ export function AdminMembers() {
     }
 
     const [standardizeAudit, setStandardizeAudit] = useState<SchoolAuditResult | null>(null);
+    const [lastSyncResult, setLastSyncResult] = useState<{ updated_count: number; timestamp: string } | null>(null);
 
     const fetchSchoolAudit = useCallback(async () => {
         try {
@@ -78,6 +79,11 @@ export function AdminMembers() {
         try {
             setStandardizeLoading(true);
             const res = await api.post<{ status: string; updated_count: number }>('/members/schools-standardize', {});
+            const nowTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            setLastSyncResult({
+                updated_count: res?.updated_count || 0,
+                timestamp: `${nowTime} WIB`
+            });
             toast.success(`Berhasil memperbarui ${res?.updated_count || 0} data sekolah ke format resmi!`);
             fetchMembers();
             fetchSchoolAudit();
@@ -1061,6 +1067,31 @@ export function AdminMembers() {
                                             </Button>
                                         </div>
                                     </div>
+
+                                    {/* Success Result Banner */}
+                                    {lastSyncResult && (
+                                        <div className="p-4 bg-green-50 border border-green-200 rounded-xl flex items-center gap-3 text-green-800 animate-in fade-in slide-in-from-top-2 duration-300">
+                                            <div className="p-2 bg-green-100 rounded-lg text-green-700">
+                                                <CheckCircle2 className="w-5 h-5" />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-bold text-sm text-green-900">
+                                                    Sinkronisasi Berhasil Selesai!
+                                                </h4>
+                                                <p className="text-xs text-green-700 mt-0.5">
+                                                    Sebanyak <strong>{lastSyncResult.updated_count} data sekolah anggota</strong> telah sukses diperbarui ke format resmi pada pukul <strong>{lastSyncResult.timestamp}</strong>.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* All Done Notice */}
+                                    {standardizeAudit && standardizeAudit.can_auto_match_count === 0 && !lastSyncResult && (
+                                        <div className="p-3.5 bg-emerald-50/80 border border-emerald-200 rounded-xl flex items-center gap-2.5 text-emerald-800 text-xs">
+                                            <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                                            <span>Semua data yang dapat dicocokkan otomatis sudah 100% menggunakan format resmi terstandarisasi.</span>
+                                        </div>
+                                    )}
 
                                     {/* Preview Matched List */}
                                     {standardizeAudit && standardizeAudit.matched_preview && standardizeAudit.matched_preview.length > 0 && (
