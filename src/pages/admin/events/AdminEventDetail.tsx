@@ -8,7 +8,6 @@ import { lmsService } from '../../../services/lmsService';
 import { DataTable } from '../../../components/ui/DataTable';
 import { Button } from '../../../components/ui/button';
 import { exportEventParticipantsExcel } from '../../../utils/exportEventParticipantsExcel';
-import { EventSchoolCoverageModal } from '../../../components/events/EventSchoolCoverageModal';
 
 interface Participant {
     user_id: string;
@@ -55,7 +54,6 @@ export function AdminEventDetail() {
     const [searchQuery, setSearchQuery] = useState('');
     const [showQR, setShowQR] = useState(false);
     const [selectedQRDay, setSelectedQRDay] = useState<number>(1);
-    const [showCoverage, setShowCoverage] = useState(false);
 
     const uniqueSchoolCount = useMemo(() => {
         const set = new Set(participants.map(p => p.asal_sekolah?.trim()).filter(Boolean));
@@ -548,11 +546,11 @@ export function AdminEventDetail() {
                     {/* Action Buttons on the Right */}
                     <div className="flex flex-wrap items-center gap-2 pl-12 xl:pl-0 shrink-0">
                         <Button 
-                            onClick={() => setShowCoverage(true)}
+                            onClick={() => navigate(`/admin/events/${id}/coverage`)}
                             variant="outline"
                             size="sm"
                             className="border-emerald-300 text-emerald-700 bg-emerald-50/70 hover:bg-emerald-100 shadow-sm h-9 font-medium"
-                            title="Analisis pemerataan sekolah: lihat sekolah mana yang sudah vs belum mendaftar"
+                            title="Buka halaman analisis pemerataan sekolah: lihat sekolah mana yang sudah vs belum mendaftar"
                         >
                             <School className="w-4 h-4 mr-2 text-emerald-600" />
                             Pemerataan Sekolah
@@ -762,16 +760,6 @@ export function AdminEventDetail() {
                         </div>
                     </div>
                 </div>
-            )}
-
-            {/* School Coverage Modal */}
-            {event && (
-                <EventSchoolCoverageModal 
-                    isOpen={showCoverage}
-                    onClose={() => setShowCoverage(false)}
-                    event={event}
-                    participants={participants}
-                />
             )}
         </div>
     );

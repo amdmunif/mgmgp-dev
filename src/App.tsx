@@ -44,6 +44,7 @@ import { AdminNews } from './pages/admin/news/AdminNews';
 import { CreateNews } from './pages/admin/news/CreateNews';
 import { AdminEvents } from './pages/admin/events/AdminEvents';
 import { AdminEventDetail } from './pages/admin/events/AdminEventDetail';
+import { AdminEventSchoolCoverage } from './pages/admin/events/AdminEventSchoolCoverage';
 import { AdminEventLms } from './pages/admin/events/AdminEventLms';
 import { AdminQuizBuilder } from './pages/admin/events/AdminQuizBuilder';
 import { AdminAssignmentGrader } from './pages/admin/events/AdminAssignmentGrader';
@@ -251,6 +252,8 @@ function App() {
           <Route path="events/create" element={<CreateEvent />} />
           <Route path="events/edit/:id" element={<CreateEvent />} />
           <Route path="events/:id" element={<AdminEventDetail />} />
+          <Route path="events/:id/coverage" element={<AdminEventSchoolCoverage />} />
+          <Route path="events/:id/school-coverage" element={<AdminEventSchoolCoverage />} />
           <Route path="lms" element={<AdminLmsList />} />
           <Route path="events/:id/lms" element={<AdminEventLms />} />
           <Route path="events/:id/lms/quiz/:quizId" element={<AdminQuizBuilder />} />
