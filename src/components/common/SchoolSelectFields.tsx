@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { School, MapPin, Info, ChevronDown, CheckCircle2, AlertCircle } from 'lucide-react';
-import { KECAMATAN_LIST, getSchoolsByKecamatan, findSchoolByName, matchSchoolFuzzy } from '../../data/schoolsData';
+import { KECAMATAN_LIST, getSchoolsByKecamatan, findSchoolByName, matchSchoolFuzzy, getSchoolsList, type SchoolItem } from '../../data/schoolsData';
+import { schoolService } from '../../services/schoolService';
 
 interface SchoolSelectFieldsProps {
     value: string;
@@ -10,6 +11,7 @@ interface SchoolSelectFieldsProps {
     className?: string;
     showBadge?: boolean;
     label?: string;
+    schools?: SchoolItem[];
 }
 
 export function SchoolSelectFields({
@@ -19,13 +21,27 @@ export function SchoolSelectFields({
     required = false,
     className = '',
     showBadge = true,
-    label = 'Asal Sekolah'
+    label = 'Asal Sekolah',
+    schools: propSchools
 }: SchoolSelectFieldsProps) {
     const [manualKecamatan, setManualKecamatan] = useState<string>('');
     const [isCustomSelected, setIsCustomSelected] = useState<boolean>(false);
+    const [loadedSchools, setLoadedSchools] = useState<SchoolItem[]>(propSchools || getSchoolsList());
 
-    // Derive matched official school from value
-    const matchedSchool = findSchoolByName(value) || matchSchoolFuzzy(value);
+    useEffect(() => {
+        if (propSchools && propSchools.length > 0) {
+            setLoadedSchools(propSchools);
+        } else {
+            schoolService.getSchools().then((data) => {
+                if (data && data.length > 0) {
+                    setLoadedSchools(data);
+                }
+            });
+        }
+    }, [propSchools]);
+
+    // Derive matched official school from value using dynamic list
+    const matchedSchool = findSchoolByName(value, loadedSchools) || matchSchoolFuzzy(value, loadedSchools);
 
     // Derived active kecamatan
     const activeKecamatan = manualKecamatan || (matchedSchool ? matchedSchool.kecamatan : '');
@@ -39,7 +55,7 @@ export function SchoolSelectFields({
         : (matchedSchool ? matchedSchool.nama : (value ? '__CUSTOM__' : ''));
 
     const schoolsInKecamatan = activeKecamatan && activeKecamatan !== 'Lainnya'
-        ? getSchoolsByKecamatan(activeKecamatan)
+        ? getSchoolsByKecamatan(activeKecamatan, loadedSchools)
         : [];
 
     const isOfficialSchool = Boolean(matchedSchool && !isCustomMode);

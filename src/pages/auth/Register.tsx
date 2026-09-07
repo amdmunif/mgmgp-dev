@@ -12,7 +12,8 @@ import { authService } from '../../services/authService';
 import { Button } from '../../components/ui/button';
 import { FormInput, FormSelect } from '../../components/ui/VerifiedFormElements';
 import { registerSchema, type RegisterFormValues } from '../../lib/schemas/registerSchema';
-import { KECAMATAN_LIST, getSchoolsByKecamatan } from '../../data/schoolsData';
+import { KECAMATAN_LIST, getSchoolsByKecamatan, getSchoolsList, type SchoolItem } from '../../data/schoolsData';
+import { schoolService } from '../../services/schoolService';
 
 const STEPS = [
     { id: 1, title: 'Identitas', icon: User },
@@ -29,6 +30,7 @@ export function Register() {
     const [currentStep, setCurrentStep] = useState(1);
 
     // School selection state
+    const [schoolsList, setSchoolsList] = useState<SchoolItem[]>(getSchoolsList());
     const [selectedKecamatan, setSelectedKecamatan] = useState<string>('');
     const [selectedSchoolChoice, setSelectedSchoolChoice] = useState<string>('');
     const [customSchoolName, setCustomSchoolName] = useState<string>('');
@@ -50,11 +52,19 @@ export function Register() {
     });
 
     useEffect(() => {
+        schoolService.getSchools().then((data) => {
+            if (data && data.length > 0) {
+                setSchoolsList(data);
+            }
+        });
+    }, []);
+
+    useEffect(() => {
         register('asal_sekolah');
     }, [register]);
 
     const schoolsInKecamatan = selectedKecamatan && selectedKecamatan !== 'Lainnya'
-        ? getSchoolsByKecamatan(selectedKecamatan)
+        ? getSchoolsByKecamatan(selectedKecamatan, schoolsList)
         : [];
 
     const handleKecamatanChange = (kec: string) => {

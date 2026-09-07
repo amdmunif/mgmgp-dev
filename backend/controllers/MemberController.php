@@ -95,6 +95,12 @@ class MemberController
             }
 
             $this->conn->commit();
+
+            if (!empty($data['asal_sekolah'])) {
+                include_once __DIR__ . '/SchoolController.php';
+                SchoolController::ensureSchoolExists($this->conn, $data['asal_sekolah']);
+            }
+
             $targetLog = !empty($userNama) ? $userNama : $id;
             Helper::log($this->conn, 0, 'Admin', 'UPDATE_MEMBER', $targetLog);
 

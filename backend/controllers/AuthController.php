@@ -55,6 +55,11 @@ class AuthController
             $stmtProfile->bindParam(':no_hp', $no_hp);
 
             if ($stmtProfile->execute()) {
+                if (!empty($asal_sekolah)) {
+                    include_once __DIR__ . '/SchoolController.php';
+                    SchoolController::ensureSchoolExists($this->conn, $asal_sekolah);
+                }
+
                 // Auto-login (Generate Token)
                 $tokenPayload = [
                     'sub' => $userId,
@@ -256,6 +261,11 @@ class AuthController
         $stmt->bindParam(':mengajar_tahun_ini', $mengajar_tahun_ini, PDO::PARAM_INT);
 
         if ($stmt->execute()) {
+            if (!empty($data['asal_sekolah'])) {
+                include_once __DIR__ . '/SchoolController.php';
+                SchoolController::ensureSchoolExists($this->conn, $data['asal_sekolah']);
+            }
+
             // Log Activity
             Helper::log($this->conn, $id, $data['nama'], 'UPDATE_PROFILE', 'System', 'Peserta');
 

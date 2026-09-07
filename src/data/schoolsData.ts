@@ -1,8 +1,10 @@
 export interface SchoolItem {
-    no: number;
-    npsn: string;
+    id?: number;
+    no?: number;
+    npsn?: string | null;
     nama: string;
     kecamatan: string;
+    is_verified?: number;
 }
 
 export const SCHOOLS_DATA: SchoolItem[] = [
@@ -149,24 +151,58 @@ export const KECAMATAN_LIST: string[] = [
     "Wonosobo"
 ];
 
-export function getSchoolsByKecamatan(kecamatan: string): SchoolItem[] {
+let dynamicSchools: SchoolItem[] = [...SCHOOLS_DATA];
+
+export function getSchoolsList(): SchoolItem[] {
+    return dynamicSchools;
+}
+
+export function updateSchoolsCache(schools: SchoolItem[]) {
+    if (Array.isArray(schools) && schools.length > 0) {
+        const map = new Map<string, SchoolItem>();
+        // Start with official static 109
+        for (const s of SCHOOLS_DATA) {
+            map.set(s.nama.toLowerCase().trim(), s);
+        }
+        // Merge dynamic database items
+        for (const s of schools) {
+            map.set(s.nama.toLowerCase().trim(), s);
+        }
+        dynamicSchools = Array.from(map.values());
+    }
+}
+
+export function addSchoolToCache(school: SchoolItem) {
+    const key = school.nama.toLowerCase().trim();
+    const existingIdx = dynamicSchools.findIndex(s => s.nama.toLowerCase().trim() === key);
+    if (existingIdx >= 0) {
+        dynamicSchools[existingIdx] = { ...dynamicSchools[existingIdx], ...school };
+    } else {
+        dynamicSchools.push(school);
+    }
+}
+
+export function getSchoolsByKecamatan(kecamatan: string, customList?: SchoolItem[]): SchoolItem[] {
     if (!kecamatan) return [];
-    return SCHOOLS_DATA.filter(s => s.kecamatan.toLowerCase() === kecamatan.toLowerCase());
+    const list = customList || dynamicSchools;
+    return list.filter(s => s.kecamatan.toLowerCase() === kecamatan.toLowerCase());
 }
 
-export function findSchoolByName(name: string): SchoolItem | undefined {
+export function findSchoolByName(name: string, customList?: SchoolItem[]): SchoolItem | undefined {
     if (!name) return undefined;
-    return SCHOOLS_DATA.find(s => s.nama.toLowerCase() === name.trim().toLowerCase());
+    const list = customList || dynamicSchools;
+    return list.find(s => s.nama.toLowerCase() === name.trim().toLowerCase());
 }
 
-export function findKecamatanBySchoolName(name: string): string | undefined {
-    const school = findSchoolByName(name) || matchSchoolFuzzy(name);
+export function findKecamatanBySchoolName(name: string, customList?: SchoolItem[]): string | undefined {
+    const school = findSchoolByName(name, customList) || matchSchoolFuzzy(name, customList);
     return school?.kecamatan;
 }
 
-export function matchSchoolFuzzy(rawName: string): SchoolItem | undefined {
+export function matchSchoolFuzzy(rawName: string, customList?: SchoolItem[]): SchoolItem | undefined {
     if (!rawName) return undefined;
-    const exact = findSchoolByName(rawName);
+    const list = customList || dynamicSchools;
+    const exact = findSchoolByName(rawName, list);
     if (exact) return exact;
 
     let clean = rawName.toLowerCase()
@@ -184,7 +220,7 @@ export function matchSchoolFuzzy(rawName: string): SchoolItem | undefined {
         .replace(/\bal quran\b/g, "al-quran")
         .replace(/\bal qur an\b/g, "al-quran");
 
-    for (const item of SCHOOLS_DATA) {
+    for (const item of list) {
         const itemClean = item.nama.toLowerCase()
             .replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, " ")
             .replace(/\s+/g, " ")
@@ -196,3 +232,4 @@ export function matchSchoolFuzzy(rawName: string): SchoolItem | undefined {
 
     return undefined;
 }
+

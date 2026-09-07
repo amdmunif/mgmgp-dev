@@ -635,6 +635,23 @@ if ($resource === 'news') {
         echo $controller->delete($action);
     }
 
+} elseif ($resource === 'schools') {
+    include_once './controllers/SchoolController.php';
+    $controller = new SchoolController();
+
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        echo $controller->getAll();
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        echo $controller->create($input);
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action) {
+        if (in_array($userRole, ['Admin', 'Pengurus'])) {
+            echo $controller->delete($action);
+        } else {
+            http_response_code(403);
+            echo json_encode(["message" => "Forbidden"]);
+        }
+    }
+
 } elseif ($resource === 'premium') {
     include_once './controllers/PremiumController.php';
     $controller = new PremiumController();

@@ -45,6 +45,21 @@ CREATE TABLE `profiles` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
+-- Master Schools Directory
+--
+CREATE TABLE IF NOT EXISTS `master_schools` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `npsn` varchar(20) DEFAULT NULL,
+  `nama` varchar(255) NOT NULL,
+  `kecamatan` varchar(100) NOT NULL,
+  `is_verified` tinyint(1) DEFAULT 1,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_school_nama` (`nama`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
 -- 2. System Settings & Content
 --
 

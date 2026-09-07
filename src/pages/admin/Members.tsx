@@ -5,7 +5,8 @@ import {
     Users, Crown, CheckCircle2, 
     XCircle, AlertCircle, Key, Filter, 
     Mail, ShieldCheck, Eye, Pencil, Printer, X, User,
-    School, Sparkles, ExternalLink, RefreshCw, Loader2
+    School, Sparkles, ExternalLink, RefreshCw, Loader2,
+    Plus, PlusCircle, Trash2, MapPin, Search
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { api, getFileUrl } from '../../lib/api';
@@ -15,6 +16,8 @@ import { useNavigate } from 'react-router-dom';
 import { DataTable } from '../../components/ui/DataTable';
 import { exportMembersToExcel } from '../../utils/exportMemberExcel';
 import { SchoolSelectFields } from '../../components/common/SchoolSelectFields';
+import { KECAMATAN_LIST, type SchoolItem, addSchoolToCache } from '../../data/schoolsData';
+import { schoolService } from '../../services/schoolService';
 
 export function AdminMembers() {
     const navigate = useNavigate();
@@ -100,6 +103,83 @@ export function AdminMembers() {
             fetchSchoolAudit();
         }
     }, [isStandardizeModalOpen, fetchSchoolAudit]);
+
+    // Master Schools Management State
+    const [isSchoolsModalOpen, setIsSchoolsModalOpen] = useState(false);
+    const [masterSchoolsList, setMasterSchoolsList] = useState<SchoolItem[]>([]);
+    const [schoolsLoading, setSchoolsLoading] = useState(false);
+    const [schoolSearch, setSchoolSearch] = useState('');
+    const [schoolKecFilter, setSchoolKecFilter] = useState('');
+    const [isAddingSchool, setIsAddingSchool] = useState(false);
+    const [newSchoolForm, setNewSchoolForm] = useState({ nama: '', kecamatan: '', npsn: '' });
+    const [isSubmittingSchool, setIsSubmittingSchool] = useState(false);
+
+    const fetchMasterSchools = useCallback(async () => {
+        try {
+            setSchoolsLoading(true);
+            const data = await schoolService.getSchools();
+            setMasterSchoolsList(data);
+        } catch (err) {
+            console.error(err);
+            toast.error('Gagal memuat data sekolah');
+        } finally {
+            setSchoolsLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (isSchoolsModalOpen) {
+            fetchMasterSchools();
+        }
+    }, [isSchoolsModalOpen, fetchMasterSchools]);
+
+    const handleCreateSchool = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newSchoolForm.nama.trim() || !newSchoolForm.kecamatan.trim()) {
+            toast.error('Nama sekolah dan kecamatan wajib diisi');
+            return;
+        }
+
+        try {
+            setIsSubmittingSchool(true);
+            const res = await schoolService.addSchool({
+                nama: newSchoolForm.nama.trim(),
+                kecamatan: newSchoolForm.kecamatan.trim(),
+                npsn: newSchoolForm.npsn.trim() || undefined
+            });
+
+            toast.success(res.message || 'Sekolah berhasil ditambahkan');
+            addSchoolToCache(res.school);
+            setNewSchoolForm({ nama: '', kecamatan: '', npsn: '' });
+            setIsAddingSchool(false);
+            fetchMasterSchools();
+        } catch (err: any) {
+            toast.error(err?.message || 'Gagal menyimpan sekolah baru');
+        } finally {
+            setIsSubmittingSchool(false);
+        }
+    };
+
+    const handleDeleteSchool = async (school: SchoolItem) => {
+        if (!school.id) return;
+        if (!confirm(`Hapus sekolah "${school.nama}" dari database master?`)) return;
+
+        try {
+            await schoolService.deleteSchool(school.id);
+            toast.success('Sekolah berhasil dihapus');
+            fetchMasterSchools();
+        } catch (err: any) {
+            toast.error(err?.message || 'Gagal menghapus sekolah');
+        }
+    };
+
+    const filteredMasterSchools = masterSchoolsList.filter(s => {
+        const matchesSearch = !schoolSearch.trim() || 
+            s.nama.toLowerCase().includes(schoolSearch.toLowerCase()) || 
+            (s.npsn && s.npsn.toLowerCase().includes(schoolSearch.toLowerCase()));
+        const matchesKec = !schoolKecFilter || s.kecamatan.toLowerCase() === schoolKecFilter.toLowerCase();
+        return matchesSearch && matchesKec;
+    });
 
     // Tab: default dari location state jika ada
     const [activeTab, setActiveTab] = useState<'active' | 'inactive' | 'duplicates'>(
@@ -495,6 +575,15 @@ export function AdminMembers() {
                 </select>
             </div>
             <div className="flex items-center gap-2 ml-auto flex-wrap">
+                <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setIsSchoolsModalOpen(true)} 
+                    className="h-9 border-indigo-200 text-indigo-700 hover:bg-indigo-50 flex items-center gap-1.5 shadow-sm"
+                >
+                    <PlusCircle className="w-4 h-4 text-indigo-600" />
+                    <span>Kelola Sekolah</span>
+                </Button>
                 <Button 
                     variant="outline" 
                     size="sm" 
@@ -1181,6 +1270,241 @@ export function AdminMembers() {
                             <Button variant="outline" size="sm" onClick={() => setIsStandardizeModalOpen(false)}>
                                 Tutup
                             </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Master Schools Management Modal */}
+            {isSchoolsModalOpen && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl max-w-4xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border border-gray-100">
+                        {/* Header */}
+                        <div className="p-5 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-indigo-50/70 via-white to-indigo-50/40">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 bg-indigo-600 text-white rounded-xl shadow-md shadow-indigo-200">
+                                    <School className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <h2 className="text-lg font-bold text-gray-900">Katalog Master Sekolah</h2>
+                                        <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
+                                            {masterSchoolsList.length} Sekolah
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-0.5">
+                                        Daftar sekolah resmi dan terdaftar di database untuk pilihan registrasi & profil anggota
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setIsSchoolsModalOpen(false)}
+                                className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {/* Sub-Header & Controls */}
+                        <div className="p-4 bg-slate-50 border-b border-gray-200/80 space-y-3">
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                                <div className="flex items-center gap-2 flex-1 min-w-[240px]">
+                                    <div className="relative flex-1">
+                                        <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                                        <input
+                                            type="text"
+                                            value={schoolSearch}
+                                            onChange={(e) => setSchoolSearch(e.target.value)}
+                                            placeholder="Cari nama sekolah atau NPSN..."
+                                            className="w-full pl-9 pr-3 py-1.5 text-xs bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        />
+                                    </div>
+                                    <div className="w-48">
+                                        <select
+                                            value={schoolKecFilter}
+                                            onChange={(e) => setSchoolKecFilter(e.target.value)}
+                                            className="w-full py-1.5 px-2.5 text-xs bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        >
+                                            <option value="">Semua Kecamatan</option>
+                                            {KECAMATAN_LIST.map((kec) => (
+                                                <option key={kec} value={kec}>Kec. {kec}</option>
+                                            ))}
+                                            <option value="Lainnya">Lainnya / Luar Wonosobo</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <Button
+                                    size="sm"
+                                    onClick={() => setIsAddingSchool(!isAddingSchool)}
+                                    className="bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-1.5 shadow-sm text-xs h-8"
+                                >
+                                    {isAddingSchool ? <X className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+                                    <span>{isAddingSchool ? 'Tutup Form' : '+ Tambah Sekolah Baru'}</span>
+                                </Button>
+                            </div>
+
+                            {/* Form Tambah Sekolah Baru */}
+                            {isAddingSchool && (
+                                <form onSubmit={handleCreateSchool} className="p-4 bg-white border border-indigo-200 rounded-xl shadow-sm space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                                    <div className="flex items-center gap-2 text-indigo-900 font-semibold text-xs border-b border-indigo-50 pb-2">
+                                        <PlusCircle className="w-4 h-4 text-indigo-600" />
+                                        <span>Input Data Sekolah Baru ke Database</span>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                        <div className="md:col-span-2 space-y-1">
+                                            <label className="block text-xs font-semibold text-gray-700">
+                                                Nama Sekolah Lengkap <span className="text-red-500">*</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                required
+                                                value={newSchoolForm.nama}
+                                                onChange={(e) => setNewSchoolForm(prev => ({ ...prev, nama: e.target.value }))}
+                                                placeholder="Contoh: SMP IT Bina Insani / SMP Ma'arif ..."
+                                                className="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                            />
+                                        </div>
+
+                                        <div className="space-y-1">
+                                            <label className="block text-xs font-semibold text-gray-700">
+                                                Kecamatan <span className="text-red-500">*</span>
+                                            </label>
+                                            <select
+                                                required
+                                                value={newSchoolForm.kecamatan}
+                                                onChange={(e) => setNewSchoolForm(prev => ({ ...prev, kecamatan: e.target.value }))}
+                                                className="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white"
+                                            >
+                                                <option value="">-- Pilih Kecamatan --</option>
+                                                {KECAMATAN_LIST.map((kec) => (
+                                                    <option key={kec} value={kec}>Kec. {kec}</option>
+                                                ))}
+                                                <option value="Lainnya">Lainnya / Luar Wonosobo</option>
+                                            </select>
+                                        </div>
+
+                                        <div className="space-y-1">
+                                            <label className="block text-xs font-semibold text-gray-700">
+                                                NPSN <span className="text-gray-400 font-normal">(Opsional)</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={newSchoolForm.npsn}
+                                                onChange={(e) => setNewSchoolForm(prev => ({ ...prev, npsn: e.target.value }))}
+                                                placeholder="Contoh: 20306796"
+                                                className="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                            />
+                                        </div>
+
+                                        <div className="md:col-span-2 flex items-end justify-end gap-2 pt-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsAddingSchool(false)}
+                                                className="px-3 py-2 text-xs text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+                                            >
+                                                Batal
+                                            </button>
+                                            <Button
+                                                type="submit"
+                                                disabled={isSubmittingSchool}
+                                                size="sm"
+                                                className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-8 px-4"
+                                            >
+                                                {isSubmittingSchool ? (
+                                                    <span className="flex items-center gap-1.5">
+                                                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                                        <span>Menyimpan...</span>
+                                                    </span>
+                                                ) : (
+                                                    <span>Simpan Sekolah ke Database</span>
+                                                )}
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </form>
+                            )}
+                        </div>
+
+                        {/* Content / Table */}
+                        <div className="p-4 overflow-y-auto flex-1 custom-scrollbar">
+                            {schoolsLoading ? (
+                                <div className="py-12 text-center text-gray-400 flex flex-col items-center gap-2">
+                                    <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
+                                    <span className="text-xs">Memuat katalog sekolah...</span>
+                                </div>
+                            ) : filteredMasterSchools.length === 0 ? (
+                                <div className="py-12 text-center text-gray-400 space-y-2">
+                                    <School className="w-8 h-8 mx-auto text-gray-300" />
+                                    <p className="text-xs">Tidak ada sekolah yang cocok dengan pencarian.</p>
+                                </div>
+                            ) : (
+                                <div className="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                                    <table className="w-full text-left text-xs">
+                                        <thead className="bg-gray-50/90 text-gray-600 font-semibold border-b border-gray-200 sticky top-0">
+                                            <tr>
+                                                <th className="py-2.5 px-3 w-12 text-center">#</th>
+                                                <th className="py-2.5 px-3 w-28">NPSN</th>
+                                                <th className="py-2.5 px-3">Nama Sekolah</th>
+                                                <th className="py-2.5 px-3 w-40">Kecamatan</th>
+                                                <th className="py-2.5 px-3 w-28 text-center">Status</th>
+                                                <th className="py-2.5 px-3 w-16 text-center">Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100">
+                                            {filteredMasterSchools.map((s, idx) => (
+                                                <tr key={s.id || s.nama} className="hover:bg-slate-50/80 transition-colors">
+                                                    <td className="py-2.5 px-3 text-center text-gray-400 font-mono text-[11px]">{idx + 1}</td>
+                                                    <td className="py-2.5 px-3 text-gray-600 font-mono text-[11px]">{s.npsn || '-'}</td>
+                                                    <td className="py-2.5 px-3 font-semibold text-gray-900">{s.nama}</td>
+                                                    <td className="py-2.5 px-3 text-gray-600">
+                                                        <span className="inline-flex items-center gap-1 text-[11px] font-medium bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full border border-slate-200">
+                                                            <MapPin className="w-3 h-3 text-slate-400" />
+                                                            <span>Kec. {s.kecamatan}</span>
+                                                        </span>
+                                                    </td>
+                                                    <td className="py-2.5 px-3 text-center">
+                                                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                                                            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                                                            <span>Terdaftar</span>
+                                                        </span>
+                                                    </td>
+                                                    <td className="py-2.5 px-3 text-center">
+                                                        {s.id && (
+                                                            <button
+                                                                onClick={() => handleDeleteSchool(s)}
+                                                                title="Hapus sekolah dari master"
+                                                                className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                            >
+                                                                <Trash2 className="w-3.5 h-3.5" />
+                                                            </button>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Footer */}
+                        <div className="p-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+                            <a
+                                href="/backend/migrate_schools_browser.php"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-xs text-indigo-600 hover:text-indigo-800 flex items-center gap-1.5 hover:underline font-medium"
+                            >
+                                <ExternalLink className="w-3.5 h-3.5" />
+                                <span>Buka Wizard Migrasi Database Sekolah (Browser Script)</span>
+                            </a>
+                            <div className="flex items-center gap-2">
+                                <Button variant="outline" size="sm" onClick={() => setIsSchoolsModalOpen(false)}>
+                                    Tutup
+                                </Button>
+                            </div>
                         </div>
                     </div>
                 </div>
