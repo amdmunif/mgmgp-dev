@@ -9,12 +9,10 @@ import {
 import { toast } from 'react-hot-toast';
 import { getFileUrl } from '../../lib/api';
 import { Button } from '../../components/ui/button';
-import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 
 import { DataTable } from '../../components/ui/DataTable';
-import * as XLSX from 'xlsx';
-import { saveAs } from 'file-saver';
+import { exportMembersToExcel } from '../../utils/exportMemberExcel';
 
 export function AdminMembers() {
     const navigate = useNavigate();
@@ -213,29 +211,17 @@ export function AdminMembers() {
             return toast.error('Tidak ada data untuk diekspor');
         }
 
-        const dataToExport = filteredMembers.map(m => ({
-            'Nama': m.nama,
-            'Email': m.email,
-            'No. HP': m.no_hp || '-',
-            'Asal Sekolah': m.asal_sekolah || '-',
-            'Status Kepegawaian': m.status_kepegawaian || '-',
-            'Pendidikan Terakhir': m.pendidikan_terakhir || '-',
-            'Jurusan': m.jurusan || '-',
-            'Role': m.role,
-            'Status': Number(m.is_active) === 1 ? 'Aktif' : 'Pending',
-            'Tipe Akun': (m.premium_until && new Date(m.premium_until) > new Date()) ? 'Premium' : 'Reguler',
-            'Masa Aktif Premium': (m.premium_until && new Date(m.premium_until) > new Date()) ? format(new Date(m.premium_until), 'dd/MM/yyyy') : '-',
-            'Hadir (Event)': m.attendance_count || 0
-        }));
-
-        const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Anggota");
-
-        const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-        const data = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8' });
-        saveAs(data, `Data_Anggota_MGMP_${format(new Date(), 'yyyyMMdd_HHmm')}.xlsx`);
-        toast.success('Data berhasil diekspor');
+        try {
+            exportMembersToExcel(filteredMembers, {
+                activeTab,
+                filterRole,
+                filterPremium
+            });
+            toast.success(`Berhasil mengekspor ${filteredMembers.length} data anggota`);
+        } catch (error) {
+            console.error('Error exporting members to Excel:', error);
+            toast.error(error instanceof Error ? error.message : 'Gagal mengekspor data anggota');
+        }
     };
 
     const handleMergeDuplicates = () => {
