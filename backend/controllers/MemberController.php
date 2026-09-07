@@ -3,6 +3,7 @@
 include_once './config/database.php';
 include_once './utils/Helper.php';
 include_once './utils/Mailer.php';
+include_once './utils/SchoolNormalizer.php';
 
 class MemberController
 {
@@ -318,6 +319,28 @@ class MemberController
             $this->conn->rollBack();
             http_response_code(500);
             return json_encode(["message" => "Gagal menggabungkan data: " . $e->getMessage()]);
+        }
+    }
+
+    public function getSchoolsAudit()
+    {
+        try {
+            $audit = SchoolNormalizer::audit($this->conn);
+            return json_encode($audit);
+        } catch (Exception $e) {
+            http_response_code(500);
+            return json_encode(["message" => "Gagal melakukan audit sekolah: " . $e->getMessage()]);
+        }
+    }
+
+    public function standardizeSchools()
+    {
+        try {
+            $result = SchoolNormalizer::executeStandardize($this->conn);
+            return json_encode($result);
+        } catch (Exception $e) {
+            http_response_code(500);
+            return json_encode(["message" => "Gagal standarisasi sekolah: " . $e->getMessage()]);
         }
     }
 }

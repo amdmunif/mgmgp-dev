@@ -7,6 +7,7 @@ import { settingsService } from '../../services/settingsService';
 import { Button } from '../../components/ui/button';
 import { useOutletContext } from 'react-router-dom';
 import { ChangePasswordForm } from '../../components/member/ChangePasswordForm';
+import { SchoolSelectFields } from '../../components/common/SchoolSelectFields';
 
 export function EditProfile() {
     const { setPageHeader } = useOutletContext<any>();
@@ -241,13 +242,10 @@ export function EditProfile() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Asal Sekolah</label>
-                            <input
-                                type="text"
-                                name="asal_sekolah"
+                            <SchoolSelectFields
                                 value={formData.asal_sekolah}
-                                onChange={handleChange}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
+                                onChange={(val) => setFormData(prev => ({ ...prev, asal_sekolah: val }))}
+                                required
                             />
                         </div>
                         <div>

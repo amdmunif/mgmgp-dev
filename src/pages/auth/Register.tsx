@@ -1,16 +1,18 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate } from 'react-router-dom';
 import {
     Loader2, Upload, AlertCircle, CheckCircle2,
     User, Lock, Briefcase,
-    BookOpen, ChevronRight, ChevronLeft, Check
+    BookOpen, ChevronRight, ChevronLeft, Check,
+    School, MapPin, Info, ChevronDown
 } from 'lucide-react';
 import { authService } from '../../services/authService';
 import { Button } from '../../components/ui/button';
 import { FormInput, FormSelect } from '../../components/ui/VerifiedFormElements';
 import { registerSchema, type RegisterFormValues } from '../../lib/schemas/registerSchema';
+import { KECAMATAN_LIST, getSchoolsByKecamatan } from '../../data/schoolsData';
 
 const STEPS = [
     { id: 1, title: 'Identitas', icon: User },
@@ -26,22 +28,61 @@ export function Register() {
     const [success, setSuccess] = useState(false);
     const [currentStep, setCurrentStep] = useState(1);
 
-    // NOTE: Password visibility state moved to FormInput component
+    // School selection state
+    const [selectedKecamatan, setSelectedKecamatan] = useState<string>('');
+    const [selectedSchoolChoice, setSelectedSchoolChoice] = useState<string>('');
+    const [customSchoolName, setCustomSchoolName] = useState<string>('');
 
     const {
         register,
         handleSubmit,
         watch,
         trigger,
+        setValue,
         formState: { errors }
     } = useForm<RegisterFormValues>({
         resolver: zodResolver(registerSchema),
         defaultValues: {
+            asal_sekolah: '',
             mapel_diampu: [],
             kelas_mengajar: []
         }
     });
 
+    useEffect(() => {
+        register('asal_sekolah');
+    }, [register]);
+
+    const schoolsInKecamatan = selectedKecamatan && selectedKecamatan !== 'Lainnya'
+        ? getSchoolsByKecamatan(selectedKecamatan)
+        : [];
+
+    const handleKecamatanChange = (kec: string) => {
+        setSelectedKecamatan(kec);
+        setSelectedSchoolChoice('');
+        setCustomSchoolName('');
+        if (kec === 'Lainnya') {
+            setSelectedSchoolChoice('__CUSTOM__');
+            setValue('asal_sekolah', '', { shouldValidate: true });
+        } else {
+            setValue('asal_sekolah', '', { shouldValidate: true });
+        }
+    };
+
+    const handleSchoolChange = (schoolVal: string) => {
+        setSelectedSchoolChoice(schoolVal);
+        if (schoolVal === '__CUSTOM__') {
+            setValue('asal_sekolah', customSchoolName.trim(), { shouldValidate: true });
+        } else {
+            setCustomSchoolName('');
+            setValue('asal_sekolah', schoolVal, { shouldValidate: true });
+        }
+    };
+
+    const handleCustomSchoolChange = (val: string) => {
+        setCustomSchoolName(val);
+        setValue('asal_sekolah', val, { shouldValidate: true });
+    };
 
     const fotoFiles = watch("foto_profil");
     const mapelDiampu = watch("mapel_diampu");
@@ -49,7 +90,7 @@ export function Register() {
 
     // Validation fields per step
     const validateStep = async (step: number) => {
-        let fieldsToValidate: any[] = [];
+        let fieldsToValidate: (keyof RegisterFormValues)[] = [];
         switch (step) {
             case 1:
                 fieldsToValidate = ['nama', 'no_hp', 'ukuran_baju'];
@@ -113,9 +154,10 @@ export function Register() {
 
             setSuccess(true);
             setTimeout(() => navigate('/login'), 3000);
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error(err);
-            setServerError(err.message || 'Gagal mendaftar. Silakan coba lagi.');
+            const message = err instanceof Error ? err.message : 'Gagal mendaftar. Silakan coba lagi.';
+            setServerError(message);
         } finally {
             setLoading(false);
         }
@@ -238,7 +280,145 @@ export function Register() {
                                 <Briefcase className="mr-2 text-primary-600" /> Data Profesi
                             </h2>
                             <div className="grid grid-cols-1 gap-6">
-                                <FormInput label="Asal Sekolah" placeholder="Nama Sekolah" register={register} name="asal_sekolah" error={errors.asal_sekolah} required autoFocus />
+                                {/* Standarisasi Asal Sekolah (Kecamatan -> Nama Sekolah) */}
+                                <div className="space-y-4 bg-slate-50/80 p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-sm">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                                            <School className="w-4 h-4 text-primary-600" />
+                                            <span>Asal Sekolah</span>
+                                            <span className="text-red-500">*</span>
+                                        </label>
+                                        <span className="inline-flex items-center text-[11px] font-medium text-primary-700 bg-primary-50 px-2.5 py-0.5 rounded-full border border-primary-200">
+                                            Terstandarisasi MGMP
+                                        </span>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {/* Dropdown 1: Kecamatan */}
+                                        <div className="space-y-1.5">
+                                            <label className="block text-xs font-semibold text-gray-700 flex items-center gap-1.5">
+                                                <MapPin className="w-3.5 h-3.5 text-primary-600" />
+                                                <span>1. Pilih Kecamatan</span>
+                                                <span className="text-red-500">*</span>
+                                            </label>
+                                            <div className="relative">
+                                                <select
+                                                    value={selectedKecamatan}
+                                                    onChange={(e) => handleKecamatanChange(e.target.value)}
+                                                    className={`block w-full rounded-xl border bg-white shadow-sm transition-all duration-200 py-3 px-4 text-sm font-medium text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 focus:outline-none appearance-none cursor-pointer pr-10 ${
+                                                        errors.asal_sekolah && !selectedKecamatan
+                                                            ? 'border-red-300 focus:border-red-500 focus:ring-red-100 ring-1 ring-red-200'
+                                                            : 'border-gray-200 hover:border-gray-300'
+                                                    }`}
+                                                >
+                                                    <option value="">-- Pilih Kecamatan --</option>
+                                                    {KECAMATAN_LIST.map((kec) => (
+                                                        <option key={kec} value={kec}>
+                                                            Kec. {kec}
+                                                        </option>
+                                                    ))}
+                                                    <option value="Lainnya">Luar Wonosobo / Lainnya</option>
+                                                </select>
+                                                <div className="absolute inset-y-0 right-0 px-3 flex items-center pointer-events-none text-gray-400">
+                                                    <ChevronDown className="w-4 h-4" />
+                                                </div>
+                                            </div>
+                                            {!selectedKecamatan && (
+                                                <p className="text-[11px] text-gray-500">Pilih kecamatan lokasi sekolah terlebih dahulu</p>
+                                            )}
+                                        </div>
+
+                                        {/* Dropdown 2: Nama Sekolah Terdaftar */}
+                                        <div className="space-y-1.5">
+                                            <label className="block text-xs font-semibold text-gray-700 flex items-center gap-1.5">
+                                                <School className="w-3.5 h-3.5 text-primary-600" />
+                                                <span>2. Pilih Nama Sekolah</span>
+                                                <span className="text-red-500">*</span>
+                                            </label>
+                                            <div className="relative">
+                                                <select
+                                                    value={selectedSchoolChoice}
+                                                    disabled={!selectedKecamatan || selectedKecamatan === 'Lainnya'}
+                                                    onChange={(e) => handleSchoolChange(e.target.value)}
+                                                    className={`block w-full rounded-xl border bg-white shadow-sm transition-all duration-200 py-3 px-4 text-sm font-medium text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 focus:outline-none appearance-none cursor-pointer pr-10 ${
+                                                        !selectedKecamatan || selectedKecamatan === 'Lainnya'
+                                                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
+                                                            : errors.asal_sekolah && !selectedSchoolChoice
+                                                            ? 'border-red-300 focus:border-red-500 focus:ring-red-100 ring-1 ring-red-200'
+                                                            : 'border-gray-200 hover:border-gray-300'
+                                                    }`}
+                                                >
+                                                    <option value="">
+                                                        {!selectedKecamatan
+                                                            ? 'Pilih kecamatan terlebih dahulu'
+                                                            : selectedKecamatan === 'Lainnya'
+                                                            ? 'Tuliskan nama sekolah di bawah'
+                                                            : `-- Pilih Sekolah di Kec. ${selectedKecamatan} --`}
+                                                    </option>
+                                                    {schoolsInKecamatan.map((s) => (
+                                                        <option key={s.npsn || s.nama} value={s.nama}>
+                                                            {s.nama}
+                                                        </option>
+                                                    ))}
+                                                    {selectedKecamatan && selectedKecamatan !== 'Lainnya' && (
+                                                        <option value="__CUSTOM__" className="font-semibold text-primary-700 bg-amber-50">
+                                                            + Sekolah Belum Ada di Daftar (Sarankan Baru)
+                                                        </option>
+                                                    )}
+                                                </select>
+                                                <div className="absolute inset-y-0 right-0 px-3 flex items-center pointer-events-none text-gray-400">
+                                                    <ChevronDown className="w-4 h-4" />
+                                                </div>
+                                            </div>
+                                            {selectedKecamatan && selectedKecamatan !== 'Lainnya' && (
+                                                <p className="text-[11px] text-gray-500">
+                                                    {schoolsInKecamatan.length} sekolah terdaftar di Kec. {selectedKecamatan}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Form Input Saran Nama Sekolah (Muncul jika pilih Belum Ada atau Luar Wonosobo) */}
+                                    {(selectedSchoolChoice === '__CUSTOM__' || selectedKecamatan === 'Lainnya') && (
+                                        <div className="p-4 bg-amber-50/80 border border-amber-200/90 rounded-xl space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                                            <div className="flex items-start gap-2.5 text-amber-900 text-xs leading-relaxed">
+                                                <Info className="w-4 h-4 mt-0.5 text-amber-600 flex-shrink-0" />
+                                                <div>
+                                                    <span className="font-semibold">Nama sekolah belum terdaftar?</span> Jangan khawatir! Silakan tuliskan nama sekolah Anda di bawah ini. Anda tetap dapat melanjutkan pendaftaran, dan usulan sekolah ini akan otomatis tercatat di sistem MGMP.
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-semibold text-gray-800 mb-1">
+                                                    Tuliskan / Sarankan Nama Sekolah Lengkap <span className="text-red-500">*</span>
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={customSchoolName}
+                                                    onChange={(e) => handleCustomSchoolChange(e.target.value)}
+                                                    onBlur={() => {
+                                                        const trimmed = customSchoolName.trim();
+                                                        setCustomSchoolName(trimmed);
+                                                        setValue('asal_sekolah', trimmed, { shouldValidate: true });
+                                                    }}
+                                                    placeholder="Contoh: SMP Negeri 4 Satu Atap Kejajar / SMP Islam ..."
+                                                    className={`block w-full rounded-xl border bg-white shadow-sm transition-all duration-200 py-2.5 px-4 text-sm font-medium text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 focus:outline-none ${
+                                                        errors.asal_sekolah && !customSchoolName.trim()
+                                                            ? 'border-red-300 focus:border-red-500 focus:ring-red-100 ring-1 ring-red-200'
+                                                            : 'border-amber-300 focus:border-primary-500'
+                                                    }`}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Error message */}
+                                    {errors.asal_sekolah && (
+                                        <p className="text-xs text-red-500 font-medium flex items-center animate-in slide-in-from-top-1 ml-0.5">
+                                            <AlertCircle className="w-3.5 h-3.5 mr-1 flex-shrink-0" />
+                                            {errors.asal_sekolah.message || 'Harap tentukan kecamatan dan asal sekolah'}
+                                        </p>
+                                    )}
+                                </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
                                         <FormSelect

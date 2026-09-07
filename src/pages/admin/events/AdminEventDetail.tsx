@@ -1,12 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { contentManagementService } from '../../../services/contentManagementService';
-import { ArrowLeft, Calendar, MapPin, Users, CheckCircle, XCircle, Trash2, Printer, QrCode, X, MonitorPlay, Trophy, UserCheck, UserMinus, Search } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, CheckCircle, XCircle, Trash2, Printer, QrCode, X, MonitorPlay, Trophy, UserCheck, UserMinus, Search, FileSpreadsheet, Download } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { api, getFileUrl } from '../../../lib/api';
 import { lmsService } from '../../../services/lmsService';
 import { DataTable } from '../../../components/ui/DataTable';
 import { Button } from '../../../components/ui/button';
+import { exportEventParticipantsExcel } from '../../../utils/exportEventParticipantsExcel';
 
 interface Participant {
     user_id: string;
@@ -19,6 +20,8 @@ interface Participant {
     is_passed?: number | boolean;
     attendance_count?: number;
     asal_sekolah?: string;
+    no_hp?: string;
+    status_kepegawaian?: string;
     payment_status?: string;
     payment_proof_url?: string;
     payment_date?: string;
@@ -231,6 +234,23 @@ export function AdminEventDetail() {
             hour: '2-digit',
             minute: '2-digit'
         });
+    };
+
+    const handleExportExcel = () => {
+        if (!event) return;
+        if (processedParticipants.length === 0) {
+            return toast.error('Tidak ada data peserta untuk diekspor');
+        }
+
+        try {
+            exportEventParticipantsExcel(event, processedParticipants, {
+                filterStatus
+            });
+            toast.success(`Berhasil mengunduh ${processedParticipants.length} data peserta`);
+        } catch (error) {
+            console.error('Error exporting participants:', error);
+            toast.error(error instanceof Error ? error.message : 'Gagal mengekspor data peserta');
+        }
     };
 
     const processedParticipants = useMemo(() => {
@@ -534,6 +554,16 @@ export function AdminEventDetail() {
                             <QrCode className="w-4 h-4 mr-2" />
                             QR Absensi
                         </Button>
+                        <Button 
+                            onClick={handleExportExcel}
+                            variant="outline"
+                            size="sm"
+                            className="border-emerald-300 text-emerald-700 bg-emerald-50/40 hover:bg-emerald-100/60 shadow-sm h-9"
+                            title="Download data peserta ke format Excel resmi"
+                        >
+                            <FileSpreadsheet className="w-4 h-4 mr-2 text-emerald-600" />
+                            Download Peserta (.xlsx)
+                        </Button>
                         {!!event?.has_lms && (
                             <Button 
                                 onClick={() => navigate(`/admin/events/${id}/lms`)}
@@ -570,7 +600,7 @@ export function AdminEventDetail() {
                             </div>
                             <select
                                 value={filterStatus}
-                                onChange={(e) => setFilterStatus(e.target.value as any)}
+                                onChange={(e) => setFilterStatus(e.target.value as 'all' | 'attended' | 'not_attended' | 'passed' | 'not_passed')}
                                 className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                             >
                                 <option value="all">Semua Status</option>
@@ -579,6 +609,16 @@ export function AdminEventDetail() {
                                 <option value="attended">Hadir (Selesai Hari)</option>
                                 <option value="not_attended">Belum Hadir</option>
                             </select>
+
+                            <Button
+                                size="sm"
+                                onClick={handleExportExcel}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm h-9"
+                                title="Download daftar peserta saat ini ke format Excel yang rapi"
+                            >
+                                <Download className="w-4 h-4 mr-1.5" />
+                                Export Excel
+                            </Button>
 
                             {selectedIds.length > 0 && (
                                 <div className="flex gap-2">

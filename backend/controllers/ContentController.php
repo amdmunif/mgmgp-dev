@@ -623,7 +623,7 @@ class ContentController
     {
         try {
             // Fetch participants with user details
-            $query = "SELECT ep.*, p.nama, u.email, p.foto_profile, p.asal_sekolah, ep.is_approved,
+            $query = "SELECT ep.*, p.nama, u.email, p.foto_profile, p.asal_sekolah, p.no_hp, p.status_kepegawaian, p.pendidikan_terakhir, ep.is_approved,
                              (SELECT COUNT(*) FROM event_attendances ea WHERE ea.event_id = ep.event_id AND ea.user_id = ep.user_id) as attendance_count
                       FROM event_participants ep
                       LEFT JOIN profiles p ON ep.user_id = p.id

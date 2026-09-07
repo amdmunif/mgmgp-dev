@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate, useOutletContext } from 'react-router-dom';
 import {
     BookOpen, Gamepad2, Terminal, Crown,
-    ArrowRight, Lock, LayoutDashboard, Calendar, Eye, X, MapPin, ChevronRight
+    ArrowRight, Lock, LayoutDashboard, Calendar, Eye, X, MapPin, ChevronRight, School
 } from 'lucide-react';
 import { authService } from '../../services/authService';
 import { statsService } from '../../services/statsService';
@@ -10,6 +10,7 @@ import { premiumService } from '../../services/premiumService';
 import { settingsService } from '../../services/settingsService';
 import { eventService } from '../../services/eventService';
 import { Button } from '../../components/ui/button';
+import { findSchoolByName } from '../../data/schoolsData';
 
 export function MemberDashboard() {
     const navigate = useNavigate();
@@ -29,6 +30,9 @@ export function MemberDashboard() {
     const [latestRequest, setLatestRequest] = useState<any>(null);
     const [premiumPrice, setPremiumPrice] = useState<string>('0');
     const [adminBanks, setAdminBanks] = useState<any[]>([]);
+    const [isSchoolBannerDismissed, setIsSchoolBannerDismissed] = useState(false);
+
+    const isSchoolStandardized = profile?.asal_sekolah ? !!findSchoolByName(profile.asal_sekolah) : false;
 
     useEffect(() => {
         setPageHeader({
@@ -126,6 +130,50 @@ export function MemberDashboard() {
     return (
         <div className="space-y-10 animate-in fade-in duration-500">
 
+            {/* Banner Pengingat Standarisasi Asal Sekolah (Opsi C) */}
+            {profile && !isSchoolStandardized && !isSchoolBannerDismissed && (
+                <div className="relative overflow-hidden bg-gradient-to-r from-amber-500/10 via-amber-50 to-orange-50 border border-amber-200/90 rounded-2xl p-5 shadow-sm">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div className="flex items-start gap-3.5">
+                            <div className="p-3 bg-amber-100 text-amber-700 rounded-xl mt-0.5 sm:mt-0 flex-shrink-0 shadow-sm">
+                                <School className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <h3 className="font-bold text-gray-900 text-sm sm:text-base">
+                                        Pembaruan Format Nama Sekolah
+                                    </h3>
+                                    <span className="text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                                        Standarisasi
+                                    </span>
+                                </div>
+                                <p className="text-xs sm:text-sm text-gray-600 mt-1 leading-relaxed">
+                                    Asal sekolah Anda saat ini{' '}
+                                    <span className="font-semibold text-gray-900">
+                                        "{profile.asal_sekolah || 'Belum Diisi'}"
+                                    </span>{' '}
+                                    belum menggunakan format resmi terstandarisasi MGMP. Mohon bantu kami menyelaraskan data sekolah Anda agar tertata rapi.
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2 self-end sm:self-center flex-shrink-0">
+                            <Link to="/member/profile">
+                                <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white shadow-sm flex items-center gap-1.5 px-4 h-9">
+                                    <span>Perbarui Sekolah</span>
+                                    <ArrowRight className="w-4 h-4" />
+                                </Button>
+                            </Link>
+                            <button
+                                onClick={() => setIsSchoolBannerDismissed(true)}
+                                className="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-black/5 transition-colors"
+                                title="Tutup pemberitahuan"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Infographics Overview */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

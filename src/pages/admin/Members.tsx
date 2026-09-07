@@ -1,18 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { memberService, type Profile, type DuplicatePair } from '../../services/memberService';
 import { useOutletContext, useLocation } from 'react-router-dom';
 import { 
     Users, Crown, CheckCircle2, 
     XCircle, AlertCircle, Key, Filter, 
-    Mail, ShieldCheck, Eye, Pencil, Printer, X, User
+    Mail, ShieldCheck, Eye, Pencil, Printer, X, User,
+    School, Sparkles, ExternalLink, RefreshCw, Loader2
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { getFileUrl } from '../../lib/api';
+import { api, getFileUrl } from '../../lib/api';
 import { Button } from '../../components/ui/button';
 import { useNavigate } from 'react-router-dom';
 
 import { DataTable } from '../../components/ui/DataTable';
 import { exportMembersToExcel } from '../../utils/exportMemberExcel';
+import { SchoolSelectFields } from '../../components/common/SchoolSelectFields';
 
 export function AdminMembers() {
     const navigate = useNavigate();
@@ -41,6 +43,57 @@ export function AdminMembers() {
     });
     const [primarySelections, setPrimarySelections] = useState<Record<number, 'id1' | 'id2'>>({});
     const [isSaving, setIsSaving] = useState(false);
+
+    // School Standardization Modal State (Opsi B & Admin Tool)
+    const [isStandardizeModalOpen, setIsStandardizeModalOpen] = useState(false);
+    const [standardizeLoading, setStandardizeLoading] = useState(false);
+    interface SchoolAuditResult {
+        total_with_school: number;
+        official_count: number;
+        can_auto_match_count: number;
+        unmatched_count: number;
+        matched_preview: Array<{ id: string; nama: string; raw: string; normalized: string }>;
+        unmatched_preview: Array<{ id: string; nama: string; raw: string }>;
+    }
+
+    const [standardizeAudit, setStandardizeAudit] = useState<SchoolAuditResult | null>(null);
+
+    const fetchSchoolAudit = useCallback(async () => {
+        try {
+            setStandardizeLoading(true);
+            const res = await api.get<SchoolAuditResult>('/members/schools-audit');
+            setStandardizeAudit(res);
+        } catch (e: unknown) {
+            console.error(e);
+            toast.error('Gagal memuat audit data sekolah');
+        } finally {
+            setStandardizeLoading(false);
+        }
+    }, []);
+
+    const handleRunStandardize = async () => {
+        if (!confirm(`Jalankan standarisasi otomatis untuk ${standardizeAudit?.can_auto_match_count || 0} data sekolah? Data nama sekolah anggota akan diperbarui ke nama resmi.`)) {
+            return;
+        }
+        try {
+            setStandardizeLoading(true);
+            const res = await api.post<{ status: string; updated_count: number }>('/members/schools-standardize', {});
+            toast.success(`Berhasil memperbarui ${res?.updated_count || 0} data sekolah ke format resmi!`);
+            fetchMembers();
+            fetchSchoolAudit();
+        } catch (e: unknown) {
+            console.error(e);
+            toast.error('Gagal menjalankan standarisasi otomatis');
+        } finally {
+            setStandardizeLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (isStandardizeModalOpen) {
+            fetchSchoolAudit();
+        }
+    }, [isStandardizeModalOpen, fetchSchoolAudit]);
 
     // Tab: default dari location state jika ada
     const [activeTab, setActiveTab] = useState<'active' | 'inactive' | 'duplicates'>(
@@ -435,7 +488,16 @@ export function AdminMembers() {
                     <option value="Reguler">Reguler</option>
                 </select>
             </div>
-            <div className="flex items-center gap-2 ml-auto">
+            <div className="flex items-center gap-2 ml-auto flex-wrap">
+                <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setIsStandardizeModalOpen(true)} 
+                    className="h-9 border-amber-300 text-amber-800 hover:bg-amber-50 flex items-center gap-1.5 shadow-sm"
+                >
+                    <School className="w-4 h-4 text-amber-600" />
+                    <span>Standarisasi Sekolah</span>
+                </Button>
                 <Button variant="outline" size="sm" onClick={handleMergeDuplicates} className="h-9 border-blue-200 text-blue-700 hover:bg-blue-50">Gabungkan Duplikat</Button>
                 <Button variant="outline" size="sm" onClick={fetchMembers} className="h-9">Refresh</Button>
                 <Button onClick={handleExport} size="sm" className="bg-green-600 hover:bg-green-700 h-9">Export Data</Button>
@@ -815,12 +877,10 @@ export function AdminMembers() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Asal Sekolah</label>
-                                    <input
-                                        type="text"
+                                    <SchoolSelectFields
                                         value={editForm.asal_sekolah}
-                                        onChange={(e) => setEditForm(prev => ({ ...prev, asal_sekolah: e.target.value }))}
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                        onChange={(val) => setEditForm(prev => ({ ...prev, asal_sekolah: val }))}
+                                        required
                                     />
                                 </div>
 
@@ -904,6 +964,193 @@ export function AdminMembers() {
                                 </Button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Standarisasi Nama Sekolah (Opsi B & Admin Tool) */}
+            {isStandardizeModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                        {/* Header */}
+                        <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-slate-50/70">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 bg-amber-100 text-amber-700 rounded-xl">
+                                    <School className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h2 className="text-lg font-bold text-gray-900">Standarisasi Nama Sekolah Anggota</h2>
+                                    <p className="text-xs text-gray-500">Penyelarasan nama sekolah anggota lama ke daftar 109 sekolah resmi se-Kab. Wonosobo</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setIsStandardizeModalOpen(false)}
+                                className="text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {/* Content */}
+                        <div className="p-6 overflow-y-auto space-y-6 flex-1">
+                            {standardizeLoading && !standardizeAudit ? (
+                                <div className="py-12 text-center text-gray-500 flex flex-col items-center justify-center gap-3">
+                                    <Loader2 className="w-8 h-8 animate-spin text-amber-600" />
+                                    <p className="text-sm">Menganalisis data sekolah anggota...</p>
+                                </div>
+                            ) : (
+                                <>
+                                    {/* Stat Grid */}
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                        <div className="bg-blue-50/70 border border-blue-100 p-4 rounded-xl">
+                                            <span className="text-xs text-blue-700 font-medium">Total Anggota</span>
+                                            <p className="text-2xl font-bold text-blue-900 mt-1">{standardizeAudit?.total_with_school ?? '-'}</p>
+                                        </div>
+                                        <div className="bg-green-50/70 border border-green-100 p-4 rounded-xl">
+                                            <span className="text-xs text-green-700 font-medium">Sudah Resmi</span>
+                                            <p className="text-2xl font-bold text-green-900 mt-1">{standardizeAudit?.official_count ?? '-'}</p>
+                                        </div>
+                                        <div className="bg-amber-50/70 border border-amber-200 p-4 rounded-xl">
+                                            <span className="text-xs text-amber-800 font-medium">Bisa Di-automatch</span>
+                                            <p className="text-2xl font-bold text-amber-900 mt-1">{standardizeAudit?.can_auto_match_count ?? '-'}</p>
+                                        </div>
+                                        <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl">
+                                            <span className="text-xs text-slate-700 font-medium">Belum Terdaftar</span>
+                                            <p className="text-2xl font-bold text-slate-900 mt-1">{standardizeAudit?.unmatched_count ?? '-'}</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Action Banner */}
+                                    <div className="bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 border border-amber-200 rounded-xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                        <div>
+                                            <h3 className="font-bold text-amber-900 text-sm flex items-center gap-1.5">
+                                                <Sparkles className="w-4 h-4 text-amber-600" />
+                                                Sinkronisasi Otomatis Massal (Opsi B)
+                                            </h3>
+                                            <p className="text-xs text-amber-800 mt-1">
+                                                Menstandarisasi variasi singkatan (seperti <em>SMPN 1 Wonosobo</em>, <em>SMP 2 Garung</em>, <em>SMPN 4 Satap Kalikajar</em>) ke format resmi secara otomatis ke database.
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center gap-2 flex-shrink-0">
+                                            <Button
+                                                onClick={handleRunStandardize}
+                                                disabled={standardizeLoading || !standardizeAudit?.can_auto_match_count}
+                                                className="bg-amber-600 hover:bg-amber-700 text-white text-xs h-9 px-4 flex items-center gap-1.5 shadow-sm"
+                                            >
+                                                {standardizeLoading ? (
+                                                    <>
+                                                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                                        <span>Memproses...</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Sparkles className="w-3.5 h-3.5" />
+                                                        <span>Sinkronkan Sekarang ({standardizeAudit?.can_auto_match_count || 0})</span>
+                                                    </>
+                                                )}
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={fetchSchoolAudit}
+                                                disabled={standardizeLoading}
+                                                className="h-9 px-3"
+                                                title="Refresh data"
+                                            >
+                                                <RefreshCw className={`w-3.5 h-3.5 ${standardizeLoading ? 'animate-spin' : ''}`} />
+                                            </Button>
+                                        </div>
+                                    </div>
+
+                                    {/* Preview Matched List */}
+                                    {standardizeAudit && standardizeAudit.matched_preview && standardizeAudit.matched_preview.length > 0 && (
+                                        <div className="space-y-2">
+                                            <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                                Data Siap Di-Standarisasikan ({standardizeAudit.matched_preview.length} dari {standardizeAudit.can_auto_match_count})
+                                            </h3>
+                                            <div className="border border-gray-200 rounded-xl overflow-hidden max-h-56 overflow-y-auto text-xs">
+                                                <table className="w-full text-left">
+                                                    <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
+                                                        <tr>
+                                                            <th className="py-2.5 px-3 font-semibold text-gray-600">Nama Anggota</th>
+                                                            <th className="py-2.5 px-3 font-semibold text-gray-600">Nama Lama</th>
+                                                            <th className="py-2.5 px-3 font-semibold text-gray-600">Format Resmi</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-gray-100">
+                                                        {standardizeAudit.matched_preview.map((p, idx) => (
+                                                            <tr key={idx} className="hover:bg-gray-50/80">
+                                                                <td className="py-2 px-3 font-medium text-gray-900">{p.nama}</td>
+                                                                <td className="py-2 px-3 text-amber-700 bg-amber-50/50">{p.raw}</td>
+                                                                <td className="py-2 px-3 text-green-700 font-semibold bg-green-50/40">➔ {p.normalized}</td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Unmatched list notice */}
+                                    {standardizeAudit && standardizeAudit.unmatched_preview && standardizeAudit.unmatched_preview.length > 0 && (
+                                        <div className="space-y-2">
+                                            <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center justify-between">
+                                                <span>Data Belum Terdaftar di 109 Sekolah ({standardizeAudit.unmatched_preview.length} dari {standardizeAudit.unmatched_count})</span>
+                                                <span className="text-[11px] font-normal text-gray-500 normal-case">Dapat dibantu diedit manual melalui tombol Edit di tabel anggota</span>
+                                            </h3>
+                                            <div className="border border-gray-200 rounded-xl overflow-hidden max-h-48 overflow-y-auto text-xs">
+                                                <table className="w-full text-left">
+                                                    <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
+                                                        <tr>
+                                                            <th className="py-2 px-3 font-semibold text-gray-600">Nama Anggota</th>
+                                                            <th className="py-2 px-3 font-semibold text-gray-600">Nama Sekolah Saat Ini</th>
+                                                            <th className="py-2 px-3 font-semibold text-gray-600">Aksi</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-gray-100">
+                                                        {standardizeAudit.unmatched_preview.map((u, idx) => (
+                                                            <tr key={idx} className="hover:bg-gray-50/80">
+                                                                <td className="py-2 px-3 font-medium text-gray-900">{u.nama}</td>
+                                                                <td className="py-2 px-3 text-gray-700 font-mono text-[11px]">{u.raw}</td>
+                                                                <td className="py-2 px-3">
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            setIsStandardizeModalOpen(false);
+                                                                            const target = members.find(m => m.id === u.id);
+                                                                            if (target) handleEdit(target);
+                                                                        }}
+                                                                        className="text-blue-600 hover:text-blue-800 font-medium hover:underline flex items-center gap-1"
+                                                                    >
+                                                                        <Pencil className="w-3 h-3" />
+                                                                        <span>Edit Anggota</span>
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </div>
+
+                        {/* Footer */}
+                        <div className="p-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+                            <a
+                                href="/backend/standardize_schools_browser.php"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-xs text-gray-600 hover:text-blue-600 flex items-center gap-1 hover:underline"
+                            >
+                                <ExternalLink className="w-3.5 h-3.5" />
+                                <span>Buka Runner Halaman Penuh (Browser Script)</span>
+                            </a>
+                            <Button variant="outline" size="sm" onClick={() => setIsStandardizeModalOpen(false)}>
+                                Tutup
+                            </Button>
+                        </div>
                     </div>
                 </div>
             )}
