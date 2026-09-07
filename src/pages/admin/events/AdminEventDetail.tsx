@@ -1,13 +1,14 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { contentManagementService } from '../../../services/contentManagementService';
-import { ArrowLeft, Calendar, MapPin, Users, CheckCircle, XCircle, Trash2, Printer, QrCode, X, MonitorPlay, Trophy, UserCheck, UserMinus, Search, FileSpreadsheet, Download } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, CheckCircle, XCircle, Trash2, Printer, QrCode, X, MonitorPlay, Trophy, UserCheck, UserMinus, Search, FileSpreadsheet, Download, School } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { api, getFileUrl } from '../../../lib/api';
 import { lmsService } from '../../../services/lmsService';
 import { DataTable } from '../../../components/ui/DataTable';
 import { Button } from '../../../components/ui/button';
 import { exportEventParticipantsExcel } from '../../../utils/exportEventParticipantsExcel';
+import { EventSchoolCoverageModal } from '../../../components/events/EventSchoolCoverageModal';
 
 interface Participant {
     user_id: string;
@@ -54,6 +55,12 @@ export function AdminEventDetail() {
     const [searchQuery, setSearchQuery] = useState('');
     const [showQR, setShowQR] = useState(false);
     const [selectedQRDay, setSelectedQRDay] = useState<number>(1);
+    const [showCoverage, setShowCoverage] = useState(false);
+
+    const uniqueSchoolCount = useMemo(() => {
+        const set = new Set(participants.map(p => p.asal_sekolah?.trim()).filter(Boolean));
+        return set.size;
+    }, [participants]);
 
     useEffect(() => {
         if (id) {
@@ -530,12 +537,26 @@ export function AdminEventDetail() {
                                     <UserMinus className="w-4 h-4" />
                                     <strong>{participants.filter(p => Number(p.is_hadir) === 0 && (!p.attendance_count || Number(p.attendance_count) === 0)).length}</strong> Tidak Hadir
                                 </span>
+                                <span className="flex items-center gap-1.5 text-emerald-700">
+                                    <School className="w-4 h-4 text-emerald-600" />
+                                    <strong>{uniqueSchoolCount}</strong> Sekolah Terdaftar
+                                </span>
                             </div>
                         </div>
                     </div>
                     
                     {/* Action Buttons on the Right */}
                     <div className="flex flex-wrap items-center gap-2 pl-12 xl:pl-0 shrink-0">
+                        <Button 
+                            onClick={() => setShowCoverage(true)}
+                            variant="outline"
+                            size="sm"
+                            className="border-emerald-300 text-emerald-700 bg-emerald-50/70 hover:bg-emerald-100 shadow-sm h-9 font-medium"
+                            title="Analisis pemerataan sekolah: lihat sekolah mana yang sudah vs belum mendaftar"
+                        >
+                            <School className="w-4 h-4 mr-2 text-emerald-600" />
+                            Pemerataan Sekolah
+                        </Button>
                         <Button 
                             onClick={() => navigate(`/admin/events/${id}/print-attendance`)}
                             variant="outline"
@@ -741,6 +762,16 @@ export function AdminEventDetail() {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* School Coverage Modal */}
+            {event && (
+                <EventSchoolCoverageModal 
+                    isOpen={showCoverage}
+                    onClose={() => setShowCoverage(false)}
+                    event={event}
+                    participants={participants}
+                />
             )}
         </div>
     );
