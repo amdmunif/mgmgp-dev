@@ -22,6 +22,7 @@ export function AdminSchools() {
     // Form state for adding new school
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [formData, setFormData] = useState({ nama: '', kecamatan: '', npsn: '' });
+    const [editingSchoolId, setEditingSchoolId] = useState<number | null>(null);
     const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
@@ -82,7 +83,7 @@ export function AdminSchools() {
         );
     }
 
-    const handleCreateSchool = async (e: React.FormEvent) => {
+    const handleSubmitSchool = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!formData.nama.trim() || !formData.kecamatan.trim()) {
             toast.error('Nama sekolah dan kecamatan wajib diisi');
@@ -91,22 +92,45 @@ export function AdminSchools() {
 
         try {
             setSubmitting(true);
-            const res = await schoolService.addSchool({
+            const payload = {
                 nama: formData.nama.trim(),
                 kecamatan: formData.kecamatan.trim(),
                 npsn: formData.npsn.trim() || undefined
-            });
+            };
 
-            toast.success(res.message || 'Sekolah berhasil ditambahkan ke database');
-            addSchoolToCache(res.school);
-            setFormData({ nama: '', kecamatan: '', npsn: '' });
-            setIsFormOpen(false);
+            if (editingSchoolId) {
+                const res = await schoolService.updateSchool(editingSchoolId, payload);
+                toast.success(res.message || 'Sekolah berhasil diperbarui');
+            } else {
+                const res = await schoolService.addSchool(payload);
+                toast.success(res.message || 'Sekolah berhasil ditambahkan ke database');
+                addSchoolToCache(res.school);
+            }
+            
+            closeForm();
             fetchSchools();
         } catch (err: any) {
             toast.error(err?.message || 'Gagal menyimpan sekolah');
         } finally {
             setSubmitting(false);
         }
+    };
+
+    const openEditForm = (school: SchoolItem) => {
+        setFormData({
+            nama: school.nama || '',
+            kecamatan: school.kecamatan || '',
+            npsn: school.npsn || ''
+        });
+        setEditingSchoolId(school.id || null);
+        setIsFormOpen(true);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const closeForm = () => {
+        setFormData({ nama: '', kecamatan: '', npsn: '' });
+        setEditingSchoolId(null);
+        setIsFormOpen(false);
     };
 
     const handleDeleteSchool = async (school: SchoolItem) => {
@@ -153,8 +177,8 @@ export function AdminSchools() {
 
                 <div className="flex items-center gap-3">
                     <Button
-                        onClick={() => setIsFormOpen(!isFormOpen)}
-                        className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-5 py-2.5 rounded-xl shadow-lg shadow-blue-500/30 flex items-center gap-2 transition-all hover:scale-[1.02]"
+                        onClick={() => isFormOpen ? closeForm() : setIsFormOpen(true)}
+                        className={`${isFormOpen ? 'bg-red-500 hover:bg-red-600 shadow-red-500/30' : 'bg-blue-500 hover:bg-blue-600 shadow-blue-500/30'} text-white font-semibold px-5 py-2.5 rounded-xl shadow-lg flex items-center gap-2 transition-all hover:scale-[1.02]`}
                     >
                         {isFormOpen ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
                         <span>{isFormOpen ? 'Tutup Formulir' : '+ Tambah Sekolah Baru'}</span>
@@ -204,17 +228,17 @@ export function AdminSchools() {
                     <div className="flex items-center justify-between border-b border-gray-100 pb-3">
                         <div className="flex items-center gap-2 text-indigo-900 font-bold text-base">
                             <PlusCircle className="w-5 h-5 text-indigo-600" />
-                            <span>Formulir Tambah Sekolah Baru ke Database</span>
+                            <span>{editingSchoolId ? 'Formulir Edit Sekolah' : 'Formulir Tambah Sekolah Baru ke Database'}</span>
                         </div>
                         <button
-                            onClick={() => setIsFormOpen(false)}
+                            onClick={closeForm}
                             className="p-1 text-gray-400 hover:text-gray-600 rounded-lg"
                         >
                             <X className="w-4 h-4" />
                         </button>
                     </div>
 
-                    <form onSubmit={handleCreateSchool} className="space-y-4">
+                    <form onSubmit={handleSubmitSchool} className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="md:col-span-2 space-y-1.5">
                                 <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider">
@@ -267,7 +291,7 @@ export function AdminSchools() {
                             <Button
                                 type="button"
                                 variant="outline"
-                                onClick={() => setIsFormOpen(false)}
+                                onClick={closeForm}
                                 className="h-10 text-xs px-4"
                             >
                                 Batal
@@ -283,7 +307,7 @@ export function AdminSchools() {
                                         <span>Menyimpan ke Database...</span>
                                     </span>
                                 ) : (
-                                    <span>Simpan Sekolah ke Database</span>
+                                    <span>{editingSchoolId ? 'Perbarui Sekolah' : 'Simpan Sekolah ke Database'}</span>
                                 )}
                             </Button>
                         </div>
@@ -426,13 +450,22 @@ export function AdminSchools() {
                                         </td>
                                         <td className="py-3.5 px-4 text-center">
                                             {school.id ? (
-                                                <button
-                                                    onClick={() => handleDeleteSchool(school)}
-                                                    title="Hapus sekolah ini dari database master"
-                                                    className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors inline-flex items-center"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
+                                                <div className="flex justify-center gap-2">
+                                                    <button
+                                                        onClick={() => openEditForm(school)}
+                                                        title="Edit sekolah ini"
+                                                        className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors inline-flex items-center"
+                                                    >
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteSchool(school)}
+                                                        title="Hapus sekolah ini dari database master"
+                                                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors inline-flex items-center"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
                                             ) : (
                                                 <span className="text-gray-300 text-xs italic">Bawaan</span>
                                             )}

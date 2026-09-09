@@ -629,6 +629,13 @@ if ($resource === 'news') {
         echo $controller->getAll();
     } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
         echo $controller->create($input);
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'PUT' && $action) {
+        if (in_array($userRole, ['Admin', 'Pengurus'])) {
+            echo $controller->update($action, $input);
+        } else {
+            http_response_code(403);
+            echo json_encode(["message" => "Forbidden"]);
+        }
     } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action) {
         if (in_array($userRole, ['Admin', 'Pengurus'])) {
             echo $controller->delete($action);

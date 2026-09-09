@@ -30,6 +30,12 @@ export const schoolService = {
         return res;
     },
 
+    // Update a school in master_schools database table
+    async updateSchool(id: number | string, payload: AddSchoolPayload): Promise<{ message: string; school: SchoolItem }> {
+        const res = await api.put<{ message: string; school: SchoolItem }>(`/schools/${id}`, payload);
+        return res;
+    },
+
     // Delete a school from master_schools database table
     async deleteSchool(id: number | string): Promise<{ message: string }> {
         return await api.delete<{ message: string }>(`/schools/${id}`);
