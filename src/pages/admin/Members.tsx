@@ -475,11 +475,7 @@ export function AdminMembers() {
                 return (
                     <div>
                         <p className="font-semibold text-gray-900">{member.asal_sekolah || '-'}</p>
-                        {isStandard ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 mt-1.5 rounded-full text-[10px] font-semibold bg-green-100 text-green-700">
-                                <CheckCircle2 className="w-3 h-3" /> Sudah Standar
-                            </span>
-                        ) : (
+                        {!isStandard && (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 mt-1.5 rounded-full text-[10px] font-semibold bg-yellow-100 text-yellow-700">
                                 <AlertCircle className="w-3 h-3" /> Belum Standarisasi
                             </span>
