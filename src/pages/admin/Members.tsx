@@ -94,7 +94,11 @@ export function AdminMembers() {
 
     // Derived state for counts
     const inactiveCount = members.filter(m => Number(m.is_active) === 0).length;
-    const unstandardizedCount = members.filter(m => Number(m.is_school_standardized) === 0).length;
+    const unstandardizedCount = members.filter(m => {
+        const isStandard = Number(m.is_school_standardized) === 1;
+        const suggestion = matchSchoolFuzzy(m.asal_sekolah || '');
+        return !isStandard || (suggestion && suggestion.nama !== m.asal_sekolah);
+    }).length;
 
     // Helper: cek kelengkapan data anggota
     const isDataComplete = (m: Profile): boolean => {
@@ -120,7 +124,7 @@ export function AdminMembers() {
 
             if (activeTab === 'active' && !isActive) return false;
             if (activeTab === 'inactive' && isActive) return false;
-            if (activeTab === 'unstandardized' && isStandardized) return false;
+            // if (activeTab === 'unstandardized' && isStandardized) return false; // Show all in Standarisasi tab
 
             // Then filter by Role
             if (filterRole !== 'All' && m.role !== filterRole) return false;
@@ -446,14 +450,21 @@ export function AdminMembers() {
             header: 'Nama Sekolah',
             accessorKey: 'asal_sekolah' as keyof Profile,
             cell: (member: Profile) => {
+                const isStandard = Number(member.is_school_standardized) === 1;
                 const suggestion = matchSchoolFuzzy(member.asal_sekolah || '');
                 return (
                     <div>
                         <p className="font-semibold text-gray-900">{member.asal_sekolah || '-'}</p>
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 mt-1.5 rounded-full text-[10px] font-semibold bg-yellow-100 text-yellow-700">
-                            <AlertCircle className="w-3 h-3" /> Belum Standarisasi
-                        </span>
-                        {suggestion && (
+                        {isStandard ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 mt-1.5 rounded-full text-[10px] font-semibold bg-green-100 text-green-700">
+                                <CheckCircle2 className="w-3 h-3" /> Sudah Standar
+                            </span>
+                        ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 mt-1.5 rounded-full text-[10px] font-semibold bg-yellow-100 text-yellow-700">
+                                <AlertCircle className="w-3 h-3" /> Belum Standarisasi
+                            </span>
+                        )}
+                        {suggestion && suggestion.nama !== member.asal_sekolah && (
                             <div className="mt-1">
                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 text-blue-700">
                                     Saran: {suggestion.nama}
@@ -469,9 +480,10 @@ export function AdminMembers() {
             className: 'text-right',
             cell: (member: Profile) => {
                 const suggestion = matchSchoolFuzzy(member.asal_sekolah || '');
+                const showFixButton = suggestion && suggestion.nama !== member.asal_sekolah;
                 return (
                     <div className="flex items-center justify-end gap-2">
-                        {suggestion && (
+                        {showFixButton && (
                             <button
                                 onClick={() => handleAutoFix(member, suggestion)}
                                 className="p-2 hover:bg-green-50 rounded-lg text-green-500 hover:text-green-700 transition-colors"
@@ -564,7 +576,7 @@ export function AdminMembers() {
                         : 'border-transparent text-gray-500 hover:text-gray-700'
                         }`}
                 >
-                    Belum Standarisasi
+                    Standarisasi Sekolah
                     {unstandardizedCount > 0 && (
                         <span className="w-5 h-5 rounded-full bg-yellow-100 text-yellow-600 text-xs flex items-center justify-center">
                             {unstandardizedCount}
