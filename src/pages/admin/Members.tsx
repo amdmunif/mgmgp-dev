@@ -4,7 +4,7 @@ import { useOutletContext, useLocation } from 'react-router-dom';
 import { 
     Users, Crown, CheckCircle2, 
     XCircle, AlertCircle, Key, Filter, 
-    Mail, ShieldCheck, Eye, Pencil, Printer, X, User
+    Mail, ShieldCheck, Eye, Pencil, Printer, X, User, Search
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { getFileUrl } from '../../lib/api';
@@ -14,7 +14,7 @@ import { useNavigate } from 'react-router-dom';
 import { DataTable } from '../../components/ui/DataTable';
 import { exportMembersToExcel } from '../../utils/exportMemberExcel';
 import { SchoolSelectFields } from '../../components/common/SchoolSelectFields';
-import { matchSchoolFuzzy } from '../../data/schoolsData';
+import { matchSchoolFuzzy, SCHOOLS_DATA } from '../../data/schoolsData';
 
 export function AdminMembers() {
     const navigate = useNavigate();
@@ -24,6 +24,8 @@ export function AdminMembers() {
     const [loading, setLoading] = useState(true);
     const [filterRole, setFilterRole] = useState('All');
     const [filterPremium, setFilterPremium] = useState('All');
+    const [filterKecamatan, setFilterKecamatan] = useState('All');
+    const [searchSekolah, setSearchSekolah] = useState('');
     const [duplicates, setDuplicates] = useState<DuplicatePair[]>([]);
     const [loadingDuplicates, setLoadingDuplicates] = useState(false);
 
@@ -116,6 +118,8 @@ export function AdminMembers() {
         return missing;
     };
 
+    const uniqueKecamatans = Array.from(new Set(SCHOOLS_DATA.map(s => s.kecamatan))).sort();
+
     const filteredMembers = members
         .filter(m => {
             // First filter by Tab (Active vs Inactive)
@@ -125,13 +129,26 @@ export function AdminMembers() {
             if (activeTab === 'inactive' && isActive) return false;
             // if (activeTab === 'unstandardized' && isStandardized) return false; // Show all in Standarisasi tab
 
-            // Then filter by Role
-            if (filterRole !== 'All' && m.role !== filterRole) return false;
+            if (activeTab === 'unstandardized') {
+                const suggestion = matchSchoolFuzzy(m.asal_sekolah || '');
+                if (filterKecamatan !== 'All') {
+                    if (!suggestion || suggestion.kecamatan !== filterKecamatan) return false;
+                }
+                if (searchSekolah) {
+                    const searchLower = searchSekolah.toLowerCase();
+                    const rawSekolahMatches = m.asal_sekolah?.toLowerCase().includes(searchLower);
+                    const suggestedMatches = suggestion?.nama?.toLowerCase().includes(searchLower);
+                    if (!rawSekolahMatches && !suggestedMatches) return false;
+                }
+            } else {
+                // Then filter by Role
+                if (filterRole !== 'All' && m.role !== filterRole) return false;
 
-            // Then filter by Premium
-            const isPremium = m.premium_until && new Date(m.premium_until) > new Date();
-            if (filterPremium === 'Premium' && !isPremium) return false;
-            if (filterPremium === 'Reguler' && isPremium) return false;
+                // Then filter by Premium
+                const isPremium = m.premium_until && new Date(m.premium_until) > new Date();
+                if (filterPremium === 'Premium' && !isPremium) return false;
+                if (filterPremium === 'Reguler' && isPremium) return false;
+            }
 
             return true;
         })
@@ -510,31 +527,63 @@ export function AdminMembers() {
 
     const FilterContent = (
         <div className="flex flex-col md:flex-row gap-4 items-center">
-            <div className="flex items-center gap-2">
-                <Filter className="w-4 h-4 text-gray-500" />
-                <select
-                    value={filterRole}
-                    onChange={(e) => setFilterRole(e.target.value)}
-                    className="px-3 py-2 rounded-lg border border-gray-200 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                    <option value="All">Semua Role</option>
-                    <option value="Admin">Admin</option>
-                    <option value="Anggota">Anggota</option>
-                    <option value="Pengurus">Pengurus</option>
-                </select>
-            </div>
-            <div className="flex items-center gap-2">
-                <Crown className="w-4 h-4 text-gray-500" />
-                <select
-                    value={filterPremium}
-                    onChange={(e) => setFilterPremium(e.target.value)}
-                    className="px-3 py-2 rounded-lg border border-gray-200 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                    <option value="All">Semua Status Akun</option>
-                    <option value="Premium">Premium</option>
-                    <option value="Reguler">Reguler</option>
-                </select>
-            </div>
+            {activeTab !== 'unstandardized' && (
+                <>
+                    <div className="flex items-center gap-2">
+                        <Filter className="w-4 h-4 text-gray-500" />
+                        <select
+                            value={filterRole}
+                            onChange={(e) => setFilterRole(e.target.value)}
+                            className="px-3 py-2 rounded-lg border border-gray-200 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                            <option value="All">Semua Role</option>
+                            <option value="Admin">Admin</option>
+                            <option value="Anggota">Anggota</option>
+                            <option value="Pengurus">Pengurus</option>
+                        </select>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Crown className="w-4 h-4 text-gray-500" />
+                        <select
+                            value={filterPremium}
+                            onChange={(e) => setFilterPremium(e.target.value)}
+                            className="px-3 py-2 rounded-lg border border-gray-200 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                            <option value="All">Semua Status Akun</option>
+                            <option value="Premium">Premium</option>
+                            <option value="Reguler">Reguler</option>
+                        </select>
+                    </div>
+                </>
+            )}
+            
+            {activeTab === 'unstandardized' && (
+                <>
+                    <div className="flex items-center gap-2">
+                        <Filter className="w-4 h-4 text-gray-500" />
+                        <select
+                            value={filterKecamatan}
+                            onChange={(e) => setFilterKecamatan(e.target.value)}
+                            className="px-3 py-2 rounded-lg border border-gray-200 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                            <option value="All">Semua Kecamatan</option>
+                            {uniqueKecamatans.map(kec => (
+                                <option key={kec} value={kec}>{kec}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="flex items-center gap-2 relative">
+                        <Search className="w-4 h-4 text-gray-500 absolute left-3" />
+                        <input
+                            type="text"
+                            placeholder="Cari Nama Sekolah..."
+                            value={searchSekolah}
+                            onChange={(e) => setSearchSekolah(e.target.value)}
+                            className="pl-9 pr-3 py-2 rounded-lg border border-gray-200 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                    </div>
+                </>
+            )}
             <div className="flex items-center gap-2 ml-auto flex-wrap">
                 <Button variant="outline" size="sm" onClick={handleMergeDuplicates} className="h-9 border-blue-200 text-blue-700 hover:bg-blue-50">Gabungkan Duplikat</Button>
                 <Button variant="outline" size="sm" onClick={fetchMembers} className="h-9">Refresh</Button>
