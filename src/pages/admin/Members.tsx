@@ -42,9 +42,10 @@ export function AdminMembers() {
     });
     const [primarySelections, setPrimarySelections] = useState<Record<number, 'id1' | 'id2'>>({});
     const [isSaving, setIsSaving] = useState(false);
+    const [editCustomNpsn, setEditCustomNpsn] = useState('');
 
     // Tab: default dari location state jika ada
-    const [activeTab, setActiveTab] = useState<'active' | 'inactive' | 'duplicates'>(
+    const [activeTab, setActiveTab] = useState<'active' | 'inactive' | 'duplicates' | 'unstandardized'>(
         location.state?.tab === 'inactive' ? 'inactive' : 'active'
     );
 
@@ -92,6 +93,7 @@ export function AdminMembers() {
 
     // Derived state for counts
     const inactiveCount = members.filter(m => Number(m.is_active) === 0).length;
+    const unstandardizedCount = members.filter(m => Number(m.is_school_standardized) === 0).length;
 
     // Helper: cek kelengkapan data anggota
     const isDataComplete = (m: Profile): boolean => {
@@ -113,8 +115,11 @@ export function AdminMembers() {
         .filter(m => {
             // First filter by Tab (Active vs Inactive)
             const isActive = Number(m.is_active) === 1;
+            const isStandardized = Number(m.is_school_standardized) === 1;
+
             if (activeTab === 'active' && !isActive) return false;
             if (activeTab === 'inactive' && isActive) return false;
+            if (activeTab === 'unstandardized' && isStandardized) return false;
 
             // Then filter by Role
             if (filterRole !== 'All' && m.role !== filterRole) return false;
@@ -154,6 +159,7 @@ export function AdminMembers() {
             jurusan: member.jurusan || '',
             status_kepegawaian: member.status_kepegawaian || ''
         });
+        setEditCustomNpsn('');
     };
 
     const handleDelete = async (id: string) => {
@@ -181,7 +187,8 @@ export function AdminMembers() {
                 jurusan: editForm.jurusan,
                 status_kepegawaian: editForm.status_kepegawaian,
                 role: editForm.role as 'Admin' | 'Anggota' | 'Pengurus',
-                is_active: Number(editForm.is_active)
+                is_active: Number(editForm.is_active),
+                npsn: editCustomNpsn || undefined
             });
             toast.success('Anggota berhasil diupdate');
             fetchMembers();
@@ -470,6 +477,20 @@ export function AdminMembers() {
                     {inactiveCount > 0 && (
                         <span className="w-5 h-5 rounded-full bg-red-100 text-red-600 text-xs flex items-center justify-center">
                             {inactiveCount}
+                        </span>
+                    )}
+                </button>
+                <button
+                    onClick={() => setActiveTab('unstandardized')}
+                    className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors duration-200 flex items-center gap-2 ${activeTab === 'unstandardized'
+                        ? 'border-yellow-500 text-yellow-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700'
+                        }`}
+                >
+                    Belum Standarisasi
+                    {unstandardizedCount > 0 && (
+                        <span className="w-5 h-5 rounded-full bg-yellow-100 text-yellow-600 text-xs flex items-center justify-center">
+                            {unstandardizedCount}
                         </span>
                     )}
                 </button>
@@ -815,10 +836,12 @@ export function AdminMembers() {
                                     />
                                 </div>
 
-                                <div>
+                                <div className="col-span-1 md:col-span-2">
                                     <SchoolSelectFields
                                         value={editForm.asal_sekolah}
                                         onChange={(val) => setEditForm(prev => ({ ...prev, asal_sekolah: val }))}
+                                        npsnValue={editCustomNpsn}
+                                        onNpsnChange={setEditCustomNpsn}
                                         required
                                     />
                                 </div>

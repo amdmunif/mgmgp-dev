@@ -20,6 +20,8 @@ export interface Profile {
     kelas?: string | string[]; // JSON string or parsed array
     attendance_count?: number;
     is_new?: number; // 1 if created in last 3 months
+    is_school_standardized?: number;
+    npsn?: string;
 }
 
 export interface DuplicatePair {

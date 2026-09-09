@@ -160,7 +160,7 @@ class SchoolController
     /**
      * Static helper to ensure school exists in master_schools when submitted by users
      */
-    public static function ensureSchoolExists($pdo, $schoolName, $kecamatan = null)
+    public static function ensureSchoolExists($pdo, $schoolName, $npsn = null, $kecamatan = null)
     {
         if (!$pdo || empty(trim($schoolName))) {
             return null;
@@ -181,17 +181,28 @@ class SchoolController
             $existing = $checkStmt->fetch(PDO::FETCH_ASSOC);
 
             if ($existing) {
+                // Optionally update NPSN if it was null but provided now
+                if (empty($existing['npsn']) && !empty($npsn)) {
+                    $updateStmt = $pdo->prepare("UPDATE master_schools SET npsn = :npsn WHERE id = :id");
+                    $updateStmt->execute([':npsn' => $npsn, ':id' => $existing['id']]);
+                }
                 return $existing;
             }
 
             // If not found, try to derive kecamatan if not provided
             if (empty($kecamatan)) {
-                $matched = SchoolNormalizer::matchSchool($nama);
-                $kecamatan = $matched ? $matched['kecamatan'] : 'Lainnya';
+                $kecamatan = 'Lainnya';
+                if (method_exists('SchoolNormalizer', 'matchSchool')) {
+                    $matched = SchoolNormalizer::matchSchool($nama);
+                    if ($matched && isset($matched['kecamatan'])) {
+                        $kecamatan = $matched['kecamatan'];
+                    }
+                }
             }
 
-            $insertStmt = $pdo->prepare("INSERT IGNORE INTO master_schools (npsn, nama, kecamatan, is_verified) VALUES (NULL, :nama, :kecamatan, 1)");
+            $insertStmt = $pdo->prepare("INSERT IGNORE INTO master_schools (npsn, nama, kecamatan, is_verified) VALUES (:npsn, :nama, :kecamatan, 1)");
             $insertStmt->execute([
+                ':npsn' => !empty($npsn) ? $npsn : null,
                 ':nama' => $nama,
                 ':kecamatan' => trim($kecamatan)
             ]);
@@ -201,8 +212,9 @@ class SchoolController
                 'nama' => $nama,
                 'kecamatan' => $kecamatan
             ];
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             // Fail silently to not block user registration/profile updates
+            error_log("Error in ensureSchoolExists: " . $e->getMessage());
             return null;
         }
     }

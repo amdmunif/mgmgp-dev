@@ -20,7 +20,8 @@ class MemberController
         // Join profiles with users to get email
         $query = "SELECT p.*, u.email, 
                   (SELECT COUNT(*) FROM event_participants ep WHERE ep.user_id = p.id AND ep.is_hadir = 1) as attendance_count,
-                  CASE WHEN p.created_at >= DATE_SUB(NOW(), INTERVAL 3 MONTH) THEN 1 ELSE 0 END as is_new
+                  CASE WHEN p.created_at >= DATE_SUB(NOW(), INTERVAL 3 MONTH) THEN 1 ELSE 0 END as is_new,
+                  (SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END FROM master_schools ms WHERE TRIM(ms.nama) = TRIM(p.asal_sekolah) AND ms.is_verified = 1 AND ms.npsn IS NOT NULL AND TRIM(ms.npsn) != '') as is_school_standardized
                   FROM profiles p 
                   LEFT JOIN users u ON p.id = u.id 
                   ORDER BY p.created_at DESC";
@@ -97,7 +98,8 @@ class MemberController
 
             if (!empty($data['asal_sekolah'])) {
                 include_once __DIR__ . '/SchoolController.php';
-                SchoolController::ensureSchoolExists($this->conn, $data['asal_sekolah']);
+                $npsn = $data['npsn'] ?? null;
+                SchoolController::ensureSchoolExists($this->conn, $data['asal_sekolah'], $npsn);
             }
 
             $targetLog = !empty($userNama) ? $userNama : $id;

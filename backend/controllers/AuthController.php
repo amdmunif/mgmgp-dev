@@ -23,6 +23,7 @@ class AuthController
         // Metadata fields
         $asal_sekolah = $data['data']['asal_sekolah'] ?? null;
         $no_hp = $data['data']['no_hp'] ?? null;
+        $npsn = $data['data']['npsn'] ?? null;
 
         // 1. Check if email exists
         $query = "SELECT id FROM users WHERE email = :email LIMIT 1";
@@ -57,7 +58,7 @@ class AuthController
             if ($stmtProfile->execute()) {
                 if (!empty($asal_sekolah)) {
                     include_once __DIR__ . '/SchoolController.php';
-                    SchoolController::ensureSchoolExists($this->conn, $asal_sekolah);
+                    SchoolController::ensureSchoolExists($this->conn, $asal_sekolah, $npsn);
                 }
 
                 // Auto-login (Generate Token)

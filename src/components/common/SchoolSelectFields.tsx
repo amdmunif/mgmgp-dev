@@ -6,6 +6,9 @@ import { schoolService } from '../../services/schoolService';
 interface SchoolSelectFieldsProps {
     value: string;
     onChange: (schoolName: string) => void;
+    npsnValue?: string;
+    onNpsnChange?: (npsn: string) => void;
+    npsnError?: string;
     error?: string;
     required?: boolean;
     className?: string;
@@ -17,6 +20,9 @@ interface SchoolSelectFieldsProps {
 export function SchoolSelectFields({
     value,
     onChange,
+    npsnValue = '',
+    onNpsnChange,
+    npsnError,
     error,
     required = false,
     className = '',
@@ -183,11 +189,11 @@ export function SchoolSelectFields({
 
             {/* Custom school input if needed */}
             {isCustomMode && (
-                <div className="p-3.5 bg-amber-50/80 border border-amber-200/90 rounded-xl space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="p-3.5 bg-amber-50/80 border border-amber-200/90 rounded-xl space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
                     <div className="flex items-start gap-2 text-amber-900 text-xs leading-relaxed">
                         <Info className="w-4 h-4 mt-0.5 text-amber-600 flex-shrink-0" />
                         <div>
-                            Tuliskan nama lengkap sekolah Anda jika belum tertera pada daftar di atas. Data tetap tersimpan secara aman.
+                            Tuliskan nama lengkap sekolah Anda jika belum tertera pada daftar di atas beserta NPSN. Data tetap tersimpan secara aman.
                         </div>
                     </div>
                     <div>
@@ -203,6 +209,21 @@ export function SchoolSelectFields({
                             className="block w-full rounded-xl border border-amber-300 bg-white shadow-sm py-2 px-3.5 text-sm font-medium text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 focus:outline-none"
                         />
                     </div>
+                    {onNpsnChange && (
+                        <div>
+                            <label className="block text-xs font-semibold text-gray-800 mb-1">
+                                NPSN Sekolah <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                value={npsnValue}
+                                onChange={(e) => onNpsnChange(e.target.value)}
+                                placeholder="Contoh: 20300011"
+                                className={`block w-full rounded-xl border bg-white shadow-sm py-2 px-3.5 text-sm font-medium text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 focus:outline-none ${npsnError ? 'border-red-300 focus:border-red-500 focus:ring-red-100 ring-1 ring-red-200' : 'border-amber-300'}`}
+                            />
+                            {npsnError && <p className="text-xs text-red-500 mt-1.5 flex items-center"><AlertCircle className="w-3 h-3 mr-1" />{npsnError}</p>}
+                        </div>
+                    )}
                 </div>
             )}
 

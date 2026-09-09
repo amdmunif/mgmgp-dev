@@ -4,7 +4,7 @@ import { format } from 'date-fns';
 import type { Profile } from '../services/memberService';
 
 interface ExportMemberOptions {
-    activeTab?: 'active' | 'inactive' | 'duplicates';
+    activeTab?: 'active' | 'inactive' | 'duplicates' | 'unstandardized';
     filterRole?: string;
     filterPremium?: string;
 }
