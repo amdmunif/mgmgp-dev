@@ -13,7 +13,8 @@ export function formatCurrency(amount: number) {
     }).format(amount);
 }
 
-export function formatDate(date: string | Date) {
+export function formatDate(date: string | Date | null | undefined) {
+    if (!date) return '-';
     let parsedDate: Date;
     if (typeof date === 'string') {
         // Replace dashes with slashes for safe Safari parsing as local time
@@ -21,14 +22,23 @@ export function formatDate(date: string | Date) {
     } else {
         parsedDate = date;
     }
-    return new Intl.DateTimeFormat("id-ID", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-    }).format(parsedDate);
+    
+    // Check for invalid date
+    if (isNaN(parsedDate.getTime())) return '-';
+    
+    try {
+        return new Intl.DateTimeFormat("id-ID", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+        }).format(parsedDate);
+    } catch (e) {
+        return '-';
+    }
 }
 
-export function formatTime(date: string | Date) {
+export function formatTime(date: string | Date | null | undefined) {
+    if (!date) return '-';
     let parsedDate: Date;
     if (typeof date === 'string') {
         // Replace dashes with slashes for safe Safari parsing as local time
@@ -36,10 +46,18 @@ export function formatTime(date: string | Date) {
     } else {
         parsedDate = date;
     }
-    return new Intl.DateTimeFormat("id-ID", {
-        hour: "2-digit",
-        minute: "2-digit",
-    }).format(parsedDate);
+    
+    // Check for invalid date
+    if (isNaN(parsedDate.getTime())) return '-';
+
+    try {
+        return new Intl.DateTimeFormat("id-ID", {
+            hour: "2-digit",
+            minute: "2-digit",
+        }).format(parsedDate);
+    } catch (e) {
+        return '-';
+    }
 }
 
 export function stripHtml(html: string) {
