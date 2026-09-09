@@ -406,7 +406,7 @@ if ($resource === 'news') {
             // DELETE /events/:id/participants/:userId
             $targetUserId = isset($uri_parts[3]) ? $uri_parts[3] : null;
             if ($targetUserId) {
-                echo $controller->deleteParticipant($action, $targetUserId);
+                echo $controller->deleteParticipant($action, $targetUserId, $userId);
             } else {
                 http_response_code(400);
                 echo json_encode(["message" => "User ID required"]);
