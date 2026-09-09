@@ -18,7 +18,7 @@ import { matchSchoolFuzzy } from '../../data/schoolsData';
 
 export function AdminMembers() {
     const navigate = useNavigate();
-    const { setPageHeader } = useOutletContext<any>() || {};
+    const { setPageHeader } = useOutletContext<{ setPageHeader: (header: string) => void }>() || {};
     const location = useLocation();
     const [members, setMembers] = useState<Profile[]>([]);
     const [loading, setLoading] = useState(true);
@@ -143,14 +143,15 @@ export function AdminMembers() {
             await memberService.update(member.id, { is_active: 1 });
             toast.success('Anggota berhasil diaktifkan');
             fetchMembers();
-        } catch (error) {
+        } catch (err) {
+            console.error(err);
             toast.error('Gagal mengaktifkan anggota');
         }
     };
 
     // ... existing handlers ...
 
-    const handleAutoFix = async (member: Profile, suggestedSchool: any) => {
+    const handleAutoFix = async (member: Profile, suggestedSchool: { nama: string; npsn?: string }) => {
         if (!confirm(`Perbaiki otomatis "${member.asal_sekolah}" menjadi "${suggestedSchool.nama}"?`)) return;
         const toastId = toast.loading(`Memperbaiki sekolah untuk ${member.nama}...`);
         try {
@@ -160,7 +161,8 @@ export function AdminMembers() {
             });
             toast.success('Sekolah berhasil diperbaiki!', { id: toastId });
             fetchMembers();
-        } catch (error) {
+        } catch (err) {
+            console.error(err);
             toast.error('Gagal memperbaiki data', { id: toastId });
         }
     };
@@ -187,7 +189,8 @@ export function AdminMembers() {
             await memberService.delete(id);
             toast.success('Anggota dihapus');
             fetchMembers();
-        } catch (error) {
+        } catch (err) {
+            console.error(err);
             toast.error('Gagal menghapus anggota');
         }
     };
@@ -228,7 +231,8 @@ export function AdminMembers() {
         try {
             await memberService.resetPassword(member.id, newPassword);
             toast.success('Password berhasil direset dan dikirim ke email', { id: toastId });
-        } catch (error: any) {
+        } catch (err) {
+            const error = err as Error;
             toast.error(error.message || 'Gagal mereset password', { id: toastId });
         }
     };
@@ -810,7 +814,7 @@ export function AdminMembers() {
                                                             <span key={idx} className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs">{m}</span>
                                                         ))
                                                         : <span className="text-gray-400">-</span>;
-                                                } catch (e) { return <span className="text-gray-400">-</span> }
+                                                } catch (err) { console.error(err); return <span className="text-gray-400">-</span>; }
                                             })()}
                                         </div>
                                     </div>
@@ -827,7 +831,7 @@ export function AdminMembers() {
                                                             <span key={idx} className="px-2 py-1 bg-purple-50 text-purple-700 rounded text-xs">{k}</span>
                                                         ))
                                                         : <span className="text-gray-400">-</span>;
-                                                } catch (e) { return <span className="text-gray-400">-</span> }
+                                                } catch (err) { console.error(err); return <span className="text-gray-400">-</span>; }
                                             })()}
                                         </div>
                                     </div>
