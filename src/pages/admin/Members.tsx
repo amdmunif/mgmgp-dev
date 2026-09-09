@@ -120,7 +120,6 @@ export function AdminMembers() {
         .filter(m => {
             // First filter by Tab (Active vs Inactive)
             const isActive = Number(m.is_active) === 1;
-            const isStandardized = Number(m.is_school_standardized) === 1;
 
             if (activeTab === 'active' && !isActive) return false;
             if (activeTab === 'inactive' && isActive) return false;
