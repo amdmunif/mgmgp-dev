@@ -141,15 +141,14 @@ class SchoolController
             return json_encode(["message" => "Database connection error."]);
         }
 
-        $input = json_decode($data, true);
-        if (!$input || empty($input['nama']) || empty($input['kecamatan'])) {
+        if (empty($data['nama']) || empty($data['kecamatan'])) {
             http_response_code(400);
             return json_encode(["message" => "Data tidak lengkap. Pastikan nama sekolah dan kecamatan diisi."]);
         }
 
-        $nama = trim($input['nama']);
-        $kecamatan = trim($input['kecamatan']);
-        $npsn = isset($input['npsn']) ? trim($input['npsn']) : null;
+        $nama = trim($data['nama']);
+        $kecamatan = trim($data['kecamatan']);
+        $npsn = isset($data['npsn']) ? trim($data['npsn']) : null;
 
         try {
             $stmt = $this->conn->prepare("UPDATE master_schools SET nama = :nama, kecamatan = :kecamatan, npsn = :npsn WHERE id = :id");
