@@ -18,7 +18,7 @@ import { matchSchoolFuzzy } from '../../data/schoolsData';
 
 export function AdminMembers() {
     const navigate = useNavigate();
-    const { setPageHeader } = useOutletContext<{ setPageHeader: (header: string) => void }>() || {};
+    const { setPageHeader } = useOutletContext<{ setPageHeader: (header: { title: string; description: string; icon: React.ReactNode }) => void }>() || {};
     const location = useLocation();
     const [members, setMembers] = useState<Profile[]>([]);
     const [loading, setLoading] = useState(true);
@@ -151,7 +151,7 @@ export function AdminMembers() {
 
     // ... existing handlers ...
 
-    const handleAutoFix = async (member: Profile, suggestedSchool: { nama: string; npsn?: string }) => {
+    const handleAutoFix = async (member: Profile, suggestedSchool: { nama: string; npsn?: string | null }) => {
         if (!confirm(`Perbaiki otomatis "${member.asal_sekolah}" menjadi "${suggestedSchool.nama}"?`)) return;
         const toastId = toast.loading(`Memperbaiki sekolah untuk ${member.nama}...`);
         try {
