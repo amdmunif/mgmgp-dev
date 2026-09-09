@@ -416,6 +416,81 @@ export function AdminMembers() {
         }
     ];
 
+    const unstandardizedColumns = [
+        {
+            header: 'Foto',
+            accessorKey: 'foto_profile' as keyof Profile,
+            className: 'w-16',
+            cell: (member: Profile) => (
+                <div className="w-10 h-10 rounded-full bg-gray-100 overflow-hidden border border-gray-200">
+                    {member.foto_profile ? (
+                        <img src={getFileUrl(member.foto_profile)} alt={member.nama} className="w-full h-full object-cover" />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-blue-100 text-blue-600 font-bold">
+                            {member.nama ? member.nama.charAt(0).toUpperCase() : <User className="w-5 h-5" />}
+                        </div>
+                    )}
+                </div>
+            )
+        },
+        {
+            header: 'Nama & Email',
+            accessorKey: 'nama' as keyof Profile,
+            cell: (member: Profile) => (
+                <div>
+                    <div className="flex items-center gap-2">
+                        <p className="font-semibold text-gray-900">{member.nama || 'Tanpa Nama'}</p>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-0.5">
+                        <Mail className="w-3 h-3" />
+                        {member.email}
+                    </div>
+                </div>
+            )
+        },
+        {
+            header: 'Asal Sekolah',
+            accessorKey: 'asal_sekolah' as keyof Profile,
+            cell: (member: Profile) => (
+                <div>
+                    <p className="font-semibold text-gray-900">{member.asal_sekolah || '-'}</p>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 mt-1.5 rounded-full text-[10px] font-semibold bg-yellow-100 text-yellow-700">
+                        <AlertCircle className="w-3 h-3" /> Belum Standarisasi
+                    </span>
+                </div>
+            )
+        },
+        {
+            header: 'No. HP',
+            accessorKey: 'no_hp' as keyof Profile,
+            cell: (member: Profile) => (
+                <span className="text-sm font-medium text-gray-700">{member.no_hp || '-'}</span>
+            )
+        },
+        {
+            header: 'Aksi',
+            className: 'text-right',
+            cell: (member: Profile) => (
+                <div className="flex items-center justify-end gap-2">
+                    <button
+                        onClick={() => handleEdit(member)}
+                        className="p-2 hover:bg-blue-50 rounded-lg text-gray-400 hover:text-blue-600 transition-colors"
+                        title="Edit Anggota (Perbaiki Sekolah)"
+                    >
+                        <Pencil className="w-4 h-4" />
+                    </button>
+                    <button
+                        onClick={() => setViewingMember(member)}
+                        className="p-2 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600 transition-colors"
+                        title="Lihat Detail"
+                    >
+                        <Eye className="w-4 h-4" />
+                    </button>
+                </div>
+            )
+        }
+    ];
+
     const FilterContent = (
         <div className="flex flex-col md:flex-row gap-4 items-center">
             <div className="flex items-center gap-2">
@@ -512,8 +587,8 @@ export function AdminMembers() {
                 ) : (
                     <DataTable
                         data={filteredMembers}
-                        columns={columns}
-                        searchKeys={['nama', 'email']}
+                        columns={activeTab === 'unstandardized' ? unstandardizedColumns : columns}
+                        searchKeys={['nama', 'email', 'asal_sekolah']}
                         pageSize={10}
                         filterContent={FilterContent}
                     />
