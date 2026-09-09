@@ -14,6 +14,7 @@ import { useNavigate } from 'react-router-dom';
 import { DataTable } from '../../components/ui/DataTable';
 import { exportMembersToExcel } from '../../utils/exportMemberExcel';
 import { SchoolSelectFields } from '../../components/common/SchoolSelectFields';
+import { matchSchoolFuzzy } from '../../data/schoolsData';
 
 export function AdminMembers() {
     const navigate = useNavigate();
@@ -145,6 +146,21 @@ export function AdminMembers() {
     };
 
     // ... existing handlers ...
+
+    const handleAutoFix = async (member: Profile, suggestedSchool: any) => {
+        if (!confirm(`Perbaiki otomatis "${member.asal_sekolah}" menjadi "${suggestedSchool.nama}"?`)) return;
+        const toastId = toast.loading(`Memperbaiki sekolah untuk ${member.nama}...`);
+        try {
+            await memberService.update(member.id, {
+                asal_sekolah: suggestedSchool.nama,
+                npsn: suggestedSchool.npsn || undefined
+            });
+            toast.success('Sekolah berhasil diperbaiki!', { id: toastId });
+            fetchMembers();
+        } catch (error) {
+            toast.error('Gagal memperbaiki data', { id: toastId });
+        }
+    };
 
     const handleEdit = (member: Profile) => {
         setEditingMember(member);
@@ -418,76 +434,62 @@ export function AdminMembers() {
 
     const unstandardizedColumns = [
         {
-            header: 'Foto',
-            accessorKey: 'foto_profile' as keyof Profile,
-            className: 'w-16',
-            cell: (member: Profile) => (
-                <div className="w-10 h-10 rounded-full bg-gray-100 overflow-hidden border border-gray-200">
-                    {member.foto_profile ? (
-                        <img src={getFileUrl(member.foto_profile)} alt={member.nama} className="w-full h-full object-cover" />
-                    ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-blue-100 text-blue-600 font-bold">
-                            {member.nama ? member.nama.charAt(0).toUpperCase() : <User className="w-5 h-5" />}
-                        </div>
-                    )}
-                </div>
-            )
-        },
-        {
-            header: 'Nama & Email',
+            header: 'Nama Member',
             accessorKey: 'nama' as keyof Profile,
             cell: (member: Profile) => (
-                <div>
-                    <div className="flex items-center gap-2">
-                        <p className="font-semibold text-gray-900">{member.nama || 'Tanpa Nama'}</p>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-0.5">
-                        <Mail className="w-3 h-3" />
-                        {member.email}
-                    </div>
+                <div className="flex flex-col">
+                    <span className="font-semibold text-gray-900">{member.nama || 'Tanpa Nama'}</span>
                 </div>
             )
         },
         {
-            header: 'Asal Sekolah',
+            header: 'Nama Sekolah',
             accessorKey: 'asal_sekolah' as keyof Profile,
-            cell: (member: Profile) => (
-                <div>
-                    <p className="font-semibold text-gray-900">{member.asal_sekolah || '-'}</p>
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 mt-1.5 rounded-full text-[10px] font-semibold bg-yellow-100 text-yellow-700">
-                        <AlertCircle className="w-3 h-3" /> Belum Standarisasi
-                    </span>
-                </div>
-            )
-        },
-        {
-            header: 'No. HP',
-            accessorKey: 'no_hp' as keyof Profile,
-            cell: (member: Profile) => (
-                <span className="text-sm font-medium text-gray-700">{member.no_hp || '-'}</span>
-            )
+            cell: (member: Profile) => {
+                const suggestion = matchSchoolFuzzy(member.asal_sekolah || '');
+                return (
+                    <div>
+                        <p className="font-semibold text-gray-900">{member.asal_sekolah || '-'}</p>
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 mt-1.5 rounded-full text-[10px] font-semibold bg-yellow-100 text-yellow-700">
+                            <AlertCircle className="w-3 h-3" /> Belum Standarisasi
+                        </span>
+                        {suggestion && (
+                            <div className="mt-1">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 text-blue-700">
+                                    Saran: {suggestion.nama}
+                                </span>
+                            </div>
+                        )}
+                    </div>
+                );
+            }
         },
         {
             header: 'Aksi',
             className: 'text-right',
-            cell: (member: Profile) => (
-                <div className="flex items-center justify-end gap-2">
-                    <button
-                        onClick={() => handleEdit(member)}
-                        className="p-2 hover:bg-blue-50 rounded-lg text-gray-400 hover:text-blue-600 transition-colors"
-                        title="Edit Anggota (Perbaiki Sekolah)"
-                    >
-                        <Pencil className="w-4 h-4" />
-                    </button>
-                    <button
-                        onClick={() => setViewingMember(member)}
-                        className="p-2 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600 transition-colors"
-                        title="Lihat Detail"
-                    >
-                        <Eye className="w-4 h-4" />
-                    </button>
-                </div>
-            )
+            cell: (member: Profile) => {
+                const suggestion = matchSchoolFuzzy(member.asal_sekolah || '');
+                return (
+                    <div className="flex items-center justify-end gap-2">
+                        {suggestion && (
+                            <button
+                                onClick={() => handleAutoFix(member, suggestion)}
+                                className="p-2 hover:bg-green-50 rounded-lg text-green-500 hover:text-green-700 transition-colors"
+                                title="Perbaiki Otomatis ke Saran"
+                            >
+                                <CheckCircle2 className="w-4 h-4" />
+                            </button>
+                        )}
+                        <button
+                            onClick={() => handleEdit(member)}
+                            className="p-2 hover:bg-blue-50 rounded-lg text-gray-400 hover:text-blue-600 transition-colors"
+                            title="Edit Anggota (Perbaiki Sekolah)"
+                        >
+                            <Pencil className="w-4 h-4" />
+                        </button>
+                    </div>
+                );
+            }
         }
     ];
 
