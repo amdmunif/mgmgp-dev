@@ -232,8 +232,8 @@ export function EventDetail() {
                                 const userStr = localStorage.getItem('user_data');
                                 const user = userStr ? JSON.parse(userStr) : {};
                                 const isPremiumUser = user.premium_until && new Date(user.premium_until) > new Date();
-                                const isActive = user.is_active === 1 || user.is_active === true;
-                                const isProfileComplete = user.is_profile_complete === true;
+                                const isActive = Number(user.is_active) === 1 || user.is_active === true;
+                                const isProfileComplete = user.is_profile_complete === true || user.is_profile_complete === 1 || user.is_profile_complete === "1";
 
                                 if (!isActive) {
                                     return (
