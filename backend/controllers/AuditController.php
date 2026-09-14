@@ -34,5 +34,18 @@ class AuditController
         $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
         return json_encode($logs);
     }
+
+    public function getKkaLogs()
+    {
+        $query = "SELECT l.*, g.nama as guru_name 
+                  FROM kka_logs l 
+                  LEFT JOIN kka_guru g ON l.guru_id = g.guru_id 
+                  ORDER BY l.created_at DESC 
+                  LIMIT 500";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return json_encode($logs);
+    }
 }
 ?>

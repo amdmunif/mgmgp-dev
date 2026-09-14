@@ -3,6 +3,7 @@
 
 include_once __DIR__ . '/../config/database.php';
 include_once __DIR__ . '/../utils/SchoolNormalizer.php';
+include_once __DIR__ . '/../utils/Helper.php';
 
 class SchoolController
 {
@@ -52,7 +53,7 @@ class SchoolController
     /**
      * Add a new school to master_schools
      */
-    public function create($data)
+    public function create($data, $adminId, $adminName)
     {
         if (empty($data['nama']) || empty($data['kecamatan'])) {
             http_response_code(400);
@@ -120,6 +121,8 @@ class SchoolController
                 'is_verified' => $is_verified
             ];
 
+            Helper::log($this->conn, $adminId, $adminName, 'CREATE_SCHOOL', "Name: $nama", 'Admin');
+
             http_response_code(201);
             return json_encode([
                 "message" => "Sekolah berhasil ditambahkan ke database.",
@@ -134,7 +137,7 @@ class SchoolController
     /**
      * Update an existing school in master_schools
      */
-    public function update($id, $data)
+    public function update($id, $data, $adminId, $adminName)
     {
         if (!$this->conn) {
             http_response_code(500);
@@ -159,6 +162,8 @@ class SchoolController
                 ':id' => $id
             ]);
 
+            Helper::log($this->conn, $adminId, $adminName, 'UPDATE_SCHOOL', "School ID: $id, Name: $nama", 'Admin');
+
             http_response_code(200);
             return json_encode([
                 "message" => "Sekolah berhasil diperbarui.",
@@ -178,7 +183,7 @@ class SchoolController
     /**
      * Delete a school from master_schools
      */
-    public function delete($id)
+    public function delete($id, $adminId, $adminName)
     {
         if (!$this->conn) {
             http_response_code(500);
@@ -190,6 +195,7 @@ class SchoolController
             $stmt->execute([':id' => $id]);
 
             if ($stmt->rowCount() > 0) {
+                Helper::log($this->conn, $adminId, $adminName, 'DELETE_SCHOOL', "School ID: $id", 'Admin');
                 return json_encode(["message" => "Sekolah berhasil dihapus."]);
             } else {
                 http_response_code(404);

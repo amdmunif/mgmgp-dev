@@ -30,7 +30,7 @@ class MemberController
         return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
     }
 
-    public function update($id, $data)
+    public function update($id, $data, $userId = '0', $userName = 'Admin')
     {
         // Split updates for profiles and users tables
         $profileUpdates = [];
@@ -103,7 +103,7 @@ class MemberController
             }
 
             $targetLog = !empty($userNama) ? $userNama : $id;
-            Helper::log($this->conn, 0, 'Admin', 'UPDATE_MEMBER', $targetLog);
+            Helper::log($this->conn, $userId, $userName, 'UPDATE_MEMBER', $targetLog, 'Admin');
 
             if ($isActivating && $userEmail) {
                 Mailer::sendMemberActivated($userEmail, $userNama);
@@ -117,7 +117,7 @@ class MemberController
         }
     }
 
-    public function resetPassword($id, $data)
+    public function resetPassword($id, $data, $userId = '0', $userName = 'Admin')
     {
         $newPassword = $data['password'] ?? null;
         if (!$newPassword) {
@@ -142,7 +142,7 @@ class MemberController
 
             $this->conn->commit();
             
-            Helper::log($this->conn, 0, 'Admin', 'RESET_PASSWORD', $id);
+            Helper::log($this->conn, $userId, $userName, 'RESET_PASSWORD', $id, 'Admin');
             Mailer::sendPasswordResetAdmin($user['email'], $newPassword);
 
             return json_encode(["message" => "Password berhasil diubah dan dikirim ke email tujuan."]);

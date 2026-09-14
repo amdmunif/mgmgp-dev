@@ -53,7 +53,7 @@ class ContributorController
         ]);
     }
 
-    public function apply($userId)
+    public function apply($userId, $userName)
     {
         // 1. Check requirements (100 questions)
         $queryCount = "SELECT COUNT(*) FROM questions WHERE creator_id = :id";
@@ -83,6 +83,7 @@ class ContributorController
         $stmtInsert->bindParam(':id', $userId);
 
         if ($stmtInsert->execute()) {
+            Helper::log($this->conn, $userId, $userName, 'APPLY_CONTRIBUTOR', "User applied for contributor", 'Member');
             return json_encode(["message" => "Aplikasi berhasil dikirim. Tunggu verifikasi admin."]);
         }
 
@@ -128,7 +129,7 @@ class ContributorController
     }
 
     // Admin: Verify
-    public function verify($data) // { id: applicationId, status: 'approved'|'rejected', notes: '' }
+    public function verify($data, $adminId, $adminName) // { id: applicationId, status: 'approved'|'rejected', notes: '' }
     {
         $appId = $data['id'];
         $status = $data['status'];
@@ -168,6 +169,7 @@ class ContributorController
             }
 
             $this->conn->commit();
+            Helper::log($this->conn, $adminId, $adminName, 'VERIFY_CONTRIBUTOR', "App ID: $appId, Status: $status", 'Admin');
             return json_encode(["message" => "Application $status."]);
 
         } catch (Exception $e) {

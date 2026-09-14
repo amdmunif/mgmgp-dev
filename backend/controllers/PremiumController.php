@@ -56,7 +56,7 @@ class PremiumController
         return json_encode($formatted);
     }
 
-    public function approve($id)
+    public function approve($id, $adminId = '0', $adminName = 'Admin')
     {
         // 1. Get request details
         $qGet = "SELECT user_id, status FROM premium_requests WHERE id = :id";
@@ -135,7 +135,7 @@ class PremiumController
             }
 
             $this->conn->commit();
-            Helper::log($this->conn, 0, 'Admin', 'APPROVE_PREMIUM', "User: $userId");
+            Helper::log($this->conn, $adminId, $adminName, 'APPROVE_PREMIUM', "User: $userId", 'Admin');
 
             // Fetch user info for email
             $stmtUser = $this->conn->prepare("SELECT p.nama, u.email FROM profiles p JOIN users u ON p.id = u.id WHERE p.id = :id");
@@ -155,7 +155,7 @@ class PremiumController
         }
     }
 
-    public function reject($id, $data)
+    public function reject($id, $data, $adminId = '0', $adminName = 'Admin')
     {
         $notes = $data['reason'] ?? '';
 
@@ -165,7 +165,7 @@ class PremiumController
         $stmt->bindParam(':id', $id);
 
         if ($stmt->execute()) {
-            Helper::log($this->conn, 0, 'Admin', 'REJECT_PREMIUM', "Request ID: $id");
+            Helper::log($this->conn, $adminId, $adminName, 'REJECT_PREMIUM', "Request ID: $id", 'Admin');
             return json_encode(["message" => "Rejected successfully"]);
         }
 
@@ -269,7 +269,7 @@ class PremiumController
         return json_encode(["message" => "Failed to extend"]);
     }
 
-    public function revoke($userId)
+    public function revoke($userId, $adminId = '0', $adminName = 'Admin')
     {
         // Set premium_until to NULL or NOW()
         // Let's set to NULL to completely remove status
@@ -278,7 +278,7 @@ class PremiumController
         $stmt->bindParam(':id', $userId);
 
         if ($stmt->execute()) {
-            Helper::log($this->conn, $userId, 'Admin', 'REVOKE_PREMIUM', "User: $userId");
+            Helper::log($this->conn, $adminId, $adminName, 'REVOKE_PREMIUM', "User: $userId", 'Admin');
             return json_encode(["message" => "Subscription revoked"]);
         }
 
@@ -286,14 +286,14 @@ class PremiumController
         return json_encode(["message" => "Failed to revoke"]);
     }
 
-    public function deleteRequest($id)
+    public function deleteRequest($id, $adminId = '0', $adminName = 'Admin')
     {
         $query = "DELETE FROM premium_requests WHERE id = :id";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id', $id);
 
         if ($stmt->execute()) {
-            Helper::log($this->conn, 0, 'Admin', 'DELETE_PREMIUM_REQUEST', "Request ID: $id");
+            Helper::log($this->conn, $adminId, $adminName, 'DELETE_PREMIUM_REQUEST', "Request ID: $id", 'Admin');
             return json_encode(["message" => "Request deleted successfully"]);
         }
 

@@ -153,7 +153,7 @@ class AuthController
                 }
 
                 // Log Activity
-                Helper::log($this->conn, $row['id'], $row['nama'], 'LOGIN', 'System', 'Peserta');
+                Helper::log($this->conn, $row['id'], $row['nama'], 'LOGIN', 'System', $row['role']);
 
                 return json_encode([
                     "user" => [

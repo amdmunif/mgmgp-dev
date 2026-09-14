@@ -2,6 +2,7 @@
 // backend/controllers/BankController.php
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../utils/Helper.php';
 
 class BankController
 {
@@ -48,7 +49,7 @@ class BankController
         return json_encode($items);
     }
 
-    public function create($data)
+    public function create($data, $adminId, $adminName)
     {
         $this->checkConnection();
         if (empty($data['bank_name']) || empty($data['account_number']) || empty($data['account_holder'])) {
@@ -70,6 +71,7 @@ class BankController
 
         try {
             if ($stmt->execute()) {
+                Helper::log($this->conn, $adminId, $adminName, 'CREATE_BANK', "Bank: {$data['bank_name']}", 'Admin');
                 http_response_code(201);
                 return json_encode(["message" => "Bank account created", "id" => $id]);
             }
@@ -82,7 +84,7 @@ class BankController
         return json_encode(["message" => "Failed to create bank account"]);
     }
 
-    public function update($id, $data)
+    public function update($id, $data, $adminId, $adminName)
     {
         $this->checkConnection();
         $fields = [];
@@ -115,6 +117,7 @@ class BankController
 
         try {
             if ($stmt->execute()) {
+                Helper::log($this->conn, $adminId, $adminName, 'UPDATE_BANK', "Bank ID: $id", 'Admin');
                 return json_encode(["message" => "Bank account updated"]);
             }
         } catch (PDOException $e) {
@@ -126,7 +129,7 @@ class BankController
         return json_encode(["message" => "Failed to update bank account"]);
     }
 
-    public function delete($id)
+    public function delete($id, $adminId, $adminName)
     {
         $this->checkConnection();
         $query = "DELETE FROM premium_bank_accounts WHERE id = :id";
@@ -135,6 +138,7 @@ class BankController
 
         try {
             if ($stmt->execute()) {
+                Helper::log($this->conn, $adminId, $adminName, 'DELETE_BANK', "Bank ID: $id", 'Admin');
                 return json_encode(["message" => "Bank account deleted"]);
             }
         } catch (PDOException $e) {

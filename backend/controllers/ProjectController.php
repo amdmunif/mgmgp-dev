@@ -50,7 +50,7 @@ class ProjectController
     }
 
     // Member: Submit a new project
-    public function createProject($userId, $data)
+    public function createProject($userId, $userName, $data)
     {
         $id = Helper::uuid();
         $title = $data['title'] ?? '';
@@ -70,7 +70,7 @@ class ProjectController
         $stmt->bindParam(':image_url', $imageUrl);
 
         if ($stmt->execute()) {
-            Helper::log($this->conn, $userId, 'Member', 'CREATE_PROJECT', "Title: $title", 'Peserta');
+            Helper::log($this->conn, $userId, $userName, 'CREATE_PROJECT', "Title: $title", 'Peserta');
             return json_encode(["message" => "Project submitted successfully"]);
         }
         http_response_code(500);
@@ -78,7 +78,7 @@ class ProjectController
     }
 
     // Member: Update their project
-    public function updateProject($id, $userId, $data)
+    public function updateProject($id, $userId, $userName, $data)
     {
         $title = $data['title'] ?? '';
         $description = $data['description'] ?? '';
@@ -98,7 +98,7 @@ class ProjectController
         $stmt->bindParam(':user_id', $userId);
 
         if ($stmt->execute()) {
-            Helper::log($this->conn, $userId, 'Member', 'UPDATE_PROJECT', "Project ID: $id", 'Peserta');
+            Helper::log($this->conn, $userId, $userName, 'UPDATE_PROJECT', "Project ID: $id", 'Peserta');
             return json_encode(["message" => "Project updated successfully"]);
         }
         http_response_code(500);
@@ -106,7 +106,7 @@ class ProjectController
     }
 
     // Member: Delete their project
-    public function deleteProject($id, $userId, $userRole = 'Member')
+    public function deleteProject($id, $userId, $userName, $userRole = 'Member')
     {
         if (in_array($userRole, ['Admin', 'Pengurus'])) {
             $query = "DELETE FROM member_projects WHERE id = :id";
@@ -120,7 +120,7 @@ class ProjectController
         }
 
         if ($stmt->execute()) {
-            Helper::log($this->conn, $userId, 'Member', 'DELETE_PROJECT', "Project ID: $id", 'Peserta');
+            Helper::log($this->conn, $userId, $userName, 'DELETE_PROJECT', "Project ID: $id", $userRole);
             return json_encode(["message" => "Project deleted successfully"]);
         }
         http_response_code(500);
@@ -128,7 +128,7 @@ class ProjectController
     }
 
     // Admin: Update status
-    public function updateStatus($id, $status)
+    public function updateStatus($id, $status, $adminId, $adminName)
     {
         if (!in_array($status, ['pending', 'approved', 'rejected'])) {
             http_response_code(400);
@@ -141,7 +141,7 @@ class ProjectController
         $stmt->bindParam(':id', $id);
 
         if ($stmt->execute()) {
-            Helper::log($this->conn, 0, 'Admin', 'VALIDATE_PROJECT', "Project ID: $id, Status: $status");
+            Helper::log($this->conn, $adminId, $adminName, 'VALIDATE_PROJECT', "Project ID: $id, Status: $status", 'Admin');
             return json_encode(["message" => "Status updated successfully"]);
         }
         http_response_code(500);

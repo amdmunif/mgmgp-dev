@@ -22,7 +22,7 @@ class GalleryController
         return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
     }
 
-    public function createImage($data)
+    public function createImage($data, $adminId, $adminName)
     {
         $id = Helper::uuid();
         $query = "INSERT INTO gallery_images (id, image_url, caption, event_id, created_at) VALUES (:id, :image_url, :caption, :event_id, NOW())";
@@ -34,18 +34,20 @@ class GalleryController
         $stmt->bindParam(':event_id', $data['event_id']);
 
         if ($stmt->execute()) {
+            Helper::log($this->conn, $adminId, $adminName, 'ADD_GALLERY_IMAGE', "Image ID: $id", 'Admin');
             return json_encode(["message" => "Image added to gallery", "id" => $id]);
         }
         http_response_code(500);
         return json_encode(["message" => "Failed to add image"]);
     }
 
-    public function deleteImage($id)
+    public function deleteImage($id, $adminId, $adminName)
     {
         $query = "DELETE FROM gallery_images WHERE id = :id";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id', $id);
         if ($stmt->execute()) {
+            Helper::log($this->conn, $adminId, $adminName, 'DELETE_GALLERY_IMAGE', "Image ID: $id", 'Admin');
             return json_encode(["message" => "Image deleted"]);
         }
         http_response_code(500);
