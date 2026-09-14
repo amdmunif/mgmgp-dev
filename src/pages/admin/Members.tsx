@@ -483,7 +483,7 @@ export function AdminMembers() {
                         {suggestion && suggestion.nama !== member.asal_sekolah && (
                             <div className="mt-1">
                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 text-blue-700">
-                                    Saran: {suggestion.nama}
+                                    <CheckCircle2 className="w-3 h-3" /> Saran: {suggestion.nama}
                                 </span>
                             </div>
                         )}
