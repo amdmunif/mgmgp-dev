@@ -630,6 +630,7 @@ if ($resource === 'news') {
 
 } elseif ($resource === 'board-meetings') {
     $controller = new BoardMeetingController();
+    $subAction = isset($uri_parts[2]) ? $uri_parts[2] : null;
     
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         if ($action) {
