@@ -198,3 +198,26 @@ export interface LmsQuiz {
     max_attempts: number;
     order_num: number;
 }
+
+export interface BoardMeeting {
+    id: string;
+    title: string;
+    description?: string;
+    date: string;
+    location?: string;
+    created_by?: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface BoardMeetingAttendance {
+    meeting_id: string;
+    user_id: string;
+    attended_at: string;
+    attendance_method: 'qr' | 'manual';
+    recorded_by?: string;
+    profiles?: {
+        nama: string;
+        role: string;
+    };
+}

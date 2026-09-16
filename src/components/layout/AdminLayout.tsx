@@ -38,6 +38,7 @@ const menuGroups = [
         items: [
             { icon: LayoutDashboard, label: 'Dashboard', path: '/admin' },
             { icon: Wallet, label: 'Buku Kas Keuangan', path: '/admin/finances' },
+            { icon: Users, label: 'Pertemuan Pengurus', path: '/admin/board-meetings' },
         ]
     },
     {

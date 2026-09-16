@@ -142,6 +142,7 @@ include_once './controllers/TrainingController.php';
 include_once './controllers/FinanceController.php';
 include_once './controllers/ProjectController.php';
 include_once './controllers/LmsController.php';
+include_once './controllers/BoardMeetingController.php';
 
 // ... includes
 
@@ -625,6 +626,58 @@ if ($resource === 'news') {
         echo $controller->update($action, $input, $userId, $userName);
     } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action) {
         echo $controller->delete($action);
+    }
+
+} elseif ($resource === 'board-meetings') {
+    $controller = new BoardMeetingController();
+    
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        if ($action) {
+            echo $controller->getById($action, $userId);
+        } else {
+            echo $controller->getAll($userRole);
+        }
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if ($action && $subAction === 'attend') {
+            $method = $input['method'] ?? 'qr';
+            $targetUserId = $input['user_id'] ?? $userId;
+            echo $controller->markAttendance($action, $targetUserId, $method, $userId);
+        } else {
+            if ($userRole === 'Admin') {
+                echo $controller->create($input, $userId);
+            } else {
+                http_response_code(403);
+                echo json_encode(["message" => "Forbidden"]);
+            }
+        }
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'PUT' && $action) {
+        if ($subAction === 'attend') {
+            $targetUserId = $input['user_id'] ?? null;
+            if ($userRole === 'Admin' && $targetUserId) {
+                // Removing attendance (Admin only)
+                if (isset($input['status']) && $input['status'] === 'absent') {
+                    echo $controller->removeAttendance($action, $targetUserId);
+                } else {
+                    $method = $input['method'] ?? 'manual';
+                    echo $controller->markAttendance($action, $targetUserId, $method, $userId);
+                }
+            } else {
+                http_response_code(403);
+                echo json_encode(["message" => "Forbidden"]);
+            }
+        } elseif ($userRole === 'Admin') {
+            echo $controller->update($action, $input, $userId);
+        } else {
+            http_response_code(403);
+            echo json_encode(["message" => "Forbidden"]);
+        }
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action) {
+        if ($userRole === 'Admin') {
+            echo $controller->delete($action, $userId);
+        } else {
+            http_response_code(403);
+            echo json_encode(["message" => "Forbidden"]);
+        }
     }
 
 } elseif ($resource === 'schools') {

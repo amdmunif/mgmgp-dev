@@ -89,6 +89,11 @@ import { ContributorRegistration } from './pages/member/ContributorRegistration'
 import { PromptGenerator } from './pages/member/PromptGenerator';
 import { MemberProjects } from './pages/member/MemberProjects';
 import { MemberProjectsGallery } from './pages/public/MemberProjectsGallery';
+import { AdminBoardMeetings } from './pages/admin/board-meetings/AdminBoardMeetings';
+import { CreateBoardMeeting } from './pages/admin/board-meetings/CreateBoardMeeting';
+import { AdminBoardMeetingDetail } from './pages/admin/board-meetings/AdminBoardMeetingDetail';
+import { MemberBoardMeetings } from './pages/member/board-meetings/MemberBoardMeetings';
+import { BoardMeetingAttend } from './pages/member/board-meetings/BoardMeetingAttend';
 import { PremiumGuard } from './components/auth/PremiumGuard';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
 
@@ -179,6 +184,8 @@ function App() {
           <Route path="questions/create" element={<QuestionBuilder basePath="/member/contributor" />} />
           <Route path="questions/edit/:id" element={<QuestionBuilder basePath="/member/contributor" />} />
           <Route path="projects" element={<MemberProjects />} />
+          <Route path="board-meetings" element={<MemberBoardMeetings />} />
+          <Route path="board-meetings/attend/:id" element={<BoardMeetingAttend />} />
 
           {/* Protected Premium Routes */}
           <Route path="questions" element={
@@ -261,6 +268,11 @@ function App() {
           <Route path="events/:id/lms/assignment/:assignmentId" element={<AdminAssignmentGrader />} />
           <Route path="events/:id/lms/assignments-report" element={<AdminAssignmentDashboard />} />
           <Route path="events/:id/print-attendance" element={<AdminEventAttendancePrint />} />
+          
+          <Route path="board-meetings" element={<AdminBoardMeetings />} />
+          <Route path="board-meetings/create" element={<CreateBoardMeeting />} />
+          <Route path="board-meetings/edit/:id" element={<CreateBoardMeeting />} />
+          <Route path="board-meetings/:id" element={<AdminBoardMeetingDetail />} />
         
           {/* Finances Route */}
           <Route path="finances" element={<AdminFinances />} />

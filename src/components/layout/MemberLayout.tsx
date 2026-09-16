@@ -14,6 +14,7 @@ import {
     UserCircle,
     Lock,
     Calendar,
+    Users,
     ChevronDown,
     FileText,
     FileQuestion,
@@ -121,6 +122,7 @@ export function MemberLayout() {
         { icon: CreditCard, label: 'Kartu Anggota', path: '/member/card' },
         // Mobile Only Items
         { icon: UserCircle, label: 'Edit Profil', path: '/member/profile', className: 'md:hidden' },
+        ...(user?.role === 'Admin' || user?.role === 'Pengurus' ? [{ icon: Users, label: 'Agenda Pengurus', path: '/member/board-meetings' }] : []),
         ...(user?.role === 'Admin' || user?.role === 'Pengurus' ? [{ icon: LayoutDashboard, label: 'Admin Dashboard', path: '/admin', className: 'md:hidden text-primary-600' }] : []),
 
         // Upgrade needs to be at the bottom
