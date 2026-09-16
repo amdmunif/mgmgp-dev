@@ -643,7 +643,7 @@ if ($resource === 'news') {
             $targetUserId = $input['user_id'] ?? $userId;
             echo $controller->markAttendance($action, $targetUserId, $method, $userId);
         } else {
-            if ($userRole === 'Admin') {
+            if (in_array($userRole, ['Admin', 'Pengurus'])) {
                 echo $controller->create($input, $userId);
             } else {
                 http_response_code(403);
@@ -653,8 +653,8 @@ if ($resource === 'news') {
     } elseif ($_SERVER['REQUEST_METHOD'] === 'PUT' && $action) {
         if ($subAction === 'attend') {
             $targetUserId = $input['user_id'] ?? null;
-            if ($userRole === 'Admin' && $targetUserId) {
-                // Removing attendance (Admin only)
+            if (in_array($userRole, ['Admin', 'Pengurus']) && $targetUserId) {
+                // Removing attendance
                 if (isset($input['status']) && $input['status'] === 'absent') {
                     echo $controller->removeAttendance($action, $targetUserId);
                 } else {
@@ -665,14 +665,14 @@ if ($resource === 'news') {
                 http_response_code(403);
                 echo json_encode(["message" => "Forbidden"]);
             }
-        } elseif ($userRole === 'Admin') {
+        } elseif (in_array($userRole, ['Admin', 'Pengurus'])) {
             echo $controller->update($action, $input, $userId);
         } else {
             http_response_code(403);
             echo json_encode(["message" => "Forbidden"]);
         }
     } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action) {
-        if ($userRole === 'Admin') {
+        if (in_array($userRole, ['Admin', 'Pengurus'])) {
             echo $controller->delete($action, $userId);
         } else {
             http_response_code(403);
