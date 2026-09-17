@@ -77,45 +77,67 @@ export const AdminBoardMeetings: React.FC = () => {
                     </div>
                 </div>
                 
-                <div className="divide-y divide-slate-200">
+                <div className="overflow-x-auto">
                     {filtered.length === 0 ? (
                         <div className="p-8 text-center text-slate-500">
                             Tidak ada pertemuan yang ditemukan.
                         </div>
                     ) : (
-                        filtered.map(meeting => (
-                            <div key={meeting.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50 transition-colors">
-                                <div className="space-y-1">
-                                    <h3 className="font-medium text-slate-900">{meeting.title}</h3>
-                                    <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500">
-                                        <div className="flex items-center gap-1">
-                                            <Calendar className="w-4 h-4" />
-                                            {format(new Date(meeting.date), 'dd MMMM yyyy, HH:mm', { locale: id })}
-                                        </div>
-                                        {meeting.location && (
-                                            <div className="flex items-center gap-1">
-                                                <MapPin className="w-4 h-4" />
-                                                {meeting.location}
+                        <table className="w-full text-left text-sm whitespace-nowrap">
+                            <thead className="bg-slate-50/80 text-gray-600 font-semibold border-b border-slate-200 text-xs uppercase tracking-wider">
+                                <tr>
+                                    <th className="py-3.5 px-4 w-16 text-center">No</th>
+                                    <th className="py-3.5 px-4">Judul Kegiatan</th>
+                                    <th className="py-3.5 px-4">Tanggal</th>
+                                    <th className="py-3.5 px-4">Lokasi</th>
+                                    <th className="py-3.5 px-4 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-200">
+                                {filtered.map((meeting, index) => (
+                                    <tr key={meeting.id} className="hover:bg-slate-50/70 transition-colors">
+                                        <td className="py-3.5 px-4 text-center text-gray-500 font-medium">
+                                            {index + 1}
+                                        </td>
+                                        <td className="py-3.5 px-4">
+                                            <div className="font-semibold text-slate-900">{meeting.title}</div>
+                                        </td>
+                                        <td className="py-3.5 px-4">
+                                            <div className="flex items-center gap-1.5 text-slate-600">
+                                                <Calendar className="w-4 h-4 text-blue-500" />
+                                                {format(new Date(meeting.date), 'dd MMMM yyyy, HH:mm', { locale: id })}
                                             </div>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Link to={`/admin/board-meetings/${meeting.id}`}>
-                                        <Button variant="outline" size="sm" className="flex items-center gap-1">
-                                            <Users className="w-4 h-4" />
-                                            Kehadiran
-                                        </Button>
-                                    </Link>
-                                    <Link to={`/admin/board-meetings/edit/${meeting.id}`}>
-                                        <Button variant="outline" size="sm">Edit</Button>
-                                    </Link>
-                                    <Button variant="destructive" size="sm" onClick={() => handleDelete(meeting.id)}>
-                                        Hapus
-                                    </Button>
-                                </div>
-                            </div>
-                        ))
+                                        </td>
+                                        <td className="py-3.5 px-4 text-slate-600">
+                                            {meeting.location ? (
+                                                <div className="flex items-center gap-1.5">
+                                                    <MapPin className="w-4 h-4 text-red-500" />
+                                                    {meeting.location}
+                                                </div>
+                                            ) : (
+                                                <span className="text-slate-400 italic">-</span>
+                                            )}
+                                        </td>
+                                        <td className="py-3.5 px-4 text-center">
+                                            <div className="flex items-center justify-center gap-2">
+                                                <Link to={`/admin/board-meetings/${meeting.id}`}>
+                                                    <Button variant="outline" size="sm" className="flex items-center gap-1 h-8 text-xs">
+                                                        <Users className="w-3.5 h-3.5" />
+                                                        Kehadiran
+                                                    </Button>
+                                                </Link>
+                                                <Link to={`/admin/board-meetings/edit/${meeting.id}`}>
+                                                    <Button variant="outline" size="sm" className="h-8 text-xs">Edit</Button>
+                                                </Link>
+                                                <Button variant="destructive" size="sm" className="h-8 text-xs" onClick={() => handleDelete(meeting.id)}>
+                                                    Hapus
+                                                </Button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     )}
                 </div>
             </div>
