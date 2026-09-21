@@ -75,6 +75,10 @@ export const lmsService = {
         return response as any[];
     },
 
+    deleteQuizAttempt: async (attemptId: string): Promise<any> => {
+        return await api.delete(`/lms/quizzes/attempts/${attemptId}`);
+    },
+
     // Penugasan
     submitAssignment: async (assignmentId: string, contentUrl: string, textContent: string): Promise<any> => {
         return await api.post('/lms/assignments/submit', {

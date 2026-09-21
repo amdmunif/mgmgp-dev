@@ -607,24 +607,40 @@ class LmsController
                 $p = (float)($q['points'] ?? 1);
                 $totalPoints += $p;
                 
-                $selectedOptId = $answers[$q['id']] ?? null;
+                $selectedOptIds = $answers[$q['id']] ?? null;
                 $isCorrect = 0;
                 $pointsEarned = 0;
                 
-                foreach ($options as $opt) {
-                    if ($opt['question_id'] === $q['id'] && $opt['is_correct']) {
-                        if ($selectedOptId === $opt['id']) {
-                            $isCorrect = 1;
-                            $pointsEarned = $p;
-                            $earnedPoints += $p;
+                if (($q['question_type'] ?? '') === 'multiple_choice' && is_array($selectedOptIds)) {
+                    $correctOptionIds = [];
+                    foreach ($options as $opt) {
+                        if ($opt['question_id'] === $q['id'] && $opt['is_correct']) {
+                            $correctOptionIds[] = $opt['id'];
                         }
-                        break;
+                    }
+                    if (count($selectedOptIds) === count($correctOptionIds) && count(array_diff($selectedOptIds, $correctOptionIds)) === 0 && count(array_diff($correctOptionIds, $selectedOptIds)) === 0) {
+                        $isCorrect = 1;
+                        $pointsEarned = $p;
+                        $earnedPoints += $p;
+                    }
+                    $selectedOptIdStr = json_encode($selectedOptIds);
+                } else {
+                    $selectedOptIdStr = is_array($selectedOptIds) ? json_encode($selectedOptIds) : $selectedOptIds;
+                    foreach ($options as $opt) {
+                        if ($opt['question_id'] === $q['id'] && $opt['is_correct']) {
+                            if ($selectedOptIds === $opt['id']) {
+                                $isCorrect = 1;
+                                $pointsEarned = $p;
+                                $earnedPoints += $p;
+                            }
+                            break;
+                        }
                     }
                 }
                 
                 $processedAnswers[] = [
                     'q_id' => $q['id'],
-                    'o_id' => $selectedOptId,
+                    'o_id' => $selectedOptIdStr,
                     'is_correct' => $isCorrect,
                     'points_earned' => $pointsEarned
                 ];
@@ -738,6 +754,24 @@ class LmsController
 
             return json_encode($bestAttempts);
         } catch (\PDOException $e) {
+            http_response_code(500);
+            return json_encode(["message" => "Database error: " . $e->getMessage()]);
+        }
+    }
+
+    public function deleteQuizAttempt($attemptId) {
+        try {
+            $this->conn->beginTransaction();
+            $stmt = $this->conn->prepare("DELETE FROM lms_quiz_answers WHERE attempt_id = :id");
+            $stmt->execute([':id' => $attemptId]);
+            
+            $stmt = $this->conn->prepare("DELETE FROM lms_quiz_attempts WHERE id = :id");
+            $stmt->execute([':id' => $attemptId]);
+            
+            $this->conn->commit();
+            return json_encode(["message" => "Attempt deleted successfully"]);
+        } catch (\PDOException $e) {
+            $this->conn->rollBack();
             http_response_code(500);
             return json_encode(["message" => "Database error: " . $e->getMessage()]);
         }

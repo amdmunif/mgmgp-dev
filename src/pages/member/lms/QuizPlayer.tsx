@@ -15,7 +15,7 @@ export function QuizPlayer() {
     const [submittingQuiz, setSubmittingQuiz] = useState(false);
     const [quizResult, setQuizResult] = useState<any>(null);
     const [currentQuestion, setCurrentQuestion] = useState(0);
-    const [answers, setAnswers] = useState<Record<string, string>>({});
+    const [answers, setAnswers] = useState<Record<string, any>>({});
     const [timeLeft, setTimeLeft] = useState(0);
     
     // Quiz Data State
@@ -29,7 +29,23 @@ export function QuizPlayer() {
                 try {
                     const data = await lmsService.getQuizByMaterialId(quizId);
                     setQuizData(data);
-                    setQuestions(data.questions || []);
+                    
+                    const shuffleArray = (array: any[]) => {
+                        const newArr = [...array];
+                        for (let i = newArr.length - 1; i > 0; i--) {
+                            const j = Math.floor(Math.random() * (i + 1));
+                            [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+                        }
+                        return newArr;
+                    };
+                    
+                    let fetchedQuestions = data.questions || [];
+                    fetchedQuestions = shuffleArray(fetchedQuestions).map((q: any) => ({
+                        ...q,
+                        options: q.options ? shuffleArray(q.options) : []
+                    }));
+                    
+                    setQuestions(fetchedQuestions);
                     setTimeLeft((data.duration_minutes || 0) * 60);
                 } catch (error) {
                     console.error("Failed to load quiz", error);
@@ -66,11 +82,19 @@ export function QuizPlayer() {
         return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
     };
 
-    const handleAnswer = (questionId: string, optionId: string) => {
-        setAnswers(prev => ({
-            ...prev,
-            [questionId]: optionId
-        }));
+    const handleAnswer = (questionId: string, optionId: string, type: string) => {
+        if (type === 'multiple_choice') {
+            setAnswers(prev => {
+                const current = Array.isArray(prev[questionId]) ? prev[questionId] : [];
+                if (current.includes(optionId)) {
+                    return { ...prev, [questionId]: current.filter((id: string) => id !== optionId) };
+                } else {
+                    return { ...prev, [questionId]: [...current, optionId] };
+                }
+            });
+        } else {
+            setAnswers(prev => ({ ...prev, [questionId]: optionId }));
+        }
     };
 
     const handleSubmit = () => {
@@ -213,11 +237,13 @@ export function QuizPlayer() {
 
                     <div className="space-y-4">
                         {q.options?.map((opt: any, index: number) => {
-                            const isSelected = answers[q.id] === opt.id;
+                            const isSelected = q.type === 'multiple_choice'
+                                ? Array.isArray(answers[q.id]) && answers[q.id].includes(opt.id)
+                                : answers[q.id] === opt.id;
                             return (
                                 <button
                                     key={opt.id}
-                                    onClick={() => handleAnswer(q.id, opt.id)}
+                                    onClick={() => handleAnswer(q.id, opt.id, q.type)}
                                     className={cn(
                                         "w-full text-left p-4 rounded-xl border-2 transition-all duration-200 flex items-start gap-4",
                                         isSelected 
@@ -226,15 +252,22 @@ export function QuizPlayer() {
                                     )}
                                 >
                                     <div className={cn(
-                                        "w-8 h-8 rounded-full border-2 flex items-center justify-center flex-shrink-0 font-medium",
+                                        "w-8 h-8 border-2 flex items-center justify-center flex-shrink-0 font-medium",
+                                        q.type === 'multiple_choice' ? "rounded" : "rounded-full",
                                         isSelected 
-                                            ? "border-blue-500 text-blue-600" 
+                                            ? "border-blue-500 bg-blue-500 text-white" 
                                             : "border-gray-300 text-gray-500"
                                     )}>
-                                        {String.fromCharCode(65 + index)}
+                                        {isSelected && q.type === 'multiple_choice' ? (
+                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        ) : (
+                                            String.fromCharCode(65 + index)
+                                        )}
                                     </div>
                                     <div className={cn(
-                                        "mt-1 text-base leading-relaxed",
+                                        "mt-1 text-base leading-relaxed flex-1",
                                         isSelected ? "text-gray-900 font-medium" : "text-gray-700"
                                     )} dangerouslySetInnerHTML={{ __html: opt.text || opt.option_text || '' }} />
                                 </button>

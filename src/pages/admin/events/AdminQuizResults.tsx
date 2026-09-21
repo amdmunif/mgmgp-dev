@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation, useOutletContext } from 'react-router-dom';
-import { ArrowLeft, Loader2, Users } from 'lucide-react';
+import { ArrowLeft, Loader2, Users, RotateCcw } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { lmsService } from '../../../services/lmsService';
 import { toast } from 'react-hot-toast';
@@ -37,6 +37,17 @@ export function AdminQuizResults() {
             toast.error("Gagal memuat hasil kuis");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleResetAttempt = async (attemptId: string, userName: string) => {
+        if (!window.confirm(`Anda yakin ingin mereset kuis untuk peserta ${userName}? Hasil kuis akan dihapus secara permanen dan peserta dapat mengulang dari awal.`)) return;
+        try {
+            await lmsService.deleteQuizAttempt(attemptId);
+            toast.success("Kuis berhasil direset");
+            fetchAttempts();
+        } catch (error) {
+            toast.error("Gagal mereset kuis");
         }
     };
 
@@ -96,6 +107,21 @@ export function AdminQuizResults() {
                             </span>
                         ) : '-'}
                     </div>
+                )
+            },
+            {
+                header: 'Aksi',
+                accessorKey: 'id',
+                cell: (p: any) => (
+                    <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleResetAttempt(p.id, p.user_name)}
+                        className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 h-8"
+                        title="Reset Kuis Peserta"
+                    >
+                        <RotateCcw className="w-3 h-3 mr-1.5" /> Reset
+                    </Button>
                 )
             }
         ];

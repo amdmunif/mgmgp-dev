@@ -225,6 +225,10 @@ if ($resource === 'news') {
                 // POST /lms/quizzes
                 echo $controller->saveQuiz($input, $userId, $userName);
             }
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $subAction === 'attempts') {
+            // DELETE /lms/quizzes/attempts/:id
+            $attemptId = isset($uri_parts[3]) ? $uri_parts[3] : '';
+            echo $controller->deleteQuizAttempt($attemptId);
         }
     } elseif ($action === 'assignments') {
         if ($_SERVER['REQUEST_METHOD'] === 'GET' && $subAction) {
