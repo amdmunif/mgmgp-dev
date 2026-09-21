@@ -237,13 +237,13 @@ export function QuizPlayer() {
 
                     <div className="space-y-4">
                         {q.options?.map((opt: any, index: number) => {
-                            const isSelected = q.type === 'multiple_choice'
+                            const isSelected = q.question_type === 'multiple_choice'
                                 ? Array.isArray(answers[q.id]) && answers[q.id].includes(opt.id)
                                 : answers[q.id] === opt.id;
                             return (
                                 <button
                                     key={opt.id}
-                                    onClick={() => handleAnswer(q.id, opt.id, q.type)}
+                                    onClick={() => handleAnswer(q.id, opt.id, q.question_type)}
                                     className={cn(
                                         "w-full text-left p-4 rounded-xl border-2 transition-all duration-200 flex items-start gap-4",
                                         isSelected 
@@ -253,12 +253,12 @@ export function QuizPlayer() {
                                 >
                                     <div className={cn(
                                         "w-8 h-8 border-2 flex items-center justify-center flex-shrink-0 font-medium",
-                                        q.type === 'multiple_choice' ? "rounded" : "rounded-full",
+                                        q.question_type === 'multiple_choice' ? "rounded" : "rounded-full",
                                         isSelected 
                                             ? "border-blue-500 bg-blue-500 text-white" 
                                             : "border-gray-300 text-gray-500"
                                     )}>
-                                        {isSelected && q.type === 'multiple_choice' ? (
+                                        {isSelected && q.question_type === 'multiple_choice' ? (
                                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                                             </svg>
