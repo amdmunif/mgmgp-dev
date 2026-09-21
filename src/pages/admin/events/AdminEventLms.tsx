@@ -208,8 +208,8 @@ export function AdminEventLms() {
                 content: materialForm.content,
                 duration: materialForm.duration ? parseInt(materialForm.duration) : 0,
                 order_num: editingMaterial ? editingMaterial.order_num : (materials[activeTopicId]?.length || 0) + 1,
-                available_at: materialForm.available_at ? new Date(materialForm.available_at).toISOString().slice(0, 19).replace('T', ' ') : null,
-                deadline_at: materialForm.deadline_at ? new Date(materialForm.deadline_at).toISOString().slice(0, 19).replace('T', ' ') : null
+                available_at: materialForm.available_at ? materialForm.available_at.replace('T', ' ') + ':00' : null,
+                deadline_at: materialForm.deadline_at ? materialForm.deadline_at.replace('T', ' ') + ':00' : null
             };
 
             if (editingMaterial) {

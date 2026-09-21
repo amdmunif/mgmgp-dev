@@ -58,10 +58,10 @@ export function CreateEvent() {
             const data = await contentManagementService.getEventById(id!);
             setValue('title', data.title);
 
-            // Split date time string if needed, or assume backend sends full datetime
-            const dateObj = new Date(data.date);
-            setValue('date', dateObj.toISOString().split('T')[0]);
-            setValue('time', dateObj.toTimeString().slice(0, 5));
+            // Extract date and time directly from string (e.g. "2026-09-22 03:00:00")
+            const [dDate, dTime] = data.date.split(' ');
+            setValue('date', dDate);
+            setValue('time', dTime ? dTime.substring(0, 5) : '00:00');
             setValue('total_days', data.total_days || 1);
 
             setValue('location', data.location);

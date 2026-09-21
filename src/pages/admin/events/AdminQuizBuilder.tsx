@@ -492,16 +492,18 @@ export function AdminQuizBuilder() {
                                 />
                             </div>
                             <div className="flex gap-4">
-                                <select
-                                    value={filterMapel}
-                                    onChange={(e) => setFilterMapel(e.target.value)}
+                                <input
+                                    list="quiz-bank-mapel"
+                                    value={filterMapel === 'All' ? '' : filterMapel}
+                                    placeholder="Semua Mapel"
+                                    onChange={(e) => setFilterMapel(e.target.value || 'All')}
                                     className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none text-sm focus:ring-2 focus:ring-purple-500"
-                                >
-                                    <option value="All">Semua Mapel</option>
+                                />
+                                <datalist id="quiz-bank-mapel">
                                     {uniqueMapels.map(m => (
-                                        <option key={m} value={m}>{m}</option>
+                                        <option key={m} value={m} />
                                     ))}
-                                </select>
+                                </datalist>
                                 <select
                                     value={filterLevel}
                                     onChange={(e) => setFilterLevel(e.target.value)}
