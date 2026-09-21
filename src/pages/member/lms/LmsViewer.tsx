@@ -455,10 +455,6 @@ export function LmsViewer() {
                                         <p className="text-sm text-gray-500">Jumlah Nilai</p>
                                         <p className="font-semibold text-gray-900">{quizData?.questions?.reduce((acc: number, q: any) => acc + (Number(q.points) || 1), 0) || 0}</p>
                                     </div>
-                                    <div>
-                                        <p className="text-sm text-gray-500">Nilai Kelulusan</p>
-                                        <p className="font-semibold text-gray-900">{quizData?.passing_score || 0}</p>
-                                    </div>
                                 </div>
                             </div>
                             
@@ -473,7 +469,6 @@ export function LmsViewer() {
                                                 <th className="py-3 px-4 whitespace-nowrap">Jawaban Benar</th>
                                                 <th className="py-3 px-4 whitespace-nowrap">Jawaban Salah</th>
                                                 <th className="py-3 px-4 whitespace-nowrap">Nilai Diperoleh</th>
-                                                <th className="py-3 px-4 whitespace-nowrap">Hasil</th>
                                                 <th className="py-3 px-4 whitespace-nowrap">Rincian</th>
                                             </tr>
                                         </thead>
@@ -493,13 +488,6 @@ export function LmsViewer() {
                                                         <td className="py-4 px-4 text-gray-600">-</td>
                                                         <td className="py-4 px-4 text-gray-600">-</td>
                                                         <td className="py-4 px-4 text-gray-900 font-medium whitespace-nowrap">{attempt.total_score}</td>
-                                                        <td className="py-4 px-4">
-                                                            {attempt.is_passed ? (
-                                                                <span className="px-2.5 py-1 bg-green-100 text-green-700 rounded-md text-xs font-semibold">Lulus</span>
-                                                            ) : (
-                                                                <span className="px-2.5 py-1 bg-red-100 text-red-700 rounded-md text-xs font-semibold">Tidak Lulus</span>
-                                                            )}
-                                                        </td>
                                                         <td className="py-4 px-4">
                                                             <Button variant="outline" size="sm" className="h-8" disabled>Rincian</Button>
                                                         </td>
@@ -711,39 +699,40 @@ export function LmsViewer() {
                                     </div>
                                 )}
                             </div>
-                            
-                            {/* Navigation & Complete Button Footer */}
-                            <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 shrink-0 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-                                <Button 
-                                    variant="outline" 
-                                    disabled={!prev} 
-                                    onClick={() => prev && setActiveMaterial(prev.id)}
-                                >
-                                    <ArrowLeft className="w-4 h-4 mr-2" /> Sebelumnya
-                                </Button>
-                                
-                                <div className="flex-1 flex justify-center">
-                                    {!activeItem?.is_completed ? (
-                                        <Button onClick={handleMarkComplete} className="bg-green-600 hover:bg-green-700 h-10">
-                                            <CheckCircle className="w-4 h-4 mr-2" /> Tandai Selesai
-                                        </Button>
-                                    ) : (
-                                        <span className="px-4 py-2 bg-green-50 text-green-700 font-medium rounded-lg flex items-center gap-2 border border-green-200 h-10">
-                                            <CheckCircle className="w-5 h-5" /> Selesai Ditonton
-                                        </span>
-                                    )}
-                                </div>
-                                
-                                <Button 
-                                    variant="outline" 
-                                    disabled={!next} 
-                                    onClick={() => next && setActiveMaterial(next.id)}
-                                >
-                                    Selanjutnya <ChevronRight className="w-4 h-4 ml-2" />
-                                </Button>
-                            </div>
                         </div>
                     )}
+
+                    {/* Navigation & Complete Button Footer (Global for all types) */}
+                    <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 shrink-0 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                        <Button 
+                            variant="outline" 
+                            disabled={!prev} 
+                            onClick={() => prev && setActiveMaterial(prev.id)}
+                        >
+                            <ArrowLeft className="w-4 h-4 mr-2" /> Sebelumnya
+                        </Button>
+                        
+                        <div className="flex-1 flex justify-center">
+                            {!activeItem?.is_completed ? (
+                                <Button onClick={handleMarkComplete} className="bg-green-600 hover:bg-green-700 h-10">
+                                    <CheckCircle className="w-4 h-4 mr-2" /> Tandai Selesai
+                                </Button>
+                            ) : (
+                                <span className="px-4 py-2 bg-green-50 text-green-700 font-medium rounded-lg flex items-center gap-2 border border-green-200 h-10">
+                                    <CheckCircle className="w-5 h-5" /> Selesai
+                                </span>
+                            )}
+                        </div>
+                        
+                        <Button 
+                            variant="outline" 
+                            disabled={!next} 
+                            onClick={() => next && setActiveMaterial(next.id)}
+                        >
+                            Selanjutnya <ChevronRight className="w-4 h-4 ml-2" />
+                        </Button>
+                    </div>
+
                 </div>
             </div>
         );

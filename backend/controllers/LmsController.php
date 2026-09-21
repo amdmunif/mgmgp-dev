@@ -777,6 +777,42 @@ class LmsController
         }
     }
 
+    public function getQuizAttemptDetails($attemptId) {
+        try {
+            $stmt = $this->conn->prepare("SELECT a.*, p.nama as user_name FROM lms_quiz_attempts a JOIN profiles p ON a.user_id = p.id WHERE a.id = :id");
+            $stmt->execute([':id' => $attemptId]);
+            $attempt = $stmt->fetch(\PDO::FETCH_ASSOC);
+            if (!$attempt) throw new \Exception("Attempt not found");
+            
+            $qStmt = $this->conn->prepare("
+                SELECT q.id as question_id, q.question_text, q.question_type, q.points,
+                       ans.selected_option_id, ans.is_correct, ans.score_awarded
+                FROM lms_quiz_questions q
+                LEFT JOIN lms_quiz_answers ans ON q.id = ans.question_id AND ans.attempt_id = :aid
+                WHERE q.quiz_id = :qid
+                ORDER BY q.order_num, q.id
+            ");
+            $qStmt->execute([':aid' => $attemptId, ':qid' => $attempt['quiz_id']]);
+            $questions = $qStmt->fetchAll(\PDO::FETCH_ASSOC);
+            
+            $oStmt = $this->conn->prepare("SELECT * FROM lms_quiz_options WHERE question_id IN (SELECT id FROM lms_quiz_questions WHERE quiz_id = :qid)");
+            $oStmt->execute([':qid' => $attempt['quiz_id']]);
+            $options = $oStmt->fetchAll(\PDO::FETCH_ASSOC);
+            
+            foreach ($questions as &$q) {
+                $q['options'] = array_values(array_filter($options, function($o) use ($q) {
+                    return $o['question_id'] === $q['question_id'];
+                }));
+            }
+            
+            $attempt['details'] = $questions;
+            return json_encode($attempt);
+        } catch (\Exception $e) {
+            http_response_code(500);
+            return json_encode(["message" => $e->getMessage()]);
+        }
+    }
+
     public function getProgressSummary($userId)
     {
         try {

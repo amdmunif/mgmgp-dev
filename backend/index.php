@@ -213,6 +213,10 @@ if ($resource === 'news') {
                 // GET /lms/quizzes/my-attempts/:quizId
                 $quizId = isset($uri_parts[3]) ? $uri_parts[3] : '';
                 echo $controller->getQuizAttempts($quizId, $userId);
+            } elseif ($subAction === 'attempt-details') {
+                // GET /lms/quizzes/attempt-details/:attemptId
+                $attemptId = isset($uri_parts[3]) ? $uri_parts[3] : '';
+                echo $controller->getQuizAttemptDetails($attemptId);
             } else {
                 // GET /lms/quizzes/:materialId
                 echo $controller->getQuizByMaterialId($subAction);

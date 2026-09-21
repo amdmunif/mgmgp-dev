@@ -130,7 +130,6 @@ export function QuizPlayer() {
 
     if (submitted && quizResult) {
         const score = quizResult.score || 0;
-        const isPassed = quizResult.is_passed;
         
         return (
             <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
@@ -141,12 +140,9 @@ export function QuizPlayer() {
                     <h1 className="text-2xl font-bold text-gray-900 mb-2">Ujian Selesai!</h1>
                     <p className="text-gray-500 mb-6">Terima kasih telah mengerjakan {quizData?.title || 'ujian ini'}.</p>
                     
-                    <div className={`p-6 rounded-xl border mb-8 ${isPassed ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'}`}>
+                    <div className="p-6 rounded-xl border mb-8 bg-blue-50 border-blue-100 text-blue-900">
                         <div className="text-sm font-medium mb-1">Nilai Anda</div>
                         <div className="text-5xl font-black mb-2">{score}</div>
-                        <div className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${isPassed ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}`}>
-                            {isPassed ? 'LULUS' : 'TIDAK LULUS'}
-                        </div>
                     </div>
 
                     <Button onClick={() => navigate(`/member/lms/classroom/${eventId}?materialId=${quizId}`)} className="w-full h-12 text-lg">
