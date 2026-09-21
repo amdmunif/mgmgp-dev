@@ -267,12 +267,14 @@ export function AdminQuizBuilder() {
                 // Let's assume standard index matching for simplicity, or A/B/C/D mapping
                 let isCorrect = false;
                 if (sq.answer_key) {
-                    if (sq.answer_key.length === 1 && /[A-E]/.test(sq.answer_key.toUpperCase())) {
-                        const charCode = sq.answer_key.toUpperCase().charCodeAt(0) - 65;
-                        isCorrect = idx === charCode;
-                    } else {
-                        isCorrect = sq.answer_key === String(idx) || sq.answer_key === optText;
-                    }
+                    const keys = sq.answer_key.toUpperCase().split(',').map((k: string) => k.trim());
+                    isCorrect = keys.some((k: string) => {
+                        if (k.length === 1 && /[A-E]/.test(k)) {
+                            const charCode = k.charCodeAt(0) - 65;
+                            return idx === charCode;
+                        }
+                        return k === String(idx) || k === optText.toUpperCase();
+                    });
                 }
 
                 return {
