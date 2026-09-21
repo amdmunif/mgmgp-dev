@@ -47,6 +47,8 @@ export function AdminQuizBuilder() {
     const [loadingBank, setLoadingBank] = useState(false);
     const [searchBank, setSearchBank] = useState('');
     const [selectedBankIds, setSelectedBankIds] = useState<Set<string>>(new Set());
+    const [filterMapel, setFilterMapel] = useState('All');
+    const [filterLevel, setFilterLevel] = useState('All');
 
     const { setPageHeader } = useOutletContext<any>();
 
@@ -111,7 +113,7 @@ export function AdminQuizBuilder() {
             {
                 id: newId,
                 text: '',
-                type: 'multiple_choice',
+                type: 'single_choice',
                 points: 1,
                 options: [
                     { id: `o${Date.now()}1`, text: '', is_correct: true },
@@ -133,6 +135,24 @@ export function AdminQuizBuilder() {
         setQuestions(questions.map(q => q.id === qId ? { ...q, text } : q));
     };
 
+    const handleUpdateQuestionType = (qId: string, type: string) => {
+        setQuestions(questions.map(q => {
+            if (q.id === qId) {
+                // Jika dari kompleks ke tunggal, pastikan hanya 1 yang benar
+                let newOptions = q.options;
+                if (type === 'single_choice') {
+                    const firstCorrect = newOptions.find(o => o.is_correct);
+                    newOptions = newOptions.map(o => ({
+                        ...o,
+                        is_correct: firstCorrect ? o.id === firstCorrect.id : false
+                    }));
+                }
+                return { ...q, type, options: newOptions };
+            }
+            return q;
+        }));
+    };
+
     const handleUpdateOption = (qId: string, oId: string, text: string) => {
         setQuestions(questions.map(q => {
             if (q.id === qId) {
@@ -148,10 +168,19 @@ export function AdminQuizBuilder() {
     const handleSetCorrectOption = (qId: string, oId: string) => {
         setQuestions(questions.map(q => {
             if (q.id === qId) {
-                return {
-                    ...q,
-                    options: q.options.map(o => ({ ...o, is_correct: o.id === oId }))
-                };
+                if (q.type === 'multiple_choice') {
+                    // Checkbox mode for Pilihan Ganda Kompleks
+                    return {
+                        ...q,
+                        options: q.options.map(o => o.id === oId ? { ...o, is_correct: !o.is_correct } : o)
+                    };
+                } else {
+                    // Radio mode for Pilihan Ganda Biasa
+                    return {
+                        ...q,
+                        options: q.options.map(o => ({ ...o, is_correct: o.id === oId }))
+                    };
+                }
             }
             return q;
         }));
@@ -258,7 +287,7 @@ export function AdminQuizBuilder() {
             return {
                 id: `q${Date.now()}${Math.floor(Math.random()*1000)}`, // New ID to detach from master bank
                 text: sq.content,
-                type: 'multiple_choice',
+                type: sq.type === 'multiple_choice' ? 'multiple_choice' : 'single_choice',
                 points: 1,
                 options: mappedOptions
             };
@@ -269,10 +298,16 @@ export function AdminQuizBuilder() {
         toast.success(`${newQuestions.length} soal berhasil disalin ke kuis`);
     };
 
-    const filteredBankQuestions = bankQuestions.filter(q => 
-        q.content.toLowerCase().includes(searchBank.toLowerCase()) || 
-        (q.mapel && q.mapel.toLowerCase().includes(searchBank.toLowerCase()))
-    );
+    const uniqueMapels = Array.from(new Set(bankQuestions.map(q => q.mapel).filter(Boolean)));
+    const uniqueLevels = Array.from(new Set(bankQuestions.map(q => q.level).filter(Boolean)));
+
+    const filteredBankQuestions = bankQuestions.filter(q => {
+        const matchesSearch = q.content.toLowerCase().includes(searchBank.toLowerCase()) || 
+                              (q.mapel && q.mapel.toLowerCase().includes(searchBank.toLowerCase()));
+        const matchesMapel = filterMapel === 'All' || q.mapel === filterMapel;
+        const matchesLevel = filterLevel === 'All' || q.level === filterLevel;
+        return matchesSearch && matchesMapel && matchesLevel;
+    });
 
     if (loading) return <div className="p-8 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-500"/></div>;
 
@@ -361,6 +396,17 @@ export function AdminQuizBuilder() {
                             </Button>
                         </div>
                         <div className="p-4 md:p-6">
+                            <div className="flex justify-between items-center mb-3">
+                                <label className="block text-sm font-medium text-gray-700">Jenis Soal</label>
+                                <select 
+                                    value={q.type || 'single_choice'}
+                                    onChange={e => handleUpdateQuestionType(q.id, e.target.value)}
+                                    className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                                >
+                                    <option value="single_choice">Pilihan Ganda (1 Jawaban Benar)</option>
+                                    <option value="multiple_choice">Pilihan Ganda Kompleks (&gt;1 Jawaban Benar)</option>
+                                </select>
+                            </div>
                             <textarea 
                                 value={q.text}
                                 onChange={e => handleUpdateQuestion(q.id, e.target.value)}
@@ -369,14 +415,25 @@ export function AdminQuizBuilder() {
                             />
                             
                             <div className="space-y-3">
-                                <p className="text-sm font-medium text-gray-700 mb-2">Pilihan Jawaban (Pilih salah satu yang benar)</p>
+                                <p className="text-sm font-medium text-gray-700 mb-2">
+                                    Pilihan Jawaban {q.type === 'multiple_choice' ? '(Pilih semua yang benar)' : '(Pilih salah satu yang benar)'}
+                                </p>
                                 {q.options.map((opt, optIndex) => (
                                     <div key={opt.id} className={cn("flex items-center gap-3 p-3 rounded-lg border transition-colors", opt.is_correct ? "border-green-500 bg-green-50/30" : "border-gray-200 hover:border-gray-300")}>
                                         <button 
                                             onClick={() => handleSetCorrectOption(q.id, opt.id)}
-                                            className={cn("w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors", opt.is_correct ? "border-green-500 bg-green-500 text-white" : "border-gray-300 bg-white")}
+                                            className={cn(
+                                                "w-6 h-6 border-2 flex items-center justify-center flex-shrink-0 transition-colors", 
+                                                q.type === 'multiple_choice' ? "rounded" : "rounded-full",
+                                                opt.is_correct ? "border-green-500 bg-green-500 text-white" : "border-gray-300 bg-white"
+                                            )}
                                         >
-                                            {opt.is_correct && <CheckCircle2 className="w-4 h-4" />}
+                                            {opt.is_correct && <CheckCircle2 className={cn("w-4 h-4", q.type === 'multiple_choice' ? "hidden" : "")} />}
+                                            {opt.is_correct && q.type === 'multiple_choice' && (
+                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                                </svg>
+                                            )}
                                         </button>
                                         <div className="font-medium text-gray-500 w-6 text-center">{String.fromCharCode(65 + optIndex)}</div>
                                         <input 
@@ -423,7 +480,7 @@ export function AdminQuizBuilder() {
                             </button>
                         </div>
                         
-                        <div className="p-4 border-b border-gray-100 bg-white">
+                        <div className="p-4 border-b border-gray-100 bg-white space-y-4">
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                                 <input 
@@ -433,6 +490,28 @@ export function AdminQuizBuilder() {
                                     onChange={e => setSearchBank(e.target.value)}
                                     className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-purple-500 outline-none text-sm"
                                 />
+                            </div>
+                            <div className="flex gap-4">
+                                <select
+                                    value={filterMapel}
+                                    onChange={(e) => setFilterMapel(e.target.value)}
+                                    className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none text-sm focus:ring-2 focus:ring-purple-500"
+                                >
+                                    <option value="All">Semua Mapel</option>
+                                    {uniqueMapels.map(m => (
+                                        <option key={m} value={m}>{m}</option>
+                                    ))}
+                                </select>
+                                <select
+                                    value={filterLevel}
+                                    onChange={(e) => setFilterLevel(e.target.value)}
+                                    className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none text-sm focus:ring-2 focus:ring-purple-500"
+                                >
+                                    <option value="All">Semua Level</option>
+                                    {uniqueLevels.map(l => (
+                                        <option key={l} value={l}>{l}</option>
+                                    ))}
+                                </select>
                             </div>
                         </div>
 
