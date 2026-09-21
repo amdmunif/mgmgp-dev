@@ -267,6 +267,11 @@ if ($resource === 'news') {
                 echo $controller->markProgress($input, $userId);
             }
         }
+    } elseif ($action === 'activity') {
+        if ($_SERVER['REQUEST_METHOD'] === 'GET' && $subAction === 'event' && isset($uri_parts[3]) && isset($uri_parts[4]) && $uri_parts[4] === 'participant' && isset($uri_parts[5])) {
+            // GET /lms/activity/event/:eventId/participant/:userId
+            echo $controller->getParticipantActivity($uri_parts[3], $uri_parts[5]);
+        }
     } elseif ($action === 'gradebook') {
         if ($_SERVER['REQUEST_METHOD'] === 'GET' && $subAction === 'event' && isset($uri_parts[3])) {
             // GET /lms/gradebook/event/:eventId

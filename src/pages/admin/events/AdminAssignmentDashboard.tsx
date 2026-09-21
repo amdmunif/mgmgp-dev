@@ -5,6 +5,7 @@ import { Button } from '../../../components/ui/button';
 import { lmsService } from '../../../services/lmsService';
 import { toast } from 'react-hot-toast';
 import { DataTable } from '../../../components/ui/DataTable';
+import { ParticipantActivityModal } from '../../../components/admin/ParticipantActivityModal';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -15,6 +16,8 @@ export function AdminAssignmentDashboard() {
     const { setPageHeader } = useOutletContext<any>() || {};
     const [loading, setLoading] = useState(true);
     const [gradebook, setGradebook] = useState<any>(null);
+    const [activityModalOpen, setActivityModalOpen] = useState(false);
+    const [selectedParticipant, setSelectedParticipant] = useState<any>(null);
 
     useEffect(() => {
         if (setPageHeader) {
@@ -124,6 +127,27 @@ export function AdminAssignmentDashboard() {
                 </div>
             ),
             className: 'text-center bg-gray-50/50 min-w-[120px]'
+        });
+
+        columns.push({
+            header: <div className="text-center">Aksi</div>,
+            accessorKey: 'actions',
+            cell: (p: any) => (
+                <div className="flex justify-center">
+                    <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="text-blue-600 border-blue-200 hover:bg-blue-50 h-8 text-xs px-2"
+                        onClick={() => {
+                            setSelectedParticipant(p);
+                            setActivityModalOpen(true);
+                        }}
+                    >
+                        Detail Aktivitas
+                    </Button>
+                </div>
+            ),
+            className: 'text-center'
         });
 
         return columns;
@@ -260,6 +284,14 @@ export function AdminAssignmentDashboard() {
                     }
                 />
             )}
+
+            <ParticipantActivityModal
+                isOpen={activityModalOpen}
+                onClose={() => setActivityModalOpen(false)}
+                eventId={id || ''}
+                userId={selectedParticipant?.user_id}
+                userName={selectedParticipant?.nama}
+            />
         </div>
     );
 }

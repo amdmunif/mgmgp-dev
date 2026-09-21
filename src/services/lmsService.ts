@@ -138,5 +138,9 @@ export const lmsService = {
 
     getEventGradebook: async (eventId: string): Promise<any> => {
         return await api.get(`/lms/gradebook/event/${eventId}`);
+    },
+
+    getParticipantActivity: async (eventId: string, userId: string): Promise<any> => {
+        return await api.get(`/lms/activity/event/${eventId}/participant/${userId}`);
     }
 };

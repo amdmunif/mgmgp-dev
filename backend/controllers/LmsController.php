@@ -858,6 +858,59 @@ class LmsController
         }
     }
 
+    public function getParticipantActivity($eventId, $userId)
+    {
+        try {
+            // Materials progress
+            $queryMaterials = "
+                SELECT m.id, m.title, m.type, p.completed_at 
+                FROM lms_materials m
+                JOIN lms_topics t ON m.topic_id = t.id
+                JOIN lms_user_progress p ON p.item_id = m.id AND p.item_type = 'material'
+                WHERE t.event_id = :eid AND p.user_id = :uid AND p.is_completed = 1
+                ORDER BY p.completed_at DESC
+            ";
+            $stmtM = $this->conn->prepare($queryMaterials);
+            $stmtM->execute([':eid' => $eventId, ':uid' => $userId]);
+            $materials = $stmtM->fetchAll(\PDO::FETCH_ASSOC);
+
+            // Quizzes progress
+            $queryQuizzes = "
+                SELECT q.id, q.title, a.score, a.finished_at as completed_at
+                FROM lms_quizzes q
+                JOIN lms_topics t ON q.topic_id = t.id
+                JOIN lms_quiz_attempts a ON a.quiz_id = q.id
+                WHERE t.event_id = :eid AND a.user_id = :uid AND a.status = 'finished'
+                ORDER BY a.finished_at DESC
+            ";
+            $stmtQ = $this->conn->prepare($queryQuizzes);
+            $stmtQ->execute([':eid' => $eventId, ':uid' => $userId]);
+            $quizzes = $stmtQ->fetchAll(\PDO::FETCH_ASSOC);
+
+            // Assignments progress
+            $queryAssignments = "
+                SELECT asg.id, asg.title, sub.score, sub.submitted_at as completed_at
+                FROM lms_assignments asg
+                JOIN lms_topics t ON asg.topic_id = t.id
+                JOIN lms_assignment_submissions sub ON sub.assignment_id = asg.id
+                WHERE t.event_id = :eid AND sub.user_id = :uid
+                ORDER BY sub.submitted_at DESC
+            ";
+            $stmtA = $this->conn->prepare($queryAssignments);
+            $stmtA->execute([':eid' => $eventId, ':uid' => $userId]);
+            $assignments = $stmtA->fetchAll(\PDO::FETCH_ASSOC);
+
+            return json_encode([
+                "materials" => $materials,
+                "quizzes" => $quizzes,
+                "assignments" => $assignments
+            ]);
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            return json_encode(["message" => "Error: " . $e->getMessage()]);
+        }
+    }
+
     public function markProgress($data, $userId)
     {
         try {

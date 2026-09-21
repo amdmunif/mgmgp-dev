@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation, useOutletContext } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, FileText, ExternalLink, X, Loader2, CheckSquare, Users } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, FileText, ExternalLink, X, Loader2, CheckSquare, Users, FileSpreadsheet, Printer } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { cn } from '../../../lib/utils';
 import { toast } from 'react-hot-toast';
 import { lmsService } from '../../../services/lmsService';
 import { DataTable } from '../../../components/ui/DataTable';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 export function AdminAssignmentGrader() {
     const { id, assignmentId } = useParams();
@@ -86,6 +89,85 @@ export function AdminAssignmentGrader() {
             day: 'numeric', month: 'short', year: 'numeric',
             hour: '2-digit', minute: '2-digit'
         }).format(date);
+    };
+
+    const getExportData = () => {
+        const head = [['Nama Peserta', 'Waktu Pengumpulan', 'Status', 'Skor', 'Catatan/Feedback']];
+        const body = filteredSubmissions.map(sub => [
+            sub.user_name,
+            formatDate(sub.submitted_at),
+            sub.score !== null ? 'Dinilai' : 'Menunggu',
+            sub.score !== null ? sub.score : '-',
+            sub.feedback || '-'
+        ]);
+        return { head, body };
+    };
+
+    const exportToExcel = () => {
+        if (filteredSubmissions.length === 0) return toast.error("Tidak ada data untuk diekspor");
+        const { head, body } = getExportData();
+        const ws = XLSX.utils.aoa_to_sheet([...head, ...body]);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Laporan Penugasan");
+        XLSX.writeFile(wb, `Laporan_Penugasan_${assignmentTitle.replace(/\s+/g, '_')}.xlsx`);
+    };
+
+    const exportToPDF = () => {
+        if (filteredSubmissions.length === 0) return toast.error("Tidak ada data untuk diekspor");
+        const { head, body } = getExportData();
+        const doc = new jsPDF('landscape');
+        doc.text(`Laporan Penugasan: ${assignmentTitle}`, 14, 15);
+        autoTable(doc, {
+            head: head,
+            body: body,
+            startY: 20,
+            theme: 'grid',
+            styles: { fontSize: 8 },
+            headStyles: { fillColor: [41, 128, 185] },
+        });
+        doc.save(`Laporan_Penugasan_${assignmentTitle.replace(/\s+/g, '_')}.pdf`);
+    };
+
+    const handlePrint = () => {
+        if (filteredSubmissions.length === 0) return toast.error("Tidak ada data untuk dicetak");
+        const { head, body } = getExportData();
+        let printContent = `
+            <html>
+            <head>
+                <title>Cetak Laporan Penugasan</title>
+                <style>
+                    body { font-family: sans-serif; padding: 20px; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; }
+                    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                    th { background-color: #f3f4f6; }
+                    h2 { text-align: center; }
+                </style>
+            </head>
+            <body>
+                <h2>Laporan Penugasan: ${assignmentTitle}</h2>
+                <table>
+                    <thead>
+                        <tr>${head[0].map((h: string) => `<th>${h}</th>`).join('')}</tr>
+                    </thead>
+                    <tbody>
+                        ${body.map((row: any[]) => `
+                            <tr>${row.map((cell: any) => `<td>${cell}</td>`).join('')}</tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </body>
+            </html>
+        `;
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            printWindow.focus();
+            setTimeout(() => {
+                printWindow.print();
+                printWindow.close();
+            }, 250);
+        }
     };
 
     const buildColumns = () => {
@@ -176,15 +258,25 @@ export function AdminAssignmentGrader() {
                     searchKeys={['user_name']}
                     pageSize={15}
                     filterContent={
-                        <div className="flex items-center gap-4">
-                            <Button variant="outline" onClick={() => navigate(`/admin/events/${id}/lms`)} className="bg-white text-gray-700 hover:bg-gray-100 shadow-sm">
-                                <ArrowLeft className="w-4 h-4 mr-2" />
-                                Kembali ke Kelas
+                        <div className="flex flex-wrap items-center gap-2">
+                            <Button size="sm" variant="outline" onClick={handlePrint} className="text-gray-700 hover:bg-gray-100">
+                                <Printer className="w-4 h-4 mr-1.5" /> Print
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={exportToPDF} className="text-red-600 border-red-200 hover:bg-red-50">
+                                <FileText className="w-4 h-4 mr-1.5" /> PDF
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={exportToExcel} className="text-green-600 border-green-200 hover:bg-green-50">
+                                <FileSpreadsheet className="w-4 h-4 mr-1.5" /> Excel
+                            </Button>
+                            <div className="h-6 w-px bg-gray-200 mx-1 hidden sm:block"></div>
+                            <Button size="sm" variant="outline" onClick={() => navigate(`/admin/events/${id}/lms`)} className="bg-white text-gray-700 hover:bg-gray-100 shadow-sm">
+                                <ArrowLeft className="w-4 h-4 mr-1.5" />
+                                Kembali
                             </Button>
                             <select 
                                 value={filterStatus}
                                 onChange={(e) => setFilterStatus(e.target.value)}
-                                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white text-sm"
+                                className="px-3 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none bg-white text-sm"
                             >
                                 <option value="all">Semua Status</option>
                                 <option value="pending">Menunggu Dinilai</option>

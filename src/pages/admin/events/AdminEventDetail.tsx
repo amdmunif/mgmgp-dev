@@ -8,6 +8,7 @@ import { lmsService } from '../../../services/lmsService';
 import { DataTable } from '../../../components/ui/DataTable';
 import { Button } from '../../../components/ui/button';
 import { exportEventParticipantsExcel } from '../../../utils/exportEventParticipantsExcel';
+import { ParticipantActivityModal } from '../../../components/admin/ParticipantActivityModal';
 
 interface Participant {
     user_id: string;
@@ -54,6 +55,8 @@ export function AdminEventDetail() {
     const [searchQuery, setSearchQuery] = useState('');
     const [showQR, setShowQR] = useState(false);
     const [selectedQRDay, setSelectedQRDay] = useState<number>(1);
+    const [activityModalOpen, setActivityModalOpen] = useState(false);
+    const [selectedParticipant, setSelectedParticipant] = useState<Participant | null>(null);
 
     const uniqueSchoolCount = useMemo(() => {
         const set = new Set(participants.map(p => p.asal_sekolah?.trim()).filter(Boolean));
@@ -467,6 +470,20 @@ export function AdminEventDetail() {
                             Hapus
                         </button>
                     </div>
+                    {event?.has_lms && (
+                        <div className="flex justify-center mt-2">
+                            <button
+                                onClick={() => {
+                                    setSelectedParticipant(item);
+                                    setActivityModalOpen(true);
+                                }}
+                                className="inline-flex items-center gap-1 px-3 py-1 rounded-md text-xs font-medium text-blue-700 border border-blue-200 bg-white hover:bg-blue-50 transition-colors w-full justify-center"
+                                title="Lihat Detail Aktivitas LMS"
+                            >
+                                Detail Aktivitas
+                            </button>
+                        </div>
+                    )}
                     {event?.is_paid && item.payment_status === 'waiting_confirmation' && (
                         <div className="flex justify-center mt-2 gap-2">
                             <button
@@ -761,6 +778,14 @@ export function AdminEventDetail() {
                     </div>
                 </div>
             )}
+
+            <ParticipantActivityModal
+                isOpen={activityModalOpen}
+                onClose={() => setActivityModalOpen(false)}
+                eventId={id || ''}
+                userId={selectedParticipant?.user_id || ''}
+                userName={selectedParticipant?.nama || ''}
+            />
         </div>
     );
 }
