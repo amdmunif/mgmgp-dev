@@ -647,7 +647,7 @@ export function LmsViewer() {
                             </div>
                         </div>
                     ) : (
-                        <div className="w-full mx-auto flex flex-col flex-1 h-full">
+                        <div className="w-full mx-auto flex flex-col flex-1">
                             <div className="mb-4 bg-white p-6 rounded-xl border border-gray-100 shadow-sm shrink-0 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                                 <div>
                                     <h2 className="text-2xl font-bold text-gray-900 mb-2">{activeItem?.title}</h2>
@@ -707,18 +707,35 @@ export function LmsViewer() {
                         <Button 
                             variant="outline" 
                             disabled={!prev} 
-                            onClick={() => prev && setActiveMaterial(prev.id)}
+                            onClick={() => {
+                                if (prev) {
+                                    setActiveMaterial(prev.id);
+                                    // Make sure topic is expanded
+                                    const prevTopic = topics.find(t => t.items.some(i => i.id === prev.id));
+                                    if (prevTopic && !expandedTopics.includes(prevTopic.id)) {
+                                        setExpandedTopics(curr => [...curr, prevTopic.id]);
+                                    }
+                                }
+                            }}
                         >
                             <ArrowLeft className="w-4 h-4 mr-2" /> Sebelumnya
                         </Button>
                         
                         <div className="flex-1 flex justify-center">
-                            {!activeItem?.is_completed ? (
-                                <Button onClick={handleMarkComplete} className="bg-green-600 hover:bg-green-700 h-10">
+                            {activeItem?.type === 'quiz' && quizAttempts.length === 0 ? (
+                                <Button disabled className="bg-gray-200 text-gray-500 h-10 font-medium">
+                                    Kerjakan Kuis Dahulu
+                                </Button>
+                            ) : activeItem?.type === 'assignment' && !assignmentData ? (
+                                <Button disabled className="bg-gray-200 text-gray-500 h-10 font-medium">
+                                    Kumpulkan Tugas Dahulu
+                                </Button>
+                            ) : !activeItem?.is_completed ? (
+                                <Button onClick={handleMarkComplete} className="bg-green-600 hover:bg-green-700 h-10 text-white shadow-sm hover:shadow">
                                     <CheckCircle className="w-4 h-4 mr-2" /> Tandai Selesai
                                 </Button>
                             ) : (
-                                <span className="px-4 py-2 bg-green-50 text-green-700 font-medium rounded-lg flex items-center gap-2 border border-green-200 h-10">
+                                <span className="px-4 py-2 bg-green-50 text-green-700 font-medium rounded-lg flex items-center gap-2 border border-green-200 h-10 shadow-sm">
                                     <CheckCircle className="w-5 h-5" /> Selesai
                                 </span>
                             )}
@@ -727,7 +744,20 @@ export function LmsViewer() {
                         <Button 
                             variant="outline" 
                             disabled={!next} 
-                            onClick={() => next && setActiveMaterial(next.id)}
+                            onClick={() => {
+                                if (next?.is_locked) {
+                                    toast.error(next.lock_reason || "Materi terkunci");
+                                    return;
+                                }
+                                if (next) {
+                                    setActiveMaterial(next.id);
+                                    // Make sure topic is expanded
+                                    const nextTopic = topics.find(t => t.items.some(i => i.id === next.id));
+                                    if (nextTopic && !expandedTopics.includes(nextTopic.id)) {
+                                        setExpandedTopics(curr => [...curr, nextTopic.id]);
+                                    }
+                                }
+                            }}
                         >
                             Selanjutnya <ChevronRight className="w-4 h-4 ml-2" />
                         </Button>
