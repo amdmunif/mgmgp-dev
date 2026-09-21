@@ -880,7 +880,7 @@ class LmsController
                 FROM lms_quizzes q
                 JOIN lms_topics t ON q.topic_id = t.id
                 JOIN lms_quiz_attempts a ON a.quiz_id = q.id
-                WHERE t.event_id = :eid AND a.user_id = :uid AND a.status = 'finished'
+                WHERE t.event_id = :eid AND a.user_id = :uid AND a.finished_at IS NOT NULL
                 ORDER BY a.finished_at DESC
             ";
             $stmtQ = $this->conn->prepare($queryQuizzes);
@@ -936,7 +936,7 @@ class LmsController
                 JOIN lms_quiz_attempts a ON a.quiz_id = q.id
                 JOIN event_participants ep ON ep.user_id = a.user_id AND ep.event_id = :eid
                 LEFT JOIN profiles pr ON pr.id = a.user_id
-                WHERE t.event_id = :eid AND a.status = 'finished'
+                WHERE t.event_id = :eid AND a.finished_at IS NOT NULL
             ";
             $stmtQ = $this->conn->prepare($queryQuizzes);
             $stmtQ->execute([':eid' => $eventId]);
