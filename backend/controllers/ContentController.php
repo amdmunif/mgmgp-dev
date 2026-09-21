@@ -629,7 +629,7 @@ class ContentController
                       LEFT JOIN profiles p ON ep.user_id = p.id
                       LEFT JOIN users u ON ep.user_id = u.id
                       WHERE ep.event_id = :eid
-                      ORDER BY ep.registered_at DESC";
+                      ORDER BY p.nama ASC";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':eid', $eventId);
             $stmt->execute();

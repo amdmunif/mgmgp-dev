@@ -911,6 +911,76 @@ class LmsController
         }
     }
 
+    public function getAllParticipantsActivity($eventId)
+    {
+        try {
+            // Materials progress
+            $queryMaterials = "
+                SELECT m.id, m.title, m.type, p.completed_at, pr.nama as user_name, pr.asal_sekolah
+                FROM lms_materials m
+                JOIN lms_topics t ON m.topic_id = t.id
+                JOIN lms_user_progress p ON p.item_id = m.id AND p.item_type = 'material'
+                JOIN event_participants ep ON ep.user_id = p.user_id AND ep.event_id = :eid
+                LEFT JOIN profiles pr ON pr.id = p.user_id
+                WHERE t.event_id = :eid AND p.is_completed = 1
+            ";
+            $stmtM = $this->conn->prepare($queryMaterials);
+            $stmtM->execute([':eid' => $eventId]);
+            $materials = $stmtM->fetchAll(\PDO::FETCH_ASSOC);
+
+            // Quizzes progress
+            $queryQuizzes = "
+                SELECT q.id, q.title, a.score, a.finished_at as completed_at, pr.nama as user_name, pr.asal_sekolah
+                FROM lms_quizzes q
+                JOIN lms_topics t ON q.topic_id = t.id
+                JOIN lms_quiz_attempts a ON a.quiz_id = q.id
+                JOIN event_participants ep ON ep.user_id = a.user_id AND ep.event_id = :eid
+                LEFT JOIN profiles pr ON pr.id = a.user_id
+                WHERE t.event_id = :eid AND a.status = 'finished'
+            ";
+            $stmtQ = $this->conn->prepare($queryQuizzes);
+            $stmtQ->execute([':eid' => $eventId]);
+            $quizzes = $stmtQ->fetchAll(\PDO::FETCH_ASSOC);
+
+            // Assignments progress
+            $queryAssignments = "
+                SELECT asg.id, asg.title, sub.score, sub.submitted_at as completed_at, pr.nama as user_name, pr.asal_sekolah
+                FROM lms_assignments asg
+                JOIN lms_topics t ON asg.topic_id = t.id
+                JOIN lms_assignment_submissions sub ON sub.assignment_id = asg.id
+                JOIN event_participants ep ON ep.user_id = sub.user_id AND ep.event_id = :eid
+                LEFT JOIN profiles pr ON pr.id = sub.user_id
+                WHERE t.event_id = :eid
+            ";
+            $stmtA = $this->conn->prepare($queryAssignments);
+            $stmtA->execute([':eid' => $eventId]);
+            $assignments = $stmtA->fetchAll(\PDO::FETCH_ASSOC);
+
+            $allActivities = [];
+            foreach ($materials as $m) {
+                $m['_type'] = 'material';
+                $allActivities[] = $m;
+            }
+            foreach ($quizzes as $q) {
+                $q['_type'] = 'quiz';
+                $allActivities[] = $q;
+            }
+            foreach ($assignments as $a) {
+                $a['_type'] = 'assignment';
+                $allActivities[] = $a;
+            }
+
+            usort($allActivities, function($a, $b) {
+                return strtotime($b['completed_at']) - strtotime($a['completed_at']);
+            });
+
+            return json_encode($allActivities);
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            return json_encode(["message" => "Error: " . $e->getMessage()]);
+        }
+    }
+
     public function markProgress($data, $userId)
     {
         try {
@@ -972,7 +1042,8 @@ public function getEventGradebook($eventId) {
     $qParts = "SELECT ep.user_id, p.nama, p.asal_sekolah, p.foto_profile 
                FROM event_participants ep 
                LEFT JOIN profiles p ON ep.user_id = p.id 
-               WHERE ep.event_id = :eid";
+               WHERE ep.event_id = :eid
+               ORDER BY p.nama ASC";
     $stmt = $this->conn->prepare($qParts);
     $stmt->execute([':eid' => $eventId]);
     $participants = $stmt->fetchAll(PDO::FETCH_ASSOC);

@@ -268,9 +268,14 @@ if ($resource === 'news') {
             }
         }
     } elseif ($action === 'activity') {
-        if ($_SERVER['REQUEST_METHOD'] === 'GET' && $subAction === 'event' && isset($uri_parts[3]) && isset($uri_parts[4]) && $uri_parts[4] === 'participant' && isset($uri_parts[5])) {
-            // GET /lms/activity/event/:eventId/participant/:userId
-            echo $controller->getParticipantActivity($uri_parts[3], $uri_parts[5]);
+        if ($_SERVER['REQUEST_METHOD'] === 'GET' && $subAction === 'event' && isset($uri_parts[3])) {
+            if (isset($uri_parts[4]) && $uri_parts[4] === 'participant' && isset($uri_parts[5])) {
+                // GET /lms/activity/event/:eventId/participant/:userId
+                echo $controller->getParticipantActivity($uri_parts[3], $uri_parts[5]);
+            } elseif (isset($uri_parts[4]) && $uri_parts[4] === 'all') {
+                // GET /lms/activity/event/:eventId/all
+                echo $controller->getAllParticipantsActivity($uri_parts[3]);
+            }
         }
     } elseif ($action === 'gradebook') {
         if ($_SERVER['REQUEST_METHOD'] === 'GET' && $subAction === 'event' && isset($uri_parts[3])) {

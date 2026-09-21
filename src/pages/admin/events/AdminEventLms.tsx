@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
-import { ArrowLeft, Plus, Video, FileText, CheckSquare, Pencil, Trash2, FileQuestion, X, Eye, ChevronUp, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Plus, Video, FileText, CheckSquare, Pencil, Trash2, FileQuestion, X, Eye, ChevronUp, ChevronDown, Activity } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { RichTextEditor } from '../../../components/ui/RichTextEditor';
 import { lmsService } from '../../../services/lmsService';
@@ -284,6 +284,10 @@ export function AdminEventLms() {
                     <span className="font-medium text-gray-700">Daftar Topik ({topics.length})</span>
                 </div>
                 <div className="flex items-center gap-2">
+                    <Button variant="outline" onClick={() => navigate(`/admin/events/${id}/lms/activity-report`)} className="hidden md:flex">
+                        <Activity className="w-4 h-4 mr-2" />
+                        Laporan Aktivitas
+                    </Button>
                     <Button variant="outline" onClick={() => navigate(`/admin/events/${id}/lms/assignments-report`)} className="hidden md:flex">
                         <CheckSquare className="w-4 h-4 mr-2" />
                         Laporan Penugasan
