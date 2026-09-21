@@ -890,10 +890,10 @@ class LmsController
             // Assignments progress
             $queryAssignments = "
                 SELECT asg.id, asg.title, sub.score, sub.submitted_at as completed_at
-                FROM lms_assignments asg
+                FROM lms_materials asg
                 JOIN lms_topics t ON asg.topic_id = t.id
                 JOIN lms_assignment_submissions sub ON sub.assignment_id = asg.id
-                WHERE t.event_id = :eid AND sub.user_id = :uid
+                WHERE t.event_id = :eid AND sub.user_id = :uid AND asg.type = 'assignment'
                 ORDER BY sub.submitted_at DESC
             ";
             $stmtA = $this->conn->prepare($queryAssignments);
@@ -945,12 +945,12 @@ class LmsController
             // Assignments progress
             $queryAssignments = "
                 SELECT asg.id, asg.title, sub.score, sub.submitted_at as completed_at, pr.nama as user_name, pr.asal_sekolah
-                FROM lms_assignments asg
+                FROM lms_materials asg
                 JOIN lms_topics t ON asg.topic_id = t.id
                 JOIN lms_assignment_submissions sub ON sub.assignment_id = asg.id
                 JOIN event_participants ep ON ep.user_id = sub.user_id AND ep.event_id = :eid
                 LEFT JOIN profiles pr ON pr.id = sub.user_id
-                WHERE t.event_id = :eid
+                WHERE t.event_id = :eid AND asg.type = 'assignment'
             ";
             $stmtA = $this->conn->prepare($queryAssignments);
             $stmtA->execute([':eid' => $eventId]);
