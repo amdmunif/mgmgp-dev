@@ -48,7 +48,10 @@ export function AdminQuizBuilder() {
     const [searchBank, setSearchBank] = useState('');
     const [selectedBankIds, setSelectedBankIds] = useState<Set<string>>(new Set());
     const [filterMapel, setFilterMapel] = useState('All');
+    const [filterKelas, setFilterKelas] = useState('All');
     const [filterLevel, setFilterLevel] = useState('All');
+    const [filterType, setFilterType] = useState('All');
+    const [filterTp, setFilterTp] = useState('All');
 
     const { setPageHeader } = useOutletContext<any>();
 
@@ -299,14 +302,19 @@ export function AdminQuizBuilder() {
     };
 
     const uniqueMapels = Array.from(new Set(bankQuestions.map(q => q.mapel).filter(Boolean)));
+    const uniqueKelas = Array.from(new Set(bankQuestions.map(q => q.kelas).filter(Boolean))).sort();
     const uniqueLevels = Array.from(new Set(bankQuestions.map(q => q.level).filter(Boolean)));
+    const uniqueTps = Array.from(new Set(bankQuestions.map(q => q.tp_code).filter(Boolean))).sort();
 
     const filteredBankQuestions = bankQuestions.filter(q => {
         const matchesSearch = q.content.toLowerCase().includes(searchBank.toLowerCase()) || 
                               (q.mapel && q.mapel.toLowerCase().includes(searchBank.toLowerCase()));
-        const matchesMapel = filterMapel === 'All' || q.mapel === filterMapel;
+        const matchesMapel = filterMapel === 'All' || (q.mapel && q.mapel.toLowerCase() === filterMapel.toLowerCase());
+        const matchesKelas = filterKelas === 'All' || q.kelas === filterKelas;
         const matchesLevel = filterLevel === 'All' || q.level === filterLevel;
-        return matchesSearch && matchesMapel && matchesLevel;
+        const matchesType = filterType === 'All' || q.type === filterType;
+        const matchesTp = filterTp === 'All' || q.tp_code === filterTp;
+        return matchesSearch && matchesMapel && matchesKelas && matchesLevel && matchesType && matchesTp;
     });
 
     if (loading) return <div className="p-8 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-500"/></div>;
@@ -505,6 +513,26 @@ export function AdminQuizBuilder() {
                                     ))}
                                 </datalist>
                                 <select
+                                    value={filterKelas}
+                                    onChange={(e) => setFilterKelas(e.target.value)}
+                                    className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none text-sm focus:ring-2 focus:ring-purple-500"
+                                >
+                                    <option value="All">Semua Kelas</option>
+                                    {uniqueKelas.map(k => (
+                                        <option key={k} value={k}>Kelas {k}</option>
+                                    ))}
+                                </select>
+                                <select
+                                    value={filterTp}
+                                    onChange={(e) => setFilterTp(e.target.value)}
+                                    className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none text-sm focus:ring-2 focus:ring-purple-500"
+                                >
+                                    <option value="All">Semua TP</option>
+                                    {uniqueTps.map(tp => (
+                                        <option key={tp} value={tp}>TP {tp}</option>
+                                    ))}
+                                </select>
+                                <select
                                     value={filterLevel}
                                     onChange={(e) => setFilterLevel(e.target.value)}
                                     className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none text-sm focus:ring-2 focus:ring-purple-500"
@@ -513,6 +541,15 @@ export function AdminQuizBuilder() {
                                     {uniqueLevels.map(l => (
                                         <option key={l} value={l}>{l}</option>
                                     ))}
+                                </select>
+                                <select
+                                    value={filterType}
+                                    onChange={(e) => setFilterType(e.target.value)}
+                                    className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none text-sm focus:ring-2 focus:ring-purple-500"
+                                >
+                                    <option value="All">Semua Tipe</option>
+                                    <option value="single_choice">Pilihan Ganda</option>
+                                    <option value="multiple_choice">Pilihan Ganda Kompleks</option>
                                 </select>
                             </div>
                         </div>
@@ -545,6 +582,8 @@ export function AdminQuizBuilder() {
                                                 <p className="text-gray-800 text-sm line-clamp-2" dangerouslySetInnerHTML={{ __html: q.content }}></p>
                                                 <div className="flex items-center gap-2 mt-2">
                                                     <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-md font-medium">{q.mapel}</span>
+                                                    {q.kelas && <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-md font-medium">Kelas {q.kelas}</span>}
+                                                    {q.tp_code && <span className="text-xs px-2 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-md font-medium">TP: {q.tp_code}</span>}
                                                     <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-md font-medium">{q.level}</span>
                                                 </div>
                                             </div>
