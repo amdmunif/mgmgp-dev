@@ -499,13 +499,13 @@ export function AdminQuizBuilder() {
                                     className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-purple-500 outline-none text-sm"
                                 />
                             </div>
-                            <div className="flex gap-4">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
                                 <input
                                     list="quiz-bank-mapel"
                                     value={filterMapel === 'All' ? '' : filterMapel}
                                     placeholder="Semua Mapel"
                                     onChange={(e) => setFilterMapel(e.target.value || 'All')}
-                                    className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none text-sm focus:ring-2 focus:ring-purple-500"
+                                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none text-sm focus:ring-2 focus:ring-purple-500"
                                 />
                                 <datalist id="quiz-bank-mapel">
                                     {uniqueMapels.map(m => (
@@ -515,7 +515,7 @@ export function AdminQuizBuilder() {
                                 <select
                                     value={filterKelas}
                                     onChange={(e) => setFilterKelas(e.target.value)}
-                                    className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none text-sm focus:ring-2 focus:ring-purple-500"
+                                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none text-sm focus:ring-2 focus:ring-purple-500"
                                 >
                                     <option value="All">Semua Kelas</option>
                                     {uniqueKelas.map(k => (
@@ -525,7 +525,7 @@ export function AdminQuizBuilder() {
                                 <select
                                     value={filterTp}
                                     onChange={(e) => setFilterTp(e.target.value)}
-                                    className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none text-sm focus:ring-2 focus:ring-purple-500"
+                                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none text-sm focus:ring-2 focus:ring-purple-500"
                                 >
                                     <option value="All">Semua TP</option>
                                     {uniqueTps.map(tp => (
@@ -535,7 +535,7 @@ export function AdminQuizBuilder() {
                                 <select
                                     value={filterLevel}
                                     onChange={(e) => setFilterLevel(e.target.value)}
-                                    className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none text-sm focus:ring-2 focus:ring-purple-500"
+                                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none text-sm focus:ring-2 focus:ring-purple-500"
                                 >
                                     <option value="All">Semua Level</option>
                                     {uniqueLevels.map(l => (
@@ -545,7 +545,7 @@ export function AdminQuizBuilder() {
                                 <select
                                     value={filterType}
                                     onChange={(e) => setFilterType(e.target.value)}
-                                    className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none text-sm focus:ring-2 focus:ring-purple-500"
+                                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none text-sm focus:ring-2 focus:ring-purple-500"
                                 >
                                     <option value="All">Semua Tipe</option>
                                     <option value="single_choice">Pilihan Ganda</option>
