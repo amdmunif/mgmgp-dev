@@ -133,28 +133,34 @@ export function TPManager() {
 
                                 <div>
                                     <label className="block text-xs font-semibold text-gray-500 uppercase mb-1.5">Mata Pelajaran</label>
-                                    <select
+                                    <input
+                                        list="tp-mapel-list"
                                         className="w-full rounded-lg border-gray-300 bg-white py-2.5 px-3 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-700"
+                                        placeholder="Pilih atau ketik Mapel"
                                         value={formData.mapel}
                                         onChange={e => setFormData({ ...formData, mapel: e.target.value as any })}
                                         required
-                                    >
-                                        <option value="Informatika">Informatika</option>
-                                        <option value="KKA">Koding dan Kecerdasan Artifisial (KKA)</option>
-                                    </select>
+                                    />
+                                    <datalist id="tp-mapel-list">
+                                        <option value="Informatika" />
+                                        <option value="KKA" />
+                                    </datalist>
                                 </div>
                                 <div>
                                     <label className="block text-xs font-semibold text-gray-500 uppercase mb-1.5">Kelas</label>
-                                    <select
+                                    <input
+                                        list="tp-kelas-list"
                                         className="w-full rounded-lg border-gray-300 bg-white py-2.5 px-3 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-700"
+                                        placeholder="Pilih atau ketik Kelas"
                                         value={formData.kelas}
                                         onChange={e => setFormData({ ...formData, kelas: e.target.value as any })}
                                         required
-                                    >
-                                        <option value="7">Kelas 7</option>
-                                        <option value="8">Kelas 8</option>
-                                        <option value="9">Kelas 9</option>
-                                    </select>
+                                    />
+                                    <datalist id="tp-kelas-list">
+                                        <option value="7" />
+                                        <option value="8" />
+                                        <option value="9" />
+                                    </datalist>
                                 </div>
                                 <div>
                                     <label className="block text-xs font-semibold text-gray-500 uppercase mb-1.5">Semester</label>
@@ -313,26 +319,30 @@ export function TPManager() {
                             <Filter className="w-4 h-4 text-gray-500" />
                             <span className="text-sm font-medium text-gray-700 mr-2">Filter:</span>
 
-                            <select
-                                className="border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[150px]"
-                                value={filterMapel}
-                                onChange={e => setFilterMapel(e.target.value as any)}
-                            >
-                                <option value="all">Semua Mapel</option>
-                                <option value="Informatika">Informatika</option>
-                                <option value="KKA">Koding & Kecerdasan Artifisial</option>
-                            </select>
+                            <input
+                                        list="tp-mapel-filter"
+                                        className="border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[150px]"
+                                        value={filterMapel === 'all' ? '' : filterMapel}
+                                        placeholder="Semua Mapel"
+                                        onChange={e => setFilterMapel(e.target.value || 'all')}
+                                    />
+                                    <datalist id="tp-mapel-filter">
+                                        <option value="Informatika" />
+                                        <option value="KKA" />
+                                    </datalist>
 
-                            <select
-                                className="border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[120px]"
-                                value={filterKelas}
-                                onChange={e => setFilterKelas(e.target.value)}
-                            >
-                                <option value="all">Semua Kelas</option>
-                                <option value="7">Kelas 7</option>
-                                <option value="8">Kelas 8</option>
-                                <option value="9">Kelas 9</option>
-                            </select>
+                            <input
+                                        list="tp-kelas-filter"
+                                        className="border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[120px]"
+                                        value={filterKelas === 'all' ? '' : filterKelas}
+                                        placeholder="Semua Kelas"
+                                        onChange={e => setFilterKelas(e.target.value || 'all')}
+                                    />
+                                    <datalist id="tp-kelas-filter">
+                                        <option value="7" />
+                                        <option value="8" />
+                                        <option value="9" />
+                                    </datalist>
 
                             <select
                                 className="border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[150px]"

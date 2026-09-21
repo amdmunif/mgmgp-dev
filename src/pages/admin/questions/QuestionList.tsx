@@ -545,25 +545,29 @@ export function AdminQuestions() {
                             filterContent={
                                 <div className="flex items-center gap-2">
                                     <Filter className="w-4 h-4 text-gray-500" />
-                                    <select
+                                    <input
+                                        list="list-mapel-filter"
                                         className="border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         value={filters.mapel}
+                                        placeholder="Semua Mapel"
                                         onChange={e => setFilters({ ...filters, mapel: e.target.value, tp: '' })}
-                                    >
-                                        <option value="">Semua Mapel</option>
-                                        <option value="Informatika">Informatika</option>
-                                        <option value="KKA">KKA</option>
-                                    </select>
-                                    <select
+                                    />
+                                    <datalist id="list-mapel-filter">
+                                        <option value="Informatika" />
+                                        <option value="KKA" />
+                                    </datalist>
+                                    <input
+                                        list="list-kelas-filter"
                                         className="border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         value={filters.kelas}
+                                        placeholder="Semua Kelas"
                                         onChange={e => setFilters({ ...filters, kelas: e.target.value, tp: '' })}
-                                    >
-                                        <option value="">Semua Kelas</option>
-                                        <option value="7">Kelas 7</option>
-                                        <option value="8">Kelas 8</option>
-                                        <option value="9">Kelas 9</option>
-                                    </select>
+                                    />
+                                    <datalist id="list-kelas-filter">
+                                        <option value="7" />
+                                        <option value="8" />
+                                        <option value="9" />
+                                    </datalist>
                                     <select
                                         className={cn(
                                             "border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-[200px] transition-colors",

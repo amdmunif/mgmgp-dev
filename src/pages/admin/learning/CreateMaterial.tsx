@@ -184,26 +184,31 @@ export function CreateMaterial() {
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">Mata Pelajaran</label>
-                                            <select
+                                            <input
+                                                list="mapel-list"
                                                 {...register('mapel')}
                                                 className="w-full rounded-md border border-gray-300 py-2 px-3 focus:ring-2 focus:ring-primary-500 bg-white"
-                                            >
-                                                <option value="Informatika">Informatika</option>
-                                                <option value="KKA">KKA</option>
-                                            </select>
+                                                placeholder="Pilih atau ketik Mapel"
+                                            />
+                                            <datalist id="mapel-list">
+                                                <option value="Informatika" />
+                                                <option value="KKA" />
+                                            </datalist>
                                         </div>
 
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">Kelas</label>
-                                            <select
+                                            <input
+                                                list="kelas-list"
                                                 {...register('kelas')}
                                                 className="w-full rounded-md border border-gray-300 py-2 px-3 focus:ring-2 focus:ring-primary-500 bg-white"
-                                            >
-                                                <option value="">- Pilih -</option>
-                                                <option value="7">Kelas 7</option>
-                                                <option value="8">Kelas 8</option>
-                                                <option value="9">Kelas 9</option>
-                                            </select>
+                                                placeholder="Pilih atau ketik Kelas"
+                                            />
+                                            <datalist id="kelas-list">
+                                                <option value="7" />
+                                                <option value="8" />
+                                                <option value="9" />
+                                            </datalist>
                                         </div>
                                     </div>
 

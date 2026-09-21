@@ -168,29 +168,33 @@ export function QuestionBuilder({ basePath = '/admin/questions' }: QuestionBuild
 
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Mata Pelajaran</label>
-                            <select
+                            <input
+                                list="mapel-list"
                                 className="w-full px-3 py-2 border rounded-lg bg-white"
+                                placeholder="Pilih atau ketik Mapel"
                                 value={q.mapel}
                                 onChange={e => setQ({ ...q, mapel: e.target.value })}
-                            >
-                                <option value="">Pilih Mapel</option>
-                                <option value="Informatika">Informatika</option>
-                                <option value="KKA">KKA</option>
-                            </select>
+                            />
+                            <datalist id="mapel-list">
+                                <option value="Informatika" />
+                                <option value="KKA" />
+                            </datalist>
                         </div>
 
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Kelas</label>
-                            <select
+                            <input
+                                list="kelas-list"
                                 className="w-full px-3 py-2 border rounded-lg bg-white"
+                                placeholder="Pilih atau ketik Kelas"
                                 value={q.kelas}
                                 onChange={e => setQ({ ...q, kelas: e.target.value })}
-                            >
-                                <option value="">Pilih Kelas</option>
-                                <option value="7">Kelas 7</option>
-                                <option value="8">Kelas 8</option>
-                                <option value="9">Kelas 9</option>
-                            </select>
+                            />
+                            <datalist id="kelas-list">
+                                <option value="7" />
+                                <option value="8" />
+                                <option value="9" />
+                            </datalist>
                         </div>
 
                         {/* TP Selector (Combobox) */}
