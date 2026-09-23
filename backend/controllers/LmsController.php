@@ -650,7 +650,7 @@ class LmsController
             $isPassed = $score >= (float)$quiz['passing_score'] ? 1 : 0;
             
             $attemptId = Helper::uuid();
-            $insAtt = $this->conn->prepare("INSERT INTO lms_quiz_attempts (id, user_id, quiz_id, status, finished_at, total_score, is_passed) VALUES (:id, :uid, :qid, 'completed', NOW(), :score, :passed)");
+            $insAtt = $this->conn->prepare("INSERT INTO lms_quiz_attempts (id, user_id, quiz_id, finished_at, total_score, is_passed) VALUES (:id, :uid, :qid, NOW(), :score, :passed)");
             $insAtt->execute([
                 ':id' => $attemptId,
                 ':uid' => $userId,
@@ -971,7 +971,9 @@ class LmsController
             }
 
             usort($allActivities, function($a, $b) {
-                return strtotime($b['completed_at']) - strtotime($a['completed_at']);
+                $timeA = isset($a['completed_at']) && $a['completed_at'] ? strtotime($a['completed_at']) : 0;
+                $timeB = isset($b['completed_at']) && $b['completed_at'] ? strtotime($b['completed_at']) : 0;
+                return $timeB - $timeA;
             });
 
             return json_encode($allActivities);
