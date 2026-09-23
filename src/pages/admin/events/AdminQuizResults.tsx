@@ -182,7 +182,7 @@ export function AdminQuizResults() {
             {
                 header: 'Status',
                 accessorKey: 'status',
-                cell: (p: any) => 'Selesai'
+                cell: () => 'Selesai'
             },
             {
                 header: 'Waktu Mulai',

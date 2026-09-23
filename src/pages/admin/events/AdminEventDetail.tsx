@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { contentManagementService } from '../../../services/contentManagementService';
-import { ArrowLeft, Calendar, MapPin, Users, CheckCircle, XCircle, Trash2, Printer, QrCode, X, MonitorPlay, Trophy, UserCheck, UserMinus, Search, FileSpreadsheet, Download, School } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, CheckCircle, XCircle, Trash2, Printer, QrCode, X, MonitorPlay, Trophy, UserCheck, UserMinus, Search, FileSpreadsheet, Download, School, FileText, Clock } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { api, getFileUrl } from '../../../lib/api';
 import { lmsService } from '../../../services/lmsService';
@@ -56,8 +56,14 @@ export function AdminEventDetail() {
     const [showQR, setShowQR] = useState(false);
     const [selectedQRDay, setSelectedQRDay] = useState<number>(1);
     const [activityModalOpen, setActivityModalOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState<'participants' | 'attendances' | 'leaderboard'>('participants');
+    const [attendancesMatrix, setAttendancesMatrix] = useState<any>(null);
+    const [leaderboard, setLeaderboard] = useState<any>(null);
+    const [loadingTabs, setLoadingTabs] = useState({
+        attendances: false,
+        leaderboard: false
+    });
     const [selectedParticipant, setSelectedParticipant] = useState<Participant | null>(null);
-
     const uniqueSchoolCount = useMemo(() => {
         const set = new Set(participants.map(p => p.asal_sekolah?.trim()).filter(Boolean));
         return set.size;
@@ -98,6 +104,42 @@ export function AdminEventDetail() {
             toast.error('Gagal memuat data event');
         } finally {
             setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (!id) return;
+        
+        if (activeTab === 'attendances' && !attendancesMatrix && !loadingTabs.attendances) {
+            loadAttendances();
+        } else if (activeTab === 'leaderboard' && !leaderboard && !loadingTabs.leaderboard) {
+            loadLeaderboard();
+        }
+    }, [activeTab, id]);
+
+    const loadAttendances = async () => {
+        setLoadingTabs(prev => ({ ...prev, attendances: true }));
+        try {
+            const data = await lmsService.getEventAttendancesMatrix(id!);
+            setAttendancesMatrix(data);
+        } catch (error) {
+            console.error(error);
+            toast.error('Gagal memuat data absensi');
+        } finally {
+            setLoadingTabs(prev => ({ ...prev, attendances: false }));
+        }
+    };
+
+    const loadLeaderboard = async () => {
+        setLoadingTabs(prev => ({ ...prev, leaderboard: true }));
+        try {
+            const data = await lmsService.getEventLeaderboard(id!);
+            setLeaderboard(data.leaderboard);
+        } catch (error) {
+            console.error(error);
+            toast.error('Gagal memuat leaderboard');
+        } finally {
+            setLoadingTabs(prev => ({ ...prev, leaderboard: false }));
         }
     };
 
@@ -614,8 +656,47 @@ export function AdminEventDetail() {
                 </div>
             </div>
 
+            {/* Navigation Tabs */}
+            <div className="flex border-b border-gray-200">
+                <button
+                    onClick={() => setActiveTab('participants')}
+                    className={`py-3 px-6 text-sm font-medium border-b-2 outline-none transition-colors ${
+                        activeTab === 'participants'
+                            ? 'border-blue-600 text-blue-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                >
+                    <Users className="w-4 h-4 inline-block mr-2" />
+                    Peserta Terdaftar
+                </button>
+                <button
+                    onClick={() => setActiveTab('attendances')}
+                    className={`py-3 px-6 text-sm font-medium border-b-2 outline-none transition-colors ${
+                        activeTab === 'attendances'
+                            ? 'border-blue-600 text-blue-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                >
+                    <Calendar className="w-4 h-4 inline-block mr-2" />
+                    Detail Absensi
+                </button>
+                {!!event?.has_lms && (
+                    <button
+                        onClick={() => setActiveTab('leaderboard')}
+                        className={`py-3 px-6 text-sm font-medium border-b-2 outline-none transition-colors ${
+                            activeTab === 'leaderboard'
+                                ? 'border-purple-600 text-purple-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        }`}
+                    >
+                        <Trophy className="w-4 h-4 inline-block mr-2" />
+                        Peserta Terbaik
+                    </button>
+                )}
+            </div>
 
-            {/* Participants List */}
+            {/* Main Content Area */}
+            {activeTab === 'participants' && (
             <div className="space-y-4">
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <div className="flex flex-row flex-wrap items-center justify-between gap-4 mb-6">
@@ -726,6 +807,145 @@ export function AdminEventDetail() {
                     />
                 </div>
             </div>
+            )}
+
+            {activeTab === 'attendances' && (
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h2 className="text-lg font-bold flex items-center gap-2 mb-6">
+                        <Calendar className="w-5 h-5 text-gray-600" />
+                        Matriks Detail Absensi
+                    </h2>
+                    {loadingTabs.attendances ? (
+                        <div className="flex justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>
+                    ) : attendancesMatrix ? (
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm text-left">
+                                <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+                                    <tr>
+                                        <th className="px-6 py-3 rounded-tl-lg whitespace-nowrap bg-gray-100 sticky left-0 z-10">Nama Peserta</th>
+                                        <th className="px-6 py-3 border-l border-gray-200">Asal Sekolah</th>
+                                        {attendancesMatrix.columns.map((col: any) => (
+                                            <th key={col.day} className="px-6 py-3 border-l border-gray-200 text-center">{col.title}</th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {attendancesMatrix.participants.map((p: any) => (
+                                        <tr key={p.user_id} className="border-b hover:bg-gray-50">
+                                            <td className="px-6 py-4 font-medium text-gray-900 bg-white sticky left-0 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] z-10">
+                                                {p.user_name}
+                                            </td>
+                                            <td className="px-6 py-4 border-l border-gray-100 text-gray-500 whitespace-nowrap">
+                                                {p.asal_sekolah || '-'}
+                                            </td>
+                                            {attendancesMatrix.columns.map((col: any) => {
+                                                const time = attendancesMatrix.attendances[p.user_id]?.[`day_${col.day}`];
+                                                return (
+                                                    <td key={col.day} className="px-6 py-4 border-l border-gray-100 text-center">
+                                                        {time ? (
+                                                            <span className="inline-flex items-center gap-1 text-green-600 font-medium">
+                                                                <CheckCircle className="w-3 h-3" /> {time}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-gray-300">-</span>
+                                                        )}
+                                                    </td>
+                                                );
+                                            })}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : (
+                        <p className="text-gray-500 text-center py-4">Tidak ada data absensi</p>
+                    )}
+                </div>
+            )}
+
+            {activeTab === 'leaderboard' && (
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h2 className="text-lg font-bold flex items-center gap-2 mb-6">
+                        <Trophy className="w-5 h-5 text-purple-600" />
+                        Leaderboard Peserta Terbaik
+                    </h2>
+                    {loadingTabs.leaderboard ? (
+                        <div className="flex justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div></div>
+                    ) : leaderboard ? (
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm text-left">
+                                <thead className="text-xs text-gray-700 uppercase bg-purple-50">
+                                    <tr>
+                                        <th className="px-6 py-3 rounded-tl-lg">Peringkat</th>
+                                        <th className="px-6 py-3">Peserta</th>
+                                        <th className="px-6 py-3 text-center">Tepat Waktu</th>
+                                        <th className="px-6 py-3 text-center">Rata-rata Absen</th>
+                                        <th className="px-6 py-3 text-right">Total Nilai</th>
+                                        <th className="px-6 py-3 rounded-tr-lg text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {leaderboard.map((user: any, index: number) => (
+                                        <tr key={user.user_id} className="border-b hover:bg-gray-50">
+                                            <td className="px-6 py-4 text-center font-bold text-lg">
+                                                {index === 0 && <Trophy className="w-6 h-6 text-yellow-500 inline-block" />}
+                                                {index === 1 && <Trophy className="w-6 h-6 text-gray-400 inline-block" />}
+                                                {index === 2 && <Trophy className="w-6 h-6 text-amber-600 inline-block" />}
+                                                {index > 2 && <span className="text-gray-500">{user.rank}</span>}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    {user.foto_profile ? (
+                                                        <img src={getFileUrl(user.foto_profile)} className="w-8 h-8 rounded-full object-cover" />
+                                                    ) : (
+                                                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
+                                                            {user.user_name.charAt(0)}
+                                                        </div>
+                                                    )}
+                                                    <div>
+                                                        <div className="font-medium text-gray-900">{user.user_name}</div>
+                                                        <div className="text-xs text-gray-500">{user.asal_sekolah || '-'}</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                {user.on_time_bonus > 0 ? (
+                                                    <span className="text-green-600 font-medium text-xs bg-green-50 px-2 py-1 rounded">+{user.on_time_bonus} Poin</span>
+                                                ) : <span className="text-gray-300">-</span>}
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                {user.average_attendance_time ? (
+                                                    <div className="flex flex-col items-center">
+                                                        <span className="font-mono text-gray-700">{user.average_attendance_time}</span>
+                                                        {user.attendance_bonus > 0 && <span className="text-green-600 text-[10px]">+{user.attendance_bonus} Poin</span>}
+                                                    </div>
+                                                ) : <span className="text-gray-400">-</span>}
+                                            </td>
+                                            <td className="px-6 py-4 text-right font-bold text-purple-600 text-lg">
+                                                {user.total_score}
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                <Button 
+                                                    size="sm" 
+                                                    variant="outline"
+                                                    onClick={() => {
+                                                        setSelectedParticipant(user);
+                                                        setActivityModalOpen(true);
+                                                    }}
+                                                >
+                                                    Detail
+                                                </Button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : (
+                        <p className="text-gray-500 text-center py-4">Belum ada data leaderboard</p>
+                    )}
+                </div>
+            )}
 
             {/* QR Code Modal */}
             {showQR && (
@@ -779,13 +999,78 @@ export function AdminEventDetail() {
                 </div>
             )}
 
-            <ParticipantActivityModal
-                isOpen={activityModalOpen}
-                onClose={() => setActivityModalOpen(false)}
-                eventId={id || ''}
-                userId={selectedParticipant?.user_id || ''}
-                userName={selectedParticipant?.nama || ''}
-            />
+            {activeTab === 'leaderboard' && activityModalOpen && selectedParticipant && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+                    <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full p-6 relative max-h-[90vh] flex flex-col">
+                        <button 
+                            onClick={() => setActivityModalOpen(false)}
+                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                        >
+                            <X className="w-6 h-6" />
+                        </button>
+                        
+                        <div className="mb-6 pb-4 border-b border-gray-100">
+                            <h3 className="text-xl font-bold text-gray-900">Rincian Aktivitas Leaderboard</h3>
+                            <p className="text-sm text-gray-500 mt-1">Peserta: <span className="font-semibold text-gray-800">{(selectedParticipant as any).user_name}</span></p>
+                        </div>
+
+                        <div className="overflow-y-auto flex-1 space-y-4 pr-2">
+                            {(selectedParticipant as any).activities?.map((act: any, idx: number) => (
+                                <div key={idx} className="bg-gray-50 rounded-lg p-4 flex gap-4 items-start border border-gray-100">
+                                    <div className={`p-2 rounded-lg shrink-0 ${
+                                        act.type === 'Kuis' ? 'bg-blue-100 text-blue-600' :
+                                        act.type === 'Tugas' ? 'bg-purple-100 text-purple-600' :
+                                        'bg-green-100 text-green-600'
+                                    }`}>
+                                        {act.type === 'Kuis' && <CheckCircle className="w-5 h-5" />}
+                                        {act.type === 'Tugas' && <FileText className="w-5 h-5" />}
+                                        {act.type === 'Absensi' && <Calendar className="w-5 h-5" />}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex justify-between items-start gap-2">
+                                            <h4 className="font-semibold text-gray-900 truncate" title={act.title}>{act.title}</h4>
+                                            <span className="text-xs font-medium text-gray-500 bg-white px-2 py-1 rounded border border-gray-200 shrink-0">
+                                                {new Date(act.date).toLocaleString('id-ID', {
+                                                    day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
+                                                })}
+                                            </span>
+                                        </div>
+                                        <div className="mt-2 flex flex-wrap gap-2 items-center text-sm">
+                                            {act.type !== 'Absensi' && (
+                                                <span className="bg-gray-200 text-gray-800 px-2 py-0.5 rounded font-medium">Nilai: {act.score}</span>
+                                            )}
+                                            {act.bonus > 0 && (
+                                                <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded font-medium flex items-center gap-1">
+                                                    <Trophy className="w-3 h-3" /> Bonus +{act.bonus} Poin
+                                                </span>
+                                            )}
+                                            {act.deadline && (
+                                                <span className="text-gray-500 text-xs flex items-center gap-1">
+                                                    <Clock className="w-3 h-3" />
+                                                    Tenggat: {new Date(act.deadline).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit' })}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                            {!(selectedParticipant as any).activities?.length && (
+                                <p className="text-gray-500 text-center py-8">Belum ada aktivitas yang tercatat</p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {activeTab === 'participants' && (
+                <ParticipantActivityModal
+                    isOpen={activityModalOpen}
+                    onClose={() => setActivityModalOpen(false)}
+                    eventId={id || ''}
+                    userId={selectedParticipant?.user_id || ''}
+                    userName={selectedParticipant?.nama || ''}
+                />
+            )}
         </div>
     );
 }

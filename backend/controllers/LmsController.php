@@ -1048,9 +1048,10 @@ class LmsController
                 return $timeB - $timeA;
             });
 
-    public function getAllParticipantsActivity($eventId)
-    {
-...
+            return json_encode($allActivities);
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            return json_encode(["message" => "Error: " . $e->getMessage()]);
         }
     }
 
@@ -1080,11 +1081,12 @@ class LmsController
             foreach ($quizzes as $q) {
                 $itemsByTopic[$q['topic_id']][] = $q;
             }
-            // Sort items inside topic by order_num
-            foreach ($itemsByTopic as $tid => &$items) {
+            // Sort items inside topic by order_num without using references
+            foreach ($itemsByTopic as $tid => $items) {
                 usort($items, function($a, $b) {
                     return $a['order_num'] - $b['order_num'];
                 });
+                $itemsByTopic[$tid] = $items;
             }
 
             // Combine into one ordered array of columns
@@ -1136,28 +1138,28 @@ class LmsController
             $asgProgress = $asgStmt->fetchAll(\PDO::FETCH_ASSOC);
 
             // Structure progress: progress[user_id][item_id] = { status, score, date }
-            $progress = [];
+            $progress = new \stdClass();
             foreach ($participants as $p) {
-                $progress[$p['user_id']] = (object)[];
+                $uid = $p['user_id'];
+                $progress->$uid = new \stdClass();
             }
             foreach ($progressRaw as $p) {
-                if (!isset($progress[$p['user_id']])) $progress[$p['user_id']] = (object)[];
-                // Casting to array to add properties, then back to object for JSON
-                $arr = (array)$progress[$p['user_id']];
-                $arr[$p['item_id']] = ['status' => $p['is_completed'] ? 'completed' : 'pending', 'date' => $p['completed_at']];
-                $progress[$p['user_id']] = (object)$arr;
+                $uid = $p['user_id'];
+                $iid = $p['item_id'];
+                if (!property_exists($progress, (string)$uid)) $progress->$uid = new \stdClass();
+                $progress->$uid->$iid = ['status' => $p['is_completed'] ? 'completed' : 'pending', 'date' => $p['completed_at']];
             }
             foreach ($quizProgress as $qp) {
-                if (!isset($progress[$qp['user_id']])) $progress[$qp['user_id']] = (object)[];
-                $arr = (array)$progress[$qp['user_id']];
-                $arr[$qp['item_id']] = ['status' => 'completed', 'score' => $qp['score']];
-                $progress[$qp['user_id']] = (object)$arr;
+                $uid = $qp['user_id'];
+                $iid = $qp['item_id'];
+                if (!property_exists($progress, (string)$uid)) $progress->$uid = new \stdClass();
+                $progress->$uid->$iid = ['status' => 'completed', 'score' => $qp['score']];
             }
             foreach ($asgProgress as $ap) {
-                if (!isset($progress[$ap['user_id']])) $progress[$ap['user_id']] = (object)[];
-                $arr = (array)$progress[$ap['user_id']];
-                $arr[$ap['item_id']] = ['status' => 'completed', 'score' => $ap['score']];
-                $progress[$ap['user_id']] = (object)$arr;
+                $uid = $ap['user_id'];
+                $iid = $ap['item_id'];
+                if (!property_exists($progress, (string)$uid)) $progress->$uid = new \stdClass();
+                $progress->$uid->$iid = ['status' => 'completed', 'score' => $ap['score']];
             }
 
             return json_encode([
@@ -1334,5 +1336,212 @@ public function getEventGradebook($eventId) {
         'participants' => $gradebook
     ]);
 }
+
+    public function getEventLeaderboard($eventId) {
+        try {
+            // 1. Get Participants
+            $qParts = "SELECT ep.user_id, p.nama as user_name, p.asal_sekolah, p.foto_profile 
+                       FROM event_participants ep 
+                       JOIN profiles p ON ep.user_id = p.id 
+                       WHERE ep.event_id = :eid
+                       ORDER BY p.nama ASC";
+            $stmt = $this->conn->prepare($qParts);
+            $stmt->execute([':eid' => $eventId]);
+            $participants = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            // 2. Get Quizzes
+            $qQuiz = "SELECT q.id, q.title FROM lms_quizzes q JOIN lms_topics t ON q.topic_id = t.id WHERE t.event_id = :eid";
+            $stmt = $this->conn->prepare($qQuiz);
+            $stmt->execute([':eid' => $eventId]);
+            $quizzes = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            // 3. Get Assignments
+            $qAsg = "SELECT m.id, m.title, m.deadline_at FROM lms_materials m JOIN lms_topics t ON m.topic_id = t.id WHERE t.event_id = :eid AND m.type = 'assignment'";
+            $stmt = $this->conn->prepare($qAsg);
+            $stmt->execute([':eid' => $eventId]);
+            $assignments = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            // 4. Get Quiz Scores
+            $qQuizScores = "SELECT qa.user_id, qa.quiz_id, qa.total_score, qa.started_at, q.title 
+                            FROM lms_quiz_attempts qa 
+                            JOIN lms_quizzes q ON qa.quiz_id = q.id
+                            JOIN lms_topics t ON q.topic_id = t.id 
+                            WHERE t.event_id = :eid
+                            ORDER BY qa.total_score DESC, qa.started_at DESC";
+            $stmt = $this->conn->prepare($qQuizScores);
+            $stmt->execute([':eid' => $eventId]);
+            $allQuizAttempts = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            $quizScores = [];
+            foreach ($allQuizAttempts as $qa) {
+                $uid = $qa['user_id'];
+                if (!isset($quizScores[$uid])) $quizScores[$uid] = [];
+                // Only keep highest/latest attempt per quiz per user
+                if (!isset($quizScores[$uid][$qa['quiz_id']])) {
+                    $quizScores[$uid][$qa['quiz_id']] = $qa;
+                }
+            }
+
+            // 5. Get Assignment Submissions
+            $qAsgScores = "SELECT s.user_id, s.assignment_id, s.score, s.submitted_at, m.title, m.deadline_at
+                           FROM lms_assignment_submissions s
+                           JOIN lms_materials m ON s.assignment_id = m.id
+                           JOIN lms_topics t ON m.topic_id = t.id
+                           WHERE t.event_id = :eid AND m.type = 'assignment'";
+            $stmt = $this->conn->prepare($qAsgScores);
+            $stmt->execute([':eid' => $eventId]);
+            $allAssignmentSubs = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            $assignmentScores = [];
+            foreach ($allAssignmentSubs as $sub) {
+                $uid = $sub['user_id'];
+                if (!isset($assignmentScores[$uid])) $assignmentScores[$uid] = [];
+                $assignmentScores[$uid][$sub['assignment_id']] = $sub;
+            }
+
+            // 6. Get Attendances
+            $qAtt = "SELECT user_id, attended_date FROM event_attendances WHERE event_id = :eid ORDER BY attended_date ASC";
+            $stmt = $this->conn->prepare($qAtt);
+            $stmt->execute([':eid' => $eventId]);
+            $allAttendances = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            $attendances = [];
+            foreach ($allAttendances as $att) {
+                $uid = $att['user_id'];
+                if (!isset($attendances[$uid])) $attendances[$uid] = [];
+                $attendances[$uid][] = $att['attended_date'];
+            }
+
+            // Calculate Leaderboard
+            $leaderboard = [];
+            foreach ($participants as $p) {
+                $uid = $p['user_id'];
+                
+                $totalQuizScore = 0;
+                $totalAsgScore = 0;
+                $onTimeBonus = 0;
+                $attendanceBonus = 0;
+                $activities = [];
+
+                // Process Quizzes
+                if (isset($quizScores[$uid])) {
+                    foreach ($quizScores[$uid] as $qid => $qdata) {
+                        $score = floatval($qdata['total_score']);
+                        $totalQuizScore += $score;
+                        $activities[] = [
+                            'type' => 'Kuis',
+                            'title' => $qdata['title'],
+                            'score' => $score,
+                            'date' => $qdata['started_at'],
+                            'bonus' => 0
+                        ];
+                    }
+                }
+
+                // Process Assignments
+                if (isset($assignmentScores[$uid])) {
+                    foreach ($assignmentScores[$uid] as $aid => $adata) {
+                        $score = floatval($adata['score']);
+                        $totalAsgScore += $score;
+                        
+                        // Check if on time
+                        $bonus = 0;
+                        if ($adata['deadline_at']) {
+                            $subTime = strtotime($adata['submitted_at']);
+                            $deadlineTime = strtotime($adata['deadline_at']);
+                            if ($subTime <= $deadlineTime) {
+                                $bonus = 10;
+                                $onTimeBonus += $bonus;
+                            }
+                        }
+
+                        $activities[] = [
+                            'type' => 'Tugas',
+                            'title' => $adata['title'],
+                            'score' => $score,
+                            'date' => $adata['submitted_at'],
+                            'bonus' => $bonus,
+                            'deadline' => $adata['deadline_at']
+                        ];
+                    }
+                }
+
+                // Process Attendances
+                $avgAttTime = null;
+                $attTimes = [];
+                if (isset($attendances[$uid])) {
+                    $totalTimeOffset = 0;
+                    foreach ($attendances[$uid] as $attDate) {
+                        $timeOnly = date('H:i:s', strtotime($attDate));
+                        $activities[] = [
+                            'type' => 'Absensi',
+                            'title' => 'Absensi Hari ' . date('d M Y', strtotime($attDate)),
+                            'score' => 0,
+                            'date' => $attDate,
+                            'bonus' => 0
+                        ];
+
+                        // Calculate offset from 00:00:00 in seconds to find average time
+                        $offset = strtotime($timeOnly) - strtotime('00:00:00');
+                        $totalTimeOffset += $offset;
+                        $attTimes[] = $timeOnly;
+
+                        // Give bonus if attendance is before 08:00 AM
+                        if ($timeOnly <= '08:00:00') {
+                            $attendanceBonus += 5;
+                        }
+                    }
+                    if (count($attendances[$uid]) > 0) {
+                        $avgOffset = $totalTimeOffset / count($attendances[$uid]);
+                        $avgAttTime = date('H:i:s', strtotime('00:00:00') + $avgOffset);
+                    }
+                }
+
+                $totalScore = $totalQuizScore + $totalAsgScore + $onTimeBonus + $attendanceBonus;
+
+                $leaderboard[] = [
+                    'user_id' => $uid,
+                    'user_name' => $p['user_name'],
+                    'asal_sekolah' => $p['asal_sekolah'],
+                    'foto_profile' => $p['foto_profile'],
+                    'quiz_score' => $totalQuizScore,
+                    'assignment_score' => $totalAsgScore,
+                    'on_time_bonus' => $onTimeBonus,
+                    'attendance_bonus' => $attendanceBonus,
+                    'total_score' => $totalScore,
+                    'average_attendance_time' => $avgAttTime,
+                    'attendance_count' => count($attTimes),
+                    'activities' => $activities
+                ];
+            }
+
+            // Sort by total score DESC, then average attendance time ASC (earlier is better)
+            usort($leaderboard, function($a, $b) {
+                if ($a['total_score'] == $b['total_score']) {
+                    if (!$a['average_attendance_time']) return 1;
+                    if (!$b['average_attendance_time']) return -1;
+                    return strcmp($a['average_attendance_time'], $b['average_attendance_time']);
+                }
+                return ($a['total_score'] > $b['total_score']) ? -1 : 1;
+            });
+
+            // Assign ranks
+            foreach ($leaderboard as $idx => &$user) {
+                $user['rank'] = $idx + 1;
+                // sort activities by date DESC
+                usort($user['activities'], function($a, $b) {
+                    return strtotime($b['date']) - strtotime($a['date']);
+                });
+            }
+
+            return json_encode([
+                "leaderboard" => $leaderboard
+            ]);
+
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            return json_encode(["message" => "Error: " . $e->getMessage()]);
+        }
+    }
 }
 ?>

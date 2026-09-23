@@ -946,5 +946,106 @@ class ContentController
             }
         }
     }
+
+    public function getEventAttendancesMatrix($eventId)
+    {
+        try {
+            // Get event dates config
+            $eventStmt = $this->conn->prepare("SELECT total_days, date FROM events WHERE id = :eid");
+            $eventStmt->execute([':eid' => $eventId]);
+            $event = $eventStmt->fetch(\PDO::FETCH_ASSOC);
+            
+            if (!$event) {
+                http_response_code(404);
+                return json_encode(["message" => "Event not found"]);
+            }
+
+            $totalDays = (int)$event['total_days'] ?: 1;
+            
+            // Generate columns
+            $columns = [];
+            for ($i = 1; $i <= $totalDays; $i++) {
+                $columns[] = [
+                    'day' => $i,
+                    'title' => 'Hari ' . $i
+                ];
+            }
+
+            // Get participants
+            $partStmt = $this->conn->prepare("
+                SELECT ep.user_id, p.nama as user_name, p.asal_sekolah 
+                FROM event_participants ep 
+                JOIN profiles p ON ep.user_id = p.id 
+                WHERE ep.event_id = :eid 
+                ORDER BY p.nama
+            ");
+            $partStmt->execute([':eid' => $eventId]);
+            $participants = $partStmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            // Get attendances
+            $attStmt = $this->conn->prepare("
+                SELECT user_id, attended_date 
+                FROM event_attendances 
+                WHERE event_id = :eid
+                ORDER BY attended_date ASC
+            ");
+            $attStmt->execute([':eid' => $eventId]);
+            $attendancesRaw = $attStmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            // Structure attendance data per participant per day
+            // We group by user_id and then map to day index (1, 2, 3...)
+            $attendances = new \stdClass();
+            foreach ($participants as $p) {
+                $uid = $p['user_id'];
+                $attendances->$uid = new \stdClass();
+            }
+
+            // We need to map actual date to Day index based on start date.
+            // Alternatively, just group by distinct dates or just assign sequentially.
+            // Since `total_days` implies sequential days from start date:
+            $startDateStr = $event['date'] ? date('Y-m-d', strtotime($event['date'])) : null;
+            
+            foreach ($attendancesRaw as $att) {
+                $uid = $att['user_id'];
+                if (!property_exists($attendances, (string)$uid)) {
+                    $attendances->$uid = new \stdClass();
+                }
+                
+                $attDateStr = date('Y-m-d', strtotime($att['attended_date']));
+                $attTimeStr = date('H:i', strtotime($att['attended_date']));
+                
+                // Calculate day index based on start date
+                $dayIndex = 1;
+                if ($startDateStr) {
+                    $diff = strtotime($attDateStr) - strtotime($startDateStr);
+                    $daysDiff = floor($diff / (60 * 60 * 24));
+                    if ($daysDiff >= 0 && $daysDiff < $totalDays) {
+                        $dayIndex = $daysDiff + 1;
+                    } else if ($daysDiff < 0) {
+                        $dayIndex = 1; // Early attendance
+                    } else {
+                        $dayIndex = $totalDays; // Late attendance
+                    }
+                }
+                
+                // If there's multiple attendances in the same day, keep the earliest or latest?
+                // Let's just keep the earliest
+                $dayKey = 'day_' . $dayIndex;
+                if (!property_exists($attendances->$uid, $dayKey)) {
+                    $attendances->$uid->$dayKey = $attTimeStr;
+                }
+            }
+
+            return json_encode([
+                "columns" => $columns,
+                "participants" => $participants,
+                "attendances" => $attendances
+            ]);
+
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            return json_encode(["message" => "Error: " . $e->getMessage()]);
+        }
+    }
 }
 ?>

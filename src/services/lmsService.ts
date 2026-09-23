@@ -155,5 +155,13 @@ export const lmsService = {
 
     getEventActivityMatrix: async (eventId: string): Promise<any> => {
         return await api.get(`/lms/activity/event/${eventId}/matrix`);
+    },
+
+    getEventLeaderboard: async (eventId: string): Promise<any> => {
+        return await api.get(`/lms/leaderboard/event/${eventId}`);
+    },
+
+    getEventAttendancesMatrix: async (eventId: string): Promise<any> => {
+        return await api.get(`/events/${eventId}/attendances-matrix`);
     }
 };

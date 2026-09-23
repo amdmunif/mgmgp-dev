@@ -289,6 +289,11 @@ if ($resource === 'news') {
             // GET /lms/gradebook/event/:eventId
             echo $controller->getEventGradebook($uri_parts[3]);
         }
+    } elseif ($action === 'leaderboard') {
+        if ($_SERVER['REQUEST_METHOD'] === 'GET' && $subAction === 'event' && isset($uri_parts[3])) {
+            // GET /lms/leaderboard/event/:eventId
+            echo $controller->getEventLeaderboard($uri_parts[3]);
+        }
     }
 } elseif ($resource === 'events') {
     $controller = new ContentController();
@@ -326,6 +331,9 @@ if ($resource === 'news') {
         } elseif ($action && $subAction === 'participants') {
             // GET /events/:id/participants
             echo $controller->getEventParticipants($action);
+        } elseif ($action && $subAction === 'attendances-matrix') {
+            // GET /events/:id/attendances-matrix
+            echo $controller->getEventAttendancesMatrix($action);
         } elseif ($action) {
             echo $controller->getEventDetail($action, in_array($userRole, ['Admin', 'Pengurus']));
         } else {
