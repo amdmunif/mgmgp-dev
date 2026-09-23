@@ -1498,6 +1498,13 @@ public function getEventGradebook($eventId) {
                     }
                 }
 
+                $latestActivityDate = null;
+                foreach ($activities as $act) {
+                    if (!$latestActivityDate || strtotime($act['date']) > strtotime($latestActivityDate)) {
+                        $latestActivityDate = $act['date'];
+                    }
+                }
+
                 $totalScore = $totalQuizScore + $totalAsgScore + $onTimeBonus + $attendanceBonus;
 
                 $leaderboard[] = [
@@ -1512,13 +1519,25 @@ public function getEventGradebook($eventId) {
                     'total_score' => $totalScore,
                     'average_attendance_time' => $avgAttTime,
                     'attendance_count' => count($attTimes),
+                    'latest_activity_date' => $latestActivityDate,
                     'activities' => $activities
                 ];
             }
 
-            // Sort by total score DESC, then average attendance time ASC (earlier is better)
+            // Sort by total score DESC, then latest activity ASC, then avg attendance time ASC
             usort($leaderboard, function($a, $b) {
                 if ($a['total_score'] == $b['total_score']) {
+                    // 1. Sort by latest_activity_date ASC (earlier is better)
+                    if ($a['latest_activity_date'] && $b['latest_activity_date']) {
+                        $cmp = strtotime($a['latest_activity_date']) - strtotime($b['latest_activity_date']);
+                        if ($cmp !== 0) return $cmp;
+                    } elseif ($a['latest_activity_date']) {
+                        return -1; // a has activities, b doesn't
+                    } elseif ($b['latest_activity_date']) {
+                        return 1;
+                    }
+                    
+                    // 2. Fallback to average attendance time
                     if (!$a['average_attendance_time']) return 1;
                     if (!$b['average_attendance_time']) return -1;
                     return strcmp($a['average_attendance_time'], $b['average_attendance_time']);
