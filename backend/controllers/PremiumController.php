@@ -199,7 +199,7 @@ class PremiumController
             $stmtUser->execute();
             $userRow = $stmtUser->fetch(PDO::FETCH_ASSOC);
             if ($userRow && $userRow['email']) {
-                Mailer::sendPremiumUpgradeRequest($userRow['email'], $userRow['nama']);
+                // Mailer::sendPremiumUpgradeRequest($userRow['email'], $userRow['nama']);
             }
             Helper::log($this->conn, $userId, 'User', 'CREATE_PREMIUM_REQUEST', "Request ID: $id");
 

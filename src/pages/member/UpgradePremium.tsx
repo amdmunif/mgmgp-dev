@@ -56,6 +56,14 @@ export function UpgradePremium() {
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
+            
+            // Check file size (max 2MB)
+            if (file.size > 2 * 1024 * 1024) {
+                alert('Ukuran file terlalu besar. Maksimal 2MB.');
+                e.target.value = ''; // Reset input
+                return;
+            }
+            
             setProofFile(file);
             setPreviewUrl(URL.createObjectURL(file));
         }
