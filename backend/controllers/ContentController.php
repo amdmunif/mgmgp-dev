@@ -801,10 +801,11 @@ class ContentController
         }
 
         // 2. Check if already attended today
-        $today = date('Y-m-d');
-        $checkDaily = "SELECT id FROM event_attendances WHERE event_id = :eid AND user_id = :uid AND attended_date = :today";
+        $todayDate = date('Y-m-d');
+        $nowDateTime = date('Y-m-d H:i:s');
+        $checkDaily = "SELECT id FROM event_attendances WHERE event_id = :eid AND user_id = :uid AND DATE(attended_date) = :today";
         $stmtDaily = $this->conn->prepare($checkDaily);
-        $stmtDaily->execute([':eid' => $eventId, ':uid' => $userId, ':today' => $today]);
+        $stmtDaily->execute([':eid' => $eventId, ':uid' => $userId, ':today' => $todayDate]);
         if ($stmtDaily->rowCount() > 0) {
             http_response_code(400);
             return json_encode(["message" => "Anda sudah melakukan absensi untuk hari ini."]);
@@ -816,10 +817,10 @@ class ContentController
         
         // 3. Mark as attended for today
         $attId = Helper::uuid();
-        $insertAtt = "INSERT INTO event_attendances (id, event_id, user_id, attended_date) VALUES (:id, :eid, :uid, :today)";
+        $insertAtt = "INSERT INTO event_attendances (id, event_id, user_id, attended_date) VALUES (:id, :eid, :uid, :nowDateTime)";
         $stmtInsAtt = $this->conn->prepare($insertAtt);
         
-        if ($stmtInsAtt->execute([':id' => $attId, ':eid' => $eventId, ':uid' => $userId, ':today' => $today])) {
+        if ($stmtInsAtt->execute([':id' => $attId, ':eid' => $eventId, ':uid' => $userId, ':nowDateTime' => $nowDateTime])) {
             $stmtTitle = $this->conn->prepare("SELECT title FROM events WHERE id = :eid");
             $stmtTitle->bindParam(':eid', $eventId);
             $stmtTitle->execute();

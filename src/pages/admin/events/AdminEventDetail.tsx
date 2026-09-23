@@ -56,12 +56,14 @@ export function AdminEventDetail() {
     const [showQR, setShowQR] = useState(false);
     const [selectedQRDay, setSelectedQRDay] = useState<number>(1);
     const [activityModalOpen, setActivityModalOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState<'participants' | 'attendances' | 'leaderboard'>('participants');
+    const [activeTab, setActiveTab] = useState<'participants' | 'attendances' | 'leaderboard' | 'activity'>('participants');
     const [attendancesMatrix, setAttendancesMatrix] = useState<any>(null);
     const [leaderboard, setLeaderboard] = useState<any>(null);
+    const [activityMatrix, setActivityMatrix] = useState<any>(null);
     const [loadingTabs, setLoadingTabs] = useState({
         attendances: false,
-        leaderboard: false
+        leaderboard: false,
+        activity: false
     });
     const [selectedParticipant, setSelectedParticipant] = useState<Participant | null>(null);
     const uniqueSchoolCount = useMemo(() => {
@@ -114,6 +116,8 @@ export function AdminEventDetail() {
             loadAttendances();
         } else if (activeTab === 'leaderboard' && !leaderboard && !loadingTabs.leaderboard) {
             loadLeaderboard();
+        } else if (activeTab === 'activity' && !activityMatrix && !loadingTabs.activity) {
+            loadActivityMatrix();
         }
     }, [activeTab, id]);
 
@@ -140,6 +144,19 @@ export function AdminEventDetail() {
             toast.error('Gagal memuat leaderboard');
         } finally {
             setLoadingTabs(prev => ({ ...prev, leaderboard: false }));
+        }
+    };
+
+    const loadActivityMatrix = async () => {
+        setLoadingTabs(prev => ({ ...prev, activity: true }));
+        try {
+            const data = await lmsService.getEventActivityMatrix(id!);
+            setActivityMatrix(data);
+        } catch (error) {
+            console.error(error);
+            toast.error('Gagal memuat matriks aktivitas');
+        } finally {
+            setLoadingTabs(prev => ({ ...prev, activity: false }));
         }
     };
 
@@ -681,17 +698,30 @@ export function AdminEventDetail() {
                     Detail Absensi
                 </button>
                 {!!event?.has_lms && (
-                    <button
-                        onClick={() => setActiveTab('leaderboard')}
-                        className={`py-3 px-6 text-sm font-medium border-b-2 outline-none transition-colors ${
-                            activeTab === 'leaderboard'
-                                ? 'border-purple-600 text-purple-600'
-                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                        }`}
-                    >
-                        <Trophy className="w-4 h-4 inline-block mr-2" />
-                        Peserta Terbaik
-                    </button>
+                    <>
+                        <button
+                            onClick={() => setActiveTab('leaderboard')}
+                            className={`py-3 px-6 text-sm font-medium border-b-2 outline-none transition-colors ${
+                                activeTab === 'leaderboard'
+                                    ? 'border-purple-600 text-purple-600'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                            }`}
+                        >
+                            <Trophy className="w-4 h-4 inline-block mr-2" />
+                            Peserta Terbaik
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('activity')}
+                            className={`py-3 px-6 text-sm font-medium border-b-2 outline-none transition-colors ${
+                                activeTab === 'activity'
+                                    ? 'border-orange-600 text-orange-600'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                            }`}
+                        >
+                            <FileText className="w-4 h-4 inline-block mr-2" />
+                            Laporan Aktivitas
+                        </button>
+                    </>
                 )}
             </div>
 
@@ -943,6 +973,63 @@ export function AdminEventDetail() {
                         </div>
                     ) : (
                         <p className="text-gray-500 text-center py-4">Belum ada data leaderboard</p>
+                    )}
+                </div>
+            )}
+
+            {/* Activity Matrix Content Area */}
+            {activeTab === 'activity' && (
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h2 className="text-lg font-bold flex items-center gap-2 mb-6">
+                        <FileText className="w-5 h-5 text-orange-600" />
+                        Laporan Aktivitas Peserta
+                    </h2>
+                    {loadingTabs.activity ? (
+                        <div className="flex justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div></div>
+                    ) : activityMatrix?.participants?.length > 0 ? (
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm text-left">
+                                <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+                                    <tr>
+                                        <th className="px-6 py-3 rounded-tl-lg whitespace-nowrap bg-gray-100 sticky left-0 z-10">Nama Peserta</th>
+                                        <th className="px-6 py-3 border-l border-gray-200">Asal Sekolah</th>
+                                        {activityMatrix.columns?.map((col: any) => (
+                                            <th key={col.id} className="px-6 py-3 border-l border-gray-200 text-center max-w-[150px]" title={col.title}>
+                                                <div className="text-[10px] text-gray-400 font-normal uppercase">{col.item_type === 'quiz' ? 'Kuis' : (col.item_type === 'assignment' ? 'Tugas' : 'Materi')}</div>
+                                                <div className="truncate">{col.title}</div>
+                                            </th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {activityMatrix.participants?.map((p: any) => (
+                                        <tr key={p.user_id} className="border-b hover:bg-gray-50">
+                                            <td className="px-6 py-4 font-medium text-gray-900 bg-white sticky left-0 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] z-10 whitespace-nowrap">
+                                                {p.user_name}
+                                            </td>
+                                            <td className="px-6 py-4 border-l border-gray-100 text-gray-500 whitespace-nowrap">
+                                                {p.asal_sekolah || '-'}
+                                            </td>
+                                            {activityMatrix.columns?.map((col: any) => {
+                                                const prog = activityMatrix.progress[p.user_id]?.[col.id];
+                                                const isCompleted = prog?.status === 'completed' || (col.item_type === 'quiz' && prog) || (col.item_type === 'assignment' && prog);
+                                                return (
+                                                    <td key={col.id} className="px-6 py-4 border-l border-gray-100 text-center">
+                                                        {isCompleted ? (
+                                                            <CheckCircle className="w-5 h-5 text-green-500 mx-auto" />
+                                                        ) : (
+                                                            <span className="text-gray-300">-</span>
+                                                        )}
+                                                    </td>
+                                                );
+                                            })}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : (
+                        <p className="text-gray-500 text-center py-4">Belum ada data aktivitas</p>
                     )}
                 </div>
             )}
