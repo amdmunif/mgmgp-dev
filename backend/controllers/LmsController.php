@@ -1104,7 +1104,7 @@ class LmsController
                 SELECT ep.user_id, p.nama as user_name, p.asal_sekolah 
                 FROM event_participants ep 
                 JOIN profiles p ON ep.user_id = p.id 
-                WHERE ep.event_id = :eid 
+                WHERE ep.event_id = :eid AND p.role != 'Pengurus'
                 ORDER BY p.nama
             ");
             $partStmt->execute([':eid' => $eventId]);
@@ -1235,7 +1235,7 @@ public function getEventGradebook($eventId) {
     $qParts = "SELECT ep.user_id, p.nama, p.asal_sekolah, p.foto_profile 
                FROM event_participants ep 
                LEFT JOIN profiles p ON ep.user_id = p.id 
-               WHERE ep.event_id = :eid
+               WHERE ep.event_id = :eid AND p.role != 'Pengurus'
                ORDER BY p.nama ASC";
     $stmt = $this->conn->prepare($qParts);
     $stmt->execute([':eid' => $eventId]);
@@ -1343,7 +1343,7 @@ public function getEventGradebook($eventId) {
             $qParts = "SELECT ep.user_id, p.nama as user_name, p.asal_sekolah, p.foto_profile 
                        FROM event_participants ep 
                        JOIN profiles p ON ep.user_id = p.id 
-                       WHERE ep.event_id = :eid
+                       WHERE ep.event_id = :eid AND p.role != 'Pengurus'
                        ORDER BY p.nama ASC";
             $stmt = $this->conn->prepare($qParts);
             $stmt->execute([':eid' => $eventId]);
