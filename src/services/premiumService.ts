@@ -20,10 +20,12 @@ export const premiumService = {
     // Member: Submit a new upgrade request
     async submitRequest(file: File, bankInfo: { bank_name: string, account_number: string, account_holder: string }) {
         try {
-            // Upload proof via PHP Upload (reusing settingsService upload or similar)
-            // Using dynamic import to avoid circular dependency if any, or just cleaner.
-            const { settingsService } = await import('./settingsService');
-            const proofUrl = await settingsService.uploadLogo(file);
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('folder', 'premium_proofs');
+
+            const uploadData = await api.post<any>('/upload', formData);
+            const proofUrl = uploadData.url;
 
             if (!proofUrl) throw new Error("Gagal mendapatkan URL bukti pembayaran");
 

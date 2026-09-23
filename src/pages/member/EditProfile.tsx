@@ -3,7 +3,6 @@ import { Camera, Save, User as UserIcon, Building2, GraduationCap, Loader2 } fro
 import { toast } from 'react-hot-toast';
 import { api } from '../../lib/api';
 import { getFileUrl } from '../../lib/api';
-import { settingsService } from '../../services/settingsService';
 import { Button } from '../../components/ui/button';
 import { useOutletContext } from 'react-router-dom';
 import { ChangePasswordForm } from '../../components/member/ChangePasswordForm';
@@ -109,8 +108,12 @@ export function EditProfile() {
         setUploading(true);
 
         try {
-            const url = await settingsService.uploadLogo(file);
-            setAvatarUrl(url);
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('folder', 'avatars');
+            
+            const data = await api.post<any>('/upload', formData);
+            setAvatarUrl(data.url);
             toast.success('Foto berhasil diupload! Jangan lupa simpan perubahan.');
         } catch (error: any) {
             console.error('Error uploading avatar:', error);
