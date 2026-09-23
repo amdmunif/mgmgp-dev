@@ -15,6 +15,10 @@ export function AdminActivityReport() {
     const { setPageHeader } = useOutletContext<any>() || {};
     const [loading, setLoading] = useState(true);
     const [activities, setActivities] = useState<any[]>([]);
+    
+    const [viewMode, setViewMode] = useState<'summary' | 'matrix'>('summary');
+    const [matrixData, setMatrixData] = useState<any>(null);
+    const [loadingMatrix, setLoadingMatrix] = useState(false);
 
     useEffect(() => {
         if (setPageHeader) {
@@ -24,12 +28,15 @@ export function AdminActivityReport() {
                 icon: <Activity className="w-6 h-6" />
             });
         }
-        if (id) {
+        if (id && viewMode === 'summary') {
             loadActivities();
+        } else if (id && viewMode === 'matrix') {
+            loadMatrix();
         }
-    }, [id, setPageHeader]);
+    }, [id, setPageHeader, viewMode]);
 
     const loadActivities = async () => {
+        if (activities.length > 0) return;
         try {
             setLoading(true);
             const data = await lmsService.getAllParticipantsActivity(id!);
@@ -39,6 +46,20 @@ export function AdminActivityReport() {
             toast.error(error.message || "Gagal memuat aktivitas peserta");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const loadMatrix = async () => {
+        if (matrixData) return;
+        try {
+            setLoadingMatrix(true);
+            const data = await lmsService.getEventActivityMatrix(id!);
+            setMatrixData(data);
+        } catch (error: any) {
+            console.error(error);
+            toast.error("Gagal memuat detail matrix");
+        } finally {
+            setLoadingMatrix(false);
         }
     };
 
@@ -200,34 +221,151 @@ export function AdminActivityReport() {
         ];
     };
 
-    if (loading) return <div className="p-8 text-center flex items-center justify-center gap-2"><Loader2 className="w-5 h-5 animate-spin" /> Memuat daftar aktivitas...</div>;
+    const buildMatrixColumns = () => {
+        if (!matrixData || !matrixData.columns) return [];
+        
+        const cols: any[] = [
+            {
+                header: 'Nama Peserta',
+                accessorKey: 'user_name',
+                cell: (p: any) => (
+                    <div className="min-w-[150px]">
+                        <div className="font-medium text-gray-900 truncate">{p.user_name}</div>
+                        {p.asal_sekolah && <div className="text-xs text-gray-500 truncate">{p.asal_sekolah}</div>}
+                    </div>
+                )
+            }
+        ];
+
+        // Group columns by topic visually by just rendering them sequentially
+        matrixData.columns.forEach((col: any) => {
+            cols.push({
+                header: (
+                    <div className="text-center min-w-[100px]">
+                        <div className="text-xs text-gray-400 font-normal truncate max-w-[120px]" title={col.topic_title}>{col.topic_title}</div>
+                        <div className="text-sm font-medium text-gray-800 truncate max-w-[120px]" title={col.title}>{col.title}</div>
+                    </div>
+                ),
+                accessorKey: `col_${col.id}`,
+                cell: (p: any) => {
+                    const prog = matrixData.progress?.[p.user_id]?.[col.id];
+                    if (!prog) return <div className="text-center text-gray-300">-</div>;
+                    
+                    if (col.item_type === 'material') {
+                        return (
+                            <div className="flex justify-center text-green-600">
+                                <span className="text-xs bg-green-50 px-2 py-0.5 rounded-full font-medium">Completed</span>
+                            </div>
+                        );
+                    } else {
+                        // quiz or assignment
+                        const score = prog.score !== undefined && prog.score !== null ? Number(prog.score) : null;
+                        return (
+                            <div className="text-center font-medium">
+                                {score !== null ? (
+                                    <span className={score >= 70 ? 'text-green-600' : 'text-orange-500'}>
+                                        {score.toFixed(2)}
+                                    </span>
+                                ) : (
+                                    <span className="text-gray-400 text-xs">Completed</span>
+                                )}
+                            </div>
+                        );
+                    }
+                }
+            });
+        });
+
+        return cols;
+    };
 
     return (
         <div className="space-y-6">
-            <DataTable 
-                data={activities} 
-                columns={buildColumns()} 
-                searchKeys={['user_name', 'title']}
-                pageSize={15}
-                filterContent={
-                    <div className="flex flex-wrap items-center gap-2">
-                        <Button size="sm" variant="outline" onClick={handlePrint} className="text-gray-700 hover:bg-gray-100">
-                            <Printer className="w-4 h-4 mr-1.5" /> Print
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={exportToPDF} className="text-red-600 border-red-200 hover:bg-red-50">
-                            <FileText className="w-4 h-4 mr-1.5" /> PDF
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={exportToExcel} className="text-green-600 border-green-200 hover:bg-green-50">
-                            <FileSpreadsheet className="w-4 h-4 mr-1.5" /> Excel
-                        </Button>
-                        <div className="h-6 w-px bg-gray-200 mx-1 hidden sm:block"></div>
-                        <Button size="sm" variant="outline" onClick={() => navigate(`/admin/events/${id}/lms`)} className="bg-white text-gray-700 hover:bg-gray-100 shadow-sm">
-                            <ArrowLeft className="w-4 h-4 mr-1.5" />
-                            Kembali ke Kelola LMS
-                        </Button>
-                    </div>
-                }
-            />
+            <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                <div className="flex bg-gray-100 p-1 rounded-lg">
+                    <button
+                        onClick={() => setViewMode('summary')}
+                        className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                            viewMode === 'summary' 
+                            ? 'bg-white text-gray-900 shadow-sm' 
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/50'
+                        }`}
+                    >
+                        Log Ringkasan
+                    </button>
+                    <button
+                        onClick={() => setViewMode('matrix')}
+                        className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                            viewMode === 'matrix' 
+                            ? 'bg-white text-gray-900 shadow-sm' 
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/50'
+                        }`}
+                    >
+                        Detail Matrix
+                    </button>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" onClick={exportToExcel} className="border-gray-200 text-gray-700 bg-white hover:bg-gray-50">
+                        <FileSpreadsheet className="w-4 h-4 mr-2 text-green-600" /> Excel
+                    </Button>
+                    <Button variant="outline" onClick={exportToPDF} className="border-gray-200 text-gray-700 bg-white hover:bg-gray-50">
+                        <FileText className="w-4 h-4 mr-2 text-red-500" /> PDF
+                    </Button>
+                    <Button variant="outline" onClick={handlePrint} className="border-gray-200 text-gray-700 bg-white hover:bg-gray-50">
+                        <Printer className="w-4 h-4 mr-2 text-blue-600" /> Cetak
+                    </Button>
+                </div>
+            </div>
+
+            {viewMode === 'summary' ? (
+                <div key="summary" className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    {loading ? (
+                        <div className="flex justify-center p-12">
+                            <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+                        </div>
+                    ) : (
+                        <DataTable 
+                            columns={buildColumns()} 
+                            data={activities}
+                            searchKeys={['user_name', 'title']}
+                            pageSize={15}
+                            filterContent={
+                                <Button size="sm" variant="outline" onClick={() => navigate(`/admin/events/${id}/lms`)} className="bg-white text-gray-700 hover:bg-gray-100 shadow-sm">
+                                    <ArrowLeft className="w-4 h-4 mr-1.5" />
+                                    Kembali ke Kelola LMS
+                                </Button>
+                            }
+                        />
+                    )}
+                </div>
+            ) : (
+                <div key="matrix" className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    {loadingMatrix ? (
+                        <div className="flex justify-center p-12">
+                            <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+                        </div>
+                    ) : matrixData ? (
+                        <div className="overflow-x-auto w-full">
+                            <DataTable 
+                                columns={buildMatrixColumns()} 
+                                data={matrixData.participants || []}
+                                searchKeys={['user_name', 'asal_sekolah']}
+                                pageSize={15}
+                                filterContent={
+                                    <Button size="sm" variant="outline" onClick={() => navigate(`/admin/events/${id}/lms`)} className="bg-white text-gray-700 hover:bg-gray-100 shadow-sm">
+                                        <ArrowLeft className="w-4 h-4 mr-1.5" />
+                                        Kembali ke Kelola LMS
+                                    </Button>
+                                }
+                            />
+                        </div>
+                    ) : (
+                        <div className="text-center py-12 text-gray-500">
+                            Gagal memuat matrix.
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 }

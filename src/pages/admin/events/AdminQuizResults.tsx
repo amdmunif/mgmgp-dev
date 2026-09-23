@@ -18,6 +18,11 @@ export function AdminQuizResults() {
     const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
     const [loadingDetails, setLoadingDetails] = useState(false);
     const [selectedAttemptDetails, setSelectedAttemptDetails] = useState<any>(null);
+    
+    // Matrix View State
+    const [viewMode, setViewMode] = useState<'summary' | 'matrix'>('summary');
+    const [detailedResults, setDetailedResults] = useState<any>(null);
+    const [loadingMatrix, setLoadingMatrix] = useState(false);
 
     useEffect(() => {
         if (setPageHeader) {
@@ -42,6 +47,25 @@ export function AdminQuizResults() {
             setLoading(false);
         }
     };
+
+    const fetchDetailedResults = async () => {
+        if (detailedResults) return; // already fetched
+        try {
+            setLoadingMatrix(true);
+            const data = await lmsService.getQuizDetailedResults(quizId!);
+            setDetailedResults(data);
+        } catch (error) {
+            toast.error("Gagal memuat detail matrix");
+        } finally {
+            setLoadingMatrix(false);
+        }
+    };
+
+    useEffect(() => {
+        if (viewMode === 'matrix') {
+            fetchDetailedResults();
+        }
+    }, [viewMode]);
 
     const handleViewDetails = async (attemptId: string) => {
         setIsDetailsModalOpen(true);
@@ -141,6 +165,80 @@ export function AdminQuizResults() {
         ];
     };
 
+    const buildMatrixColumns = () => {
+        if (!detailedResults || !detailedResults.questions) return [];
+        
+        const cols: any[] = [
+            {
+                header: 'Nama Peserta',
+                accessorKey: 'user_name',
+                cell: (p: any) => (
+                    <div>
+                        <div className="font-medium text-gray-900">{p.user_name}</div>
+                        {p.user_email && <div className="text-xs text-gray-500">{p.user_email}</div>}
+                    </div>
+                )
+            },
+            {
+                header: 'Status',
+                accessorKey: 'status',
+                cell: (p: any) => 'Selesai'
+            },
+            {
+                header: 'Waktu Mulai',
+                accessorKey: 'started_at',
+                cell: (p: any) => formatDate(p.started_at)
+            },
+            {
+                header: 'Waktu Selesai',
+                accessorKey: 'finished_at',
+                cell: (p: any) => formatDate(p.finished_at)
+            },
+            {
+                header: 'Nilai',
+                accessorKey: 'total_score',
+                cell: (p: any) => (
+                    <div className="font-bold text-gray-900">
+                        {p.total_score !== null ? Number(p.total_score) : '-'}
+                    </div>
+                )
+            }
+        ];
+
+        // Add columns for each question
+        detailedResults.questions.forEach((q: any, idx: number) => {
+            cols.push({
+                header: (
+                    <div className="text-center">
+                        <div>Q.{idx + 1}</div>
+                        <div className="text-xs font-normal text-gray-500">/{q.points}</div>
+                    </div>
+                ),
+                accessorKey: `q_${q.id}`,
+                cell: (p: any) => {
+                    const ans = p.answers?.[q.id];
+                    if (!ans) return <div className="text-center text-gray-400">-</div>;
+                    
+                    const isCorrect = ans.is_correct == 1 || ans.is_correct === true;
+                    return (
+                        <div className="flex items-center justify-center gap-1.5">
+                            {isCorrect ? (
+                                <CheckCircle2 className="w-4 h-4 text-green-500" />
+                            ) : (
+                                <XCircle className="w-4 h-4 text-red-500" />
+                            )}
+                            <span className={isCorrect ? "text-green-700 font-medium" : "text-red-600 font-medium"}>
+                                {ans.score_awarded}
+                            </span>
+                        </div>
+                    );
+                }
+            });
+        });
+
+        return cols;
+    };
+
     return (
         <div className="space-y-6">
             {loading ? (
@@ -158,18 +256,76 @@ export function AdminQuizResults() {
                     </Button>
                 </div>
             ) : (
-                <DataTable 
-                    data={attempts} 
-                    columns={buildColumns()} 
-                    searchKeys={['user_name']}
-                    pageSize={15}
-                    filterContent={
-                        <Button variant="outline" onClick={() => navigate(`/admin/events/${id}/lms`)} className="bg-white text-gray-700 hover:bg-gray-100 shadow-sm">
-                            <ArrowLeft className="w-4 h-4 mr-2" />
-                            Kembali ke Kelas
-                        </Button>
-                    }
-                />
+                <>
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex bg-gray-100 p-1 rounded-lg">
+                            <button
+                                onClick={() => setViewMode('summary')}
+                                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                                    viewMode === 'summary' 
+                                    ? 'bg-white text-gray-900 shadow-sm' 
+                                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/50'
+                                }`}
+                            >
+                                Ringkasan
+                            </button>
+                            <button
+                                onClick={() => setViewMode('matrix')}
+                                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                                    viewMode === 'matrix' 
+                                    ? 'bg-white text-gray-900 shadow-sm' 
+                                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/50'
+                                }`}
+                            >
+                                Detail Matrix
+                            </button>
+                        </div>
+                    </div>
+
+                    {viewMode === 'summary' ? (
+                        <div key="summary" className="bg-white rounded-xl shadow-sm border border-gray-100">
+                            <DataTable 
+                                data={attempts} 
+                                columns={buildColumns()} 
+                                searchKeys={['user_name']}
+                                pageSize={15}
+                                filterContent={
+                                    <Button variant="outline" onClick={() => navigate(`/admin/events/${id}/lms`)} className="bg-white text-gray-700 hover:bg-gray-100 shadow-sm">
+                                        <ArrowLeft className="w-4 h-4 mr-2" />
+                                        Kembali ke Kelas
+                                    </Button>
+                                }
+                            />
+                        </div>
+                    ) : (
+                        <div key="matrix" className="bg-white rounded-xl shadow-sm border border-gray-100">
+                            {loadingMatrix ? (
+                                <div className="flex justify-center p-12">
+                                    <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+                                </div>
+                            ) : detailedResults ? (
+                                <div className="overflow-x-auto w-full">
+                                    <DataTable
+                                        columns={buildMatrixColumns()}
+                                        data={detailedResults.attempts || []}
+                                        searchKeys={['user_name', 'user_email']}
+                                        pageSize={15}
+                                        filterContent={
+                                            <Button variant="outline" onClick={() => navigate(`/admin/events/${id}/lms`)} className="bg-white text-gray-700 hover:bg-gray-100 shadow-sm">
+                                                <ArrowLeft className="w-4 h-4 mr-2" />
+                                                Kembali ke Kelas
+                                            </Button>
+                                        }
+                                    />
+                                </div>
+                            ) : (
+                                <div className="text-center py-12 text-gray-500">
+                                    Gagal memuat matrix.
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </>
             )}
 
             {/* Modal Detail Jawaban */}
@@ -244,7 +400,7 @@ export function AdminQuizResults() {
                                                             <div className="mt-0.5 shrink-0 w-5 h-5 flex items-center justify-center">
                                                                 {icon || <div className="w-4 h-4 rounded-full border border-gray-300"></div>}
                                                             </div>
-                                                            <div className="text-sm text-gray-700 flex-1">{opt.text}</div>
+                                                            <div className="text-sm text-gray-700 flex-1" dangerouslySetInnerHTML={{ __html: opt.text || opt.option_text || '' }} />
                                                         </div>
                                                     );
                                                 })}

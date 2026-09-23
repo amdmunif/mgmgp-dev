@@ -209,6 +209,10 @@ if ($resource === 'news') {
                 // GET /lms/quizzes/all-attempts/:quizId
                 $quizId = isset($uri_parts[3]) ? $uri_parts[3] : '';
                 echo $controller->getAllQuizAttempts($quizId);
+            } elseif ($subAction === 'detailed-results') {
+                // GET /lms/quizzes/detailed-results/:quizId
+                $quizId = isset($uri_parts[3]) ? $uri_parts[3] : '';
+                echo $controller->getQuizDetailedResults($quizId);
             } elseif ($subAction === 'my-attempts') {
                 // GET /lms/quizzes/my-attempts/:quizId
                 $quizId = isset($uri_parts[3]) ? $uri_parts[3] : '';
@@ -275,6 +279,9 @@ if ($resource === 'news') {
             } elseif (isset($uri_parts[4]) && $uri_parts[4] === 'all') {
                 // GET /lms/activity/event/:eventId/all
                 echo $controller->getAllParticipantsActivity($uri_parts[3]);
+            } elseif (isset($uri_parts[4]) && $uri_parts[4] === 'matrix') {
+                // GET /lms/activity/event/:eventId/matrix
+                echo $controller->getEventActivityMatrix($uri_parts[3]);
             }
         }
     } elseif ($action === 'gradebook') {

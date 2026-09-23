@@ -759,6 +759,78 @@ class LmsController
         }
     }
 
+    public function getQuizDetailedResults($quizId) {
+        try {
+            // 1. Get Questions
+            $qStmt = $this->conn->prepare("
+                SELECT id, question_text, question_type, points, order_num 
+                FROM lms_quiz_questions 
+                WHERE quiz_id = :qid 
+                ORDER BY order_num, id
+            ");
+            $qStmt->execute([':qid' => $quizId]);
+            $questions = $qStmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            // 2. Get Best Attempts
+            $query = "SELECT a.*, p.nama as user_name, u.email as user_email
+                      FROM lms_quiz_attempts a 
+                      LEFT JOIN profiles p ON a.user_id = p.id 
+                      LEFT JOIN users u ON a.user_id = u.id
+                      WHERE a.quiz_id = :qid 
+                      ORDER BY a.total_score DESC, a.started_at DESC";
+            $stmt = $this->conn->prepare($query);
+            $stmt->execute([':qid' => $quizId]);
+            $allAttempts = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            $bestAttempts = [];
+            $seenUsers = [];
+            $attemptIds = [];
+            foreach ($allAttempts as $attempt) {
+                if (!isset($seenUsers[$attempt['user_id']])) {
+                    $bestAttempts[] = $attempt;
+                    $seenUsers[$attempt['user_id']] = true;
+                    $attemptIds[] = $attempt['id'];
+                }
+            }
+
+            // 3. Get Answers for these attempts
+            $answersByAttempt = [];
+            if (count($attemptIds) > 0) {
+                $inQuery = implode(',', array_fill(0, count($attemptIds), '?'));
+                $ansStmt = $this->conn->prepare("
+                    SELECT attempt_id, question_id, is_correct, score_awarded 
+                    FROM lms_quiz_answers 
+                    WHERE attempt_id IN ($inQuery)
+                ");
+                $ansStmt->execute($attemptIds);
+                $answers = $ansStmt->fetchAll(\PDO::FETCH_ASSOC);
+
+                foreach ($answers as $ans) {
+                    if (!isset($answersByAttempt[$ans['attempt_id']])) {
+                        $answersByAttempt[$ans['attempt_id']] = [];
+                    }
+                    $answersByAttempt[$ans['attempt_id']][$ans['question_id']] = [
+                        'is_correct' => $ans['is_correct'],
+                        'score_awarded' => $ans['score_awarded']
+                    ];
+                }
+            }
+
+            // 4. Merge answers into attempts
+            foreach ($bestAttempts as &$attempt) {
+                $attempt['answers'] = $answersByAttempt[$attempt['id']] ?? (object)[];
+            }
+
+            return json_encode([
+                "questions" => $questions,
+                "attempts" => $bestAttempts
+            ]);
+        } catch (\PDOException $e) {
+            http_response_code(500);
+            return json_encode(["message" => "Database error: " . $e->getMessage()]);
+        }
+    }
+
     public function deleteQuizAttempt($attemptId) {
         try {
             $this->conn->beginTransaction();
@@ -866,8 +938,8 @@ class LmsController
                 SELECT m.id, m.title, m.type, p.completed_at 
                 FROM lms_materials m
                 JOIN lms_topics t ON m.topic_id = t.id
-                JOIN lms_user_progress p ON p.item_id = m.id AND p.item_type = 'material'
-                WHERE t.event_id = :eid AND p.user_id = :uid AND p.is_completed = 1
+                JOIN lms_user_progress p ON p.item_id = m.id 
+                WHERE t.event_id = :eid AND p.user_id = :uid AND p.is_completed = 1 AND m.type != 'assignment'
                 ORDER BY p.completed_at DESC
             ";
             $stmtM = $this->conn->prepare($queryMaterials);
@@ -919,10 +991,10 @@ class LmsController
                 SELECT m.id, m.title, m.type, p.completed_at, pr.nama as user_name, pr.asal_sekolah
                 FROM lms_materials m
                 JOIN lms_topics t ON m.topic_id = t.id
-                JOIN lms_user_progress p ON p.item_id = m.id AND p.item_type = 'material'
+                JOIN lms_user_progress p ON p.item_id = m.id 
                 JOIN event_participants ep ON ep.user_id = p.user_id AND ep.event_id = :eid
                 LEFT JOIN profiles pr ON pr.id = p.user_id
-                WHERE t.event_id = :eid AND p.is_completed = 1
+                WHERE t.event_id = :eid AND p.is_completed = 1 AND m.type != 'assignment'
             ";
             $stmtM = $this->conn->prepare($queryMaterials);
             $stmtM->execute([':eid' => $eventId]);
@@ -976,7 +1048,124 @@ class LmsController
                 return $timeB - $timeA;
             });
 
-            return json_encode($allActivities);
+    public function getAllParticipantsActivity($eventId)
+    {
+...
+        }
+    }
+
+    public function getEventActivityMatrix($eventId)
+    {
+        try {
+            // 1. Get all topics & items for columns
+            $topicsStmt = $this->conn->prepare("SELECT id, title FROM lms_topics WHERE event_id = :eid ORDER BY order_num, created_at");
+            $topicsStmt->execute([':eid' => $eventId]);
+            $topics = $topicsStmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            $matStmt = $this->conn->prepare("SELECT id, topic_id, title, type as item_type, order_num FROM lms_materials WHERE topic_id IN (SELECT id FROM lms_topics WHERE event_id = :eid) ORDER BY order_num");
+            $matStmt->execute([':eid' => $eventId]);
+            $materials = $matStmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            $quizStmt = $this->conn->prepare("SELECT id, topic_id, title, 'quiz' as item_type, order_num FROM lms_quizzes WHERE topic_id IN (SELECT id FROM lms_topics WHERE event_id = :eid) ORDER BY order_num");
+            $quizStmt->execute([':eid' => $eventId]);
+            $quizzes = $quizStmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            $itemsByTopic = [];
+            foreach ($topics as $t) {
+                $itemsByTopic[$t['id']] = [];
+            }
+            foreach ($materials as $m) {
+                $itemsByTopic[$m['topic_id']][] = $m;
+            }
+            foreach ($quizzes as $q) {
+                $itemsByTopic[$q['topic_id']][] = $q;
+            }
+            // Sort items inside topic by order_num
+            foreach ($itemsByTopic as $tid => &$items) {
+                usort($items, function($a, $b) {
+                    return $a['order_num'] - $b['order_num'];
+                });
+            }
+
+            // Combine into one ordered array of columns
+            $columns = [];
+            foreach ($topics as $t) {
+                $tItems = $itemsByTopic[$t['id']] ?? [];
+                foreach ($tItems as $item) {
+                    $item['topic_title'] = $t['title'];
+                    $columns[] = $item;
+                }
+            }
+
+            // 2. Get participants (Rows)
+            $partStmt = $this->conn->prepare("
+                SELECT ep.user_id, p.nama as user_name, p.asal_sekolah 
+                FROM event_participants ep 
+                JOIN profiles p ON ep.user_id = p.id 
+                WHERE ep.event_id = :eid 
+                ORDER BY p.nama
+            ");
+            $partStmt->execute([':eid' => $eventId]);
+            $participants = $partStmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            // 3. Get progress
+            $progStmt = $this->conn->prepare("
+                SELECT user_id, item_id, is_completed, completed_at
+                FROM lms_user_progress 
+                WHERE item_id IN (SELECT id FROM lms_materials WHERE topic_id IN (SELECT id FROM lms_topics WHERE event_id = :eid))
+            ");
+            $progStmt->execute([':eid' => $eventId]);
+            $progressRaw = $progStmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            $qAttemptStmt = $this->conn->prepare("
+                SELECT user_id, quiz_id as item_id, MAX(total_score) as score
+                FROM lms_quiz_attempts 
+                WHERE quiz_id IN (SELECT id FROM lms_quizzes WHERE topic_id IN (SELECT id FROM lms_topics WHERE event_id = :eid))
+                GROUP BY user_id, quiz_id
+            ");
+            $qAttemptStmt->execute([':eid' => $eventId]);
+            $quizProgress = $qAttemptStmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            $asgStmt = $this->conn->prepare("
+                SELECT sub.user_id, sub.assignment_id as item_id, sub.score
+                FROM lms_assignment_submissions sub
+                JOIN lms_materials m ON sub.assignment_id = m.id
+                WHERE m.topic_id IN (SELECT id FROM lms_topics WHERE event_id = :eid)
+            ");
+            $asgStmt->execute([':eid' => $eventId]);
+            $asgProgress = $asgStmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            // Structure progress: progress[user_id][item_id] = { status, score, date }
+            $progress = [];
+            foreach ($participants as $p) {
+                $progress[$p['user_id']] = (object)[];
+            }
+            foreach ($progressRaw as $p) {
+                if (!isset($progress[$p['user_id']])) $progress[$p['user_id']] = (object)[];
+                // Casting to array to add properties, then back to object for JSON
+                $arr = (array)$progress[$p['user_id']];
+                $arr[$p['item_id']] = ['status' => $p['is_completed'] ? 'completed' : 'pending', 'date' => $p['completed_at']];
+                $progress[$p['user_id']] = (object)$arr;
+            }
+            foreach ($quizProgress as $qp) {
+                if (!isset($progress[$qp['user_id']])) $progress[$qp['user_id']] = (object)[];
+                $arr = (array)$progress[$qp['user_id']];
+                $arr[$qp['item_id']] = ['status' => 'completed', 'score' => $qp['score']];
+                $progress[$qp['user_id']] = (object)$arr;
+            }
+            foreach ($asgProgress as $ap) {
+                if (!isset($progress[$ap['user_id']])) $progress[$ap['user_id']] = (object)[];
+                $arr = (array)$progress[$ap['user_id']];
+                $arr[$ap['item_id']] = ['status' => 'completed', 'score' => $ap['score']];
+                $progress[$ap['user_id']] = (object)$arr;
+            }
+
+            return json_encode([
+                "columns" => $columns,
+                "participants" => $participants,
+                "progress" => $progress
+            ]);
+
         } catch (\Throwable $e) {
             http_response_code(500);
             return json_encode(["message" => "Error: " . $e->getMessage()]);

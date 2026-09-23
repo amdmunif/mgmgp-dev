@@ -75,6 +75,11 @@ export const lmsService = {
         return response as any[];
     },
 
+    getQuizDetailedResults: async (quizId: string): Promise<any> => {
+        const response: any = await api.get(`/lms/quizzes/detailed-results/${quizId}`);
+        return response;
+    },
+
     deleteQuizAttempt: async (attemptId: string): Promise<any> => {
         return await api.delete(`/lms/quizzes/attempts/${attemptId}`);
     },
@@ -146,5 +151,9 @@ export const lmsService = {
 
     getAllParticipantsActivity: async (eventId: string): Promise<any[]> => {
         return await api.get(`/lms/activity/event/${eventId}/all`);
+    },
+
+    getEventActivityMatrix: async (eventId: string): Promise<any> => {
+        return await api.get(`/lms/activity/event/${eventId}/matrix`);
     }
 };
