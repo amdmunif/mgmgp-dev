@@ -36,7 +36,7 @@ jobs:
           sudo apt-get update && sudo apt-get install -y lftp
           
           # Sync Frontend Files (contents of dist/ to /)
-          lftp -c "set ssl:verify-certificate no; set ftp:ssl-allow yes; set net:timeout 10; set net:reconnect-interval-base 2; set net:max-retries 3; set net:connection-limit 2; open -u $FTP_USERNAME,$FTP_PASSWORD $FTP_SERVER; lcd ./dist; mirror -R -v -c --parallel=2 --exclude-glob .git* --exclude-glob node_modules/ . ./"
+          lftp -c "set ssl:verify-certificate no; set ftp:ssl-allow yes; set ftp:use-site-chmod false; set net:timeout 10; set net:reconnect-interval-base 2; set net:max-retries 3; set net:connection-limit 1; open -u $FTP_USERNAME,$FTP_PASSWORD $FTP_SERVER; lcd ./dist; mirror -R -v -c --parallel=1 --exclude-glob .git* --exclude-glob node_modules/ . ./"
           
           # Sync Backend Files (contents of backend/ to /api/)
-          lftp -c "set ssl:verify-certificate no; set ftp:ssl-allow yes; set net:timeout 10; set net:reconnect-interval-base 2; set net:max-retries 3; set net:connection-limit 2; open -u $FTP_USERNAME,$FTP_PASSWORD $FTP_SERVER; cd api; lcd ./backend; mirror -R -v -c --parallel=2 --exclude-glob .git* --exclude-glob node_modules/ --exclude-glob .env --exclude-glob database.php --exclude-glob uploads/ . ./"
+          lftp -c "set ssl:verify-certificate no; set ftp:ssl-allow yes; set ftp:use-site-chmod false; set net:timeout 10; set net:reconnect-interval-base 2; set net:max-retries 3; set net:connection-limit 1; open -u $FTP_USERNAME,$FTP_PASSWORD $FTP_SERVER; cd api; lcd ./backend; mirror -R -v -c --parallel=1 --exclude-glob .git* --exclude-glob node_modules/ --exclude-glob .env --exclude-glob database.php --exclude-glob uploads/ . ./"
