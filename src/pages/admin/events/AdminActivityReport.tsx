@@ -34,9 +34,9 @@ export function AdminActivityReport() {
             setLoading(true);
             const data = await lmsService.getAllParticipantsActivity(id!);
             setActivities(data);
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            toast.error("Gagal memuat aktivitas peserta");
+            toast.error(error.message || "Gagal memuat aktivitas peserta");
         } finally {
             setLoading(false);
         }

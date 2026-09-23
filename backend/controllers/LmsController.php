@@ -54,7 +54,7 @@ class LmsController
                     started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     finished_at TIMESTAMP NULL,
                     answers JSON DEFAULT NULL,
-                    total_score DECIMAL(5,2) DEFAULT 0,
+                    score DECIMAL(5,2) DEFAULT 0,
                     is_passed TINYINT(1) DEFAULT 0
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
             ");
@@ -650,7 +650,7 @@ class LmsController
             $isPassed = $score >= (float)$quiz['passing_score'] ? 1 : 0;
             
             $attemptId = Helper::uuid();
-            $insAtt = $this->conn->prepare("INSERT INTO lms_quiz_attempts (id, user_id, quiz_id, finished_at, total_score, is_passed) VALUES (:id, :uid, :qid, NOW(), :score, :passed)");
+            $insAtt = $this->conn->prepare("INSERT INTO lms_quiz_attempts (id, user_id, quiz_id, finished_at, score, is_passed) VALUES (:id, :uid, :qid, NOW(), :score, :passed)");
             $insAtt->execute([
                 ':id' => $attemptId,
                 ':uid' => $userId,
@@ -738,7 +738,7 @@ class LmsController
                       FROM lms_quiz_attempts a 
                       LEFT JOIN profiles p ON a.user_id = p.id 
                       WHERE a.quiz_id = :qid 
-                      ORDER BY a.total_score DESC, a.started_at DESC";
+                      ORDER BY a.score DESC, a.started_at DESC";
             $stmt = $this->conn->prepare($query);
             $stmt->execute([':qid' => $quizId]);
             $attempts = $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -876,7 +876,7 @@ class LmsController
 
             // Quizzes progress
             $queryQuizzes = "
-                SELECT q.id, q.title, a.total_score as score, a.finished_at as completed_at
+                SELECT q.id, q.title, a.score, a.finished_at as completed_at
                 FROM lms_quizzes q
                 JOIN lms_topics t ON q.topic_id = t.id
                 JOIN lms_quiz_attempts a ON a.quiz_id = q.id
@@ -930,7 +930,7 @@ class LmsController
 
             // Quizzes progress
             $queryQuizzes = "
-                SELECT q.id, q.title, a.total_score as score, a.finished_at as completed_at, pr.nama as user_name, pr.asal_sekolah
+                SELECT q.id, q.title, a.score, a.finished_at as completed_at, pr.nama as user_name, pr.asal_sekolah
                 FROM lms_quizzes q
                 JOIN lms_topics t ON q.topic_id = t.id
                 JOIN lms_quiz_attempts a ON a.quiz_id = q.id
@@ -1068,12 +1068,12 @@ public function getEventGradebook($eventId) {
 
     // 4. Get quiz scores (latest attempt for each user & quiz)
     // We can fetch all attempts and filter in PHP since it's simpler.
-    $qQuizScores = "SELECT qa.user_id, qa.quiz_id, qa.total_score, qa.started_at 
-                    FROM lms_quiz_attempts qa
+    $qQuizScores = "SELECT qa.user_id, qa.quiz_id, qa.score, qa.started_at 
+                    FROM lms_quiz_attempts qa 
+                    JOIN event_participants ep ON qa.user_id = ep.user_id AND ep.event_id = :eid
                     JOIN lms_quizzes q ON qa.quiz_id = q.id
-                    JOIN lms_topics t ON q.topic_id = t.id
-                    WHERE t.event_id = :eid
-                    ORDER BY qa.total_score DESC, qa.started_at DESC";
+                    JOIN lms_topics t ON q.topic_id = t.id AND t.event_id = :eid
+                    ORDER BY qa.score DESC, qa.started_at DESC";
     $stmt = $this->conn->prepare($qQuizScores);
     $stmt->execute([':eid' => $eventId]);
     $allQuizAttempts = $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -1083,7 +1083,7 @@ public function getEventGradebook($eventId) {
     foreach ($allQuizAttempts as $qa) {
         $key = $qa['user_id'] . '_' . $qa['quiz_id'];
         if (!isset($quizScores[$key])) {
-            $quizScores[$key] = $qa['total_score'];
+            $quizScores[$key] = $qa['score'];
         }
     }
 
