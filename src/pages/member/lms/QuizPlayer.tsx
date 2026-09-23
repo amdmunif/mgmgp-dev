@@ -119,8 +119,8 @@ export function QuizPlayer() {
             setSubmitted(true);
             setStarted(false);
             toast.success("Kuis berhasil diselesaikan!");
-        } catch (error) {
-            toast.error("Gagal mengirim hasil kuis.");
+        } catch (error: any) {
+            toast.error(error.message || "Gagal mengirim hasil kuis.");
         } finally {
             setSubmittingQuiz(false);
         }
