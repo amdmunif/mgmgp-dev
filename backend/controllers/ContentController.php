@@ -985,7 +985,7 @@ class ContentController
 
             // Get attendances
             $attStmt = $this->conn->prepare("
-                SELECT user_id, attended_date 
+                SELECT user_id, attended_date, created_at 
                 FROM event_attendances 
                 WHERE event_id = :eid
                 ORDER BY attended_date ASC
@@ -1012,8 +1012,10 @@ class ContentController
                     $attendances->$uid = new \stdClass();
                 }
                 
+                $timeSource = !empty($att['created_at']) ? $att['created_at'] : $att['attended_date'];
+                
                 $attDateStr = date('Y-m-d', strtotime($att['attended_date']));
-                $attTimeStr = date('H:i', strtotime($att['attended_date']));
+                $attTimeStr = date('H:i', strtotime($timeSource));
                 
                 // Calculate day index based on start date
                 $dayIndex = 1;

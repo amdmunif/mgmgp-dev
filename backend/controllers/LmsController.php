@@ -1400,7 +1400,7 @@ public function getEventGradebook($eventId) {
             }
 
             // 6. Get Attendances
-            $qAtt = "SELECT user_id, attended_date FROM event_attendances WHERE event_id = :eid ORDER BY attended_date ASC";
+            $qAtt = "SELECT user_id, attended_date, created_at FROM event_attendances WHERE event_id = :eid ORDER BY attended_date ASC";
             $stmt = $this->conn->prepare($qAtt);
             $stmt->execute([':eid' => $eventId]);
             $allAttendances = $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -1409,7 +1409,8 @@ public function getEventGradebook($eventId) {
             foreach ($allAttendances as $att) {
                 $uid = $att['user_id'];
                 if (!isset($attendances[$uid])) $attendances[$uid] = [];
-                $attendances[$uid][] = $att['attended_date'];
+                $timeSource = !empty($att['created_at']) ? $att['created_at'] : $att['attended_date'];
+                $attendances[$uid][] = $timeSource;
             }
 
             // Calculate Leaderboard
