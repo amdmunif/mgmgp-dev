@@ -876,7 +876,7 @@ class LmsController
 
             // Quizzes progress
             $queryQuizzes = "
-                SELECT q.id, q.title, a.score, a.finished_at as completed_at
+                SELECT q.id, q.title, a.total_score as score, a.finished_at as completed_at
                 FROM lms_quizzes q
                 JOIN lms_topics t ON q.topic_id = t.id
                 JOIN lms_quiz_attempts a ON a.quiz_id = q.id
@@ -930,7 +930,7 @@ class LmsController
 
             // Quizzes progress
             $queryQuizzes = "
-                SELECT q.id, q.title, a.score, a.finished_at as completed_at, pr.nama as user_name, pr.asal_sekolah
+                SELECT q.id, q.title, a.total_score as score, a.finished_at as completed_at, pr.nama as user_name, pr.asal_sekolah
                 FROM lms_quizzes q
                 JOIN lms_topics t ON q.topic_id = t.id
                 JOIN lms_quiz_attempts a ON a.quiz_id = q.id
