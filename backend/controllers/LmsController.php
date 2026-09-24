@@ -690,9 +690,10 @@ class LmsController
 
     public function getAllAssignmentSubmissions($assignmentId) {
         try {
-            $query = "SELECT s.*, p.nama as user_name 
+            $query = "SELECT s.*, p.nama as user_name, m.deadline_at 
                       FROM lms_assignment_submissions s 
                       LEFT JOIN profiles p ON s.user_id = p.id 
+                      LEFT JOIN lms_materials m ON s.assignment_id = m.id
                       WHERE s.assignment_id = :aid 
                       ORDER BY s.submitted_at DESC";
             $stmt = $this->conn->prepare($query);

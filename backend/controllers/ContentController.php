@@ -658,6 +658,59 @@ class ContentController
         return json_encode(["message" => "Failed to update participant status"]);
     }
 
+    public function markParticipantAttendanceDay($eventId, $userId, $day, $status, $adminId, $adminName)
+    {
+        $stmtEvent = $this->conn->prepare("SELECT date, total_days FROM events WHERE id = :eid");
+        $stmtEvent->execute([':eid' => $eventId]);
+        $eventData = $stmtEvent->fetch(\PDO::FETCH_ASSOC);
+        
+        if (!$eventData) {
+            http_response_code(404);
+            return json_encode(["message" => "Event not found"]);
+        }
+
+        $startDateStr = $eventData['date'] ? date('Y-m-d', strtotime($eventData['date'])) : date('Y-m-d');
+        $targetDate = date('Y-m-d', strtotime($startDateStr . ' + ' . ($day - 1) . ' days'));
+        
+        if ($status === 'attend') {
+            $check = $this->conn->prepare("SELECT id FROM event_attendances WHERE event_id = :eid AND user_id = :uid AND DATE(attended_date) = :tdate");
+            $check->execute([':eid' => $eventId, ':uid' => $userId, ':tdate' => $targetDate]);
+            
+            if ($check->rowCount() == 0) {
+                $attendedTime = $targetDate . ' 08:00:00';
+                $attId = Helper::uuid();
+                $ins = $this->conn->prepare("INSERT INTO event_attendances (id, event_id, user_id, attended_date) VALUES (:id, :eid, :uid, :adate)");
+                if ($ins->execute([':id' => $attId, ':eid' => $eventId, ':uid' => $userId, ':adate' => $attendedTime])) {
+                    Helper::log($this->conn, $adminId, $adminName, 'MARK_ATTENDANCE_DAY', "Event: $eventId, User: $userId, Day: $day", 'Admin');
+                    
+                    $upd = $this->conn->prepare("UPDATE event_participants SET is_hadir = 1 WHERE event_id = :eid AND user_id = :uid");
+                    $upd->execute([':eid' => $eventId, ':uid' => $userId]);
+                    
+                    return json_encode(["message" => "Attendance marked for day $day"]);
+                }
+            } else {
+                return json_encode(["message" => "Already attended on day $day"]);
+            }
+        } else {
+            $del = $this->conn->prepare("DELETE FROM event_attendances WHERE event_id = :eid AND user_id = :uid AND DATE(attended_date) = :tdate");
+            if ($del->execute([':eid' => $eventId, ':uid' => $userId, ':tdate' => $targetDate])) {
+                Helper::log($this->conn, $adminId, $adminName, 'UNMARK_ATTENDANCE_DAY', "Event: $eventId, User: $userId, Day: $day", 'Admin');
+                
+                $checkCount = $this->conn->prepare("SELECT COUNT(*) FROM event_attendances WHERE event_id = :eid AND user_id = :uid");
+                $checkCount->execute([':eid' => $eventId, ':uid' => $userId]);
+                if ($checkCount->fetchColumn() == 0) {
+                    $upd = $this->conn->prepare("UPDATE event_participants SET is_hadir = 0 WHERE event_id = :eid AND user_id = :uid");
+                    $upd->execute([':eid' => $eventId, ':uid' => $userId]);
+                }
+                
+                return json_encode(["message" => "Attendance removed for day $day"]);
+            }
+        }
+        
+        http_response_code(500);
+        return json_encode(["message" => "Failed to update attendance"]);
+    }
+
     public function approveLms($eventId, $userId, $isApproved, $adminId = '0', $adminName = 'Admin')
     {
         $isApproved = (int)$isApproved;

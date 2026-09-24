@@ -262,6 +262,33 @@ export function AdminEventDetail() {
         }
     };
 
+    const handleDayAttendance = async (userId: string, day: number, status: 'attend' | 'unattend') => {
+        if (!id) return;
+        try {
+            await contentManagementService.markParticipantAttendanceDay(id, userId, day, status);
+            toast.success(status === 'attend' ? `Absensi Hari ${day} berhasil ditambahkan` : `Absensi Hari ${day} dibatalkan`);
+            
+            // Optimistic update for matrix
+            setAttendancesMatrix((prev: any) => {
+                if (!prev) return prev;
+                const newMatrix = JSON.parse(JSON.stringify(prev));
+                if (!newMatrix.attendances[userId]) {
+                    newMatrix.attendances[userId] = {};
+                }
+                if (status === 'attend') {
+                    newMatrix.attendances[userId][`day_${day}`] = '08:00'; // Manual time display
+                } else {
+                    delete newMatrix.attendances[userId][`day_${day}`];
+                }
+                return newMatrix;
+            });
+            
+            // Sync with main participants list if needed, but not strictly necessary as matrix is its own tab
+        } catch (error) {
+            toast.error('Gagal mengupdate absensi hari ini');
+        }
+    };
+
     const handleLmsApproveUpdate = async (userId: string, currentStatus: number | boolean | undefined) => {
         if (!id) return;
         const newStatus = Number(currentStatus) === 1 ? 0 : 1;
@@ -873,11 +900,21 @@ export function AdminEventDetail() {
                                                 return (
                                                     <td key={col.day} className="px-6 py-4 border-l border-gray-100 text-center">
                                                         {time ? (
-                                                            <span className="inline-flex items-center gap-1 text-green-600 font-medium">
+                                                            <button 
+                                                                onClick={() => handleDayAttendance(p.user_id, col.day, 'unattend')}
+                                                                className="inline-flex items-center gap-1 text-green-600 font-medium hover:text-red-500 transition-colors"
+                                                                title="Klik untuk membatalkan absensi hari ini"
+                                                            >
                                                                 <CheckCircle className="w-3 h-3" /> {time}
-                                                            </span>
+                                                            </button>
                                                         ) : (
-                                                            <span className="text-gray-300">-</span>
+                                                            <button 
+                                                                onClick={() => handleDayAttendance(p.user_id, col.day, 'attend')}
+                                                                className="text-gray-300 hover:text-green-500 transition-colors"
+                                                                title="Klik untuk menandai hadir (manual)"
+                                                            >
+                                                                <CheckCircle className="w-4 h-4 mx-auto" />
+                                                            </button>
                                                         )}
                                                     </td>
                                                 );

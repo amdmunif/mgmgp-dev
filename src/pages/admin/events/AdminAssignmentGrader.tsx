@@ -180,7 +180,21 @@ export function AdminAssignmentGrader() {
             {
                 header: 'Waktu Pengumpulan',
                 accessorKey: 'submitted_at',
-                cell: (p: any) => <div className="text-gray-500">{formatDate(p.submitted_at)}</div>
+                cell: (p: any) => {
+                    const isLate = p.deadline_at && new Date(p.submitted_at) > new Date(p.deadline_at);
+                    return (
+                        <div className="flex flex-col gap-1">
+                            <span className={isLate ? "text-red-600 font-medium" : "text-gray-500"}>
+                                {formatDate(p.submitted_at)}
+                            </span>
+                            {isLate && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700 w-fit uppercase tracking-wider border border-red-200">
+                                    Terlambat
+                                </span>
+                            )}
+                        </div>
+                    );
+                }
             },
             {
                 header: 'File / Link',

@@ -582,10 +582,15 @@ export function LmsViewer() {
                             
                             <div className="p-8 bg-white border-b border-gray-100">
                                 {assignmentData ? (
-                                    <div className="bg-green-50 rounded-xl border border-green-200 p-6 text-green-800">
-                                        <div className="flex items-center gap-2 mb-4">
-                                            <CheckCircle className="w-5 h-5 text-green-600" />
+                                    <div className={`rounded-xl border p-6 ${activeItem?.deadline_at && new Date(assignmentData.submitted_at) > new Date(activeItem.deadline_at) ? 'bg-orange-50 border-orange-200 text-orange-900' : 'bg-green-50 border-green-200 text-green-800'}`}>
+                                        <div className="flex flex-wrap items-center gap-2 mb-4">
+                                            <CheckCircle className={`w-5 h-5 ${activeItem?.deadline_at && new Date(assignmentData.submitted_at) > new Date(activeItem.deadline_at) ? 'text-orange-600' : 'text-green-600'}`} />
                                             <span className="font-semibold text-lg">Tugas telah dikumpulkan</span>
+                                            {activeItem?.deadline_at && new Date(assignmentData.submitted_at) > new Date(activeItem.deadline_at) && (
+                                                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700 border border-red-200 ml-auto">
+                                                    Terlambat
+                                                </span>
+                                            )}
                                         </div>
                                         <div className="text-sm space-y-2">
                                             <p><span className="font-medium">Waktu Pengumpulan:</span> {new Date(assignmentData.submitted_at).toLocaleString('id-ID')}</p>
@@ -593,8 +598,8 @@ export function LmsViewer() {
                                                 <p><span className="font-medium">Nilai:</span> <span className="text-lg font-bold">{assignmentData.score}</span> / 100</p>
                                             )}
                                             {assignmentData.feedback && (
-                                                <div className="mt-4 p-4 bg-white rounded-lg border border-green-100">
-                                                    <span className="font-medium text-green-900 block mb-1">Catatan Pengajar:</span>
+                                                <div className={`mt-4 p-4 bg-white rounded-lg border ${activeItem?.deadline_at && new Date(assignmentData.submitted_at) > new Date(activeItem.deadline_at) ? 'border-orange-100' : 'border-green-100'}`}>
+                                                    <span className={`font-medium block mb-1 ${activeItem?.deadline_at && new Date(assignmentData.submitted_at) > new Date(activeItem.deadline_at) ? 'text-orange-900' : 'text-green-900'}`}>Catatan Pengajar:</span>
                                                     <p className="text-gray-700">{assignmentData.feedback}</p>
                                                 </div>
                                             )}
@@ -613,24 +618,32 @@ export function LmsViewer() {
                                     className="prose prose-sm prose-blue max-w-none text-gray-700 mb-8"
                                     dangerouslySetInnerHTML={{ __html: activeItem.content || '<p>Tidak ada instruksi khusus untuk penugasan ini.</p>' }}
                                 />
-                                <div className="mt-8 flex gap-3">
+                                <div className="mt-8 flex flex-col gap-3">
                                     {!isFormOpen ? (
-                                        activeItem?.deadline_at && new Date(activeItem.deadline_at) < new Date() ? (
-                                            <div className="text-sm font-bold text-red-600 bg-red-50 px-4 py-3 rounded-lg border border-red-100 w-full text-center">
-                                                Batas waktu pengumpulan tugas telah lewat.
-                                            </div>
-                                        ) : (
+                                        <div className="space-y-3">
+                                            {activeItem?.deadline_at && new Date(activeItem.deadline_at) < new Date() && (
+                                                <div className="text-sm font-medium text-red-600 bg-red-50 px-4 py-3 rounded-lg border border-red-100 w-full">
+                                                    ⚠️ Batas waktu pengumpulan tugas telah lewat. Tugas yang dikumpulkan sekarang akan ditandai <span className="font-bold">Terlambat</span>.
+                                                </div>
+                                            )}
                                             <Button 
                                                 onClick={() => setIsFormOpen(true)}
                                                 className="bg-blue-600 hover:bg-blue-700 text-white rounded-md"
                                             >
                                                 {assignmentData ? "Edit Pengumpulan Tugas" : "Mulai Pengumpulan Tugas"}
                                             </Button>
-                                        )
+                                        </div>
                                     ) : (
                                         <div className="w-full">
                                             <div className="space-y-4 max-w-2xl bg-gray-50 p-6 rounded-xl border border-gray-200">
-                                                <h3 className="font-bold text-gray-900 border-b pb-2">Lembar Jawaban</h3>
+                                                <div className="flex items-center justify-between border-b border-gray-200 pb-2 mb-4">
+                                                    <h3 className="font-bold text-gray-900">Lembar Jawaban</h3>
+                                                    {activeItem?.deadline_at && new Date(activeItem.deadline_at) < new Date() && (
+                                                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700 border border-red-200 uppercase tracking-wider">
+                                                            Pengumpulan Terlambat
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 
                                                 <div>
                                                     <label className="block text-sm font-medium text-gray-700 mb-1">Tautan Lampiran (Google Drive, Docs, dll) (Opsional)</label>

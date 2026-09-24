@@ -410,6 +410,18 @@ if ($resource === 'news') {
                 http_response_code(403);
                 echo json_encode(["message" => "Forbidden"]);
             }
+        } elseif ($action && $subAction === 'participants' && isset($uri_parts[3]) && isset($uri_parts[4]) && $uri_parts[4] === 'attend') {
+            // POST /events/:id/participants/:userId/attend
+            $targetUserId = $uri_parts[3];
+            $day = $input['day'] ?? 1;
+            $status = $input['status'] ?? 'attend';
+            
+            if (in_array($userRole, ['Admin', 'Pengurus'])) {
+                echo $controller->markParticipantAttendanceDay($action, $targetUserId, $day, $status, $userId, $userName);
+            } else {
+                http_response_code(403);
+                echo json_encode(["message" => "Forbidden"]);
+            }
         } else {
             echo $controller->createEvent($input, $userId, $userName);
         }

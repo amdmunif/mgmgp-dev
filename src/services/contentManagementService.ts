@@ -46,6 +46,10 @@ export const contentManagementService = {
         return await api.post(`/events/${eventId}/participants/bulk`, { user_ids: userIds, status });
     },
 
+    async markParticipantAttendanceDay(eventId: string, userId: string, day: number, status: 'attend' | 'unattend') {
+        return await api.post(`/events/${eventId}/participants/${userId}/attend`, { day, status });
+    },
+
     async markSelfAttendance(eventId: string, day: number = 1): Promise<void> {
         return api.post(`/events/${eventId}/attend`, { day });
     },
