@@ -117,10 +117,10 @@ class StatsController
 
         $query = "SELECT p.id, p.nama, p.asal_sekolah, p.premium_until, 
                   COUNT(DISTINCT e.id) as total_events_attended
-                  FROM event_attendances ea
-                  JOIN events e ON ea.event_id = e.id
-                  JOIN profiles p ON ea.user_id = p.id
-                  WHERE 1=1";
+                  FROM event_participants ep
+                  JOIN events e ON ep.event_id = e.id
+                  JOIN profiles p ON ep.user_id = p.id
+                  WHERE ep.is_hadir = 1";
 
         if ($memberFilter === 'premium') {
             $query .= " AND p.premium_until >= NOW()";
