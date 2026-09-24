@@ -21,6 +21,7 @@ export interface TeacherStats {
     };
     education: Array<{ pendidikan_terakhir: string; count: number }>;
     topSchools: Array<{ asal_sekolah: string; count: number }>;
+    majors: Array<{ jurusan: string; count: number }>;
 }
 
 export const statsService = {

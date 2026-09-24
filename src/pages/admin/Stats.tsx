@@ -181,6 +181,35 @@ export function AdminStats() {
                     </div>
                 </div>
 
+                {/* Majors Distribution */}
+                <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                    <div className="flex items-center gap-2 mb-8">
+                        <GraduationCap className="w-5 h-5 text-gray-400" />
+                        <h2 className="text-lg font-bold text-gray-900">Distribusi Jurusan / Latar Belakang</h2>
+                    </div>
+
+                    <div className="space-y-4">
+                        {stats.majors?.length > 0 ? stats.majors.map((item, idx) => {
+                            const percentage = totalTeachers > 0 ? (item.count / totalTeachers) * 100 : 0;
+                            return (
+                                <div key={idx} className="space-y-1">
+                                    <div className="flex justify-between items-center text-sm font-medium">
+                                        <span className="text-gray-700 truncate mr-2" title={item.jurusan}>{item.jurusan}</span>
+                                        <span className="text-gray-900 whitespace-nowrap">{item.count} Guru</span>
+                                    </div>
+                                    <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-purple-500 transition-all duration-1000"
+                                            style={{ width: `${percentage}%` }}
+                                        />
+                                    </div>
+                                </div>
+                            );
+                        }) : <p className="text-sm text-gray-500 text-center">Data jurusan belum tersedia.</p>}
+                    </div>
+                </div>
+            </div>
+
             {/* Engagement Section */}
             <div className="bg-gradient-to-br from-primary-600 to-indigo-700 p-8 rounded-3xl shadow-xl text-white overflow-hidden relative">
                 <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
@@ -208,6 +237,5 @@ export function AdminStats() {
                 <div className="absolute bottom-0 left-0 w-32 h-32 bg-primary-400/10 rounded-full -ml-16 -mb-16 blur-2xl"></div>
             </div>
         </div>
-    </div>
     );
 }

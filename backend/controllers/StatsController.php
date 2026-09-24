@@ -74,16 +74,9 @@ class StatsController
         $schools = $q2->fetchAll(PDO::FETCH_COLUMN);
 
         foreach ($schools as $school) {
-            $schoolUpper = strtoupper($school);
-            // Keywords for Negeri: SMPN, SMAN, SMKN, MTSN, MAN, Negeri
-            if (
-                strpos($schoolUpper, 'SMPN') !== false ||
-                strpos($schoolUpper, 'SMAN') !== false ||
-                strpos($schoolUpper, 'SMKN') !== false ||
-                strpos($schoolUpper, 'MTSN') !== false ||
-                strpos($schoolUpper, 'MAN') !== false ||
-                strpos($schoolUpper, 'NEGERI') !== false
-            ) {
+            // More accurate regex for Negeri schools to avoid false positives like "NURUL IMAN" matching "MAN"
+            // Matches boundaries of SMAN, SMPN, SMKN, MTSN, MAN, MIN, SDN, NEGERI
+            if (preg_match('/\b(SMPN|SMAN|SMKN|MTSN|MAN|MIN|SDN)[ \-\d]*\b|\bNEGERI\b/i', $school)) {
                 $stats['schoolTypes']['Negeri']++;
             } else {
                 $stats['schoolTypes']['Swasta']++;
@@ -109,6 +102,10 @@ class StatsController
         // 5. Top Schools (Asal Sekolah terbanyak)
         $q6 = $this->conn->query("SELECT asal_sekolah, COUNT(*) as count FROM profiles WHERE asal_sekolah IS NOT NULL AND asal_sekolah != '' GROUP BY asal_sekolah ORDER BY count DESC LIMIT 5");
         $stats['topSchools'] = $q6->fetchAll(PDO::FETCH_ASSOC);
+
+        // 6. Majors (Jurusan)
+        $q7 = $this->conn->query("SELECT jurusan, COUNT(*) as count FROM profiles WHERE jurusan IS NOT NULL AND jurusan != '' GROUP BY jurusan ORDER BY count DESC LIMIT 10");
+        $stats['majors'] = $q7->fetchAll(PDO::FETCH_ASSOC);
 
         return json_encode($stats);
     }
