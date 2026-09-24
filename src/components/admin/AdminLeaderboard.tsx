@@ -8,15 +8,16 @@ export function AdminLeaderboard() {
     const [loading, setLoading] = useState(true);
     const [memberType, setMemberType] = useState('all'); // all, premium, reguler
     const [eventType, setEventType] = useState('all'); // all, premium, umum
+    const [roleType, setRoleType] = useState('all'); // all, pengurus, anggota
 
     useEffect(() => {
         fetchLeaderboard();
-    }, [memberType, eventType]);
+    }, [memberType, eventType, roleType]);
 
     const fetchLeaderboard = async () => {
         setLoading(true);
         try {
-            const data = await statsService.getLeaderboard(memberType, eventType);
+            const data = await statsService.getLeaderboard(memberType, eventType, roleType);
             const rankedData = (data as any[]).map((item, index) => ({ ...item, rank: index + 1 }));
             setLeaderboard(rankedData);
         } catch (error) {
@@ -110,6 +111,19 @@ export function AdminLeaderboard() {
                             <option value="all">Semua Kegiatan</option>
                             <option value="premium">Kegiatan Premium</option>
                             <option value="umum">Kegiatan Umum</option>
+                        </select>
+                    </div>
+
+                    <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-gray-200 w-full sm:w-auto">
+                        <Filter className="w-4 h-4 text-gray-400" />
+                        <select 
+                            value={roleType} 
+                            onChange={e => setRoleType(e.target.value)}
+                            className="bg-transparent border-none text-sm outline-none w-full cursor-pointer text-gray-700"
+                        >
+                            <option value="all">Semua Role</option>
+                            <option value="pengurus">Hanya Pengurus</option>
+                            <option value="anggota">Hanya Anggota</option>
                         </select>
                     </div>
                 </div>

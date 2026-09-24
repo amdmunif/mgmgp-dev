@@ -114,8 +114,9 @@ class StatsController
     {
         $memberFilter = isset($_GET['member_type']) ? $_GET['member_type'] : 'all';
         $eventFilter = isset($_GET['event_type']) ? $_GET['event_type'] : 'all';
+        $roleFilter = isset($_GET['role_type']) ? $_GET['role_type'] : 'all';
 
-        $query = "SELECT p.id, p.nama, p.asal_sekolah, p.premium_until, 
+        $query = "SELECT p.id, p.nama, p.asal_sekolah, p.premium_until, p.role, 
                   COUNT(DISTINCT e.id) as total_events_attended
                   FROM event_participants ep
                   JOIN events e ON ep.event_id = e.id
@@ -134,7 +135,13 @@ class StatsController
             $query .= " AND e.is_premium = 0";
         }
 
-        $query .= " GROUP BY p.id, p.nama, p.asal_sekolah, p.premium_until 
+        if ($roleFilter === 'pengurus') {
+            $query .= " AND p.role IN ('Admin', 'Pengurus')";
+        } elseif ($roleFilter === 'anggota') {
+            $query .= " AND (p.role = 'Anggota' OR p.role IS NULL OR p.role = '')";
+        }
+
+        $query .= " GROUP BY p.id, p.nama, p.asal_sekolah, p.premium_until, p.role 
                     ORDER BY total_events_attended DESC, p.nama ASC 
                     LIMIT 100";
 
