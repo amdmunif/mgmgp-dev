@@ -284,12 +284,44 @@ export function LmsViewer() {
         if (!activeItem || !eventId) return;
         try {
             await lmsService.markProgress(eventId, activeItem.type, activeItem.id);
-            setTopics(prevTopics => prevTopics.map(topic => ({
-                ...topic,
-                items: topic.items.map(item => 
-                    item.id === activeMaterial ? { ...item, is_completed: true } : item
-                )
-            })));
+            
+            setTopics(prevTopics => {
+                let waterfallLocked = false;
+                return prevTopics.map(topic => ({
+                    ...topic,
+                    items: topic.items.map(item => {
+                        const isCompleted = item.id === activeMaterial ? true : item.is_completed;
+                        
+                        let isLocked = false;
+                        let lockReason = '';
+
+                        if (item.available_at) {
+                            const availableDate = new Date(item.available_at);
+                            if (new Date() < availableDate) {
+                                isLocked = true;
+                                lockReason = `Tersedia pada: ${availableDate.toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}`;
+                            }
+                        }
+
+                        if (!isLocked && waterfallLocked) {
+                            isLocked = true;
+                            lockReason = 'Selesaikan materi sebelumnya terlebih dahulu';
+                        }
+
+                        if (!isCompleted) {
+                            waterfallLocked = true;
+                        }
+
+                        return {
+                            ...item,
+                            is_completed: isCompleted,
+                            is_locked: isLocked,
+                            lock_reason: lockReason
+                        };
+                    })
+                }));
+            });
+            
             toast.success("Berhasil menandai materi sebagai selesai!");
         } catch (error) {
             toast.error("Gagal menyimpan progres");
