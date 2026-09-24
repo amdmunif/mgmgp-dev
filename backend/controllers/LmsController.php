@@ -1405,12 +1405,28 @@ public function getEventGradebook($eventId) {
             $stmt->execute([':eid' => $eventId]);
             $allAttendances = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
+            $validUserIds = array_column($participants, 'user_id');
             $attendances = [];
+            $earliestAttendancePerDay = []; // [ date => ['user_id' => uid, 'time' => timeOnly] ]
+
             foreach ($allAttendances as $att) {
                 $uid = $att['user_id'];
+                
+                // Only consider valid participants (this correctly excludes Pengurus as they are excluded from $participants)
+                if (!in_array($uid, $validUserIds)) continue;
+
                 if (!isset($attendances[$uid])) $attendances[$uid] = [];
                 $timeSource = !empty($att['created_at']) ? $att['created_at'] : $att['attended_date'];
                 $attendances[$uid][] = $timeSource;
+
+                $dateOnly = date('Y-m-d', strtotime($timeSource));
+                $timeOnly = date('H:i:s', strtotime($timeSource));
+
+                if ($timeOnly <= '08:00:00') {
+                    if (!isset($earliestAttendancePerDay[$dateOnly]) || $timeOnly < $earliestAttendancePerDay[$dateOnly]['time']) {
+                        $earliestAttendancePerDay[$dateOnly] = ['user_id' => $uid, 'time' => $timeOnly];
+                    }
+                }
             }
 
             // Calculate Leaderboard
@@ -1474,23 +1490,34 @@ public function getEventGradebook($eventId) {
                     $totalTimeOffset = 0;
                     foreach ($attendances[$uid] as $attDate) {
                         $timeOnly = date('H:i:s', strtotime($attDate));
+                        $dateOnly = date('Y-m-d', strtotime($attDate));
+                        
+                        $bonusAmount = 0;
+                        $titleSuffix = '';
+
+                        // Give bonus if attendance is before 08:00 AM
+                        if ($timeOnly <= '08:00:00') {
+                            if (isset($earliestAttendancePerDay[$dateOnly]) && $earliestAttendancePerDay[$dateOnly]['user_id'] === $uid) {
+                                $bonusAmount = 10;
+                                $titleSuffix = ' (Tercepat!)';
+                            } else {
+                                $bonusAmount = 5;
+                            }
+                            $attendanceBonus += $bonusAmount;
+                        }
+
                         $activities[] = [
                             'type' => 'Absensi',
-                            'title' => 'Absensi Hari ' . date('d M Y', strtotime($attDate)),
+                            'title' => 'Absensi Hari ' . date('d M Y', strtotime($attDate)) . $titleSuffix,
                             'score' => 0,
                             'date' => $attDate,
-                            'bonus' => 0
+                            'bonus' => $bonusAmount
                         ];
 
                         // Calculate offset from 00:00:00 in seconds to find average time
                         $offset = strtotime($timeOnly) - strtotime('00:00:00');
                         $totalTimeOffset += $offset;
                         $attTimes[] = $timeOnly;
-
-                        // Give bonus if attendance is before 08:00 AM
-                        if ($timeOnly <= '08:00:00') {
-                            $attendanceBonus += 5;
-                        }
                     }
                     if (count($attendances[$uid]) > 0) {
                         $avgOffset = $totalTimeOffset / count($attendances[$uid]);
