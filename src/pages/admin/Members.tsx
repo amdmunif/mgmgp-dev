@@ -4,7 +4,7 @@ import { useOutletContext, useLocation } from 'react-router-dom';
 import { 
     Users, Crown, CheckCircle2, 
     XCircle, AlertCircle, Key, Filter, 
-    Mail, ShieldCheck, Eye, Pencil, Printer, X, User, Search
+    Mail, ShieldCheck, Eye, Pencil, Printer, X, User, Search, Trophy
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { getFileUrl } from '../../lib/api';
@@ -15,6 +15,7 @@ import { DataTable } from '../../components/ui/DataTable';
 import { exportMembersToExcel } from '../../utils/exportMemberExcel';
 import { SchoolSelectFields } from '../../components/common/SchoolSelectFields';
 import { matchSchoolFuzzy, SCHOOLS_DATA } from '../../data/schoolsData';
+import { AdminLeaderboard } from '../../components/admin/AdminLeaderboard';
 
 export function AdminMembers() {
     const navigate = useNavigate();
@@ -48,7 +49,7 @@ export function AdminMembers() {
     const [editCustomNpsn, setEditCustomNpsn] = useState('');
 
     // Tab: default dari location state jika ada
-    const [activeTab, setActiveTab] = useState<'active' | 'inactive' | 'duplicates' | 'unstandardized'>(
+    const [activeTab, setActiveTab] = useState<'active' | 'inactive' | 'duplicates' | 'unstandardized' | 'leaderboard'>(
         location.state?.tab === 'inactive' ? 'inactive' : 'active'
     );
 
@@ -640,10 +641,22 @@ export function AdminMembers() {
                 >
                     Data Duplikat
                 </button>
+                <button
+                    onClick={() => setActiveTab('leaderboard')}
+                    className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors duration-200 flex items-center gap-2 ${activeTab === 'leaderboard'
+                        ? 'border-green-500 text-green-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700'
+                        }`}
+                >
+                    <Trophy className="w-4 h-4" />
+                    Leaderboard
+                </button>
             </div>
 
             {/* Data Table */}
-            {activeTab !== 'duplicates' ? (
+            {activeTab === 'leaderboard' ? (
+                <AdminLeaderboard />
+            ) : activeTab !== 'duplicates' ? (
                 loading ? (
                     <div className="p-8 text-center text-gray-500">Memuat data...</div>
                 ) : (

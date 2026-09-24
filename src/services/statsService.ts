@@ -30,5 +30,8 @@ export const statsService = {
     },
     async getTeacherStats() {
         return await api.get<TeacherStats>('/stats/teachers');
+    },
+    async getLeaderboard(memberType: string, eventType: string) {
+        return await api.get(`/stats/leaderboard?member_type=${memberType}&event_type=${eventType}`);
     }
 };

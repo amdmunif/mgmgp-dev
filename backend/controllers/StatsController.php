@@ -109,5 +109,43 @@ class StatsController
 
         return json_encode($stats);
     }
+    
+    public function getLeaderboard()
+    {
+        $memberFilter = isset($_GET['member_type']) ? $_GET['member_type'] : 'all';
+        $eventFilter = isset($_GET['event_type']) ? $_GET['event_type'] : 'all';
+
+        $query = "SELECT p.id, p.nama, p.asal_sekolah, p.premium_until, 
+                  COUNT(DISTINCT e.id) as total_events_attended
+                  FROM event_attendances ea
+                  JOIN events e ON ea.event_id = e.id
+                  JOIN profiles p ON ea.user_id = p.id
+                  WHERE 1=1";
+
+        if ($memberFilter === 'premium') {
+            $query .= " AND p.premium_until >= NOW()";
+        } elseif ($memberFilter === 'reguler') {
+            $query .= " AND (p.premium_until IS NULL OR p.premium_until < NOW())";
+        }
+
+        if ($eventFilter === 'premium') {
+            $query .= " AND e.is_premium = 1";
+        } elseif ($eventFilter === 'umum') {
+            $query .= " AND e.is_premium = 0";
+        }
+
+        $query .= " GROUP BY p.id, p.nama, p.asal_sekolah, p.premium_until 
+                    ORDER BY total_events_attended DESC, p.nama ASC 
+                    LIMIT 100";
+
+        try {
+            $stmt = $this->conn->prepare($query);
+            $stmt->execute();
+            return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+        } catch (Exception $e) {
+            http_response_code(500);
+            return json_encode(["message" => "Error: " . $e->getMessage()]);
+        }
+    }
 }
 ?>

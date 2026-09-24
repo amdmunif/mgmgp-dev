@@ -511,6 +511,8 @@ if ($resource === 'news') {
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         if ($action === 'teachers') {
             echo $controller->getTeacherStats();
+        } elseif ($action === 'leaderboard') {
+            echo $controller->getLeaderboard();
         } else {
             echo $controller->getOverview();
         }
