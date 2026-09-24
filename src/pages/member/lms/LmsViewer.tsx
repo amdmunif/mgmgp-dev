@@ -754,15 +754,7 @@ export function LmsViewer() {
                         </Button>
                         
                         <div className="flex-1 flex justify-center">
-                            {activeItem?.type === 'quiz' && quizAttempts.length === 0 ? (
-                                <Button disabled className="bg-gray-200 text-gray-500 h-10 font-medium">
-                                    Kerjakan Kuis Dahulu
-                                </Button>
-                            ) : activeItem?.type === 'assignment' && !assignmentData ? (
-                                <Button disabled className="bg-gray-200 text-gray-500 h-10 font-medium">
-                                    Kumpulkan Tugas Dahulu
-                                </Button>
-                            ) : !activeItem?.is_completed ? (
+                            {!activeItem?.is_completed ? (
                                 <Button onClick={handleMarkComplete} className="bg-green-600 hover:bg-green-700 h-10 text-white shadow-sm hover:shadow">
                                     <CheckCircle className="w-4 h-4 mr-2" /> Tandai Selesai
                                 </Button>
