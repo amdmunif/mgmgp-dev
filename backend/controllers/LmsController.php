@@ -647,6 +647,17 @@ class LmsController
             }
             
             $score = $totalPoints > 0 ? round(($earnedPoints / $totalPoints) * 100) : 0;
+            
+            // Check if late (deadline passed)
+            $stmtMat = $this->conn->prepare("SELECT deadline_at FROM lms_materials WHERE id = :id");
+            $stmtMat->execute([':id' => $quizId]);
+            $material = $stmtMat->fetch();
+            $isLate = false;
+            if ($material && !empty($material['deadline_at']) && strtotime($material['deadline_at']) < time()) {
+                $isLate = true;
+                $score = max(0, $score - 10); // Deduct 10 points for late submission, min score 0
+            }
+
             $isPassed = $score >= (float)$quiz['passing_score'] ? 1 : 0;
             
             $attemptId = Helper::uuid();

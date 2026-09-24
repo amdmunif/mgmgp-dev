@@ -530,29 +530,28 @@ export function LmsViewer() {
                                     </table>
                                 </div>
                                 
-                                <div className="mt-8 flex justify-end items-center gap-4">
-                                    {activeItem?.deadline_at && new Date(activeItem.deadline_at) < new Date() ? (
-                                        <div className="text-sm font-bold text-red-600 bg-red-50 px-4 py-2 rounded-lg border border-red-100">
-                                            Batas Waktu Telah Lewat ({new Date(activeItem.deadline_at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })})
+                                <div className="mt-8 flex flex-col items-end gap-3">
+                                    {activeItem?.deadline_at && new Date(activeItem.deadline_at) < new Date() && (
+                                        <div className="text-sm font-medium text-red-600 bg-red-50 px-4 py-3 rounded-lg border border-red-100 w-full text-right">
+                                            ⚠️ Batas waktu kuis telah lewat ({new Date(activeItem.deadline_at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}). Anda masih dapat mengerjakannya namun akan ditandai <span className="font-bold">Terlambat</span>.
                                         </div>
-                                    ) : (
-                                        <>
-                                            {quizData?.max_attempts > 0 && (
-                                                <p className="text-sm text-gray-500">
-                                                    Sisa percobaan: <span className="font-bold text-gray-900">{Math.max(0, quizData.max_attempts - quizAttempts.length)}</span> dari {quizData.max_attempts}
-                                                </p>
-                                            )}
-                                            <Button 
-                                                onClick={() => navigate(`/member/lms/classroom/${eventId}/quiz/${activeItem.id}`)}
-                                                disabled={quizData?.max_attempts > 0 && quizAttempts.length >= quizData.max_attempts}
-                                                className="bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-300 disabled:text-gray-500"
-                                            >
-                                                {quizData?.max_attempts > 0 && quizAttempts.length >= quizData.max_attempts 
-                                                    ? "Jatah Ujian Habis" 
-                                                    : "Mulai / Ulangi Ujian"}
-                                            </Button>
-                                        </>
                                     )}
+                                    <div className="flex items-center gap-4 mt-2">
+                                        {quizData?.max_attempts > 0 && (
+                                            <p className="text-sm text-gray-500">
+                                                Sisa percobaan: <span className="font-bold text-gray-900">{Math.max(0, quizData.max_attempts - quizAttempts.length)}</span> dari {quizData.max_attempts}
+                                            </p>
+                                        )}
+                                        <Button 
+                                            onClick={() => navigate(`/member/lms/classroom/${eventId}/quiz/${activeItem.id}`)}
+                                            disabled={quizData?.max_attempts > 0 && quizAttempts.length >= quizData.max_attempts}
+                                            className="bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-300 disabled:text-gray-500"
+                                        >
+                                            {quizData?.max_attempts > 0 && quizAttempts.length >= quizData.max_attempts 
+                                                ? "Jatah Ujian Habis" 
+                                                : "Mulai / Ulangi Ujian"}
+                                        </Button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
