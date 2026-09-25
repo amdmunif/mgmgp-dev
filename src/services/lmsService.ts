@@ -195,6 +195,10 @@ export const lmsService = {
     juryEvaluateParticipant: async (data: any): Promise<any> => {
         return await api.post(`/lms-group-tasks/jury-evaluate-participant`, data);
     },
+    getParticipantsWithActiveness: async (eventId: string): Promise<any[]> => {
+        const res: any = await api.get(`/lms-group-tasks/participants-activeness/${eventId}`);
+        return res.data || [];
+    },
     getGradeSettings: async (): Promise<any[]> => {
         const res: any = await api.get(`/lms-group-tasks/settings`);
         return res.data || [];

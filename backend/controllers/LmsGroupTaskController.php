@@ -82,7 +82,7 @@ class LmsGroupTaskController
             $name = $data['name'];
             $members = isset($data['members']) ? $data['members'] : []; // Array of user_ids
 
-            $groupId = Helper::generateUUID();
+            $groupId = Helper::uuid();
 
             $this->conn->beginTransaction();
 

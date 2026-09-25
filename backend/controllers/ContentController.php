@@ -152,8 +152,8 @@ class ContentController
     {
         try {
             $id = Helper::uuid();
-            $query = "INSERT INTO events (id, title, description, date, total_days, location, image_url, is_registration_open, is_premium, is_paid, price, registration_deadline, attendance_deadline, quota, has_lms, created_at) 
-                      VALUES (:id, :title, :description, :date, :total_days, :location, :image_url, :is_registration_open, :is_premium, :is_paid, :price, :registration_deadline, :attendance_deadline, :quota, :has_lms, NOW())";
+            $query = "INSERT INTO events (id, title, description, date, total_days, location, image_url, is_registration_open, is_premium, is_paid, price, registration_deadline, attendance_deadline, quota, has_lms, group_task_available_at, created_at) 
+                      VALUES (:id, :title, :description, :date, :total_days, :location, :image_url, :is_registration_open, :is_premium, :is_paid, :price, :registration_deadline, :attendance_deadline, :quota, :has_lms, :group_task_available_at, NOW())";
 
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':id', $id);
@@ -181,6 +181,8 @@ class ContentController
             $stmt->bindParam(':quota', $quota, PDO::PARAM_INT);
             $has_lms = $data['has_lms'] ?? 0;
             $stmt->bindParam(':has_lms', $has_lms, PDO::PARAM_INT);
+            $groupTaskAvailable = !empty($data['group_task_available_at']) ? $data['group_task_available_at'] : null;
+            $stmt->bindParam(':group_task_available_at', $groupTaskAvailable);
 
             if ($stmt->execute()) {
                 Helper::log($this->conn, $userId, $userName, 'CREATE_EVENT', $data['title']);
@@ -334,7 +336,8 @@ class ContentController
                         registration_deadline = :registration_deadline,
                         attendance_deadline = :attendance_deadline,
                         quota = :quota,
-                        has_lms = :has_lms
+                        has_lms = :has_lms,
+                        group_task_available_at = :group_task_available_at
                       WHERE id = :id";
 
             $stmt = $this->conn->prepare($query);
@@ -363,6 +366,8 @@ class ContentController
             $stmt->bindParam(':quota', $quota, PDO::PARAM_INT);
             $has_lms = $data['has_lms'] ?? 0;
             $stmt->bindParam(':has_lms', $has_lms, PDO::PARAM_INT);
+            $groupTaskAvailable = !empty($data['group_task_available_at']) ? $data['group_task_available_at'] : null;
+            $stmt->bindParam(':group_task_available_at', $groupTaskAvailable);
 
             if ($stmt->execute()) {
                 Helper::log($this->conn, $userId, $userName, 'UPDATE_EVENT', $data['title']);
@@ -623,7 +628,7 @@ class ContentController
     {
         try {
             // Fetch participants with user details
-            $query = "SELECT ep.*, p.nama, p.nama as user_name, u.email, p.foto_profile, p.asal_sekolah, p.no_hp, p.status_kepegawaian, p.pendidikan_terakhir, ep.is_approved,
+            $query = "SELECT ep.*, p.nama, p.nama as user_name, u.email, p.role, p.foto_profile, p.asal_sekolah, p.no_hp, p.status_kepegawaian, p.pendidikan_terakhir, ep.is_approved,
                              (SELECT COUNT(*) FROM event_attendances ea WHERE ea.event_id = ep.event_id AND ea.user_id = ep.user_id) as attendance_count
                       FROM event_participants ep
                       LEFT JOIN profiles p ON ep.user_id = p.id

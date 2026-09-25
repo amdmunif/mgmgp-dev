@@ -42,6 +42,7 @@ export interface Event {
     participants_count?: number;
     quota?: number;
     has_lms?: boolean | number;
+    group_task_available_at?: string;
 }
 
 export type MaterialType = 'cp' | 'tp' | 'rpp' | 'slide' | 'modul';

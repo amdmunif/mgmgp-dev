@@ -75,6 +75,7 @@ export function LmsViewer() {
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [quizAttempts, setQuizAttempts] = useState<any[]>([]);
     const [isPassed, setIsPassed] = useState(false);
+    const [groupTaskAvailableAt, setGroupTaskAvailableAt] = useState<string | null>(null);
 
     useEffect(() => {
         if (eventId) {
@@ -94,7 +95,10 @@ export function LmsViewer() {
                 lmsService.getEventProgress(eId)
             ]);
 
-            if (evRes.status === 'fulfilled' && evRes.value?.title) setEventTitle(evRes.value.title);
+            if (evRes.status === 'fulfilled' && evRes.value?.title) {
+                setEventTitle(evRes.value.title);
+                setGroupTaskAvailableAt(evRes.value.group_task_available_at || null);
+            }
             if (partRes.status === 'fulfilled' && partRes.value && Number(partRes.value.is_passed) === 1) setIsPassed(true);
 
             const fetchedTopics = (fetchedTopicsRaw.status === 'fulfilled' && Array.isArray(fetchedTopicsRaw.value)) ? fetchedTopicsRaw.value : [];
@@ -925,20 +929,34 @@ export function LmsViewer() {
                     })}
                         
                         <div className="border-t border-gray-100 mt-2">
-                            <button
-                                onClick={() => setActiveMaterial('group-tasks')}
-                                className={cn(
-                                    "w-full text-left px-4 py-3 flex items-center justify-between transition-colors",
-                                    activeMaterial === 'group-tasks' ? "bg-blue-50 text-blue-700 font-medium border-r-4 border-blue-600" : "hover:bg-gray-50 text-gray-700"
-                                )}
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className="w-6 flex justify-center text-purple-500">
-                                        <CheckSquare className="w-5 h-5" />
-                                    </div>
-                                    <span className="text-sm font-bold">Tugas Kelompok Akhir</span>
-                                </div>
-                            </button>
+                            {(() => {
+                                const isGroupTaskLocked = groupTaskAvailableAt && new Date(groupTaskAvailableAt) > new Date();
+                                const groupTaskLockReason = isGroupTaskLocked ? `Terbuka pada ${new Date(groupTaskAvailableAt!).toLocaleString('id-ID', {day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute:'2-digit'})}` : '';
+
+                                return (
+                                    <button
+                                        onClick={() => !isGroupTaskLocked && setActiveMaterial('group-tasks')}
+                                        className={cn(
+                                            "w-full text-left px-4 py-3 flex items-start justify-between transition-colors",
+                                            activeMaterial === 'group-tasks' ? "bg-blue-50 text-blue-700 font-medium border-r-4 border-blue-600" : "hover:bg-gray-50 text-gray-700",
+                                            isGroupTaskLocked ? "opacity-60 cursor-not-allowed" : ""
+                                        )}
+                                        disabled={!!isGroupTaskLocked}
+                                    >
+                                        <div className="flex flex-col gap-0.5">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-6 flex justify-center text-purple-500">
+                                                    <CheckSquare className="w-5 h-5" />
+                                                </div>
+                                                <span className="text-sm font-bold">Tugas Kelompok Akhir</span>
+                                            </div>
+                                            {isGroupTaskLocked && (
+                                                <span className="text-[10px] text-red-500 block leading-tight ml-9">{groupTaskLockReason}</span>
+                                            )}
+                                        </div>
+                                    </button>
+                                );
+                            })()}
                         </div>
                         
                         </>

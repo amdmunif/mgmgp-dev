@@ -9,12 +9,16 @@ import { contentManagementService } from '../../../services/contentManagementSer
 export function AdminEventLmsGroupTasks({ eventId }: { eventId: string }) {
     const [groups, setGroups] = useState<any[]>([]);
     const [participants, setParticipants] = useState<any[]>([]);
+    const [eventDetail, setEventDetail] = useState<any>(null);
+    const [availableAt, setAvailableAt] = useState<string>('');
     const [loading, setLoading] = useState(true);
+    const [savingSettings, setSavingSettings] = useState(false);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingGroup, setEditingGroup] = useState<any>(null);
     const [formName, setFormName] = useState('');
     const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
+    const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
         loadData();
@@ -23,12 +27,18 @@ export function AdminEventLmsGroupTasks({ eventId }: { eventId: string }) {
     const loadData = async () => {
         try {
             setLoading(true);
-            const [fetchedGroups, fetchedParticipants] = await Promise.all([
+            const [fetchedGroups, fetchedParticipants, fetchedEvent] = await Promise.all([
                 lmsService.getGroups(eventId),
-                contentManagementService.getEventParticipants(eventId)
+                contentManagementService.getEventParticipants(eventId),
+                contentManagementService.getEventById(eventId)
             ]);
             setGroups(fetchedGroups || []);
             setParticipants(fetchedParticipants || []);
+            setEventDetail(fetchedEvent);
+            if (fetchedEvent?.group_task_available_at) {
+                // Convert database datetime (YYYY-MM-DD HH:mm:ss) to datetime-local input format (YYYY-MM-DDTHH:mm)
+                setAvailableAt(fetchedEvent.group_task_available_at.replace(' ', 'T').slice(0, 16));
+            }
         } catch (error) {
             console.error(error);
             toast.error("Gagal memuat data kelompok");
@@ -47,6 +57,7 @@ export function AdminEventLmsGroupTasks({ eventId }: { eventId: string }) {
             setFormName('');
             setSelectedMembers([]);
         }
+        setSearchQuery('');
         setIsModalOpen(true);
     };
 
@@ -88,6 +99,25 @@ export function AdminEventLmsGroupTasks({ eventId }: { eventId: string }) {
         }
     };
 
+    const handleSaveSettings = async () => {
+        if (!eventDetail) return;
+        try {
+            setSavingSettings(true);
+            const dateVal = availableAt ? availableAt.replace('T', ' ') + ':00' : null;
+            await contentManagementService.updateEvent(eventId, {
+                ...eventDetail,
+                group_task_available_at: dateVal
+            });
+            toast.success("Pengaturan waktu berhasil disimpan");
+            loadData();
+        } catch (error) {
+            console.error(error);
+            toast.error("Gagal menyimpan pengaturan waktu");
+        } finally {
+            setSavingSettings(false);
+        }
+    };
+
     const toggleMember = (userId: string) => {
         setSelectedMembers(prev => 
             prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]
@@ -102,6 +132,26 @@ export function AdminEventLmsGroupTasks({ eventId }: { eventId: string }) {
                 <h3 className="text-lg font-bold">Manajemen Kelompok Tugas</h3>
                 <Button onClick={() => handleOpenModal()} className="flex items-center gap-2">
                     <Plus className="w-4 h-4" /> Tambah Kelompok
+                </Button>
+            </div>
+
+            <div className="bg-white p-4 rounded-lg shadow-sm border mb-6 flex items-end gap-4">
+                <div className="flex-1 max-w-sm">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Buka Akses Tugas Kelompok Pada:
+                    </label>
+                    <input 
+                        type="datetime-local" 
+                        value={availableAt}
+                        onChange={(e) => setAvailableAt(e.target.value)}
+                        className="w-full px-3 py-2 border rounded-md"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                        Kosongkan jika ingin tugas kelompok langsung dapat diakses.
+                    </p>
+                </div>
+                <Button onClick={handleSaveSettings} disabled={savingSettings}>
+                    {savingSettings ? 'Menyimpan...' : 'Simpan Pengaturan'}
                 </Button>
             </div>
 
@@ -122,6 +172,11 @@ export function AdminEventLmsGroupTasks({ eventId }: { eventId: string }) {
                         <div className="text-sm text-gray-600 mb-2">
                             <Users className="inline w-4 h-4 mr-1" /> {g.members.length} Anggota
                         </div>
+                        <ul className="text-xs text-gray-500 mb-3 pl-5 list-disc min-h-[4rem]">
+                            {g.members.map((m: any) => (
+                                <li key={m.user_id}>{m.user_name || m.nama}</li>
+                            ))}
+                        </ul>
                         <div className="text-xs text-gray-500 mb-2">
                             Tugas: {g.is_submitted === 1 ? <a href={g.task_url} target="_blank" rel="noreferrer" className="text-blue-500 underline">Lihat URL</a> : 'Belum Dikumpulkan'}
                         </div>
@@ -158,22 +213,42 @@ export function AdminEventLmsGroupTasks({ eventId }: { eventId: string }) {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Pilih Anggota</label>
+                                <div className="flex justify-between items-center mb-2">
+                                    <label className="block text-sm font-medium text-gray-700">Pilih Anggota</label>
+                                    <input 
+                                        type="text" 
+                                        placeholder="Cari nama atau sekolah..." 
+                                        value={searchQuery}
+                                        onChange={e => setSearchQuery(e.target.value)}
+                                        className="border rounded-md px-2 py-1 text-sm w-48"
+                                    />
+                                </div>
                                 <div className="space-y-2 border rounded-md p-2 h-64 overflow-y-auto">
-                                    {participants.map(p => (
-                                        <div key={p.user_id} className="flex items-center gap-2">
+                                    {participants.filter(p => 
+                                        (p.user_name || p.nama || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
+                                        (p.asal_sekolah || '').toLowerCase().includes(searchQuery.toLowerCase())
+                                    ).map(p => {
+                                        const otherGroup = groups.find(g => g.id !== editingGroup?.id && g.members.some((m: any) => m.user_id === p.user_id));
+                                        return (
+                                        <div key={p.user_id} className="flex items-center gap-2 hover:bg-gray-50 p-1 rounded">
                                             <input 
                                                 type="checkbox" 
                                                 id={`member-${p.user_id}`}
                                                 checked={selectedMembers.includes(p.user_id)}
                                                 onChange={() => toggleMember(p.user_id)}
-                                                className="rounded border-gray-300"
+                                                disabled={!!otherGroup}
+                                                className="rounded border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
                                             />
-                                            <label htmlFor={`member-${p.user_id}`} className="text-sm cursor-pointer select-none">
-                                                {p.user_name} <span className="text-xs text-gray-500">({p.asal_sekolah})</span>
+                                            <label htmlFor={`member-${p.user_id}`} className={`text-sm cursor-pointer select-none flex-1 ${otherGroup ? 'text-gray-400 cursor-not-allowed' : ''}`}>
+                                                {p.user_name || p.nama} <span className="text-xs">({p.asal_sekolah})</span>
+                                                {otherGroup && (
+                                                    <span className="ml-2 text-xs bg-red-50 text-red-600 px-1.5 py-0.5 rounded border border-red-100">
+                                                        Di {otherGroup.name}
+                                                    </span>
+                                                )}
                                             </label>
                                         </div>
-                                    ))}
+                                    )})}
                                 </div>
                             </div>
                         </div>
