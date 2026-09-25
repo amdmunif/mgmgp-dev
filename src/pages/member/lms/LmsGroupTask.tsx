@@ -92,7 +92,7 @@ export function LmsGroupTask({ eventId }: { eventId: string }) {
                         <h4 className="font-medium text-gray-700 mb-2 text-sm">Anggota Kelompok:</h4>
                         <ul className="list-disc list-inside text-sm text-gray-600 grid grid-cols-1 sm:grid-cols-2 gap-1">
                             {myGroup.members?.map((m: any) => (
-                                <li key={m.user_id}>{m.user_name}</li>
+                                <li key={m.user_id}>{m.nama}</li>
                             ))}
                         </ul>
                     </div>

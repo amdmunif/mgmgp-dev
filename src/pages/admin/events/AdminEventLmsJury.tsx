@@ -106,7 +106,7 @@ export function AdminEventLmsJury({ eventId }: { eventId: string }) {
                                     const isJury = juryIds.includes(p.user_id);
                                     return (
                                         <tr key={p.user_id} className="border-b">
-                                            <td className="p-3">{p.user_name}</td>
+                                            <td className="p-3">{p.nama}</td>
                                             <td className="p-3">{p.asal_sekolah}</td>
                                             <td className="p-3 text-center">
                                                 {isJury ? <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-bold">JURI</span> : <span className="text-gray-400">-</span>}

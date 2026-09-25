@@ -167,7 +167,8 @@ export const lmsService = {
 
     // Group Tasks API
     getGroups: async (eventId: string): Promise<any[]> => {
-        return await api.get(`/lms-group-tasks/groups/${eventId}`);
+        const res: any = await api.get(`/lms-group-tasks/groups/${eventId}`);
+        return res.data || [];
     },
     createGroup: async (data: any): Promise<any> => {
         return await api.post(`/lms-group-tasks/groups`, data);
@@ -179,7 +180,8 @@ export const lmsService = {
         return await api.delete(`/lms-group-tasks/groups/${groupId}`);
     },
     getMyGroup: async (eventId: string): Promise<any> => {
-        return await api.get(`/lms-group-tasks/my-group/${eventId}`);
+        const res: any = await api.get(`/lms-group-tasks/my-group/${eventId}`);
+        return res.data || null;
     },
     submitGroupTask: async (data: any): Promise<any> => {
         return await api.post(`/lms-group-tasks/submit`, data);
@@ -194,18 +196,21 @@ export const lmsService = {
         return await api.post(`/lms-group-tasks/jury-evaluate-participant`, data);
     },
     getGradeSettings: async (): Promise<any[]> => {
-        return await api.get(`/lms-group-tasks/settings`);
+        const res: any = await api.get(`/lms-group-tasks/settings`);
+        return res.data || [];
     },
     updateGradeSettings: async (data: any[]): Promise<any> => {
         return await api.post(`/lms-group-tasks/settings`, data);
     },
     getJuries: async (eventId: string): Promise<any[]> => {
-        return await api.get(`/lms-group-tasks/juries/${eventId}`);
+        const res: any = await api.get(`/lms-group-tasks/juries/${eventId}`);
+        return res.data || [];
     },
     setJuryRole: async (data: any): Promise<any> => {
         return await api.post(`/lms-group-tasks/juries`, data);
     },
     getParticipantsActiveness: async (eventId: string): Promise<any[]> => {
-        return await api.get(`/lms-group-tasks/participants-activeness/${eventId}`);
+        const res: any = await api.get(`/lms-group-tasks/participants-activeness/${eventId}`);
+        return res.data || [];
     }
 };
