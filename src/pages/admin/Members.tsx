@@ -19,7 +19,7 @@ import { AdminLeaderboard } from '../../components/admin/AdminLeaderboard';
 
 export function AdminMembers() {
     const navigate = useNavigate();
-    const { setPageHeader } = useOutletContext<{ setPageHeader: (header: { title: string; description: string; icon: React.ReactNode }) => void }>() || {};
+    const { setPageHeader, user } = useOutletContext<{ setPageHeader: (header: { title: string; description: string; icon: React.ReactNode }) => void, user?: any }>() || {};
     const location = useLocation();
     const [members, setMembers] = useState<Profile[]>([]);
     const [loading, setLoading] = useState(true);
@@ -641,16 +641,18 @@ export function AdminMembers() {
                 >
                     Data Duplikat
                 </button>
-                <button
-                    onClick={() => setActiveTab('leaderboard')}
-                    className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors duration-200 flex items-center gap-2 ${activeTab === 'leaderboard'
-                        ? 'border-green-500 text-green-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700'
-                        }`}
-                >
-                    <Trophy className="w-4 h-4" />
-                    Leaderboard
-                </button>
+                {(user?.role === 'Admin' || user?.role === 'Super Admin') && (
+                    <button
+                        onClick={() => setActiveTab('leaderboard')}
+                        className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors duration-200 flex items-center gap-2 ${activeTab === 'leaderboard'
+                            ? 'border-green-500 text-green-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700'
+                            }`}
+                    >
+                        <Trophy className="w-4 h-4" />
+                        Leaderboard
+                    </button>
+                )}
             </div>
 
             {/* Data Table */}

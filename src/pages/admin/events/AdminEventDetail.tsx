@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
 import { contentManagementService } from '../../../services/contentManagementService';
 import { ArrowLeft, Calendar, MapPin, Users, CheckCircle, XCircle, Trash2, Printer, QrCode, X, MonitorPlay, Trophy, UserCheck, UserMinus, Search, FileSpreadsheet, Download, School, FileText, Clock } from 'lucide-react';
 import { toast } from 'react-hot-toast';
@@ -46,6 +46,7 @@ interface EventDetail {
 
 export function AdminEventDetail() {
     const { id } = useParams<{ id: string }>();
+    const { user } = useOutletContext<{ user?: any }>() || {};
     const navigate = useNavigate();
     const [event, setEvent] = useState<EventDetail | null>(null);
     const [participants, setParticipants] = useState<Participant[]>([]);
@@ -724,7 +725,7 @@ export function AdminEventDetail() {
                     <Calendar className="w-4 h-4 inline-block mr-2" />
                     Detail Absensi
                 </button>
-                {!!event?.has_lms && (
+                {!!event?.has_lms && (user?.role === 'Admin' || user?.role === 'Super Admin') && (
                     <>
                         <button
                             onClick={() => setActiveTab('leaderboard')}
@@ -943,60 +944,57 @@ export function AdminEventDetail() {
                             <table className="w-full text-sm text-left">
                                 <thead className="text-xs text-gray-700 uppercase bg-purple-50">
                                     <tr>
-                                        <th className="px-6 py-3 rounded-tl-lg">Peringkat</th>
-                                        <th className="px-6 py-3">Peserta</th>
-                                        <th className="px-6 py-3 text-center">Tepat Waktu</th>
-                                        <th className="px-6 py-3 text-center">Rata-rata Absen</th>
-                                        <th className="px-6 py-3 text-right">Total Nilai</th>
-                                        <th className="px-6 py-3 rounded-tr-lg text-center">Aksi</th>
+                                        <th className="px-4 py-3 rounded-tl-lg">Peringkat</th>
+                                        <th className="px-4 py-3">Peserta</th>
+                                        <th className="px-4 py-3 text-center">Tugas</th>
+                                        <th className="px-4 py-3 text-center">Kuis</th>
+                                        <th className="px-4 py-3 text-center">Hadir</th>
+                                        <th className="px-4 py-3 text-center" title="Proyek Akhir">Proyek</th>
+                                        <th className="px-4 py-3 text-center">Keaktifan</th>
+                                        <th className="px-4 py-3 text-center">Bonus</th>
+                                        <th className="px-4 py-3 text-right">Total</th>
+                                        <th className="px-4 py-3 rounded-tr-lg text-center">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {leaderboard.map((user: any, index: number) => (
-                                        <tr key={user.user_id} className="border-b hover:bg-gray-50">
-                                            <td className="px-6 py-4 text-center font-bold text-lg">
+                                    {leaderboard.map((u: any, index: number) => (
+                                        <tr key={u.user_id} className="border-b hover:bg-gray-50">
+                                            <td className="px-4 py-4 text-center font-bold text-lg">
                                                 {index === 0 && <Trophy className="w-6 h-6 text-yellow-500 inline-block" />}
                                                 {index === 1 && <Trophy className="w-6 h-6 text-gray-400 inline-block" />}
                                                 {index === 2 && <Trophy className="w-6 h-6 text-amber-600 inline-block" />}
-                                                {index > 2 && <span className="text-gray-500">{user.rank}</span>}
+                                                {index > 2 && <span className="text-gray-500">{index + 1}</span>}
                                             </td>
-                                            <td className="px-6 py-4">
+                                            <td className="px-4 py-4">
                                                 <div className="flex items-center gap-3">
-                                                    {user.foto_profile ? (
-                                                        <img src={getFileUrl(user.foto_profile)} className="w-8 h-8 rounded-full object-cover" />
+                                                    {u.foto_profile ? (
+                                                        <img src={getFileUrl(u.foto_profile)} className="w-8 h-8 rounded-full object-cover" />
                                                     ) : (
                                                         <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
-                                                            {user.user_name.charAt(0)}
+                                                            {u.user_name.charAt(0)}
                                                         </div>
                                                     )}
                                                     <div>
-                                                        <div className="font-medium text-gray-900">{user.user_name}</div>
-                                                        <div className="text-xs text-gray-500">{user.asal_sekolah || '-'}</div>
+                                                        <div className="font-medium text-gray-900">{u.user_name}</div>
+                                                        <div className="text-[10px] text-gray-500">{u.asal_sekolah || '-'}</div>
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 text-center">
-                                                {user.on_time_bonus > 0 ? (
-                                                    <span className="text-green-600 font-medium text-xs bg-green-50 px-2 py-1 rounded">+{user.on_time_bonus} Poin</span>
-                                                ) : <span className="text-gray-300">-</span>}
-                                            </td>
-                                            <td className="px-6 py-4 text-center">
-                                                {user.average_attendance_time ? (
-                                                    <div className="flex flex-col items-center">
-                                                        <span className="font-mono text-gray-700">{user.average_attendance_time}</span>
-                                                        {user.attendance_bonus > 0 && <span className="text-green-600 text-[10px]">+{user.attendance_bonus} Poin</span>}
-                                                    </div>
-                                                ) : <span className="text-gray-400">-</span>}
-                                            </td>
-                                            <td className="px-6 py-4 text-right font-bold text-purple-600 text-lg">
-                                                {user.total_score}
+                                            <td className="px-4 py-4 text-center font-medium">{u.assignment_score || '-'}</td>
+                                            <td className="px-4 py-4 text-center font-medium">{u.quiz_score || '-'}</td>
+                                            <td className="px-4 py-4 text-center font-medium">{u.attendance_bonus || '-'}</td>
+                                            <td className="px-4 py-4 text-center font-medium text-indigo-600">{u.final_task_score || '-'}</td>
+                                            <td className="px-4 py-4 text-center font-medium text-emerald-600">{u.activeness_score || '-'}</td>
+                                            <td className="px-4 py-4 text-center font-medium text-orange-500">{(u.on_time_bonus || 0) + (u.likes_bonus || 0) > 0 ? `+${(u.on_time_bonus || 0) + (u.likes_bonus || 0)}` : '-'}</td>
+                                            <td className="px-4 py-4 text-right font-bold text-purple-600 text-lg">
+                                                {u.total_score}
                                             </td>
                                             <td className="px-6 py-4 text-center">
                                                 <Button 
                                                     size="sm" 
                                                     variant="outline"
                                                     onClick={() => {
-                                                        setSelectedParticipant(user);
+                                                        setSelectedParticipant(u);
                                                         setActivityModalOpen(true);
                                                     }}
                                                 >

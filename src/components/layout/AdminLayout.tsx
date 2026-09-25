@@ -507,7 +507,7 @@ export function AdminLayout() {
                     <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:32px_32px]" />
 
                     <div className="relative z-10 max-w-[1600px] mx-auto">
-                        <Outlet context={{ setPageHeader }} />
+                        <Outlet context={{ setPageHeader, user }} />
                     </div>
                 </div>
             </main>

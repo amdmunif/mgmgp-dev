@@ -217,7 +217,7 @@ class LmsGroupTaskController
             }
 
             // upsert evaluation
-            $id = Helper::generateUUID();
+            $id = Helper::uuid();
             // check if exists
             $stmtCheck = $this->conn->prepare("SELECT id FROM event_group_peer_evaluations WHERE evaluator_user_id = :u AND target_group_id = :g");
             $stmtCheck->execute([':u' => $userId, ':g' => $targetGroupId]);
@@ -247,7 +247,7 @@ class LmsGroupTaskController
             $grade = $data['grade'];
 
             // Upsert
-            $id = Helper::generateUUID();
+            $id = Helper::uuid();
             $stmtCheck = $this->conn->prepare("SELECT id FROM event_jury_group_evaluations WHERE jury_user_id = :u AND target_group_id = :g");
             $stmtCheck->execute([':u' => $userId, ':g' => $targetGroupId]);
             $existing = $stmtCheck->fetch();
@@ -275,7 +275,7 @@ class LmsGroupTaskController
             $grade = $data['grade'];
 
             // Upsert
-            $id = Helper::generateUUID();
+            $id = Helper::uuid();
             $stmtCheck = $this->conn->prepare("SELECT id FROM event_jury_participant_evaluations WHERE jury_user_id = :j AND target_user_id = :t AND event_id = :e");
             $stmtCheck->execute([':j' => $userId, ':t' => $targetUserId, ':e' => $eventId]);
             $existing = $stmtCheck->fetch();
