@@ -6,6 +6,8 @@ import { RichTextEditor } from '../../../components/ui/RichTextEditor';
 import { lmsService } from '../../../services/lmsService';
 import type { LmsTopic, LmsMaterial } from '../../../types';
 import { toast } from 'react-hot-toast';
+import { AdminEventLmsGroupTasks } from './AdminEventLmsGroupTasks';
+import { AdminEventLmsJury } from './AdminEventLmsJury';
 
 export function AdminEventLms() {
     const { id } = useParams<{ id: string }>();
@@ -27,6 +29,7 @@ export function AdminEventLms() {
     const [editingMaterial, setEditingMaterial] = useState<LmsMaterial | null>(null);
     
     const [activeTopicId, setActiveTopicId] = useState<string | null>(null);
+    const [activeLmsTab, setActiveLmsTab] = useState<'materials' | 'groups' | 'jury'>('materials');
 
     // Form States
     const [topicTitle, setTopicTitle] = useState('');
@@ -276,8 +279,31 @@ export function AdminEventLms() {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-                <div className="flex items-center gap-4">
+            <div className="flex border-b">
+                <button 
+                    className={`px-6 py-3 font-medium text-sm border-b-2 transition-colors ${activeLmsTab === 'materials' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                    onClick={() => setActiveLmsTab('materials')}
+                >
+                    Topik & Materi
+                </button>
+                <button 
+                    className={`px-6 py-3 font-medium text-sm border-b-2 transition-colors ${activeLmsTab === 'groups' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                    onClick={() => setActiveLmsTab('groups')}
+                >
+                    Kelompok & Tugas
+                </button>
+                <button 
+                    className={`px-6 py-3 font-medium text-sm border-b-2 transition-colors ${activeLmsTab === 'jury' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                    onClick={() => setActiveLmsTab('jury')}
+                >
+                    Juri & Keaktifan
+                </button>
+            </div>
+
+            {activeLmsTab === 'materials' && (
+                <>
+                    <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                        <div className="flex items-center gap-4">
                     <Button variant="ghost" onClick={() => navigate(`/admin/lms`)} className="text-gray-500 p-2 h-auto">
                         <ArrowLeft className="w-5 h-5" />
                     </Button>
@@ -407,8 +433,12 @@ export function AdminEventLms() {
                             </Button>
                         </div>
                     </div>
-                ))}
             </div>
+            </>
+            )}
+
+            {activeLmsTab === 'groups' && id && <AdminEventLmsGroupTasks eventId={id} />}
+            {activeLmsTab === 'jury' && id && <AdminEventLmsJury eventId={id} />}
 
             {/* Modal Topik */}
             {isTopicModalOpen && (

@@ -1441,6 +1441,53 @@ public function getEventGradebook($eventId) {
                 }
             }
 
+            // 7. Get LMS Grade Settings
+            $stmt = $this->conn->query("SELECT grade, points FROM lms_grade_settings");
+            $gradeSettingsRaw = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            $gradeSettings = [];
+            foreach ($gradeSettingsRaw as $gs) {
+                $gradeSettings[$gs['grade']] = (int)$gs['points'];
+            }
+
+            // 8. Get Activeness Grades
+            $qAct = "SELECT target_user_id, grade, created_at FROM event_jury_participant_evaluations WHERE event_id = :eid";
+            $stmt = $this->conn->prepare($qAct);
+            $stmt->execute([':eid' => $eventId]);
+            $activenessDataRaw = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            $activenessData = [];
+            foreach ($activenessDataRaw as $ad) {
+                $activenessData[$ad['target_user_id']] = $ad;
+            }
+
+            // 9. Get Group Tasks Grades
+            $qGr = "SELECT gm.user_id, je.grade, je.created_at, g.name as group_name 
+                    FROM event_group_members gm 
+                    JOIN event_groups g ON gm.group_id = g.id 
+                    JOIN event_jury_group_evaluations je ON g.id = je.target_group_id 
+                    WHERE g.event_id = :eid";
+            $stmt = $this->conn->prepare($qGr);
+            $stmt->execute([':eid' => $eventId]);
+            $groupTaskDataRaw = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            $groupTaskData = [];
+            foreach ($groupTaskDataRaw as $gd) {
+                $groupTaskData[$gd['user_id']] = $gd;
+            }
+
+            // 10. Get Group Likes
+            $qLikes = "SELECT gm.user_id, COUNT(pe.id) as like_count 
+                       FROM event_group_members gm 
+                       JOIN event_groups g ON gm.group_id = g.id 
+                       JOIN event_group_peer_evaluations pe ON g.id = pe.target_group_id 
+                       WHERE g.event_id = :eid AND pe.evaluation = 'like'
+                       GROUP BY gm.user_id";
+            $stmt = $this->conn->prepare($qLikes);
+            $stmt->execute([':eid' => $eventId]);
+            $likesDataRaw = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            $likesData = [];
+            foreach ($likesDataRaw as $ld) {
+                $likesData[$ld['user_id']] = (int)$ld['like_count'];
+            }
+
             // Calculate Leaderboard
             $leaderboard = [];
             foreach ($participants as $p) {
@@ -1537,6 +1584,44 @@ public function getEventGradebook($eventId) {
                     }
                 }
 
+                $activenessScore = 0;
+                if (isset($activenessData[$uid])) {
+                    $g = $activenessData[$uid]['grade'];
+                    $activenessScore = isset($gradeSettings[$g]) ? $gradeSettings[$g] : 0;
+                    $activities[] = [
+                        'type' => 'Keaktifan',
+                        'title' => 'Nilai Keaktifan (Grade ' . $g . ')',
+                        'score' => $activenessScore,
+                        'date' => $activenessData[$uid]['created_at'],
+                        'bonus' => 0
+                    ];
+                }
+
+                $finalTaskScore = 0;
+                if (isset($groupTaskData[$uid])) {
+                    $g = $groupTaskData[$uid]['grade'];
+                    $finalTaskScore = isset($gradeSettings[$g]) ? $gradeSettings[$g] : 0;
+                    $activities[] = [
+                        'type' => 'Tugas Kelompok',
+                        'title' => 'Tugas Akhir: ' . $groupTaskData[$uid]['group_name'] . ' (Grade ' . $g . ')',
+                        'score' => $finalTaskScore,
+                        'date' => $groupTaskData[$uid]['created_at'],
+                        'bonus' => 0
+                    ];
+                }
+
+                $likesBonus = 0;
+                if (isset($likesData[$uid]) && $likesData[$uid] > 0) {
+                    $likesBonus = $likesData[$uid]; // 1 point per like
+                    $activities[] = [
+                        'type' => 'Bonus Suka',
+                        'title' => 'Bonus Peer Evaluation (' . $likesBonus . ' Suka)',
+                        'score' => 0,
+                        'date' => date('Y-m-d H:i:s'), 
+                        'bonus' => $likesBonus
+                    ];
+                }
+
                 $latestActivityDate = null;
                 foreach ($activities as $act) {
                     if (!$latestActivityDate || strtotime($act['date']) > strtotime($latestActivityDate)) {
@@ -1544,7 +1629,7 @@ public function getEventGradebook($eventId) {
                     }
                 }
 
-                $totalScore = $totalQuizScore + $totalAsgScore + $onTimeBonus + $attendanceBonus;
+                $totalScore = $totalQuizScore + $totalAsgScore + $onTimeBonus + $attendanceBonus + $activenessScore + $finalTaskScore + $likesBonus;
 
                 $leaderboard[] = [
                     'user_id' => $uid,
@@ -1553,8 +1638,11 @@ public function getEventGradebook($eventId) {
                     'foto_profile' => $p['foto_profile'],
                     'quiz_score' => $totalQuizScore,
                     'assignment_score' => $totalAsgScore,
+                    'activeness_score' => $activenessScore,
+                    'final_task_score' => $finalTaskScore,
                     'on_time_bonus' => $onTimeBonus,
                     'attendance_bonus' => $attendanceBonus,
+                    'likes_bonus' => $likesBonus,
                     'total_score' => $totalScore,
                     'average_attendance_time' => $avgAttTime,
                     'attendance_count' => count($attTimes),

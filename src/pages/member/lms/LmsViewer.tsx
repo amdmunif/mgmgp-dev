@@ -7,6 +7,8 @@ import { toast } from 'react-hot-toast';
 import { lmsService } from '../../../services/lmsService';
 import { contentManagementService } from '../../../services/contentManagementService';
 import { eventService } from '../../../services/eventService';
+import { LmsGroupTask } from './LmsGroupTask';
+import { LmsGroupTask } from './LmsGroupTask';
 
 // Mock Data Types
 interface LmsMaterial {
@@ -376,8 +378,10 @@ export function LmsViewer() {
                 </div>
 
                 {/* Content Area */}
-                <div className={cn("flex-1 overflow-y-auto", !activeItem ? "bg-white" : "bg-gray-50 p-4 md:p-8")}>
-                    {!activeItem ? (
+                <div className={cn("flex-1 overflow-y-auto", (!activeItem && activeMaterial !== 'group-tasks') ? "bg-white" : "bg-gray-50 p-4 md:p-8")}>
+                    {activeMaterial === 'group-tasks' && eventId ? (
+                        <LmsGroupTask eventId={eventId} />
+                    ) : !activeItem ? (
                         <div className="w-full min-h-full flex flex-col p-6 md:p-10">
                             <div className="w-full max-w-7xl mx-auto flex flex-col flex-1">
                                 <div className="flex items-center gap-4 mb-8 pb-6 border-b border-gray-100">
@@ -747,6 +751,7 @@ export function LmsViewer() {
                     )}
 
                     {/* Navigation & Complete Button Footer (Global for all types) */}
+                    {activeMaterial !== 'group-tasks' && activeItem && (
                     <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 shrink-0 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
                         <Button 
                             variant="outline" 
@@ -798,6 +803,7 @@ export function LmsViewer() {
                             Selanjutnya <ChevronRight className="w-4 h-4 ml-2" />
                         </Button>
                     </div>
+                    )}
 
                 </div>
             </div>
@@ -918,6 +924,24 @@ export function LmsViewer() {
                             </div>
                         );
                     })}
+                        
+                        <div className="border-t border-gray-100 mt-2">
+                            <button
+                                onClick={() => setActiveMaterial('group-tasks')}
+                                className={cn(
+                                    "w-full text-left px-4 py-3 flex items-center justify-between transition-colors",
+                                    activeMaterial === 'group-tasks' ? "bg-blue-50 text-blue-700 font-medium border-r-4 border-blue-600" : "hover:bg-gray-50 text-gray-700"
+                                )}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="w-6 flex justify-center text-purple-500">
+                                        <CheckSquare className="w-5 h-5" />
+                                    </div>
+                                    <span className="text-sm font-bold">Tugas Kelompok Akhir</span>
+                                </div>
+                            </button>
+                        </div>
+                        
                         </>
                     )}
                 </div>

@@ -143,6 +143,7 @@ include_once './controllers/TrainingController.php';
 include_once './controllers/FinanceController.php';
 include_once './controllers/ProjectController.php';
 include_once './controllers/LmsController.php';
+include_once './controllers/LmsGroupTaskController.php';
 include_once './controllers/BoardMeetingController.php';
 
 // ... includes
@@ -162,6 +163,46 @@ if ($resource === 'news') {
         echo $controller->updateNews($action, $input, $userId, $userName);
     if ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action)
         echo $controller->deleteNews($action, $userId, $userName);
+
+} elseif ($resource === 'lms-group-tasks') {
+    $controller = new LmsGroupTaskController();
+    $subAction = isset($uri_parts[2]) ? $uri_parts[2] : null;
+
+    if ($action === 'groups') {
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            echo $controller->getGroups($subAction);
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            echo $controller->createGroup($input);
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'PUT') {
+            echo $controller->updateGroup($subAction, $input);
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+            echo $controller->deleteGroup($subAction);
+        }
+    } elseif ($action === 'my-group' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        echo $controller->getMyGroup($subAction, $userId);
+    } elseif ($action === 'submit' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        echo $controller->submitTask($input, $userId);
+    } elseif ($action === 'peer-evaluate' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        echo $controller->peerEvaluate($input, $userId);
+    } elseif ($action === 'jury-evaluate-group' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        echo $controller->juryEvaluateGroup($input, $userId);
+    } elseif ($action === 'jury-evaluate-participant' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        echo $controller->juryEvaluateParticipant($input, $userId);
+    } elseif ($action === 'settings') {
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            echo $controller->getSettings();
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            echo $controller->updateSettings($input);
+        }
+    } elseif ($action === 'juries') {
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            echo $controller->getJuries($subAction);
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            echo $controller->setJuryRole($input);
+        }
+    } elseif ($action === 'participants-activeness' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        echo $controller->getParticipantsWithActiveness($subAction);
+    }
 
 } elseif ($resource === 'lms') {
     $controller = new LmsController();
@@ -292,6 +333,11 @@ if ($resource === 'news') {
     } elseif ($action === 'leaderboard') {
         if ($_SERVER['REQUEST_METHOD'] === 'GET' && $subAction === 'event' && isset($uri_parts[3])) {
             // GET /lms/leaderboard/event/:eventId
+            if ($userRole !== 'Admin') {
+                http_response_code(403);
+                echo json_encode(["message" => "Akses Ditolak: Hanya Admin yang dapat mengakses Leaderboard"]);
+                exit();
+            }
             echo $controller->getEventLeaderboard($uri_parts[3]);
         }
     }

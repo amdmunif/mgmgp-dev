@@ -163,5 +163,49 @@ export const lmsService = {
 
     getEventAttendancesMatrix: async (eventId: string): Promise<any> => {
         return await api.get(`/events/${eventId}/attendances-matrix`);
+    },
+
+    // Group Tasks API
+    getGroups: async (eventId: string): Promise<any[]> => {
+        return await api.get(`/lms-group-tasks/groups/${eventId}`);
+    },
+    createGroup: async (data: any): Promise<any> => {
+        return await api.post(`/lms-group-tasks/groups`, data);
+    },
+    updateGroup: async (groupId: string, data: any): Promise<any> => {
+        return await api.put(`/lms-group-tasks/groups/${groupId}`, data);
+    },
+    deleteGroup: async (groupId: string): Promise<any> => {
+        return await api.delete(`/lms-group-tasks/groups/${groupId}`);
+    },
+    getMyGroup: async (eventId: string): Promise<any> => {
+        return await api.get(`/lms-group-tasks/my-group/${eventId}`);
+    },
+    submitGroupTask: async (data: any): Promise<any> => {
+        return await api.post(`/lms-group-tasks/submit`, data);
+    },
+    peerEvaluateGroup: async (data: any): Promise<any> => {
+        return await api.post(`/lms-group-tasks/peer-evaluate`, data);
+    },
+    juryEvaluateGroup: async (data: any): Promise<any> => {
+        return await api.post(`/lms-group-tasks/jury-evaluate-group`, data);
+    },
+    juryEvaluateParticipant: async (data: any): Promise<any> => {
+        return await api.post(`/lms-group-tasks/jury-evaluate-participant`, data);
+    },
+    getGradeSettings: async (): Promise<any[]> => {
+        return await api.get(`/lms-group-tasks/settings`);
+    },
+    updateGradeSettings: async (data: any[]): Promise<any> => {
+        return await api.post(`/lms-group-tasks/settings`, data);
+    },
+    getJuries: async (eventId: string): Promise<any[]> => {
+        return await api.get(`/lms-group-tasks/juries/${eventId}`);
+    },
+    setJuryRole: async (data: any): Promise<any> => {
+        return await api.post(`/lms-group-tasks/juries`, data);
+    },
+    getParticipantsActiveness: async (eventId: string): Promise<any[]> => {
+        return await api.get(`/lms-group-tasks/participants-activeness/${eventId}`);
     }
 };
