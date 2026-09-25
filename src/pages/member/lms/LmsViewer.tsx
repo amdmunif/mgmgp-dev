@@ -8,7 +8,6 @@ import { lmsService } from '../../../services/lmsService';
 import { contentManagementService } from '../../../services/contentManagementService';
 import { eventService } from '../../../services/eventService';
 import { LmsGroupTask } from './LmsGroupTask';
-import { LmsGroupTask } from './LmsGroupTask';
 
 // Mock Data Types
 interface LmsMaterial {

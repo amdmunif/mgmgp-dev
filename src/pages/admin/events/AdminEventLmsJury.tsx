@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { Settings, Save, Check } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Settings, Save } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { toast } from 'react-hot-toast';
 import { lmsService } from '../../../services/lmsService';
 import { contentManagementService } from '../../../services/contentManagementService';
-import type { Participant } from '../../../types';
+// import type { Participant } from '../../../types';
 
 export function AdminEventLmsJury({ eventId }: { eventId: string }) {
-    const [participants, setParticipants] = useState<Participant[]>([]);
+    const [participants, setParticipants] = useState<any[]>([]);
     const [juries, setJuries] = useState<any[]>([]);
     const [gradeSettings, setGradeSettings] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
