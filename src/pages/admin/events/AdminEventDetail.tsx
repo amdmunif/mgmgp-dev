@@ -980,11 +980,11 @@ export function AdminEventDetail() {
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-4 py-4 text-center font-medium">{u.assignment_score || '-'}</td>
-                                            <td className="px-4 py-4 text-center font-medium">{u.quiz_score || '-'}</td>
-                                            <td className="px-4 py-4 text-center font-medium">{u.attendance_bonus || '-'}</td>
-                                            <td className="px-4 py-4 text-center font-medium text-indigo-600">{u.final_task_score || '-'}</td>
-                                            <td className="px-4 py-4 text-center font-medium text-emerald-600">{u.activeness_score || '-'}</td>
+                                            <td className="px-4 py-4 text-center font-medium">{u.assignment_score ?? '-'}</td>
+                                            <td className="px-4 py-4 text-center font-medium">{u.quiz_score ?? '-'}</td>
+                                            <td className="px-4 py-4 text-center font-medium">{u.attendance_bonus ?? '-'}</td>
+                                            <td className="px-4 py-4 text-center font-medium text-indigo-600">{u.final_task_score ?? '-'}</td>
+                                            <td className="px-4 py-4 text-center font-medium text-emerald-600">{u.activeness_score ?? '-'}</td>
                                             <td className="px-4 py-4 text-center font-medium text-orange-500">{(u.on_time_bonus || 0) + (u.likes_bonus || 0) > 0 ? `+${(u.on_time_bonus || 0) + (u.likes_bonus || 0)}` : '-'}</td>
                                             <td className="px-4 py-4 text-right font-bold text-purple-600 text-lg">
                                                 {u.total_score}

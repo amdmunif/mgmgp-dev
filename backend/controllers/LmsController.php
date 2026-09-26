@@ -1448,6 +1448,15 @@ public function getEventGradebook($eventId) {
             foreach ($gradeSettingsRaw as $gs) {
                 $gradeSettings[$gs['grade']] = (int)$gs['points'];
             }
+            if (empty($gradeSettings)) {
+                $gradeSettings = [
+                    'A' => 100,
+                    'B' => 80,
+                    'C' => 60,
+                    'D' => 40,
+                    'E' => 20
+                ];
+            }
 
             // 8. Get Activeness Grades
             $qAct = "SELECT target_user_id, grade, created_at FROM event_jury_participant_evaluations WHERE event_id = :eid";
