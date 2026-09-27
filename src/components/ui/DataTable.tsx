@@ -125,7 +125,16 @@ export function DataTable<T extends Record<string, any>>({
 
     // Pagination
     const totalPages = Math.ceil(sortedData.length / limit);
-    const paginatedData = sortedData.slice((currentPage - 1) * limit, currentPage * limit);
+    
+    useEffect(() => {
+        const maxPage = Math.max(1, totalPages);
+        if (currentPage > maxPage) {
+            updateParams({ page: maxPage.toString() });
+        }
+    }, [currentPage, totalPages, limit]);
+
+    const actualPage = Math.min(currentPage, Math.max(1, totalPages));
+    const paginatedData = sortedData.slice((actualPage - 1) * limit, actualPage * limit);
 
     return (
         <div className="space-y-4">

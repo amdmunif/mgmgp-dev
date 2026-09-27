@@ -182,6 +182,7 @@ class LmsGroupTaskController
         try {
             $groupId = $data['group_id'];
             $taskUrl = $data['task_url'];
+            $presentationUrl = isset($data['presentation_url']) ? $data['presentation_url'] : null;
 
             // verify user is in group
             $stmt = $this->conn->prepare("SELECT 1 FROM event_group_members WHERE group_id = :g AND user_id = :u");
@@ -191,9 +192,9 @@ class LmsGroupTaskController
                 return json_encode(["message" => "Bukan anggota kelompok ini"]);
             }
 
-            $q = "UPDATE event_groups SET task_url = :url, is_submitted = 1 WHERE id = :id";
+            $q = "UPDATE event_groups SET task_url = :url, presentation_url = :p_url, is_submitted = 1 WHERE id = :id";
             $stmt = $this->conn->prepare($q);
-            $stmt->execute([':url' => $taskUrl, ':id' => $groupId]);
+            $stmt->execute([':url' => $taskUrl, ':p_url' => $presentationUrl, ':id' => $groupId]);
 
             return json_encode(["status" => "success", "message" => "Tugas berhasil dikumpulkan"]);
         } catch (PDOException $e) {

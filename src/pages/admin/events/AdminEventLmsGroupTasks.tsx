@@ -177,8 +177,11 @@ export function AdminEventLmsGroupTasks({ eventId }: { eventId: string }) {
                                 <li key={m.user_id}>{m.user_name || m.nama}</li>
                             ))}
                         </ul>
-                        <div className="text-xs text-gray-500 mb-2">
-                            Tugas: {g.is_submitted === 1 ? <a href={g.task_url} target="_blank" rel="noreferrer" className="text-blue-500 underline">Lihat URL</a> : 'Belum Dikumpulkan'}
+                        <div className="text-xs text-gray-500 mb-2 flex flex-col gap-1">
+                            <div>Tugas: {g.is_submitted == 1 ? <a href={g.task_url} target="_blank" rel="noreferrer" className="text-blue-500 underline">Lihat URL Produk</a> : 'Belum Dikumpulkan'}</div>
+                            {g.presentation_url && (
+                                <div>Presentasi: <a href={g.presentation_url} target="_blank" rel="noreferrer" className="text-blue-500 underline">Lihat URL Presentasi</a></div>
+                            )}
                         </div>
                         <div className="text-xs flex gap-3 text-gray-500">
                             <span>👍 {g.likes} Suka</span>

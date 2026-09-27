@@ -212,10 +212,17 @@ export function AdminEventLmsJury({ eventId }: { eventId: string }) {
         {
             header: "Tugas Terkumpul",
             cell: (item: any) => (
-                item.is_submitted === 1 ? (
-                    <a href={item.task_url} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline inline-flex items-center gap-1">
-                        Lihat Tugas
-                    </a>
+                item.is_submitted == 1 ? (
+                    <div className="flex flex-col gap-1">
+                        <a href={item.task_url} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline inline-flex items-center gap-1 text-xs">
+                            URL Produk
+                        </a>
+                        {item.presentation_url && (
+                            <a href={item.presentation_url} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline inline-flex items-center gap-1 text-xs">
+                                URL Presentasi
+                            </a>
+                        )}
+                    </div>
                 ) : (
                     <span className="text-red-500">Belum Dikumpulkan</span>
                 )
