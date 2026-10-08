@@ -1054,11 +1054,12 @@ if ($resource === 'news') {
             echo json_encode(["message" => "Unauthorized"]);
         }
     } elseif ($_SERVER['REQUEST_METHOD'] === 'PUT' && $action) {
-        if ($userId && !in_array($userRole, ['Admin', 'Pengurus'])) {
-            echo $controller->updateProject($action, $userId, $userName, $input);
-        } elseif (in_array($userRole, ['Admin', 'Pengurus']) && isset($input['status'])) {
+        if (isset($input['status']) && in_array($userRole, ['Admin', 'Pengurus'])) {
             // Admin updating status
             echo $controller->updateStatus($action, $input['status'], $userId, $userName);
+        } elseif ($userId && !isset($input['status'])) {
+            // User (including Admin) updating their own project content
+            echo $controller->updateProject($action, $userId, $userName, $input);
         } else {
             http_response_code(403);
             echo json_encode(["message" => "Forbidden"]);
