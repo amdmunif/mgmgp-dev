@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
 import { contentManagementService } from '../../../services/contentManagementService';
-import { ArrowLeft, Calendar, MapPin, Users, CheckCircle, XCircle, Trash2, Printer, QrCode, X, MonitorPlay, Trophy, UserCheck, UserMinus, Search, FileSpreadsheet, Download, School, FileText, Clock } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, CheckCircle, XCircle, Trash2, Printer, QrCode, X, MonitorPlay, Trophy, UserCheck, UserMinus, Search, FileSpreadsheet, Download, School, FileText, Clock, Eye, Phone, Copy, Check, ExternalLink } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { api, getFileUrl } from '../../../lib/api';
 import { lmsService } from '../../../services/lmsService';
@@ -23,6 +23,8 @@ interface Participant {
     asal_sekolah?: string;
     no_hp?: string;
     status_kepegawaian?: string;
+    pendidikan_terakhir?: string;
+    role?: string;
     payment_status?: string;
     payment_proof_url?: string;
     payment_date?: string;
@@ -67,6 +69,8 @@ export function AdminEventDetail() {
         activity: false
     });
     const [selectedParticipant, setSelectedParticipant] = useState<Participant | null>(null);
+    const [viewingParticipant, setViewingParticipant] = useState<Participant | null>(null);
+    const [copiedPhone, setCopiedPhone] = useState(false);
     const uniqueSchoolCount = useMemo(() => {
         const set = new Set(participants.map(p => p.asal_sekolah?.trim()).filter(Boolean));
         return set.size;
@@ -173,6 +177,10 @@ export function AdminEventDetail() {
                     : p
             );
             setParticipants(updatedParticipants);
+            setViewingParticipant(prev => (prev && prev.user_id === userId)
+                ? { ...prev, status: newStatus, is_hadir: !isAttended ? 1 : 0, attendance_count: !isAttended ? (event?.total_days || 1) : 0 }
+                : prev
+            );
             toast.success(!isAttended ? 'Peserta ditandai hadir' : 'Absensi dibatalkan');
         } catch (error) {
             toast.error('Gagal memperbarui status');
@@ -191,6 +199,10 @@ export function AdminEventDetail() {
                     : p
             );
             setParticipants(updatedParticipants);
+            setViewingParticipant(prev => (prev && prev.user_id === userId)
+                ? { ...prev, is_passed: newPassedStatus }
+                : prev
+            );
             toast.success(!isPassed ? 'Peserta ditandai LULUS' : 'Kelulusan dibatalkan');
         } catch (error) {
             toast.error('Gagal memperbarui kelulusan');
@@ -208,6 +220,10 @@ export function AdminEventDetail() {
                     : p
             );
             setParticipants(updatedParticipants);
+            setViewingParticipant(prev => (prev && prev.user_id === userId)
+                ? { ...prev, payment_status: newStatus }
+                : prev
+            );
             toast.success(action === 'confirm-payment' ? 'Pembayaran dikonfirmasi' : 'Pembayaran ditolak');
         } catch (error) {
             toast.error('Gagal memperbarui status pembayaran');
@@ -257,6 +273,9 @@ export function AdminEventDetail() {
         try {
             await contentManagementService.deleteParticipant(id, userId);
             setParticipants(participants.filter(p => p.user_id !== userId));
+            if (viewingParticipant && viewingParticipant.user_id === userId) {
+                setViewingParticipant(null);
+            }
             toast.success('Peserta berhasil dihapus');
         } catch (error) {
             toast.error('Gagal menghapus peserta');
@@ -348,6 +367,57 @@ export function AdminEventDetail() {
         }
     };
 
+    const fallbackCopy = (text: string, name?: string) => {
+        try {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.focus();
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            setCopiedPhone(true);
+            setTimeout(() => setCopiedPhone(false), 2000);
+            toast.success(name ? `Nomor HP ${name} disalin!` : 'Nomor HP disalin!');
+        } catch {
+            toast.error('Gagal menyalin nomor HP');
+        }
+    };
+
+    const copyPhoneNumber = (phone: string, name?: string) => {
+        if (!phone) {
+            toast.error('Nomor HP belum tersedia untuk peserta ini');
+            return;
+        }
+        const cleanNumber = phone.trim();
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(cleanNumber)
+                .then(() => {
+                    setCopiedPhone(true);
+                    setTimeout(() => setCopiedPhone(false), 2000);
+                    toast.success(name ? `Nomor HP ${name} disalin!` : 'Nomor HP disalin!');
+                })
+                .catch(() => {
+                    fallbackCopy(cleanNumber, name);
+                });
+        } else {
+            fallbackCopy(cleanNumber, name);
+        }
+    };
+
+    const formatWhatsAppUrl = (phone?: string) => {
+        if (!phone) return null;
+        let cleaned = phone.replace(/[^0-9]/g, '');
+        if (cleaned.startsWith('0')) {
+            cleaned = '62' + cleaned.substring(1);
+        } else if (cleaned.startsWith('8')) {
+            cleaned = '62' + cleaned;
+        }
+        return `https://wa.me/${cleaned}`;
+    };
+
     const processedParticipants = useMemo(() => {
         let result = [...participants];
 
@@ -368,7 +438,8 @@ export function AdminEventDetail() {
             result = result.filter(p => 
                 (p.nama && p.nama.toLowerCase().includes(query)) ||
                 (p.email && p.email.toLowerCase().includes(query)) ||
-                (p.asal_sekolah && p.asal_sekolah.toLowerCase().includes(query))
+                (p.asal_sekolah && p.asal_sekolah.toLowerCase().includes(query)) ||
+                (p.no_hp && p.no_hp.toLowerCase().includes(query))
             );
         }
 
@@ -404,19 +475,58 @@ export function AdminEventDetail() {
             accessorKey: "nama" as keyof Participant,
             cell: (item: Participant) => (
                 <div className="flex items-center">
-                    <div className="flex-shrink-0 h-10 w-10">
+                    <button
+                        type="button"
+                        onClick={() => setViewingParticipant(item)}
+                        className="flex-shrink-0 h-10 w-10 text-left focus:outline-none group relative"
+                        title="Klik untuk lihat detail peserta"
+                    >
                         {item.foto_profile ? (
-                            <img className="h-10 w-10 rounded-full object-cover border border-gray-200" src={getFileUrl(item.foto_profile)} alt="" />
+                            <img className="h-10 w-10 rounded-full object-cover border border-gray-200 group-hover:ring-2 group-hover:ring-blue-400 transition-all" src={getFileUrl(item.foto_profile)} alt="" />
                         ) : (
-                            <div className="h-10 w-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm">
+                            <div className="h-10 w-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm group-hover:bg-blue-200 transition-colors">
                                 {item.nama.charAt(0).toUpperCase()}
                             </div>
                         )}
-                    </div>
+                    </button>
                     <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{item.nama}</div>
+                        <div className="flex items-center gap-1.5">
+                            <button
+                                type="button"
+                                onClick={() => setViewingParticipant(item)}
+                                className="text-sm font-semibold text-gray-900 hover:text-blue-600 transition-colors text-left"
+                                title="Klik untuk lihat detail"
+                            >
+                                {item.nama}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setViewingParticipant(item)}
+                                className="text-gray-400 hover:text-blue-600 transition-colors p-0.5 rounded hover:bg-gray-100"
+                                title="Lihat detail peserta"
+                            >
+                                <Eye className="w-3.5 h-3.5" />
+                            </button>
+                        </div>
                         <div className="text-xs text-gray-500">{item.email}</div>
-                        {item.asal_sekolah && <div className="text-xs text-blue-600 mt-0.5">{item.asal_sekolah}</div>}
+                        {item.asal_sekolah && <div className="text-xs text-blue-600 mt-0.5 font-medium">{item.asal_sekolah}</div>}
+                        {item.no_hp && (
+                            <div className="flex items-center gap-1.5 text-xs text-emerald-800 mt-1 bg-emerald-50 px-2 py-0.5 rounded w-fit border border-emerald-100">
+                                <Phone className="w-3 h-3 text-emerald-600 shrink-0" />
+                                <span className="font-mono">{item.no_hp}</span>
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        copyPhoneNumber(item.no_hp!, item.nama);
+                                    }}
+                                    className="p-0.5 text-emerald-600 hover:text-emerald-900 hover:bg-emerald-200/50 rounded transition-colors"
+                                    title={`Salin No. HP (${item.no_hp})`}
+                                >
+                                    <Copy className="w-3 h-3" />
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
             )
@@ -525,10 +635,18 @@ export function AdminEventDetail() {
                 const isPresent = Number(item.is_hadir) === 1;
                 return (
                     <>
-                    <div className="flex justify-center">
+                    <div className="flex justify-center items-center gap-1.5">
+                        <button
+                            onClick={() => setViewingParticipant(item)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-colors"
+                            title="Lihat Detail Peserta & Kontak (No. HP)"
+                        >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>Detail</span>
+                        </button>
                         <button
                             onClick={() => handleStatusUpdate(item.user_id, Number(item.is_hadir))}
-                            className={`inline-flex items-center gap-1 px-3 py-1 rounded-md text-xs font-medium transition-colors ${isPresent
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${isPresent
                                 ? 'text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200'
                                 : 'text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200'
                                 }`}
@@ -539,9 +657,9 @@ export function AdminEventDetail() {
                         </button>
                         <button
                             onClick={() => handlePassedUpdate(item.user_id, item.is_passed)}
-                            className={`inline-flex items-center gap-1 px-3 py-1 rounded-md text-xs font-medium transition-colors ml-2 ${Number(item.is_passed) === 1
-                                ? 'text-green-700 bg-green-50 hover:bg-green-100'
-                                : 'text-gray-700 bg-gray-50 hover:bg-gray-100'
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${Number(item.is_passed) === 1
+                                ? 'text-green-700 bg-green-50 hover:bg-green-100 border border-green-200'
+                                : 'text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200'
                                 }`}
                             title="Tandai Lulus / Tidak Lulus"
                         >
@@ -550,7 +668,7 @@ export function AdminEventDetail() {
                         </button>
                         <button
                             onClick={() => handleDeleteParticipant(item.user_id, item.nama)}
-                            className="inline-flex items-center gap-1 px-3 py-1 rounded-md text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100 ml-2"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 transition-colors"
                             title="Hapus Peserta"
                         >
                             <Trash2 className="w-3 h-3" />
@@ -1192,6 +1310,235 @@ export function AdminEventDetail() {
                     userId={selectedParticipant?.user_id || ''}
                     userName={selectedParticipant?.nama || ''}
                 />
+            )}
+
+            {/* Modal Detail Peserta (Cek Data & Copas No. HP) */}
+            {viewingParticipant && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+                        {/* Header Modal */}
+                        <div className="flex items-center justify-between p-5 border-b border-gray-100 bg-gray-50/70 shrink-0">
+                            <div className="flex items-center gap-2.5">
+                                <div className="p-2 bg-blue-100 text-blue-700 rounded-lg shadow-sm">
+                                    <Eye className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h2 className="text-lg font-bold text-gray-900 leading-tight">Detail Peserta Event</h2>
+                                    <p className="text-xs text-gray-500">Informasi profil dan data kontak peserta</p>
+                                </div>
+                            </div>
+                            <button 
+                                onClick={() => setViewingParticipant(null)} 
+                                className="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-200/60 transition-colors"
+                                title="Tutup"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {/* Body Modal */}
+                        <div className="overflow-y-auto flex-1 p-6 space-y-5">
+                            {/* Kartu Profil Peserta */}
+                            <div className="flex items-center gap-4 p-4 rounded-xl bg-gradient-to-r from-blue-50/60 via-indigo-50/40 to-slate-50 border border-blue-100">
+                                <div className="w-16 h-16 rounded-full bg-white shadow-sm overflow-hidden border border-blue-200 shrink-0">
+                                    {viewingParticipant.foto_profile ? (
+                                        <img src={getFileUrl(viewingParticipant.foto_profile)} alt={viewingParticipant.nama} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center bg-blue-100 text-blue-700 font-bold text-xl">
+                                            {viewingParticipant.nama.charAt(0).toUpperCase()}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <h3 className="text-base font-bold text-gray-900 truncate">{viewingParticipant.nama}</h3>
+                                    <p className="text-xs text-gray-600 truncate mt-0.5">{viewingParticipant.email}</p>
+                                    <div className="flex flex-wrap gap-1.5 mt-2">
+                                        {viewingParticipant.role && (
+                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-blue-100 text-blue-800">
+                                                {viewingParticipant.role}
+                                            </span>
+                                        )}
+                                        {viewingParticipant.asal_sekolah && (
+                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-100 text-emerald-800 truncate max-w-full">
+                                                {viewingParticipant.asal_sekolah}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* KARTU KONTAK & NO. HP / WHATSAPP (FOKUS UTAMA) */}
+                            <div className="p-4 rounded-xl border border-emerald-200 bg-gradient-to-br from-emerald-50/80 to-teal-50/40 shadow-sm space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-bold text-emerald-900 uppercase tracking-wider flex items-center gap-1.5">
+                                        <Phone className="w-4 h-4 text-emerald-600" />
+                                        Nomor Handphone / WhatsApp
+                                    </span>
+                                    {viewingParticipant.no_hp && (
+                                        <span className="text-[11px] text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full font-medium">
+                                            Terdaftar
+                                        </span>
+                                    )}
+                                </div>
+
+                                {viewingParticipant.no_hp ? (
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+                                        <div className="font-mono text-xl sm:text-2xl font-bold text-emerald-950 tracking-wider select-all">
+                                            {viewingParticipant.no_hp}
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <Button
+                                                size="sm"
+                                                onClick={() => copyPhoneNumber(viewingParticipant.no_hp!, viewingParticipant.nama)}
+                                                className={`h-9 px-3.5 text-xs font-medium shadow-sm transition-all ${
+                                                    copiedPhone 
+                                                        ? 'bg-emerald-700 text-white' 
+                                                        : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                                                }`}
+                                                title="Salin nomor HP ke clipboard"
+                                            >
+                                                {copiedPhone ? <Check className="w-3.5 h-3.5 mr-1.5" /> : <Copy className="w-3.5 h-3.5 mr-1.5" />}
+                                                {copiedPhone ? 'Tersalin!' : 'Salin No. HP'}
+                                            </Button>
+
+                                            {formatWhatsAppUrl(viewingParticipant.no_hp) && (
+                                                <a
+                                                    href={formatWhatsAppUrl(viewingParticipant.no_hp)!}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center justify-center h-9 px-3.5 text-xs font-medium text-emerald-700 bg-white hover:bg-emerald-100/70 border border-emerald-300 rounded-lg shadow-sm transition-colors"
+                                                    title="Buka chat WhatsApp di tab baru"
+                                                >
+                                                    <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
+                                                    Chat WA
+                                                </a>
+                                            )}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="text-xs text-gray-500 italic py-1 bg-white/60 p-2.5 rounded border border-gray-200">
+                                        Peserta belum mencantumkan nomor HP di akun profilnya.
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Informasi Detail Pendaftaran & Status */}
+                            <div className="space-y-3">
+                                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Rincian Kegiatan & Status</h4>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                        <div className="text-gray-500 mb-1">Waktu Pendaftaran</div>
+                                        <div className="font-semibold text-gray-800">{formatDate(viewingParticipant.registered_at)}</div>
+                                    </div>
+                                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                        <div className="text-gray-500 mb-1">Status Kepegawaian</div>
+                                        <div className="font-semibold text-gray-800">{viewingParticipant.status_kepegawaian || '-'}</div>
+                                    </div>
+                                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                        <div className="text-gray-500 mb-1">Pendidikan Terakhir</div>
+                                        <div className="font-semibold text-gray-800">{viewingParticipant.pendidikan_terakhir || '-'}</div>
+                                    </div>
+                                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                        <div className="text-gray-500 mb-1">Kehadiran</div>
+                                        <div className="font-semibold text-gray-800 flex items-center justify-between">
+                                            <span>
+                                                {viewingParticipant.attendance_count || 0} / {event?.total_days || 1} Hari
+                                                {Number(viewingParticipant.is_hadir) === 1 && (
+                                                    <span className="ml-1 text-green-600 font-normal">(Hadir Manual)</span>
+                                                )}
+                                            </span>
+                                            <button
+                                                onClick={() => handleStatusUpdate(viewingParticipant.user_id, Number(viewingParticipant.is_hadir))}
+                                                className="text-[11px] text-blue-600 hover:underline"
+                                            >
+                                                {Number(viewingParticipant.is_hadir) === 1 ? 'Batalkan' : 'Set Hadir'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                        <div className="text-gray-500 mb-1">Status Kelulusan</div>
+                                        <div className="flex items-center justify-between">
+                                            <span className={`inline-flex px-2 py-0.5 rounded text-xs font-semibold ${
+                                                Number(viewingParticipant.is_passed) === 1 
+                                                    ? 'bg-blue-100 text-blue-800' 
+                                                    : 'bg-gray-200 text-gray-700'
+                                            }`}>
+                                                {Number(viewingParticipant.is_passed) === 1 ? 'Lulus' : 'Belum Lulus'}
+                                            </span>
+                                            <button
+                                                onClick={() => handlePassedUpdate(viewingParticipant.user_id, viewingParticipant.is_passed)}
+                                                className="text-[11px] text-blue-600 hover:underline"
+                                            >
+                                                Ubah
+                                            </button>
+                                        </div>
+                                    </div>
+                                    {event?.is_paid && (
+                                        <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                            <div className="flex items-center justify-between mb-1">
+                                                <span className="text-gray-500">Status Pembayaran</span>
+                                                {viewingParticipant.payment_proof_url && (
+                                                    <a 
+                                                        href={getFileUrl(viewingParticipant.payment_proof_url)} 
+                                                        target="_blank" 
+                                                        rel="noreferrer" 
+                                                        className="text-blue-600 hover:underline flex items-center gap-1 font-medium"
+                                                    >
+                                                        <ExternalLink className="w-3 h-3" /> Bukti Bayar
+                                                    </a>
+                                                )}
+                                            </div>
+                                            <div className="font-semibold text-gray-800 capitalize">
+                                                {viewingParticipant.payment_status || 'Gratis'}
+                                            </div>
+                                        </div>
+                                    )}
+                                    {event?.has_lms && (
+                                        <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 col-span-1 sm:col-span-2 flex items-center justify-between">
+                                            <div>
+                                                <div className="text-gray-500 mb-1">LMS / Nilai Rata-rata</div>
+                                                <div className="font-bold text-gray-800">
+                                                    {viewingParticipant.lms_score !== undefined && viewingParticipant.lms_score !== null 
+                                                        ? Number(viewingParticipant.lms_score).toFixed(1) 
+                                                        : '-'}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <span className={`px-2 py-1 text-xs font-semibold rounded ${
+                                                    Number(viewingParticipant.is_approved) === 1 
+                                                        ? 'bg-green-100 text-green-700' 
+                                                        : 'bg-red-100 text-red-700'
+                                                }`}>
+                                                    Akses LMS: {Number(viewingParticipant.is_approved) === 1 ? 'Aktif' : 'Nonaktif'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Footer Modal */}
+                        <div className="p-4 px-6 border-t border-gray-100 bg-gray-50/80 shrink-0 flex items-center justify-between">
+                            {viewingParticipant.no_hp ? (
+                                <button
+                                    onClick={() => copyPhoneNumber(viewingParticipant.no_hp!, viewingParticipant.nama)}
+                                    className="text-xs text-emerald-700 hover:text-emerald-800 flex items-center gap-1.5 font-medium transition-colors"
+                                >
+                                    <Copy className="w-3.5 h-3.5" />
+                                    <span>Salin No. HP ({viewingParticipant.no_hp})</span>
+                                </button>
+                            ) : <div />}
+                            <Button 
+                                variant="outline"
+                                onClick={() => setViewingParticipant(null)}
+                                className="h-9 px-4 text-xs font-medium"
+                            >
+                                Tutup
+                            </Button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );

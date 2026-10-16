@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Wallet, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, DollarSign, Calendar, Plus, Minus, X, Loader2, Printer, Download, FileText, Trash2 } from 'lucide-react';
+import { Wallet, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, DollarSign, Calendar, Plus, Minus, X, Loader2, Printer, Download, FileText, Trash2, Filter, RotateCcw, Tag, Crown } from 'lucide-react';
 import { financeService } from '../../../services/financeService';
+import { eventService } from '../../../services/eventService';
 import { toast } from 'react-hot-toast';
 import { DataTable } from '../../../components/ui/DataTable';
 import { useOutletContext } from 'react-router-dom';
@@ -24,6 +25,7 @@ interface FinanceTransaction {
     reference_id: string | null;
     reference_type: string | null;
     transaction_date: string;
+    event_title?: string | null;
 }
 
 export function AdminFinances() {
@@ -41,12 +43,71 @@ export function AdminFinances() {
     const [submitting, setSubmitting] = useState(false);
 
     // Filter states
+    const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all');
+    const [filterSource, setFilterSource] = useState<'all' | 'event' | 'premium' | 'manual'>('all');
+    const [filterEvent, setFilterEvent] = useState<string>('all');
+    const [availableEvents, setAvailableEvents] = useState<string[]>([]);
     const [filterDate, setFilterDate] = useState<string>('');
     const [filterMonth, setFilterMonth] = useState<string>('');
     const [filterYear, setFilterYear] = useState<string>('');
 
+    const getTransactionSource = (tx: FinanceTransaction): 'event' | 'premium' | 'manual' => {
+        if (tx.reference_type === 'event_registration' || tx.description?.toLowerCase().includes('pendaftaran event')) {
+            return 'event';
+        }
+        if (tx.reference_type === 'premium_upgrade' || tx.description?.toLowerCase().includes('premium upgrade')) {
+            return 'premium';
+        }
+        return 'manual';
+    };
+
+    const getEventTitle = (tx: FinanceTransaction): string | null => {
+        if (tx.event_title) return tx.event_title.trim();
+        const match = tx.description?.match(/^Pendaftaran Event:\s*(.*?)(?:\s*\(a\.n\.|\s*$)/i);
+        if (match && match[1]) {
+            return match[1].trim();
+        }
+        return null;
+    };
+
+    const isFiltered = filterType !== 'all' || 
+                       filterSource !== 'all' || 
+                       filterEvent !== 'all' || 
+                       Boolean(filterDate) || 
+                       Boolean(filterMonth) || 
+                       Boolean(filterYear);
+
+    const resetFilters = () => {
+        setFilterType('all');
+        setFilterSource('all');
+        setFilterEvent('all');
+        setFilterDate('');
+        setFilterMonth('');
+        setFilterYear('');
+    };
+
     const filteredTransactions = useMemo(() => {
         return transactions.filter(tx => {
+            // Filter by transaction type (income / expense)
+            if (filterType !== 'all' && tx.type !== filterType) {
+                return false;
+            }
+
+            // Filter by source (event, premium, manual)
+            const source = getTransactionSource(tx);
+            if (filterSource !== 'all' && source !== filterSource) {
+                return false;
+            }
+
+            // Filter by specific event
+            if (filterEvent !== 'all') {
+                const title = getEventTitle(tx);
+                if (!title || title.toLowerCase() !== filterEvent.toLowerCase()) {
+                    return false;
+                }
+            }
+
+            // Filter by date, month, year
             const date = new Date(tx.transaction_date);
             const dateStr = tx.transaction_date.split(' ')[0];
             const monthStr = String(date.getMonth() + 1).padStart(2, '0');
@@ -58,7 +119,23 @@ export function AdminFinances() {
 
             return true;
         });
-    }, [transactions, filterDate, filterMonth, filterYear]);
+    }, [transactions, filterType, filterSource, filterEvent, filterDate, filterMonth, filterYear]);
+
+    const filteredStats = useMemo(() => {
+        let income = 0;
+        let expense = 0;
+        filteredTransactions.forEach(tx => {
+            const amt = Number(tx.amount) || 0;
+            if (tx.type === 'income') income += amt;
+            else if (tx.type === 'expense') expense += amt;
+        });
+        return {
+            count: filteredTransactions.length,
+            income,
+            expense,
+            net: income - expense
+        };
+    }, [filteredTransactions]);
 
     const handlePrint = () => {
         window.print();
@@ -69,31 +146,46 @@ export function AdminFinances() {
         doc.text('Laporan Keuangan', 14, 15);
         doc.setFontSize(10);
         doc.text(`Dicetak pada: ${new Date().toLocaleString('id-ID')}`, 14, 22);
+        if (filterSource !== 'all' || filterEvent !== 'all') {
+            const filterLabel = filterEvent !== 'all' ? `Kegiatan: ${filterEvent}` : filterSource === 'event' ? 'Sumber: Kegiatan' : filterSource === 'premium' ? 'Sumber: Upgrade Member' : 'Sumber: Manual';
+            doc.text(`Filter: ${filterLabel}`, 14, 27);
+        }
         
-        const tableColumn = ["Tanggal", "Keterangan", "Tipe", "Jumlah"];
-        const tableRows = filteredTransactions.map(tx => [
-            formatDate(tx.transaction_date),
-            tx.description,
-            tx.type === 'income' ? 'Pemasukan' : 'Pengeluaran',
-            formatCurrency(tx.amount)
-        ]);
+        const tableColumn = ["Tanggal", "Keterangan", "Sumber", "Tipe", "Jumlah"];
+        const tableRows = filteredTransactions.map(tx => {
+            const source = getTransactionSource(tx);
+            const sourceLabel = source === 'event' ? 'Kegiatan' : source === 'premium' ? 'Upgrade Member' : 'Manual';
+            return [
+                formatDate(tx.transaction_date),
+                tx.description,
+                sourceLabel,
+                tx.type === 'income' ? 'Pemasukan' : 'Pengeluaran',
+                formatCurrency(tx.amount)
+            ];
+        });
 
         autoTable(doc, {
             head: [tableColumn],
             body: tableRows,
-            startY: 28,
+            startY: filterSource !== 'all' || filterEvent !== 'all' ? 32 : 28,
         });
         
         doc.save('Laporan_Keuangan.pdf');
     };
 
     const handleExportExcel = () => {
-        const data = filteredTransactions.map(tx => ({
-            "Tanggal": formatDate(tx.transaction_date),
-            "Keterangan": tx.description,
-            "Tipe": tx.type === 'income' ? 'Pemasukan' : 'Pengeluaran',
-            "Jumlah": Number(tx.amount)
-        }));
+        const data = filteredTransactions.map(tx => {
+            const source = getTransactionSource(tx);
+            const eventTitle = getEventTitle(tx);
+            const sourceLabel = source === 'event' ? (eventTitle ? `Kegiatan: ${eventTitle}` : 'Kegiatan') : source === 'premium' ? 'Upgrade Member' : 'Manual';
+            return {
+                "Tanggal": formatDate(tx.transaction_date),
+                "Keterangan": tx.description,
+                "Sumber": sourceLabel,
+                "Tipe": tx.type === 'income' ? 'Pemasukan' : 'Pengeluaran',
+                "Jumlah": Number(tx.amount)
+            };
+        });
         const worksheet = XLSX.utils.json_to_sheet(data);
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Keuangan");
@@ -114,12 +206,22 @@ export function AdminFinances() {
     const loadData = async () => {
         setLoading(true);
         try {
-            const [summaryData, txData] = await Promise.all([
+            const [summaryData, txData, eventsData] = await Promise.all([
                 financeService.getSummary(),
-                financeService.getTransactions()
+                financeService.getTransactions(),
+                eventService.getEvents().catch(() => [])
             ]);
             setSummary(summaryData as unknown as FinanceSummary);
             setTransactions(txData);
+
+            // Compute available unique event titles from transactions + events API
+            const txEventTitles = txData
+                .filter((t: any) => getTransactionSource(t) === 'event')
+                .map((t: any) => getEventTitle(t))
+                .filter(Boolean);
+            const eventsApiTitles = (Array.isArray(eventsData) ? eventsData : []).map((e: any) => e.title?.trim()).filter(Boolean);
+            const allUniqueEvents = Array.from(new Set([...txEventTitles, ...eventsApiTitles])).sort() as string[];
+            setAvailableEvents(allUniqueEvents);
         } catch (error) {
             console.error('Failed to load finances:', error);
             toast.error('Gagal memuat data keuangan');
@@ -164,8 +266,8 @@ export function AdminFinances() {
             header: "Tanggal",
             accessorKey: "transaction_date" as keyof FinanceTransaction,
             cell: (item: FinanceTransaction) => (
-                <div className="flex items-center text-gray-500 text-sm">
-                    <Calendar className="w-4 h-4 mr-1" />
+                <div className="flex items-center text-gray-500 text-sm whitespace-nowrap">
+                    <Calendar className="w-4 h-4 mr-1 text-gray-400" />
                     {formatDate(item.transaction_date)}
                 </div>
             )
@@ -173,15 +275,54 @@ export function AdminFinances() {
         {
             header: "Keterangan",
             accessorKey: "description" as keyof FinanceTransaction,
-            cell: (item: FinanceTransaction) => (
-                <div className="font-medium text-gray-900">{item.description}</div>
-            )
+            cell: (item: FinanceTransaction) => {
+                const source = getTransactionSource(item);
+                const eventTitle = getEventTitle(item);
+                
+                return (
+                    <div className="space-y-1">
+                        <div className="font-medium text-gray-900 leading-snug">{item.description}</div>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                            {source === 'event' && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setFilterSource('event');
+                                        if (eventTitle) setFilterEvent(eventTitle);
+                                    }}
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 transition-colors"
+                                    title="Klik untuk filter transaksi hanya untuk kegiatan ini"
+                                >
+                                    <Tag className="w-3 h-3 text-blue-500 shrink-0" />
+                                    <span className="truncate max-w-[280px]">Kegiatan{eventTitle ? `: ${eventTitle}` : ''}</span>
+                                </button>
+                            )}
+                            {source === 'premium' && (
+                                <button
+                                    type="button"
+                                    onClick={() => setFilterSource('premium')}
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 transition-colors"
+                                    title="Klik untuk filter transaksi Upgrade Member"
+                                >
+                                    <Crown className="w-3 h-3 text-amber-600 shrink-0" />
+                                    <span>Upgrade Member</span>
+                                </button>
+                            )}
+                            {source === 'manual' && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-600 border border-gray-200">
+                                    Manual
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                );
+            }
         },
         {
             header: "Tipe",
             accessorKey: "type" as keyof FinanceTransaction,
             cell: (item: FinanceTransaction) => (
-                <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                <span className={`px-2.5 py-1 inline-flex text-xs leading-4 font-semibold rounded-full ${
                     item.type === 'income' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                 }`}>
                     {item.type === 'income' ? 'Pemasukan' : 'Pengeluaran'}
@@ -204,7 +345,7 @@ export function AdminFinances() {
             cell: (item: FinanceTransaction) => (
                 <button
                     onClick={() => handleDelete(item.id, item.description)}
-                    className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors tooltip mx-auto block"
+                    className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors tooltip mx-auto block"
                     title="Hapus Transaksi"
                 >
                     <Trash2 className="w-4 h-4" />
@@ -213,6 +354,78 @@ export function AdminFinances() {
             className: "text-center w-16"
         }
     ];
+
+    const FilterContent = (
+        <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
+            {/* Filter Tipe Transaksi */}
+            <select
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value as 'all' | 'income' | 'expense')}
+                className="text-xs sm:text-sm border border-gray-200 rounded-lg px-3 py-2 bg-gray-50 hover:bg-white focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
+                title="Filter Tipe Transaksi"
+            >
+                <option value="all">Semua Tipe</option>
+                <option value="income">Pemasukan Saja (+)</option>
+                <option value="expense">Pengeluaran Saja (-)</option>
+            </select>
+
+            {/* Filter Sumber Dana (Fokus Utama User) */}
+            <select
+                value={filterSource}
+                onChange={(e) => {
+                    const val = e.target.value as 'all' | 'event' | 'premium' | 'manual';
+                    setFilterSource(val);
+                    if (val !== 'event' && val !== 'all') {
+                        setFilterEvent('all');
+                    }
+                }}
+                className="text-xs sm:text-sm border border-gray-200 rounded-lg px-3 py-2 bg-gray-50 hover:bg-white focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors font-medium text-gray-800"
+                title="Filter Sumber Dana / Uang Masuk"
+            >
+                <option value="all">Semua Sumber Dana</option>
+                <option value="event">Pendaftaran Kegiatan (Event)</option>
+                <option value="premium">Upgrade Member Premium</option>
+                <option value="manual">Manual / Lainnya</option>
+            </select>
+
+            {/* Filter Kegiatan Spesifik */}
+            {(filterSource === 'all' || filterSource === 'event') && availableEvents.length > 0 && (
+                <select
+                    value={filterEvent}
+                    onChange={(e) => {
+                        setFilterEvent(e.target.value);
+                        if (e.target.value !== 'all') {
+                            setFilterSource('event');
+                        }
+                    }}
+                    className={`text-xs sm:text-sm border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none max-w-[220px] sm:max-w-[280px] truncate transition-colors ${
+                        filterEvent !== 'all' 
+                            ? 'border-blue-400 bg-blue-50 text-blue-900 font-semibold' 
+                            : 'border-gray-200 bg-gray-50 hover:bg-white text-gray-700'
+                    }`}
+                    title={filterEvent !== 'all' ? `Kegiatan: ${filterEvent}` : 'Pilih Kegiatan Spesifik'}
+                >
+                    <option value="all">Semua Kegiatan ({availableEvents.length})</option>
+                    {availableEvents.map(evt => (
+                        <option key={evt} value={evt}>
+                            {evt}
+                        </option>
+                    ))}
+                </select>
+            )}
+
+            {isFiltered && (
+                <button
+                    onClick={resetFilters}
+                    className="px-2.5 py-2 text-xs text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded-lg font-medium transition-colors flex items-center gap-1 border border-red-200"
+                    title="Reset semua filter"
+                >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>Reset</span>
+                </button>
+            )}
+        </div>
+    );
 
     if (loading) return <div className="p-8 text-center text-gray-500">Memuat data...</div>;
 
@@ -358,12 +571,43 @@ export function AdminFinances() {
                         </tbody>
                     </table>
                 </div>
-                <div className="p-6 print:hidden">
+                <div className="p-6 print:hidden space-y-4">
+                    {isFiltered && (
+                        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 bg-blue-50/80 border border-blue-200/70 rounded-xl text-xs sm:text-sm">
+                            <div className="flex flex-wrap items-center gap-2 text-blue-950 font-medium">
+                                <Filter className="w-4 h-4 text-blue-600 shrink-0" />
+                                <span>
+                                    Hasil Terfilter: <strong>{filteredStats.count}</strong> transaksi
+                                </span>
+                                <span className="text-blue-300">|</span>
+                                <span className="text-green-700 font-semibold">
+                                    Pemasukan: +{formatCurrency(filteredStats.income)}
+                                </span>
+                                {filteredStats.expense > 0 && (
+                                    <>
+                                        <span className="text-blue-300">|</span>
+                                        <span className="text-red-700 font-semibold">
+                                            Pengeluaran: -{formatCurrency(filteredStats.expense)}
+                                        </span>
+                                    </>
+                                )}
+                            </div>
+                            <button
+                                onClick={resetFilters}
+                                className="text-xs font-semibold text-blue-700 hover:text-blue-900 hover:underline flex items-center gap-1 ml-auto"
+                            >
+                                <RotateCcw className="w-3.5 h-3.5" />
+                                Reset Filter
+                            </button>
+                        </div>
+                    )}
+
                     <DataTable
                         columns={columns}
                         data={filteredTransactions}
                         searchKeys={['description']}
                         pageSize={10}
+                        filterContent={FilterContent}
                     />
                 </div>
             </div>

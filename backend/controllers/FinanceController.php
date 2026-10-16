@@ -47,7 +47,11 @@ class FinanceController
 
     public function getTransactions()
     {
-        $stmt = $this->conn->prepare("SELECT * FROM finance_transactions ORDER BY transaction_date DESC");
+        $query = "SELECT ft.*, e.title as event_title 
+                  FROM finance_transactions ft 
+                  LEFT JOIN events e ON ft.reference_type = 'event_registration' AND ft.reference_id = e.id 
+                  ORDER BY ft.transaction_date DESC";
+        $stmt = $this->conn->prepare($query);
         $stmt->execute();
         return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
     }
