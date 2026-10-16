@@ -207,19 +207,46 @@ export function AdminFinances() {
         setLoading(true);
         try {
             const [summaryData, txData, eventsData] = await Promise.all([
-                financeService.getSummary(),
-                financeService.getTransactions(),
+                financeService.getSummary().catch(err => {
+                    console.error('Failed to get finance summary:', err);
+                    return null;
+                }),
+                financeService.getTransactions().catch(err => {
+                    console.error('Failed to get finance transactions:', err);
+                    return [];
+                }),
                 eventService.getEvents().catch(() => [])
             ]);
-            setSummary(summaryData as unknown as FinanceSummary);
-            setTransactions(txData);
+
+            if (summaryData) {
+                setSummary(summaryData as unknown as FinanceSummary);
+            }
+
+            const safeTxData: FinanceTransaction[] = Array.isArray(txData) ? txData : [];
+            const safeEvents = Array.isArray(eventsData) ? eventsData : [];
+
+            // Map event IDs to titles for fast lookup
+            const eventMap = new Map<string, string>();
+            safeEvents.forEach((e: any) => {
+                if (e.id && e.title) eventMap.set(String(e.id), e.title.trim());
+            });
+
+            // Enrich transactions with event_title if reference_id matches
+            const enrichedTx = safeTxData.map((tx: FinanceTransaction) => {
+                if (!tx.event_title && tx.reference_id && eventMap.has(String(tx.reference_id))) {
+                    return { ...tx, event_title: eventMap.get(String(tx.reference_id)) };
+                }
+                return tx;
+            });
+
+            setTransactions(enrichedTx);
 
             // Compute available unique event titles from transactions + events API
-            const txEventTitles = txData
-                .filter((t: any) => getTransactionSource(t) === 'event')
-                .map((t: any) => getEventTitle(t))
-                .filter(Boolean);
-            const eventsApiTitles = (Array.isArray(eventsData) ? eventsData : []).map((e: any) => e.title?.trim()).filter(Boolean);
+            const txEventTitles = enrichedTx
+                .filter((t: FinanceTransaction) => getTransactionSource(t) === 'event')
+                .map((t: FinanceTransaction) => getEventTitle(t))
+                .filter((title): title is string => Boolean(title));
+            const eventsApiTitles = safeEvents.map((e: any) => e.title?.trim()).filter(Boolean);
             const allUniqueEvents = Array.from(new Set([...txEventTitles, ...eventsApiTitles])).sort() as string[];
             setAvailableEvents(allUniqueEvents);
         } catch (error) {
