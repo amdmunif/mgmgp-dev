@@ -17,6 +17,7 @@ interface DataTableProps<T> {
     filterContent?: React.ReactNode; // Optional slot for filters
     searchValue?: string;
     onSearchChange?: (value: string) => void;
+    dense?: boolean;
 }
 
 export function DataTable<T extends Record<string, any>>({
@@ -26,7 +27,8 @@ export function DataTable<T extends Record<string, any>>({
     pageSize = 10,
     filterContent,
     searchValue,
-    onSearchChange
+    onSearchChange,
+    dense = false
 }: DataTableProps<T>) {
     const [searchParams, setSearchParams] = useSearchParams();
 
@@ -175,7 +177,8 @@ export function DataTable<T extends Record<string, any>>({
                                     <th
                                         key={idx}
                                         className={cn(
-                                            "px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none",
+                                            dense ? "px-3.5 py-3" : "px-6 py-4",
+                                            "text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none",
                                             col.className
                                         )}
                                         onClick={() => col.accessorKey && handleSort(col.accessorKey)}
@@ -193,7 +196,7 @@ export function DataTable<T extends Record<string, any>>({
                                 paginatedData.map((item, rowIdx) => (
                                     <tr key={rowIdx} className="hover:bg-gray-50/80 transition-colors">
                                         {columns.map((col, colIdx) => (
-                                            <td key={colIdx} className={cn("px-6 py-4 text-sm text-gray-600", col.className)}>
+                                            <td key={colIdx} className={cn(dense ? "px-3.5 py-3" : "px-6 py-4", "text-sm text-gray-600", col.className)}>
                                                 {col.cell ? col.cell(item) : (item[col.accessorKey!] as React.ReactNode)}
                                             </td>
                                         ))}

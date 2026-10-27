@@ -358,6 +358,23 @@ export function AdminEventDetail() {
         });
     };
 
+    const formatCompactDate = (dateString: string) => {
+        if (!dateString) return { datePart: '-', timePart: '-' };
+        const d = new Date(dateString);
+        if (isNaN(d.getTime())) return { datePart: '-', timePart: '-' };
+        const datePart = d.toLocaleDateString('id-ID', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric'
+        });
+        const timePart = d.toLocaleTimeString('id-ID', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        }).replace('.', ':');
+        return { datePart, timePart };
+    };
+
     const handleExportExcel = () => {
         if (!event) return;
         if (processedParticipants.length === 0) {
@@ -492,34 +509,26 @@ export function AdminEventDetail() {
                     <button
                         type="button"
                         onClick={() => setViewingParticipant(item)}
-                        className="flex-shrink-0 h-10 w-10 text-left focus:outline-none group relative"
+                        className="flex-shrink-0 h-9 w-9 text-left focus:outline-none group relative"
                         title="Klik untuk lihat detail peserta"
                     >
                         {item.foto_profile ? (
-                            <img className="h-10 w-10 rounded-full object-cover border border-gray-200 group-hover:ring-2 group-hover:ring-blue-400 transition-all" src={getFileUrl(item.foto_profile)} alt="" />
+                            <img className="h-9 w-9 rounded-full object-cover border border-gray-200 group-hover:ring-2 group-hover:ring-blue-400 transition-all" src={getFileUrl(item.foto_profile)} alt="" />
                         ) : (
-                            <div className="h-10 w-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm group-hover:bg-blue-200 transition-colors">
+                            <div className="h-9 w-9 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs group-hover:bg-blue-200 transition-colors">
                                 {item.nama.charAt(0).toUpperCase()}
                             </div>
                         )}
                     </button>
-                    <div className="ml-4">
-                        <div className="flex items-center gap-1.5">
+                    <div className="ml-3 min-w-0">
+                        <div>
                             <button
                                 type="button"
                                 onClick={() => setViewingParticipant(item)}
                                 className="text-sm font-semibold text-gray-900 hover:text-blue-600 transition-colors text-left"
-                                title="Klik untuk lihat detail"
+                                title="Klik untuk lihat detail peserta"
                             >
                                 {item.nama}
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setViewingParticipant(item)}
-                                className="text-gray-400 hover:text-blue-600 transition-colors p-0.5 rounded hover:bg-gray-100"
-                                title="Lihat detail peserta"
-                            >
-                                <Eye className="w-3.5 h-3.5" />
                             </button>
                         </div>
                         <div className="text-xs text-gray-500">{item.email}</div>
@@ -527,7 +536,7 @@ export function AdminEventDetail() {
                         {item.no_hp && (
                             <div className="flex items-center gap-1.5 text-xs text-emerald-800 mt-1 bg-emerald-50 px-2 py-0.5 rounded w-fit border border-emerald-100">
                                 <Phone className="w-3 h-3 text-emerald-600 shrink-0" />
-                                <span className="font-mono">{item.no_hp}</span>
+                                <span className="font-mono text-[11px]">{item.no_hp}</span>
                                 <button
                                     type="button"
                                     onClick={(e) => {
@@ -548,42 +557,41 @@ export function AdminEventDetail() {
         {
             header: "Waktu Daftar",
             accessorKey: "registered_at" as keyof Participant,
-            cell: (item: Participant) => (
-                <span className="text-sm text-gray-500">{formatDate(item.registered_at)}</span>
-            ),
-            className: "hidden sm:table-cell"
+            cell: (item: Participant) => {
+                const { datePart, timePart } = formatCompactDate(item.registered_at);
+                return (
+                    <div className="text-xs text-gray-600 whitespace-nowrap">
+                        <div className="font-medium text-gray-800">{datePart}</div>
+                        <div className="text-gray-400 text-[11px]">{timePart} WIB</div>
+                    </div>
+                );
+            },
+            className: "whitespace-nowrap hidden sm:table-cell"
         },
         {
-            header: "Kehadiran",
+            header: "Kehadiran & Status",
             accessorKey: "attendance_count" as keyof Participant,
             cell: (item: Participant) => {
                 const count = item.attendance_count || 0;
                 const total = event?.total_days || 1;
                 const isManual = Number(item.is_hadir) === 1;
+                const isPassed = Number(item.is_passed) === 1;
                 return (
-                    <div className="flex flex-col items-center">
-                        <span className="text-sm font-semibold text-gray-700">{count} / {total} Hari</span>
-                        {isManual && <span className="text-[10px] text-green-600">(Hadir Manual)</span>}
+                    <div className="flex flex-col items-center gap-1">
+                        <span className="text-xs font-semibold text-gray-800 whitespace-nowrap">
+                            {count} / {total} Hari
+                        </span>
+                        {isManual && <span className="text-[10px] text-green-600 font-medium">(Hadir Manual)</span>}
+                        <span className={`px-2.5 py-0.5 inline-flex text-[11px] leading-4 font-semibold rounded-full whitespace-nowrap ${isPassed
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-gray-100 text-gray-600'
+                            }`}>
+                            {isPassed ? '✓ Lulus' : 'Belum Lulus'}
+                        </span>
                     </div>
                 );
             },
-            className: "text-center"
-        },
-        {
-            header: "Kelulusan",
-            accessorKey: "is_passed" as keyof Participant,
-            cell: (item: Participant) => {
-                const isPassed = Number(item.is_passed) === 1;
-                return (
-                    <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${isPassed
-                        ? 'bg-blue-100 text-blue-800'
-                        : 'bg-gray-100 text-gray-800'
-                        }`}>
-                        {isPassed ? 'Lulus' : 'Belum'}
-                    </span>
-                );
-            },
-            className: "text-center"
+            className: "text-center whitespace-nowrap"
         },
         isPaidEvent ? {
             header: "Pembayaran",
@@ -603,7 +611,7 @@ export function AdminEventDetail() {
                 
                 return (
                     <div className="flex flex-col items-center gap-1">
-                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${color}`}>
+                        <span className={`px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full whitespace-nowrap ${color}`}>
                             {label}
                         </span>
                         {item.payment_proof_url && (
@@ -611,7 +619,7 @@ export function AdminEventDetail() {
                                 href={getFileUrl(item.payment_proof_url)} 
                                 target="_blank" 
                                 rel="noreferrer"
-                                className="text-xs text-blue-600 hover:underline flex items-center gap-1 font-medium"
+                                className="text-[11px] text-blue-600 hover:underline flex items-center gap-1 font-medium whitespace-nowrap"
                             >
                                 <ExternalLink className="w-3 h-3" /> Lihat Bukti
                             </a>
@@ -619,112 +627,101 @@ export function AdminEventDetail() {
                     </div>
                 );
             },
-            className: "text-center"
+            className: "text-center whitespace-nowrap"
         } : null,
         event?.has_lms ? {
             header: "LMS",
             accessorKey: "lms_score",
             cell: (item: Participant) => (
-                <div className="flex flex-col items-center gap-2">
-                    <span className="text-xs font-semibold text-gray-700">
+                <div className="flex flex-col items-center gap-1.5">
+                    <span className="text-xs font-semibold text-gray-700 whitespace-nowrap">
                         Skor: {item.lms_score !== null && item.lms_score !== undefined ? Number(item.lms_score).toFixed(1) : '-'}
                     </span>
                     <button
                         onClick={() => handleLmsApproveUpdate(item.user_id, item.is_approved)}
-                        className={`px-2 py-1 inline-flex text-[10px] leading-4 font-bold rounded-md transition-colors ${Number(item.is_approved) === 1
+                        className={`px-2 py-0.5 inline-flex text-[10px] leading-4 font-bold rounded transition-colors whitespace-nowrap ${Number(item.is_approved) === 1
                             ? 'bg-green-100 text-green-700 hover:bg-green-200'
                             : 'bg-red-100 text-red-700 hover:bg-red-200 border border-red-200'
                             }`}
                         title="Klik untuk mengubah akses LMS"
                     >
-                        {Number(item.is_approved) === 1 ? 'Akses LMS: ON' : 'Akses LMS: OFF (Konfirmasi)'}
+                        {Number(item.is_approved) === 1 ? 'Akses LMS: ON' : 'Akses LMS: OFF'}
                     </button>
                 </div>
             ),
-            className: "text-center"
+            className: "text-center whitespace-nowrap"
         } : null,
         {
             header: "Aksi",
             cell: (item: Participant) => {
                 const isPresent = Number(item.is_hadir) === 1;
                 return (
-                    <>
-                    <div className="flex justify-center items-center gap-1.5">
-                        <button
-                            onClick={() => setViewingParticipant(item)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-colors"
-                            title="Lihat Detail Peserta & Kontak (No. HP)"
-                        >
-                            <Eye className="w-3.5 h-3.5" />
-                            <span>Detail</span>
-                        </button>
-                        <button
-                            onClick={() => handleStatusUpdate(item.user_id, Number(item.is_hadir))}
-                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${isPresent
-                                ? 'text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200'
-                                : 'text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200'
-                                }`}
-                            title={isPresent ? "Batalkan Kehadiran Manual" : "Tandai Hadir Penuh"}
-                        >
-                            {isPresent ? <XCircle className="w-3 h-3" /> : <CheckCircle className="w-3 h-3" />}
-                            {isPresent ? 'Batal' : 'Absen'}
-                        </button>
-                        <button
-                            onClick={() => handlePassedUpdate(item.user_id, item.is_passed)}
-                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${Number(item.is_passed) === 1
-                                ? 'text-green-700 bg-green-50 hover:bg-green-100 border border-green-200'
-                                : 'text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200'
-                                }`}
-                            title="Tandai Lulus / Tidak Lulus"
-                        >
-                            <Trophy className="w-3 h-3" />
-                            {Number(item.is_passed) === 1 ? 'Lulus' : 'Tdk Lulus'}
-                        </button>
-                        <button
-                            onClick={() => handleDeleteParticipant(item.user_id, item.nama)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 transition-colors"
-                            title="Hapus Peserta"
-                        >
-                            <Trash2 className="w-3 h-3" />
-                            Hapus
-                        </button>
-                    </div>
-                    {event?.has_lms && (
-                        <div className="flex justify-center mt-2">
+                    <div className="flex flex-col items-center gap-1.5">
+                        <div className="flex justify-center items-center gap-1.5 whitespace-nowrap">
+                            <button
+                                onClick={() => handleStatusUpdate(item.user_id, Number(item.is_hadir))}
+                                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${isPresent
+                                    ? 'text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200'
+                                    : 'text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200'
+                                    }`}
+                                title={isPresent ? "Batalkan Kehadiran Manual" : "Tandai Hadir Penuh"}
+                            >
+                                {isPresent ? <XCircle className="w-3.5 h-3.5" /> : <CheckCircle className="w-3.5 h-3.5" />}
+                                <span>{isPresent ? 'Batal' : 'Absen'}</span>
+                            </button>
+                            <button
+                                onClick={() => handlePassedUpdate(item.user_id, item.is_passed)}
+                                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${Number(item.is_passed) === 1
+                                    ? 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200'
+                                    : 'text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200'
+                                    }`}
+                                title="Tandai Lulus / Tidak Lulus"
+                            >
+                                <Trophy className="w-3.5 h-3.5" />
+                                <span>{Number(item.is_passed) === 1 ? 'Lulus' : 'Tdk Lulus'}</span>
+                            </button>
+                            <button
+                                onClick={() => handleDeleteParticipant(item.user_id, item.nama)}
+                                className="inline-flex items-center justify-center p-1.5 rounded-md text-red-600 hover:text-red-700 hover:bg-red-50 border border-red-200 transition-colors"
+                                title={`Hapus ${item.nama}`}
+                            >
+                                <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                        </div>
+                        {event?.has_lms && (
                             <button
                                 onClick={() => {
                                     setSelectedParticipant(item);
                                     setActivityModalOpen(true);
                                 }}
-                                className="inline-flex items-center gap-1 px-3 py-1 rounded-md text-xs font-medium text-blue-700 border border-blue-200 bg-white hover:bg-blue-50 transition-colors w-full justify-center"
+                                className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-[11px] font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 transition-colors w-full"
                                 title="Lihat Detail Aktivitas LMS"
                             >
                                 Detail Aktivitas
                             </button>
-                        </div>
-                    )}
-                    {isPaidEvent && (item.payment_status === 'waiting_confirmation' || (item.payment_status === 'pending' && Boolean(item.payment_proof_url))) && (
-                        <div className="flex justify-center mt-2 gap-1.5">
-                            <button
-                                onClick={() => handlePaymentUpdate(item.user_id, 'confirm-payment')}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-green-600 text-white hover:bg-green-700 shadow-sm transition-colors"
-                                title="Terima dan konfirmasi pembayaran"
-                            >
-                                <Check className="w-3 h-3" /> Terima
-                            </button>
-                            <button
-                                onClick={() => handlePaymentUpdate(item.user_id, 'reject-payment')}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-red-600 text-white hover:bg-red-700 shadow-sm transition-colors"
-                                title="Tolak bukti pembayaran"
-                            >
-                                <X className="w-3 h-3" /> Tolak
-                            </button>
-                        </div>
-                    )}
-                    </>
+                        )}
+                        {isPaidEvent && (item.payment_status === 'waiting_confirmation' || (item.payment_status === 'pending' && Boolean(item.payment_proof_url))) && (
+                            <div className="flex justify-center gap-1.5 w-full">
+                                <button
+                                    onClick={() => handlePaymentUpdate(item.user_id, 'confirm-payment')}
+                                    className="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-green-600 text-white hover:bg-green-700 shadow-sm transition-colors flex-1"
+                                    title="Terima dan konfirmasi pembayaran"
+                                >
+                                    <Check className="w-3 h-3" /> Terima
+                                </button>
+                                <button
+                                    onClick={() => handlePaymentUpdate(item.user_id, 'reject-payment')}
+                                    className="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-red-600 text-white hover:bg-red-700 shadow-sm transition-colors flex-1"
+                                    title="Tolak bukti pembayaran"
+                                >
+                                    <X className="w-3 h-3" /> Tolak
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 );
             },
-            className: "text-center"
+            className: "text-center whitespace-nowrap"
         }
     ].filter(Boolean) as any[];
     return cols;
@@ -1042,6 +1039,7 @@ export function AdminEventDetail() {
                         data={processedParticipants}
                         searchKeys={[]}
                         pageSize={10}
+                        dense={true}
                     />
                 </div>
             </div>
