@@ -21,7 +21,8 @@ class StatsController
             'events' => 0,
             'premium' => 0,
             'pendingMembers' => 0,
-            'pendingPremium' => 0
+            'pendingPremium' => 0,
+            'pendingEventPayments' => 0
         ];
 
         // Members Count (all)
@@ -47,6 +48,10 @@ class StatsController
         // Pending Premium Requests
         $q6 = $this->conn->query("SELECT COUNT(*) FROM premium_requests WHERE status = 'pending'");
         $stats['pendingPremium'] = $q6->fetchColumn();
+
+        // Pending Event Payments
+        $q7 = $this->conn->query("SELECT COUNT(*) FROM event_participants WHERE payment_status = 'waiting_confirmation'");
+        $stats['pendingEventPayments'] = (int)$q7->fetchColumn();
 
         return json_encode($stats);
     }
@@ -74,16 +79,9 @@ class StatsController
         $schools = $q2->fetchAll(PDO::FETCH_COLUMN);
 
         foreach ($schools as $school) {
-            $schoolUpper = strtoupper($school);
-            // Keywords for Negeri: SMPN, SMAN, SMKN, MTSN, MAN, Negeri
-            if (
-                strpos($schoolUpper, 'SMPN') !== false ||
-                strpos($schoolUpper, 'SMAN') !== false ||
-                strpos($schoolUpper, 'SMKN') !== false ||
-                strpos($schoolUpper, 'MTSN') !== false ||
-                strpos($schoolUpper, 'MAN') !== false ||
-                strpos($schoolUpper, 'NEGERI') !== false
-            ) {
+            // More accurate regex for Negeri schools to avoid false positives like "NURUL IMAN" matching "MAN"
+            // Matches boundaries of SMAN, SMPN, SMKN, MTSN, MAN, MIN, SDN, NEGERI
+            if (preg_match('/\b(SMPN|SMAN|SMKN|MTSN|MAN|MIN|SDN)[ \-\d]*\b|\bNEGERI\b/i', $school)) {
                 $stats['schoolTypes']['Negeri']++;
             } else {
                 $stats['schoolTypes']['Swasta']++;
@@ -92,17 +90,74 @@ class StatsController
 
         // 3. Engagement (Attendance)
         try {
-            // Using 'attended' from event_participants table
-            $q3 = $this->conn->query("SELECT COUNT(*) FROM event_participants WHERE status = 'attended'");
+            // Using 'is_hadir' from event_participants table
+            $q3 = $this->conn->query("SELECT COUNT(*) FROM event_participants WHERE is_hadir = 1");
             $stats['engagement']['totalAttendance'] = (int) $q3->fetchColumn();
 
-            $q4 = $this->conn->query("SELECT COUNT(DISTINCT user_id) FROM event_participants WHERE status = 'attended'");
+            $q4 = $this->conn->query("SELECT COUNT(DISTINCT user_id) FROM event_participants WHERE is_hadir = 1");
             $stats['engagement']['uniqueActiveTeachers'] = (int) $q4->fetchColumn();
         } catch (Exception $e) {
             // Fallback if table doesn't exist or column differs
         }
 
+        // 4. Education Distribution (Pendidikan Terakhir)
+        $q5 = $this->conn->query("SELECT pendidikan_terakhir, COUNT(*) as count FROM profiles WHERE pendidikan_terakhir IS NOT NULL AND pendidikan_terakhir != '' GROUP BY pendidikan_terakhir ORDER BY count DESC");
+        $stats['education'] = $q5->fetchAll(PDO::FETCH_ASSOC);
+
+        // 5. Top Schools (Asal Sekolah terbanyak)
+        $q6 = $this->conn->query("SELECT asal_sekolah, COUNT(*) as count FROM profiles WHERE asal_sekolah IS NOT NULL AND asal_sekolah != '' GROUP BY asal_sekolah ORDER BY count DESC LIMIT 5");
+        $stats['topSchools'] = $q6->fetchAll(PDO::FETCH_ASSOC);
+
+        // 6. Majors (Jurusan)
+        $q7 = $this->conn->query("SELECT jurusan, COUNT(*) as count FROM profiles WHERE jurusan IS NOT NULL AND jurusan != '' GROUP BY jurusan ORDER BY count DESC LIMIT 10");
+        $stats['majors'] = $q7->fetchAll(PDO::FETCH_ASSOC);
+
         return json_encode($stats);
+    }
+    
+    public function getLeaderboard()
+    {
+        $memberFilter = isset($_GET['member_type']) ? $_GET['member_type'] : 'all';
+        $eventFilter = isset($_GET['event_type']) ? $_GET['event_type'] : 'all';
+        $roleFilter = isset($_GET['role_type']) ? $_GET['role_type'] : 'all';
+
+        $query = "SELECT p.id, p.nama, p.asal_sekolah, p.premium_until, p.role, 
+                  COUNT(DISTINCT e.id) as total_events_attended
+                  FROM event_participants ep
+                  JOIN events e ON ep.event_id = e.id
+                  JOIN profiles p ON ep.user_id = p.id
+                  WHERE ep.is_hadir = 1";
+
+        if ($memberFilter === 'premium') {
+            $query .= " AND p.premium_until >= NOW()";
+        } elseif ($memberFilter === 'reguler') {
+            $query .= " AND (p.premium_until IS NULL OR p.premium_until < NOW())";
+        }
+
+        if ($eventFilter === 'premium') {
+            $query .= " AND e.is_premium = 1";
+        } elseif ($eventFilter === 'umum') {
+            $query .= " AND e.is_premium = 0";
+        }
+
+        if ($roleFilter === 'pengurus') {
+            $query .= " AND p.role IN ('Admin', 'Pengurus')";
+        } elseif ($roleFilter === 'anggota') {
+            $query .= " AND (p.role = 'Anggota' OR p.role IS NULL OR p.role = '')";
+        }
+
+        $query .= " GROUP BY p.id, p.nama, p.asal_sekolah, p.premium_until, p.role 
+                    ORDER BY total_events_attended DESC, p.nama ASC 
+                    LIMIT 100";
+
+        try {
+            $stmt = $this->conn->prepare($query);
+            $stmt->execute();
+            return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+        } catch (Exception $e) {
+            http_response_code(500);
+            return json_encode(["message" => "Error: " . $e->getMessage()]);
+        }
     }
 }
 ?>

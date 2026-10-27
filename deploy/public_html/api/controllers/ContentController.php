@@ -103,11 +103,14 @@ class ContentController
     // --- EVENTS ---
     public function getEvents($isAdmin = false)
     {
-        $query = "SELECT * FROM events";
+        $query = "SELECT e.*, 
+                         (SELECT COUNT(*) FROM event_participants WHERE event_id = e.id) as participants_count,
+                         (SELECT COUNT(*) FROM event_participants WHERE event_id = e.id AND payment_status = 'waiting_confirmation') as pending_payments_count 
+                  FROM events e";
         if (!$isAdmin) {
-            $query .= " WHERE is_registration_open = 1";
+            $query .= " WHERE e.is_registration_open = 1";
         }
-        $query .= " ORDER BY date DESC";
+        $query .= " ORDER BY e.date DESC";
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
         return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
@@ -115,9 +118,9 @@ class ContentController
 
     public function getEventDetail($id, $isAdmin = false)
     {
-        $query = "SELECT * FROM events WHERE id = :id";
+        $query = "SELECT e.*, (SELECT COUNT(*) FROM event_participants WHERE event_id = e.id) as participants_count FROM events e WHERE e.id = :id";
         if (!$isAdmin) {
-            $query .= " AND is_registration_open = 1";
+            $query .= " AND e.is_registration_open = 1";
         }
         
         $stmt = $this->conn->prepare($query);
@@ -152,14 +155,16 @@ class ContentController
     {
         try {
             $id = Helper::uuid();
-            $query = "INSERT INTO events (id, title, description, date, location, image_url, is_registration_open, is_premium, is_paid, price, registration_deadline, attendance_deadline, quota, has_lms, created_at) 
-                      VALUES (:id, :title, :description, :date, :location, :image_url, :is_registration_open, :is_premium, :is_paid, :price, :registration_deadline, :attendance_deadline, :quota, :has_lms, NOW())";
+            $query = "INSERT INTO events (id, title, description, date, total_days, location, image_url, is_registration_open, is_premium, is_paid, price, registration_deadline, attendance_deadline, quota, has_lms, group_task_available_at, created_at) 
+                      VALUES (:id, :title, :description, :date, :total_days, :location, :image_url, :is_registration_open, :is_premium, :is_paid, :price, :registration_deadline, :attendance_deadline, :quota, :has_lms, :group_task_available_at, NOW())";
 
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':id', $id);
             $stmt->bindParam(':title', $data['title']);
             $stmt->bindParam(':description', $data['description']);
             $stmt->bindParam(':date', $data['date']);
+            $total_days = isset($data['total_days']) ? (int)$data['total_days'] : 1;
+            $stmt->bindParam(':total_days', $total_days, PDO::PARAM_INT);
             $stmt->bindParam(':location', $data['location']);
             $stmt->bindParam(':image_url', $data['image_url']);
             $isReg = $data['is_registration_open'] ?? 1;
@@ -179,6 +184,8 @@ class ContentController
             $stmt->bindParam(':quota', $quota, PDO::PARAM_INT);
             $has_lms = $data['has_lms'] ?? 0;
             $stmt->bindParam(':has_lms', $has_lms, PDO::PARAM_INT);
+            $groupTaskAvailable = !empty($data['group_task_available_at']) ? $data['group_task_available_at'] : null;
+            $stmt->bindParam(':group_task_available_at', $groupTaskAvailable);
 
             if ($stmt->execute()) {
                 Helper::log($this->conn, $userId, $userName, 'CREATE_EVENT', $data['title']);
@@ -192,25 +199,127 @@ class ContentController
         }
     }
 
-    public function deleteEvent($id, $userId, $userName)
+    public function deleteEvent($id, $userId, $userName, $userRole = '')
     {
-        // Get title for logging
-        $title = "Unknown Event";
-        $stmtTitle = $this->conn->prepare("SELECT title FROM events WHERE id = :id");
-        $stmtTitle->bindParam(':id', $id);
-        $stmtTitle->execute();
-        if ($res = $stmtTitle->fetch(PDO::FETCH_ASSOC))
-            $title = $res['title'];
+        try {
+            $this->conn->beginTransaction();
+            
+            // Get title and event details for logging and role checks
+            $title = "Unknown Event";
+            $stmtEvent = $this->conn->prepare("SELECT title, is_paid, has_lms FROM events WHERE id = :id");
+            $stmtEvent->bindParam(':id', $id);
+            $stmtEvent->execute();
+            if ($res = $stmtEvent->fetch(PDO::FETCH_ASSOC)) {
+                $title = $res['title'];
+                
+                // Role check: Only Admin can delete events that are paid or have LMS
+                if (($res['is_paid'] || $res['has_lms']) && $userRole !== 'Admin') {
+                    $this->conn->rollBack();
+                    http_response_code(403);
+                    return json_encode(["message" => "Hanya Super Admin yang dapat menghapus kegiatan berbayar atau kegiatan yang memiliki modul LMS."]);
+                }
+            } else {
+                $this->conn->rollBack();
+                http_response_code(404);
+                return json_encode(["message" => "Event not found"]);
+            }
 
-        $query = "DELETE FROM events WHERE id = :id";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':id', $id);
-        if ($stmt->execute()) {
+            // 1. Lms Sub-items
+            $stmtTopics = $this->conn->prepare("SELECT id FROM lms_topics WHERE event_id = :id");
+            $stmtTopics->execute([':id' => $id]);
+            $topicIds = $stmtTopics->fetchAll(PDO::FETCH_COLUMN);
+
+            if (!empty($topicIds)) {
+                $topicIn = str_repeat('?,', count($topicIds) - 1) . '?';
+                
+                // Quizzes
+                $stmtQuiz = $this->conn->prepare("SELECT id FROM lms_quizzes WHERE topic_id IN ($topicIn)");
+                $stmtQuiz->execute($topicIds);
+                $quizIds = $stmtQuiz->fetchAll(PDO::FETCH_COLUMN);
+
+                if (!empty($quizIds)) {
+                    $quizIn = str_repeat('?,', count($quizIds) - 1) . '?';
+                    
+                    // Attempts
+                    $stmtAtt = $this->conn->prepare("SELECT id FROM lms_quiz_attempts WHERE quiz_id IN ($quizIn)");
+                    $stmtAtt->execute($quizIds);
+                    $attemptIds = $stmtAtt->fetchAll(PDO::FETCH_COLUMN);
+                    
+                    if (!empty($attemptIds)) {
+                        $attIn = str_repeat('?,', count($attemptIds) - 1) . '?';
+                        $stmt = $this->conn->prepare("DELETE FROM lms_quiz_answers WHERE attempt_id IN ($attIn)");
+                        $stmt->execute($attemptIds);
+                    }
+                    
+                    $stmt = $this->conn->prepare("DELETE FROM lms_quiz_attempts WHERE quiz_id IN ($quizIn)");
+                    $stmt->execute($quizIds);
+
+                    // Questions
+                    $stmtQ = $this->conn->prepare("SELECT id FROM lms_quiz_questions WHERE quiz_id IN ($quizIn)");
+                    $stmtQ->execute($quizIds);
+                    $qIds = $stmtQ->fetchAll(PDO::FETCH_COLUMN);
+
+                    if (!empty($qIds)) {
+                        $qIn = str_repeat('?,', count($qIds) - 1) . '?';
+                        $stmt = $this->conn->prepare("DELETE FROM lms_quiz_options WHERE question_id IN ($qIn)");
+                        $stmt->execute($qIds);
+                    }
+
+                    $stmt = $this->conn->prepare("DELETE FROM lms_quiz_questions WHERE quiz_id IN ($quizIn)");
+                    $stmt->execute($quizIds);
+
+                    $stmt = $this->conn->prepare("DELETE FROM lms_quizzes WHERE topic_id IN ($topicIn)");
+                    $stmt->execute($topicIds);
+                }
+
+                // Assignments
+                $stmtAsg = $this->conn->prepare("SELECT id FROM lms_assignments WHERE topic_id IN ($topicIn)");
+                $stmtAsg->execute($topicIds);
+                $asgIds = $stmtAsg->fetchAll(PDO::FETCH_COLUMN);
+
+                if (!empty($asgIds)) {
+                    $asgIn = str_repeat('?,', count($asgIds) - 1) . '?';
+                    $stmt = $this->conn->prepare("DELETE FROM lms_assignment_submissions WHERE assignment_id IN ($asgIn)");
+                    $stmt->execute($asgIds);
+                }
+
+                $stmt = $this->conn->prepare("DELETE FROM lms_assignments WHERE topic_id IN ($topicIn)");
+                $stmt->execute($topicIds);
+
+                $stmt = $this->conn->prepare("DELETE FROM lms_materials WHERE topic_id IN ($topicIn)");
+                $stmt->execute($topicIds);
+
+                $stmt = $this->conn->prepare("DELETE FROM lms_topics WHERE event_id = ?");
+                $stmt->execute([$id]);
+            }
+
+            // 2. Direct Event relations
+            $stmt = $this->conn->prepare("DELETE FROM lms_user_progress WHERE event_id = ?");
+            $stmt->execute([$id]);
+
+            $stmt = $this->conn->prepare("DELETE FROM event_participants WHERE event_id = ?");
+            $stmt->execute([$id]);
+
+            $stmt = $this->conn->prepare("DELETE FROM letters WHERE event_id = ?");
+            $stmt->execute([$id]);
+
+            $stmt = $this->conn->prepare("DELETE FROM gallery_images WHERE event_id = ?");
+            $stmt->execute([$id]);
+
+            // 3. Delete Event
+            $stmt = $this->conn->prepare("DELETE FROM events WHERE id = ?");
+            $stmt->execute([$id]);
+
             Helper::log($this->conn, $userId, $userName, 'DELETE_EVENT', $title);
-            return json_encode(["message" => "Event deleted"]);
+            
+            $this->conn->commit();
+            return json_encode(["message" => "Event deleted completely"]);
+            
+        } catch (\Exception $e) {
+            $this->conn->rollBack();
+            http_response_code(500);
+            return json_encode(["message" => "Failed to delete event: " . $e->getMessage()]);
         }
-        http_response_code(500);
-        return json_encode(["message" => "Failed to delete event"]);
     }
 
     public function updateEvent($id, $data, $userId, $userName)
@@ -220,6 +329,7 @@ class ContentController
                         title = :title, 
                         description = :description, 
                         date = :date, 
+                        total_days = :total_days,
                         location = :location, 
                         image_url = :image_url, 
                         is_registration_open = :is_registration_open,
@@ -229,7 +339,8 @@ class ContentController
                         registration_deadline = :registration_deadline,
                         attendance_deadline = :attendance_deadline,
                         quota = :quota,
-                        has_lms = :has_lms
+                        has_lms = :has_lms,
+                        group_task_available_at = :group_task_available_at
                       WHERE id = :id";
 
             $stmt = $this->conn->prepare($query);
@@ -237,6 +348,8 @@ class ContentController
             $stmt->bindParam(':title', $data['title']);
             $stmt->bindParam(':description', $data['description']);
             $stmt->bindParam(':date', $data['date']);
+            $total_days = isset($data['total_days']) ? (int)$data['total_days'] : 1;
+            $stmt->bindParam(':total_days', $total_days, PDO::PARAM_INT);
             $stmt->bindParam(':location', $data['location']);
             $stmt->bindParam(':image_url', $data['image_url']);
             $isReg = $data['is_registration_open'] ?? 1;
@@ -256,6 +369,8 @@ class ContentController
             $stmt->bindParam(':quota', $quota, PDO::PARAM_INT);
             $has_lms = $data['has_lms'] ?? 0;
             $stmt->bindParam(':has_lms', $has_lms, PDO::PARAM_INT);
+            $groupTaskAvailable = !empty($data['group_task_available_at']) ? $data['group_task_available_at'] : null;
+            $stmt->bindParam(':group_task_available_at', $groupTaskAvailable);
 
             if ($stmt->execute()) {
                 Helper::log($this->conn, $userId, $userName, 'UPDATE_EVENT', $data['title']);
@@ -277,6 +392,27 @@ class ContentController
         $stmtEvent->bindParam(':eid', $eventId);
         $stmtEvent->execute();
         $event = $stmtEvent->fetch(PDO::FETCH_ASSOC);
+
+        // Validate Profile Completion & Active Status
+        $stmtProfile = $this->conn->prepare("SELECT is_active, nama, asal_sekolah, no_hp FROM profiles WHERE id = :uid");
+        $stmtProfile->bindParam(':uid', $userId);
+        $stmtProfile->execute();
+        $userProfileStatus = $stmtProfile->fetch(PDO::FETCH_ASSOC);
+
+        if (!$userProfileStatus) {
+            http_response_code(400);
+            return json_encode(["message" => "Profil pengguna tidak ditemukan."]);
+        }
+
+        if (!$userProfileStatus['is_active']) {
+            http_response_code(403);
+            return json_encode(["message" => "Akun Anda belum dikonfirmasi oleh Admin. Silakan tunggu konfirmasi untuk mendaftar kegiatan."]);
+        }
+
+        if (empty($userProfileStatus['nama']) || empty($userProfileStatus['asal_sekolah']) || empty($userProfileStatus['no_hp'])) {
+            http_response_code(403);
+            return json_encode(["message" => "Silakan lengkapi data profil Anda (Nama, Asal Sekolah, No HP) terlebih dahulu sebelum mendaftar kegiatan."]);
+        }
 
         if ($event && $event['is_premium'] == 1) {
             $stmtUser = $this->conn->prepare("SELECT premium_until FROM profiles WHERE id = :uid");
@@ -303,8 +439,31 @@ class ContentController
         $check->bindParam(':eid', $eventId);
         $check->bindParam(':uid', $userId);
         $check->execute();
-        if ($check->rowCount() > 0)
+        $existing = $check->fetch(PDO::FETCH_ASSOC);
+
+        if ($existing) {
+            if ($paymentProofUrl) {
+                $upd = $this->conn->prepare("UPDATE event_participants 
+                                             SET payment_proof_url = :proof, 
+                                                 payment_status = 'waiting_confirmation', 
+                                                 payment_date = NOW() 
+                                             WHERE event_id = :eid AND user_id = :uid");
+                $upd->execute([':proof' => $paymentProofUrl, ':eid' => $eventId, ':uid' => $userId]);
+
+                if (!empty($userProfileStatus['nama'])) {
+                    $stmtUser = $this->conn->prepare("SELECT email FROM users WHERE id = :uid");
+                    $stmtUser->execute([':uid' => $userId]);
+                    $userEmail = $stmtUser->fetchColumn();
+                    if ($userEmail && !empty($event['title'])) {
+                        Mailer::sendEventPaymentProofUploaded($userEmail, $userProfileStatus['nama'], $event['title']);
+                    }
+                }
+
+                Helper::log($this->conn, $userId, 'Member', 'UPLOAD_PAYMENT', "Event: " . ($event['title'] ?? $eventId));
+                return json_encode(["message" => "Bukti pembayaran berhasil diunggah"]);
+            }
             return json_encode(["message" => "Already joined"]);
+        }
 
         if ($event && $event['is_paid'] == 1) {
             $paymentStatus = $paymentProofUrl ? 'waiting_confirmation' : 'pending';
@@ -342,7 +501,7 @@ class ContentController
             }
 
             $targetLog = !empty($eventTitle) ? $eventTitle : $eventId;
-            Helper::log($this->conn, $userId, 'Member', 'JOIN_EVENT', $targetLog);
+            Helper::log($this->conn, $userId, 'Member', 'JOIN_EVENT', $targetLog, 'Peserta');
             return json_encode(["message" => "Joined successfully"]);
         }
         http_response_code(500);
@@ -357,7 +516,18 @@ class ContentController
         $stmt->bindParam(':eid', $eventId);
         $stmt->bindParam(':uid', $userId);
         
-        if ($stmt->execute()) {
+        $executed = $stmt->execute();
+        if ($executed && $stmt->rowCount() == 0) {
+            // Check if participant row exists at all
+            $check = $this->conn->prepare("SELECT COUNT(*) FROM event_participants WHERE event_id = :eid AND user_id = :uid");
+            $check->execute([':eid' => $eventId, ':uid' => $userId]);
+            if ($check->fetchColumn() == 0) {
+                $ins = $this->conn->prepare("INSERT INTO event_participants (event_id, user_id, payment_status, payment_proof_url, payment_date, registered_at) VALUES (:eid, :uid, 'waiting_confirmation', :proofUrl, NOW(), NOW())");
+                $ins->execute([':eid' => $eventId, ':uid' => $userId, ':proofUrl' => $proofUrl]);
+            }
+        }
+        
+        if ($executed) {
             $stmtEvent = $this->conn->prepare("SELECT title FROM events WHERE id = :eid");
             $stmtEvent->bindParam(':eid', $eventId);
             $stmtEvent->execute();
@@ -371,6 +541,7 @@ class ContentController
             if ($userData && $eventTitle) {
                 Mailer::sendEventPaymentProofUploaded($userData['email'], $userData['nama'], $eventTitle);
             }
+            Helper::log($this->conn, $userId, 'Member', 'UPLOAD_PAYMENT', "Event: $eventTitle");
             return json_encode(["message" => "Payment proof uploaded successfully"]);
         }
         
@@ -410,6 +581,7 @@ class ContentController
             if ($user && $eventTitle) {
                 Mailer::sendTaskSubmitted($user['email'], $user['nama'], $eventTitle);
             }
+            Helper::log($this->conn, $userId, 'Member', 'SUBMIT_TASK', "Event: $eventTitle");
             return json_encode(["message" => "Task submitted"]);
         }
         http_response_code(500);
@@ -424,6 +596,7 @@ class ContentController
         // e.* will include is_premium IF it exists.
         // Synthesize participation_status from is_hadir since 'status' column does not exist
         $query = "SELECT e.*, 
+                  (SELECT COUNT(*) FROM event_participants WHERE event_id = e.id) as participants_count,
                   CASE 
                     WHEN ep.is_hadir = 1 THEN 'attended'
                     WHEN ep.user_id IS NOT NULL THEN 'registered'
@@ -450,7 +623,7 @@ class ContentController
 
     public function getMyHistory($userId)
     {
-        $query = "SELECT ep.*, e.title, e.date, e.location, e.tasks_url as event_tasks_url, e.certificate_url 
+        $query = "SELECT ep.*, e.title, e.date, e.location, e.tasks_url as event_tasks_url, e.certificate_url, e.has_lms, e.image_url 
                   FROM event_participants ep 
                   JOIN events e ON ep.event_id = e.id 
                   WHERE ep.user_id = :uid 
@@ -472,12 +645,16 @@ class ContentController
                 'tugas_submitted' => $row['tugas_submitted'] ?? 0,
                 'task_url' => $row['task_url'] ?? null,
                 'registered_at' => $row['registered_at'],
+                'is_approved' => $row['is_approved'] ?? 0,
+                'is_passed' => $row['is_passed'] ?? 0,
                 'events' => [
                     'title' => $row['title'],
                     'date' => $row['date'],
                     'location' => $row['location'],
                     'certificate_url' => $row['certificate_url'] ?? null,
-                    'tasks_url' => $row['event_tasks_url'] ?? null
+                    'tasks_url' => $row['event_tasks_url'] ?? null,
+                    'has_lms' => $row['has_lms'],
+                    'image_url' => $row['image_url']
                 ]
             ];
         }
@@ -486,20 +663,26 @@ class ContentController
 
     public function getEventParticipants($eventId)
     {
-        // Fetch participants with user details
-        $query = "SELECT ep.*, p.nama, u.email, p.foto_profile, p.asal_sekolah 
-                  FROM event_participants ep
-                  LEFT JOIN profiles p ON ep.user_id = p.id
-                  LEFT JOIN users u ON ep.user_id = u.id
-                  WHERE ep.event_id = :eid
-                  ORDER BY ep.registered_at DESC";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':eid', $eventId);
-        $stmt->execute();
-        return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+        try {
+            // Fetch participants with user details
+            $query = "SELECT ep.*, p.nama, p.nama as user_name, u.email, p.role, p.foto_profile, p.asal_sekolah, p.no_hp, p.status_kepegawaian, p.pendidikan_terakhir, ep.is_approved,
+                             (SELECT COUNT(*) FROM event_attendances ea WHERE ea.event_id = ep.event_id AND ea.user_id = ep.user_id) as attendance_count
+                      FROM event_participants ep
+                      LEFT JOIN profiles p ON ep.user_id = p.id
+                      LEFT JOIN users u ON ep.user_id = u.id
+                      WHERE ep.event_id = :eid
+                      ORDER BY p.nama ASC";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':eid', $eventId);
+            $stmt->execute();
+            return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+        } catch (PDOException $e) {
+            http_response_code(500);
+            return json_encode(["error" => "Database error: " . $e->getMessage()]);
+        }
     }
 
-    public function updateParticipantStatus($eventId, $userId, $status)
+    public function updateParticipantStatus($eventId, $userId, $status, $adminId = '0', $adminName = 'Admin')
     {
         $isHadir = ($status === 'attended') ? 1 : 0;
 
@@ -510,13 +693,100 @@ class ContentController
         $stmt->bindParam(':uid', $userId);
 
         if ($stmt->execute()) {
-            return json_encode(["message" => "Status updated"]);
+            Helper::log($this->conn, $adminId, $adminName, 'UPDATE_PARTICIPANT_STATUS', "Event ID: $eventId, User ID: $userId, Status: $status", 'Admin');
+            return json_encode(["message" => "Success"]);
         }
         http_response_code(500);
-        return json_encode(["message" => "Failed to update status"]);
+        return json_encode(["message" => "Failed to update participant status"]);
     }
 
-    public function confirmPayment($eventId, $userId, $adminId)
+    public function markParticipantAttendanceDay($eventId, $userId, $day, $status, $adminId, $adminName)
+    {
+        $stmtEvent = $this->conn->prepare("SELECT date, total_days FROM events WHERE id = :eid");
+        $stmtEvent->execute([':eid' => $eventId]);
+        $eventData = $stmtEvent->fetch(\PDO::FETCH_ASSOC);
+        
+        if (!$eventData) {
+            http_response_code(404);
+            return json_encode(["message" => "Event not found"]);
+        }
+
+        $startDateStr = $eventData['date'] ? date('Y-m-d', strtotime($eventData['date'])) : date('Y-m-d');
+        $targetDate = date('Y-m-d', strtotime($startDateStr . ' + ' . ($day - 1) . ' days'));
+        
+        if ($status === 'attend') {
+            $check = $this->conn->prepare("SELECT id FROM event_attendances WHERE event_id = :eid AND user_id = :uid AND DATE(attended_date) = :tdate");
+            $check->execute([':eid' => $eventId, ':uid' => $userId, ':tdate' => $targetDate]);
+            
+            if ($check->rowCount() == 0) {
+                $attendedTime = $targetDate . ' 08:00:00';
+                $attId = Helper::uuid();
+                $ins = $this->conn->prepare("INSERT INTO event_attendances (id, event_id, user_id, attended_date) VALUES (:id, :eid, :uid, :adate)");
+                if ($ins->execute([':id' => $attId, ':eid' => $eventId, ':uid' => $userId, ':adate' => $attendedTime])) {
+                    Helper::log($this->conn, $adminId, $adminName, 'MARK_ATTENDANCE_DAY', "Event: $eventId, User: $userId, Day: $day", 'Admin');
+                    
+                    $upd = $this->conn->prepare("UPDATE event_participants SET is_hadir = 1 WHERE event_id = :eid AND user_id = :uid");
+                    $upd->execute([':eid' => $eventId, ':uid' => $userId]);
+                    
+                    return json_encode(["message" => "Attendance marked for day $day"]);
+                }
+            } else {
+                return json_encode(["message" => "Already attended on day $day"]);
+            }
+        } else {
+            $del = $this->conn->prepare("DELETE FROM event_attendances WHERE event_id = :eid AND user_id = :uid AND DATE(attended_date) = :tdate");
+            if ($del->execute([':eid' => $eventId, ':uid' => $userId, ':tdate' => $targetDate])) {
+                Helper::log($this->conn, $adminId, $adminName, 'UNMARK_ATTENDANCE_DAY', "Event: $eventId, User: $userId, Day: $day", 'Admin');
+                
+                $checkCount = $this->conn->prepare("SELECT COUNT(*) FROM event_attendances WHERE event_id = :eid AND user_id = :uid");
+                $checkCount->execute([':eid' => $eventId, ':uid' => $userId]);
+                if ($checkCount->fetchColumn() == 0) {
+                    $upd = $this->conn->prepare("UPDATE event_participants SET is_hadir = 0 WHERE event_id = :eid AND user_id = :uid");
+                    $upd->execute([':eid' => $eventId, ':uid' => $userId]);
+                }
+                
+                return json_encode(["message" => "Attendance removed for day $day"]);
+            }
+        }
+        
+        http_response_code(500);
+        return json_encode(["message" => "Failed to update attendance"]);
+    }
+
+    public function approveLms($eventId, $userId, $isApproved, $adminId = '0', $adminName = 'Admin')
+    {
+        $isApproved = (int)$isApproved;
+        $query = "UPDATE event_participants SET is_approved = :is_approved WHERE event_id = :eid AND user_id = :uid";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':is_approved', $isApproved, PDO::PARAM_INT);
+        $stmt->bindParam(':eid', $eventId);
+        $stmt->bindParam(':uid', $userId);
+        
+        if ($stmt->execute()) {
+            Helper::log($this->conn, $adminId, $adminName, 'APPROVE_LMS_ACCESS', "Event ID: $eventId, User ID: $userId, Approved: $isApproved", 'Admin');
+            return json_encode(["message" => "Success"]);
+        }
+        http_response_code(500);
+        return json_encode(["message" => "Failed to update LMS access"]);
+    }
+
+    public function updateParticipantPassed($eventId, $userId, $isPassed, $adminId = '0', $adminName = 'Admin')
+    {
+        $query = "UPDATE event_participants SET is_passed = :is_passed WHERE event_id = :eid AND user_id = :uid";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':is_passed', $isPassed, PDO::PARAM_INT);
+        $stmt->bindParam(':eid', $eventId);
+        $stmt->bindParam(':uid', $userId);
+
+        if ($stmt->execute()) {
+            Helper::log($this->conn, $adminId, $adminName, 'UPDATE_PARTICIPANT_PASSED', "Event ID: $eventId, User ID: $userId, Passed: $isPassed", 'Admin');
+            return json_encode(["message" => "Kelulusan diupdate"]);
+        }
+        http_response_code(500);
+        return json_encode(["message" => "Gagal update kelulusan"]);
+    }
+
+    public function confirmPayment($eventId, $userId, $adminId, $adminName = 'Admin')
     {
         // First check if it's already confirmed
         $check = $this->conn->prepare("SELECT payment_status FROM event_participants WHERE event_id = :eid AND user_id = :uid");
@@ -563,6 +833,7 @@ class ContentController
             if ($userData && $userData['email']) {
                 Mailer::sendEventPaymentConfirmed($userData['email'], $userData['nama'], $userData['event_title']);
             }
+            Helper::log($this->conn, $adminId, $adminName, 'CONFIRM_PAYMENT', "Event ID: $eventId, User ID: $userId", 'Admin');
 
             return json_encode(["message" => "Payment confirmed and logged to finance"]);
         }
@@ -570,7 +841,7 @@ class ContentController
         return json_encode(["message" => "Failed to confirm payment"]);
     }
 
-    public function rejectPayment($eventId, $userId)
+    public function rejectPayment($eventId, $userId, $adminId, $adminName = 'Admin')
     {
         $query = "UPDATE event_participants SET payment_status = 'rejected' WHERE event_id = :eid AND user_id = :uid";
         $stmt = $this->conn->prepare($query);
@@ -587,6 +858,7 @@ class ContentController
             if ($userData && $userData['email']) {
                 Mailer::sendEventPaymentRejected($userData['email'], $userData['nama'], $userData['event_title']);
             }
+            Helper::log($this->conn, $adminId, $adminName, 'REJECT_PAYMENT', "Event ID: $eventId, User ID: $userId", 'Admin');
 
             return json_encode(["message" => "Payment rejected"]);
         }
@@ -594,7 +866,7 @@ class ContentController
         return json_encode(["message" => "Failed to reject payment"]);
     }
 
-    public function markSelfAttendance($eventId, $userId)
+    public function markSelfAttendance($eventId, $userId, $day = 1)
     {
         // 1. Verify user is registered
         $checkQuery = "SELECT * FROM event_participants WHERE event_id = :eid AND user_id = :uid";
@@ -609,7 +881,7 @@ class ContentController
         }
 
         // 1.5 Check attendance deadline
-        $checkEvent = "SELECT attendance_deadline FROM events WHERE id = :eid";
+        $checkEvent = "SELECT attendance_deadline, total_days FROM events WHERE id = :eid";
         $stmtEvent = $this->conn->prepare($checkEvent);
         $stmtEvent->execute([':eid' => $eventId]);
         $eventData = $stmtEvent->fetch(PDO::FETCH_ASSOC);
@@ -623,27 +895,47 @@ class ContentController
             }
         }
 
-        // 2. Mark as attended
-        $updateQuery = "UPDATE event_participants SET is_hadir = 1 WHERE event_id = :eid AND user_id = :uid";
-        $updateStmt = $this->conn->prepare($updateQuery);
-        $updateStmt->bindParam(':eid', $eventId);
-        $updateStmt->bindParam(':uid', $userId);
+        // 2. Check if already attended today
+        $todayDate = date('Y-m-d');
+        $nowDateTime = date('Y-m-d H:i:s');
+        $checkDaily = "SELECT id FROM event_attendances WHERE event_id = :eid AND user_id = :uid AND DATE(attended_date) = :today";
+        $stmtDaily = $this->conn->prepare($checkDaily);
+        $stmtDaily->execute([':eid' => $eventId, ':uid' => $userId, ':today' => $todayDate]);
+        if ($stmtDaily->rowCount() > 0) {
+            http_response_code(400);
+            return json_encode(["message" => "Anda sudah melakukan absensi untuk hari ini."]);
+        }
 
-        if ($updateStmt->execute()) {
+        // Check if day parameter is valid (optional security check for multi-day events)
+        // If event is multi-day, ideally the day they scan should match the event schedule,
+        // but since we only track the current date, we just allow one scan per day.
+        
+        // 3. Mark as attended for today
+        $attId = Helper::uuid();
+        $insertAtt = "INSERT INTO event_attendances (id, event_id, user_id, attended_date) VALUES (:id, :eid, :uid, :nowDateTime)";
+        $stmtInsAtt = $this->conn->prepare($insertAtt);
+        
+        if ($stmtInsAtt->execute([':id' => $attId, ':eid' => $eventId, ':uid' => $userId, ':nowDateTime' => $nowDateTime])) {
             $stmtTitle = $this->conn->prepare("SELECT title FROM events WHERE id = :eid");
             $stmtTitle->bindParam(':eid', $eventId);
             $stmtTitle->execute();
             $eventTitle = $stmtTitle->fetchColumn();
             $targetLog = !empty($eventTitle) ? $eventTitle : $eventId;
-            Helper::log($this->conn, $userId, 'Member', 'SELF_ATTENDANCE', $targetLog);
+            Helper::log($this->conn, $userId, 'Member', 'SELF_ATTENDANCE', $targetLog, 'Peserta');
             
-            // Send Notification
-            $stmtUser = $this->conn->prepare("SELECT p.nama, u.email FROM profiles p JOIN users u ON p.id = u.id WHERE p.id = :uid");
-            $stmtUser->execute([':uid' => $userId]);
-            $user = $stmtUser->fetch(PDO::FETCH_ASSOC);
-            
-            if ($user && $eventTitle) {
-                Mailer::sendEventAttendance($user['email'], $user['nama'], $eventTitle);
+            // Send Notification (only once per day, or maybe just first time)
+            $stmtCount = $this->conn->prepare("SELECT COUNT(*) FROM event_attendances WHERE event_id = :eid AND user_id = :uid");
+            $stmtCount->execute([':eid' => $eventId, ':uid' => $userId]);
+            $count = $stmtCount->fetchColumn();
+
+            if ($count == 1) { // Only send email on first attendance
+                $stmtUser = $this->conn->prepare("SELECT p.nama, u.email FROM profiles p JOIN users u ON p.id = u.id WHERE p.id = :uid");
+                $stmtUser->execute([':uid' => $userId]);
+                $user = $stmtUser->fetch(PDO::FETCH_ASSOC);
+                
+                if ($user && $eventTitle) {
+                    Mailer::sendEventAttendance($user['email'], $user['nama'], $eventTitle);
+                }
             }
 
             return json_encode(["message" => "Attendance marked successfully"]);
@@ -653,26 +945,34 @@ class ContentController
         return json_encode(["message" => "Failed to mark attendance"]);
     }
 
-    public function updateParticipantsBulk($eventId, $userIds, $status)
+    public function updateParticipantsBulk($eventId, $userIds, $status, $adminId, $adminName = 'Admin')
     {
         if (!is_array($userIds) || empty($userIds)) {
             http_response_code(400);
             return json_encode(["message" => "Invalid user IDs"]);
         }
 
-        $isHadir = ($status === 'attended') ? 1 : 0;
-
-        // Construct placeholders for IN clause
         $placeholders = implode(',', array_fill(0, count($userIds), '?'));
 
-        $query = "UPDATE event_participants SET is_hadir = ? WHERE event_id = ? AND user_id IN ($placeholders)";
-        $stmt = $this->conn->prepare($query);
-
-        // Bind parameters: is_hadir, eventId, ...userIds
-        $params = array_merge([$isHadir, $eventId], $userIds);
+        if ($status === 'passed' || $status === 'not_passed') {
+            $isPassed = ($status === 'passed') ? 1 : 0;
+            $query = "UPDATE event_participants SET is_passed = ? WHERE event_id = ? AND user_id IN ($placeholders)";
+            $stmt = $this->conn->prepare($query);
+            $params = array_merge([$isPassed, $eventId], $userIds);
+        } else if ($status === 'approve_lms' || $status === 'revoke_lms') {
+            $isApproved = ($status === 'approve_lms') ? 1 : 0;
+            $query = "UPDATE event_participants SET is_approved = ? WHERE event_id = ? AND user_id IN ($placeholders)";
+            $stmt = $this->conn->prepare($query);
+            $params = array_merge([$isApproved, $eventId], $userIds);
+        } else {
+            $isHadir = ($status === 'attended') ? 1 : 0;
+            $query = "UPDATE event_participants SET is_hadir = ? WHERE event_id = ? AND user_id IN ($placeholders)";
+            $stmt = $this->conn->prepare($query);
+            $params = array_merge([$isHadir, $eventId], $userIds);
+        }
 
         if ($stmt->execute($params)) {
-            Helper::log($this->conn, 0, 'Admin', 'BULK_ATTENDANCE_UPDATE', "Event ID: $eventId, Count: " . count($userIds));
+            Helper::log($this->conn, $adminId, $adminName, 'BULK_UPDATE_PARTICIPANTS', "Event ID: $eventId, Status: $status, Count: " . count($userIds), 'Admin');
             return json_encode(["message" => "Bulk update successful"]);
         }
 
@@ -680,7 +980,7 @@ class ContentController
         return json_encode(["message" => "Failed to update participants"]);
     }
 
-    public function deleteParticipant($eventId, $userId)
+    public function deleteParticipant($eventId, $userId, $adminId, $adminName = 'Admin')
     {
         $query = "DELETE FROM event_participants WHERE event_id = :eid AND user_id = :uid";
         $stmt = $this->conn->prepare($query);
@@ -688,11 +988,162 @@ class ContentController
         $stmt->bindParam(':uid', $userId);
 
         if ($stmt->execute()) {
+            Helper::log($this->conn, $adminId, $adminName, 'DELETE_PARTICIPANT', "Event ID: $eventId, User ID: $userId", 'Admin');
             return json_encode(["message" => "Participant removed successfully"]);
         }
 
         http_response_code(500);
         return json_encode(["message" => "Failed to remove participant"]);
+    }
+
+    private function syncAttendances($eventId, $userIds, $isHadir)
+    {
+        if (empty($userIds)) return;
+
+        if (!$isHadir) {
+            // Delete all attendances for these users
+            $placeholders = implode(',', array_fill(0, count($userIds), '?'));
+            $delQ = "DELETE FROM event_attendances WHERE event_id = ? AND user_id IN ($placeholders)";
+            $delStmt = $this->conn->prepare($delQ);
+            $delStmt->execute(array_merge([$eventId], $userIds));
+            return;
+        }
+
+        // Generate missing attendances up to total_days
+        $evtQ = "SELECT IFNULL(total_days, 1) as total_days, date FROM events WHERE id = :eid";
+        $evtStmt = $this->conn->prepare($evtQ);
+        $evtStmt->execute([':eid' => $eventId]);
+        $evt = $evtStmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($evt) {
+            $totalDays = (int)$evt['total_days'];
+            $startDate = $evt['date'];
+
+            foreach ($userIds as $userId) {
+                $countQ = "SELECT COUNT(*) FROM event_attendances WHERE event_id = :eid AND user_id = :uid";
+                $countStmt = $this->conn->prepare($countQ);
+                $countStmt->execute([':eid' => $eventId, ':uid' => $userId]);
+                $existingCount = (int)$countStmt->fetchColumn();
+
+                for ($i = $existingCount; $i < $totalDays; $i++) {
+                    $attDate = date('Y-m-d', strtotime($startDate . " + $i days"));
+                    
+                    $checkQ = "SELECT id FROM event_attendances WHERE event_id = :eid AND user_id = :uid AND DATE(attended_date) = :adate";
+                    $checkStmt = $this->conn->prepare($checkQ);
+                    $checkStmt->execute([':eid' => $eventId, ':uid' => $userId, ':adate' => $attDate]);
+                    
+                    if ($checkStmt->rowCount() == 0) {
+                        $attId = Helper::uuid();
+                        $ins = "INSERT INTO event_attendances (id, event_id, user_id, attended_date) VALUES (:id, :eid, :uid, :adate)";
+                        $insStmt = $this->conn->prepare($ins);
+                        $insStmt->execute([':id' => $attId, ':eid' => $eventId, ':uid' => $userId, ':adate' => $attDate]);
+                    }
+                }
+            }
+        }
+    }
+
+    public function getEventAttendancesMatrix($eventId)
+    {
+        try {
+            // Get event dates config
+            $eventStmt = $this->conn->prepare("SELECT total_days, date FROM events WHERE id = :eid");
+            $eventStmt->execute([':eid' => $eventId]);
+            $event = $eventStmt->fetch(\PDO::FETCH_ASSOC);
+            
+            if (!$event) {
+                http_response_code(404);
+                return json_encode(["message" => "Event not found"]);
+            }
+
+            $totalDays = (int)$event['total_days'] ?: 1;
+            
+            // Generate columns
+            $columns = [];
+            for ($i = 1; $i <= $totalDays; $i++) {
+                $columns[] = [
+                    'day' => $i,
+                    'title' => 'Hari ' . $i
+                ];
+            }
+
+            // Get participants
+            $partStmt = $this->conn->prepare("
+                SELECT ep.user_id, p.nama as user_name, p.asal_sekolah 
+                FROM event_participants ep 
+                JOIN profiles p ON ep.user_id = p.id 
+                WHERE ep.event_id = :eid 
+                ORDER BY p.nama
+            ");
+            $partStmt->execute([':eid' => $eventId]);
+            $participants = $partStmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            // Get attendances
+            $attStmt = $this->conn->prepare("
+                SELECT user_id, attended_date, created_at 
+                FROM event_attendances 
+                WHERE event_id = :eid
+                ORDER BY attended_date ASC
+            ");
+            $attStmt->execute([':eid' => $eventId]);
+            $attendancesRaw = $attStmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            // Structure attendance data per participant per day
+            // We group by user_id and then map to day index (1, 2, 3...)
+            $attendances = new \stdClass();
+            foreach ($participants as $p) {
+                $uid = $p['user_id'];
+                $attendances->$uid = new \stdClass();
+            }
+
+            // We need to map actual date to Day index based on start date.
+            // Alternatively, just group by distinct dates or just assign sequentially.
+            // Since `total_days` implies sequential days from start date:
+            $startDateStr = $event['date'] ? date('Y-m-d', strtotime($event['date'])) : null;
+            
+            foreach ($attendancesRaw as $att) {
+                $uid = $att['user_id'];
+                if (!property_exists($attendances, (string)$uid)) {
+                    $attendances->$uid = new \stdClass();
+                }
+                
+                $timeSource = !empty($att['created_at']) ? $att['created_at'] : $att['attended_date'];
+                
+                $attDateStr = date('Y-m-d', strtotime($att['attended_date']));
+                $attTimeStr = date('H:i', strtotime($timeSource));
+                
+                // Calculate day index based on start date
+                $dayIndex = 1;
+                if ($startDateStr) {
+                    $diff = strtotime($attDateStr) - strtotime($startDateStr);
+                    $daysDiff = floor($diff / (60 * 60 * 24));
+                    if ($daysDiff >= 0 && $daysDiff < $totalDays) {
+                        $dayIndex = $daysDiff + 1;
+                    } else if ($daysDiff < 0) {
+                        $dayIndex = 1; // Early attendance
+                    } else {
+                        $dayIndex = $totalDays; // Late attendance
+                    }
+                }
+                
+                // If there's multiple attendances in the same day, keep the earliest or latest?
+                // Let's just keep the earliest
+                $dayKey = 'day_' . $dayIndex;
+                if (!property_exists($attendances->$uid, $dayKey)) {
+                    $attendances->$uid->$dayKey = $attTimeStr;
+                }
+            }
+
+            return json_encode([
+                "columns" => $columns,
+                "participants" => $participants,
+                "attendances" => $attendances
+            ]);
+
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            return json_encode(["message" => "Error: " . $e->getMessage()]);
+        }
     }
 }
 ?>

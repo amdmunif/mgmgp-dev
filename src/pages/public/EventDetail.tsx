@@ -60,6 +60,31 @@ export function EventDetail() {
         }
     };
 
+    const handleReUploadProof = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !event) return;
+
+        setUploadingProof(true);
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('folder', 'payments');
+
+        try {
+            const res = await api.post<{ url: string }>('/upload', formData);
+            if (res.url) {
+                await api.post(`/events/${event.id}/upload-payment`, { proof_url: res.url });
+                alert('Bukti pembayaran berhasil diunggah! Mohon menunggu verifikasi dari admin.');
+                const part = await api.get<any>(`/events/${event.id}/participation`);
+                setParticipation(part);
+            }
+        } catch (error) {
+            console.error('Failed to upload proof:', error);
+            alert('Gagal mengunggah bukti pembayaran');
+        } finally {
+            setUploadingProof(false);
+        }
+    };
+
     const handleJoin = async () => {
         if (!event) return;
         
@@ -208,17 +233,36 @@ export function EventDetail() {
                                 <div className="bg-green-50 text-green-700 p-4 rounded-lg text-center font-bold">
                                     Anda sudah terdaftar di kegiatan ini
                                 </div>
-                                {Number(event.is_paid) === 1 && participation.payment_status && (
-                                    <div className="p-3 text-sm rounded-lg border text-center font-medium bg-white">
-                                        Status Pembayaran: 
-                                        <span className={`ml-2 px-2 py-0.5 rounded-full ${
-                                            participation.payment_status === 'confirmed' ? 'bg-green-100 text-green-700' :
-                                            participation.payment_status === 'rejected' ? 'bg-red-100 text-red-700' :
-                                            'bg-blue-100 text-blue-700'
-                                        }`}>
-                                            {participation.payment_status === 'confirmed' ? 'Lunas' :
-                                             participation.payment_status === 'rejected' ? 'Ditolak' : 'Menunggu Konfirmasi'}
-                                        </span>
+                                {Number(event.is_paid) === 1 && (
+                                    <div className="p-4 text-sm rounded-lg border bg-white space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-gray-600 font-medium">Status Pembayaran:</span>
+                                            <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+                                                participation.payment_status === 'confirmed' ? 'bg-green-100 text-green-700' :
+                                                participation.payment_status === 'rejected' ? 'bg-red-100 text-red-700' :
+                                                participation.payment_status === 'waiting_confirmation' ? 'bg-blue-100 text-blue-700' :
+                                                'bg-yellow-100 text-yellow-800'
+                                            }`}>
+                                                {participation.payment_status === 'confirmed' ? 'Lunas' :
+                                                 participation.payment_status === 'rejected' ? 'Ditolak' :
+                                                 participation.payment_status === 'waiting_confirmation' ? 'Menunggu Konfirmasi' : 'Belum Bayar'}
+                                            </span>
+                                        </div>
+                                        {participation.payment_status !== 'confirmed' && (
+                                            <div className="pt-2 border-t border-gray-100">
+                                                <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                                                    {participation.payment_status === 'waiting_confirmation' ? 'Ganti / Upload Ulang Bukti Transfer:' : 'Upload Bukti Transfer:'}
+                                                </label>
+                                                <input 
+                                                    type="file" 
+                                                    accept="image/*"
+                                                    onChange={handleReUploadProof}
+                                                    className="w-full text-xs"
+                                                    disabled={uploadingProof}
+                                                />
+                                                {uploadingProof && <span className="text-xs text-blue-600 mt-1 block animate-pulse">Mengunggah bukti...</span>}
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>

@@ -21,7 +21,8 @@ class StatsController
             'events' => 0,
             'premium' => 0,
             'pendingMembers' => 0,
-            'pendingPremium' => 0
+            'pendingPremium' => 0,
+            'pendingEventPayments' => 0
         ];
 
         // Members Count (all)
@@ -47,6 +48,10 @@ class StatsController
         // Pending Premium Requests
         $q6 = $this->conn->query("SELECT COUNT(*) FROM premium_requests WHERE status = 'pending'");
         $stats['pendingPremium'] = $q6->fetchColumn();
+
+        // Pending Event Payments
+        $q7 = $this->conn->query("SELECT COUNT(*) FROM event_participants WHERE payment_status = 'waiting_confirmation'");
+        $stats['pendingEventPayments'] = (int)$q7->fetchColumn();
 
         return json_encode($stats);
     }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Button } from '../../../components/ui/button';
-import { Plus, Trash2, Calendar, MapPin, Eye, Pencil, Copy } from 'lucide-react';
+import { Plus, Trash2, Calendar, MapPin, Eye, Pencil, Copy, AlertCircle } from 'lucide-react';
 import { contentManagementService } from '../../../services/contentManagementService';
 import { toast } from 'react-hot-toast';
 import type { Event } from '../../../types';
@@ -139,6 +139,12 @@ export function AdminEvents() {
                             </div>
                         );
                     })()}
+                    {Number((item as any).pending_payments_count) > 0 && (
+                        <div className="inline-flex items-center gap-1 text-xs font-bold text-amber-800 bg-amber-50 border border-amber-300 px-2 py-0.5 rounded-full w-fit animate-pulse">
+                            <AlertCircle className="w-3 h-3 text-amber-600" />
+                            {(item as any).pending_payments_count} Verifikasi Bayar
+                        </div>
+                    )}
                 </div>
             )
         },

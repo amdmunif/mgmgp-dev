@@ -27,7 +27,8 @@ export function DashboardOverview() {
         events: 0,
         premium: 0,
         pendingMembers: 0,
-        pendingPremium: 0
+        pendingPremium: 0,
+        pendingEventPayments: 0
     });
     const [logs, setLogs] = useState<AuditLog[]>([]);
     const [loading, setLoading] = useState(true);
@@ -52,7 +53,8 @@ export function DashboardOverview() {
                     events: statsData.events || 0,
                     premium: statsData.premium || 0,
                     pendingMembers: statsData.pendingMembers || 0,
-                    pendingPremium: statsData.pendingPremium || 0
+                    pendingPremium: statsData.pendingPremium || 0,
+                    pendingEventPayments: statsData.pendingEventPayments || 0
                 });
             }
             if (logsData) {
@@ -135,13 +137,13 @@ export function DashboardOverview() {
                 {activeTab === 'overview' && (
                     <div className="space-y-8 animate-in fade-in duration-300">
                         {/* Notifications / Action Required */}
-                        {(stats.pendingMembers > 0 || stats.pendingPremium > 0) && (
+                        {(stats.pendingMembers > 0 || stats.pendingPremium > 0 || (stats.pendingEventPayments || 0) > 0) && (
                             <div className="bg-orange-50 border border-orange-200 rounded-2xl p-6">
                                 <h2 className="text-lg font-bold text-orange-900 mb-4 flex items-center gap-2">
                                     <AlertCircle className="w-5 h-5" />
                                     Perlu Tindakan Segera
                                 </h2>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                     {stats.pendingMembers > 0 && (
                                         <div className="bg-white p-4 rounded-xl border border-orange-100 flex items-center justify-between shadow-sm">
                                             <div className="flex items-center gap-3">
@@ -178,6 +180,25 @@ export function DashboardOverview() {
                                                 className="text-sm font-semibold text-yellow-600 hover:text-yellow-700 px-4 py-2 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors"
                                             >
                                                 Cek Request →
+                                            </Link>
+                                        </div>
+                                    )}
+                                    {(stats.pendingEventPayments || 0) > 0 && (
+                                        <div className="bg-white p-4 rounded-xl border border-orange-100 flex items-center justify-between shadow-sm">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg">
+                                                    <Calendar className="w-5 h-5" />
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-gray-900">{stats.pendingEventPayments} Bukti Bayar Event</p>
+                                                    <p className="text-xs text-gray-500">Menunggu verifikasi pembayaran</p>
+                                                </div>
+                                            </div>
+                                            <Link
+                                                to="/admin/events"
+                                                className="text-sm font-semibold text-emerald-600 hover:text-emerald-700 px-4 py-2 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors"
+                                            >
+                                                Verifikasi →
                                             </Link>
                                         </div>
                                     )}

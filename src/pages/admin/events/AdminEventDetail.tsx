@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
 import { contentManagementService } from '../../../services/contentManagementService';
-import { ArrowLeft, Calendar, MapPin, Users, CheckCircle, XCircle, Trash2, Printer, QrCode, X, MonitorPlay, Trophy, UserCheck, UserMinus, Search, FileSpreadsheet, Download, School, FileText, Clock, Eye, Phone, Copy, Check, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, CheckCircle, XCircle, Trash2, Printer, QrCode, X, MonitorPlay, Trophy, UserCheck, UserMinus, Search, FileSpreadsheet, Download, School, FileText, Clock, Eye, Phone, Copy, Check, ExternalLink, AlertCircle, Banknote } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { api, getFileUrl } from '../../../lib/api';
 import { lmsService } from '../../../services/lmsService';
@@ -54,7 +54,7 @@ export function AdminEventDetail() {
     const [participants, setParticipants] = useState<Participant[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
-    const [filterStatus, setFilterStatus] = useState<'all' | 'attended' | 'not_attended' | 'passed' | 'not_passed'>('all');
+    const [filterStatus, setFilterStatus] = useState<'all' | 'attended' | 'not_attended' | 'passed' | 'not_passed' | 'waiting_payment' | 'paid' | 'unpaid'>('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [showQR, setShowQR] = useState(false);
     const [selectedQRDay, setSelectedQRDay] = useState<number>(1);
@@ -74,6 +74,14 @@ export function AdminEventDetail() {
     const uniqueSchoolCount = useMemo(() => {
         const set = new Set(participants.map(p => p.asal_sekolah?.trim()).filter(Boolean));
         return set.size;
+    }, [participants]);
+
+    const isPaidEvent = useMemo(() => {
+        return Number(event?.is_paid) === 1 || participants.some(p => Boolean(p.payment_proof_url) || (Boolean(p.payment_status) && p.payment_status !== 'free'));
+    }, [event?.is_paid, participants]);
+
+    const pendingPaymentsCount = useMemo(() => {
+        return participants.filter(p => p.payment_status === 'waiting_confirmation' || (p.payment_status === 'pending' && Boolean(p.payment_proof_url))).length;
     }, [participants]);
 
     useEffect(() => {
@@ -430,6 +438,12 @@ export function AdminEventDetail() {
             result = result.filter(p => Number(p.is_passed) === 1);
         } else if (filterStatus === 'not_passed') {
             result = result.filter(p => Number(p.is_passed) === 0);
+        } else if (filterStatus === 'waiting_payment') {
+            result = result.filter(p => p.payment_status === 'waiting_confirmation' || (p.payment_status === 'pending' && Boolean(p.payment_proof_url)));
+        } else if (filterStatus === 'paid') {
+            result = result.filter(p => p.payment_status === 'confirmed');
+        } else if (filterStatus === 'unpaid') {
+            result = result.filter(p => p.payment_status === 'pending' && !p.payment_proof_url);
         }
 
         // Search
@@ -571,7 +585,7 @@ export function AdminEventDetail() {
             },
             className: "text-center"
         },
-        event?.is_paid ? {
+        isPaidEvent ? {
             header: "Pembayaran",
             accessorKey: "payment_status" as keyof Participant,
             cell: (item: Participant) => {
@@ -597,9 +611,9 @@ export function AdminEventDetail() {
                                 href={getFileUrl(item.payment_proof_url)} 
                                 target="_blank" 
                                 rel="noreferrer"
-                                className="text-xs text-blue-600 hover:underline"
+                                className="text-xs text-blue-600 hover:underline flex items-center gap-1 font-medium"
                             >
-                                Lihat Bukti
+                                <ExternalLink className="w-3 h-3" /> Lihat Bukti
                             </a>
                         )}
                     </div>
@@ -689,19 +703,21 @@ export function AdminEventDetail() {
                             </button>
                         </div>
                     )}
-                    {event?.is_paid && item.payment_status === 'waiting_confirmation' && (
-                        <div className="flex justify-center mt-2 gap-2">
+                    {isPaidEvent && (item.payment_status === 'waiting_confirmation' || (item.payment_status === 'pending' && Boolean(item.payment_proof_url))) && (
+                        <div className="flex justify-center mt-2 gap-1.5">
                             <button
                                 onClick={() => handlePaymentUpdate(item.user_id, 'confirm-payment')}
-                                className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-green-500 text-white hover:bg-green-600"
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-green-600 text-white hover:bg-green-700 shadow-sm transition-colors"
+                                title="Terima dan konfirmasi pembayaran"
                             >
-                                Terima
+                                <Check className="w-3 h-3" /> Terima
                             </button>
                             <button
                                 onClick={() => handlePaymentUpdate(item.user_id, 'reject-payment')}
-                                className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-red-500 text-white hover:bg-red-600"
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-red-600 text-white hover:bg-red-700 shadow-sm transition-colors"
+                                title="Tolak bukti pembayaran"
                             >
-                                Tolak
+                                <X className="w-3 h-3" /> Tolak
                             </button>
                         </div>
                     )}
@@ -712,7 +728,7 @@ export function AdminEventDetail() {
         }
     ].filter(Boolean) as any[];
     return cols;
-    }, [participants, selectedIds, event]);
+    }, [participants, selectedIds, event, isPaidEvent]);
 
     if (loading) return <div className="p-8 text-center">Memuat...</div>;
     if (!event) return <div className="p-8 text-center">Event tidak ditemukan</div>;
@@ -761,6 +777,16 @@ export function AdminEventDetail() {
                                     <School className="w-4 h-4 text-emerald-600" />
                                     <strong>{uniqueSchoolCount}</strong> Sekolah Terdaftar
                                 </span>
+                                {pendingPaymentsCount > 0 && (
+                                    <span 
+                                        onClick={() => setFilterStatus(filterStatus === 'waiting_payment' ? 'all' : 'waiting_payment')}
+                                        className="flex items-center gap-1.5 text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-300 px-2.5 py-0.5 rounded-full cursor-pointer transition-colors text-xs font-bold animate-pulse"
+                                        title="Klik untuk memfilter peserta yang butuh konfirmasi bukti bayar"
+                                    >
+                                        <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
+                                        <strong>{pendingPaymentsCount}</strong> Butuh Verifikasi Bayar
+                                    </span>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -874,6 +900,35 @@ export function AdminEventDetail() {
             {/* Main Content Area */}
             {activeTab === 'participants' && (
             <div className="space-y-4">
+                {pendingPaymentsCount > 0 && (
+                    <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2.5 bg-amber-100 text-amber-800 rounded-xl shrink-0">
+                                <AlertCircle className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <p className="font-bold text-amber-950 text-sm">
+                                    {pendingPaymentsCount} Peserta Menunggu Konfirmasi Pembayaran
+                                </p>
+                                <p className="text-xs text-amber-800">
+                                    Peserta telah mengunggah bukti pembayaran/transfer dan menunggu verifikasi admin.
+                                </p>
+                            </div>
+                        </div>
+                        <Button
+                            size="sm"
+                            onClick={() => setFilterStatus(filterStatus === 'waiting_payment' ? 'all' : 'waiting_payment')}
+                            className={`shrink-0 text-xs font-semibold ${
+                                filterStatus === 'waiting_payment'
+                                    ? 'bg-amber-800 text-white hover:bg-amber-900'
+                                    : 'bg-amber-600 text-white hover:bg-amber-700'
+                            }`}
+                        >
+                            {filterStatus === 'waiting_payment' ? 'Tampilkan Semua' : 'Filter Peserta Menunggu'}
+                        </Button>
+                    </div>
+                )}
+
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <div className="flex flex-row flex-wrap items-center justify-between gap-4 mb-6">
                         <h2 className="text-lg font-bold flex items-center gap-2 whitespace-nowrap">
@@ -893,10 +948,17 @@ export function AdminEventDetail() {
                             </div>
                             <select
                                 value={filterStatus}
-                                onChange={(e) => setFilterStatus(e.target.value as 'all' | 'attended' | 'not_attended' | 'passed' | 'not_passed')}
+                                onChange={(e) => setFilterStatus(e.target.value as any)}
                                 className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                             >
                                 <option value="all">Semua Status</option>
+                                {isPaidEvent && (
+                                    <>
+                                        <option value="waiting_payment">⚠️ Menunggu Konfirmasi Bayar {pendingPaymentsCount > 0 ? `(${pendingPaymentsCount})` : ''}</option>
+                                        <option value="paid">Pembayaran Lunas</option>
+                                        <option value="unpaid">Belum Bayar</option>
+                                    </>
+                                )}
                                 <option value="passed">Lulus</option>
                                 <option value="not_passed">Belum Lulus</option>
                                 <option value="attended">Hadir (Selesai Hari)</option>
@@ -1473,24 +1535,77 @@ export function AdminEventDetail() {
                                             </button>
                                         </div>
                                     </div>
-                                    {event?.is_paid && (
-                                        <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
-                                            <div className="flex items-center justify-between mb-1">
-                                                <span className="text-gray-500">Status Pembayaran</span>
-                                                {viewingParticipant.payment_proof_url && (
-                                                    <a 
-                                                        href={getFileUrl(viewingParticipant.payment_proof_url)} 
-                                                        target="_blank" 
-                                                        rel="noreferrer" 
-                                                        className="text-blue-600 hover:underline flex items-center gap-1 font-medium"
-                                                    >
-                                                        <ExternalLink className="w-3 h-3" /> Bukti Bayar
-                                                    </a>
-                                                )}
+                                    {(isPaidEvent || viewingParticipant.payment_proof_url || (Boolean(viewingParticipant.payment_status) && viewingParticipant.payment_status !== 'free')) && (
+                                        <div className="p-3.5 bg-gray-50 rounded-xl border border-gray-200 col-span-1 sm:col-span-2 space-y-2.5">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1.5">
+                                                    <Banknote className="w-4 h-4 text-emerald-600" /> Informasi Pembayaran
+                                                </span>
+                                                <span className={`px-2.5 py-0.5 text-xs font-semibold rounded-full ${
+                                                    viewingParticipant.payment_status === 'confirmed' ? 'bg-green-100 text-green-700' :
+                                                    viewingParticipant.payment_status === 'rejected' ? 'bg-red-100 text-red-700' :
+                                                    viewingParticipant.payment_status === 'waiting_confirmation' ? 'bg-blue-100 text-blue-700' :
+                                                    'bg-yellow-100 text-yellow-800'
+                                                }`}>
+                                                    {viewingParticipant.payment_status === 'confirmed' ? 'Lunas' :
+                                                     viewingParticipant.payment_status === 'rejected' ? 'Ditolak' :
+                                                     viewingParticipant.payment_status === 'waiting_confirmation' ? 'Menunggu Konfirmasi' : 'Belum Bayar'}
+                                                </span>
                                             </div>
-                                            <div className="font-semibold text-gray-800 capitalize">
-                                                {viewingParticipant.payment_status || 'Gratis'}
-                                            </div>
+
+                                            {viewingParticipant.payment_proof_url ? (
+                                                <div className="space-y-2 pt-2 border-t border-gray-200/60">
+                                                    <div className="flex items-center justify-between text-xs">
+                                                        <span className="text-gray-500 font-medium">Bukti Transfer:</span>
+                                                        <a 
+                                                            href={getFileUrl(viewingParticipant.payment_proof_url)} 
+                                                            target="_blank" 
+                                                            rel="noreferrer" 
+                                                            className="text-blue-600 hover:underline flex items-center gap-1 font-semibold"
+                                                        >
+                                                            <ExternalLink className="w-3.5 h-3.5" /> Buka Ukuran Penuh
+                                                        </a>
+                                                    </div>
+                                                    <div className="border border-gray-200 rounded-lg overflow-hidden bg-white max-h-56 flex items-center justify-center p-1">
+                                                        <img 
+                                                            src={getFileUrl(viewingParticipant.payment_proof_url)} 
+                                                            alt="Bukti Transfer" 
+                                                            className="object-contain max-h-52 w-full rounded cursor-pointer hover:opacity-90 transition-opacity"
+                                                            onClick={() => window.open(getFileUrl(viewingParticipant.payment_proof_url), '_blank')}
+                                                        />
+                                                    </div>
+                                                    <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
+                                                        {viewingParticipant.payment_status !== 'confirmed' && (
+                                                            <button
+                                                                onClick={() => handlePaymentUpdate(viewingParticipant.user_id, 'confirm-payment')}
+                                                                className="px-3 py-1.5 text-xs font-semibold bg-green-600 hover:bg-green-700 text-white rounded-lg shadow-sm flex items-center gap-1.5 transition-colors"
+                                                            >
+                                                                <Check className="w-3.5 h-3.5" /> Terima Pembayaran
+                                                            </button>
+                                                        )}
+                                                        {viewingParticipant.payment_status !== 'rejected' && (
+                                                            <button
+                                                                onClick={() => handlePaymentUpdate(viewingParticipant.user_id, 'reject-payment')}
+                                                                className="px-3 py-1.5 text-xs font-semibold bg-red-600 hover:bg-red-700 text-white rounded-lg shadow-sm flex items-center gap-1.5 transition-colors"
+                                                            >
+                                                                <X className="w-3.5 h-3.5" /> Tolak
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center justify-between text-xs text-gray-500 pt-1 border-t border-gray-200/60">
+                                                    <span className="italic">Belum ada file bukti transfer yang diunggah.</span>
+                                                    {viewingParticipant.payment_status !== 'confirmed' && (
+                                                        <button
+                                                            onClick={() => handlePaymentUpdate(viewingParticipant.user_id, 'confirm-payment')}
+                                                            className="px-2.5 py-1 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors"
+                                                        >
+                                                            Tandai Lunas Manual
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                     {event?.has_lms && (

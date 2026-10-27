@@ -6,6 +6,7 @@ import { toast } from 'react-hot-toast';
 import { cn } from '../../lib/utils';
 import { DataTable } from '../../components/ui/DataTable';
 import { useOutletContext } from 'react-router-dom';
+import { getFileUrl } from '../../lib/api';
 
 export function AdminPremium() {
     const { setPageHeader } = useOutletContext<any>() || {};
@@ -225,10 +226,10 @@ export function AdminPremium() {
                                 <div>
                                     <p className="text-sm text-gray-500 mb-2">Bukti Pembayaran</p>
                                     <div className="rounded-lg overflow-hidden border border-gray-200">
-                                        <img src={viewData.proof_url} alt="Proof" className="w-full object-contain max-h-[400px]" />
+                                        <img src={getFileUrl(viewData.proof_url)} alt="Proof" className="w-full object-contain max-h-[400px]" />
                                     </div>
                                     <div className="mt-2 text-right">
-                                        <a href={viewData.proof_url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline text-sm font-medium">
+                                        <a href={getFileUrl(viewData.proof_url)} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline text-sm font-medium">
                                             Buka gambar asli
                                         </a>
                                     </div>

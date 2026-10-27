@@ -7,6 +7,7 @@ export interface DashboardStats {
     premium: number;
     pendingMembers: number;
     pendingPremium: number;
+    pendingEventPayments?: number;
 }
 
 export interface TeacherStats {

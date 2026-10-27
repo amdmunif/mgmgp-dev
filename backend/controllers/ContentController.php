@@ -103,7 +103,10 @@ class ContentController
     // --- EVENTS ---
     public function getEvents($isAdmin = false)
     {
-        $query = "SELECT e.*, (SELECT COUNT(*) FROM event_participants WHERE event_id = e.id) as participants_count FROM events e";
+        $query = "SELECT e.*, 
+                         (SELECT COUNT(*) FROM event_participants WHERE event_id = e.id) as participants_count,
+                         (SELECT COUNT(*) FROM event_participants WHERE event_id = e.id AND payment_status = 'waiting_confirmation') as pending_payments_count 
+                  FROM events e";
         if (!$isAdmin) {
             $query .= " WHERE e.is_registration_open = 1";
         }
@@ -436,8 +439,31 @@ class ContentController
         $check->bindParam(':eid', $eventId);
         $check->bindParam(':uid', $userId);
         $check->execute();
-        if ($check->rowCount() > 0)
+        $existing = $check->fetch(PDO::FETCH_ASSOC);
+
+        if ($existing) {
+            if ($paymentProofUrl) {
+                $upd = $this->conn->prepare("UPDATE event_participants 
+                                             SET payment_proof_url = :proof, 
+                                                 payment_status = 'waiting_confirmation', 
+                                                 payment_date = NOW() 
+                                             WHERE event_id = :eid AND user_id = :uid");
+                $upd->execute([':proof' => $paymentProofUrl, ':eid' => $eventId, ':uid' => $userId]);
+
+                if (!empty($userProfileStatus['nama'])) {
+                    $stmtUser = $this->conn->prepare("SELECT email FROM users WHERE id = :uid");
+                    $stmtUser->execute([':uid' => $userId]);
+                    $userEmail = $stmtUser->fetchColumn();
+                    if ($userEmail && !empty($event['title'])) {
+                        Mailer::sendEventPaymentProofUploaded($userEmail, $userProfileStatus['nama'], $event['title']);
+                    }
+                }
+
+                Helper::log($this->conn, $userId, 'Member', 'UPLOAD_PAYMENT', "Event: " . ($event['title'] ?? $eventId));
+                return json_encode(["message" => "Bukti pembayaran berhasil diunggah"]);
+            }
             return json_encode(["message" => "Already joined"]);
+        }
 
         if ($event && $event['is_paid'] == 1) {
             $paymentStatus = $paymentProofUrl ? 'waiting_confirmation' : 'pending';
@@ -490,7 +516,18 @@ class ContentController
         $stmt->bindParam(':eid', $eventId);
         $stmt->bindParam(':uid', $userId);
         
-        if ($stmt->execute()) {
+        $executed = $stmt->execute();
+        if ($executed && $stmt->rowCount() == 0) {
+            // Check if participant row exists at all
+            $check = $this->conn->prepare("SELECT COUNT(*) FROM event_participants WHERE event_id = :eid AND user_id = :uid");
+            $check->execute([':eid' => $eventId, ':uid' => $userId]);
+            if ($check->fetchColumn() == 0) {
+                $ins = $this->conn->prepare("INSERT INTO event_participants (event_id, user_id, payment_status, payment_proof_url, payment_date, registered_at) VALUES (:eid, :uid, 'waiting_confirmation', :proofUrl, NOW(), NOW())");
+                $ins->execute([':eid' => $eventId, ':uid' => $userId, ':proofUrl' => $proofUrl]);
+            }
+        }
+        
+        if ($executed) {
             $stmtEvent = $this->conn->prepare("SELECT title FROM events WHERE id = :eid");
             $stmtEvent->bindParam(':eid', $eventId);
             $stmtEvent->execute();

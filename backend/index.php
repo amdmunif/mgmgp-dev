@@ -388,9 +388,10 @@ if ($resource === 'news') {
     }
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($action && $subAction === 'join') {
-            if ($userId)
-                echo $controller->joinEvent($action, $userId);
-            else {
+            if ($userId) {
+                $paymentProofUrl = $input['payment_proof_url'] ?? $input['proof_url'] ?? null;
+                echo $controller->joinEvent($action, $userId, $paymentProofUrl);
+            } else {
                 http_response_code(401);
                 echo json_encode(["message" => "Unauthorized"]);
             }
@@ -404,7 +405,7 @@ if ($resource === 'news') {
                 echo json_encode(["message" => "Unauthorized"]);
             }
         } elseif ($action && $subAction === 'upload-payment') {
-            $proofUrl = $input['proof_url'] ?? '';
+            $proofUrl = $input['proof_url'] ?? $input['payment_proof_url'] ?? '';
             if ($userId)
                 echo $controller->uploadEventPaymentProof($action, $userId, $proofUrl);
             else {
