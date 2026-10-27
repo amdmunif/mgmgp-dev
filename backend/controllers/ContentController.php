@@ -450,13 +450,11 @@ class ContentController
                                              WHERE event_id = :eid AND user_id = :uid");
                 $upd->execute([':proof' => $paymentProofUrl, ':eid' => $eventId, ':uid' => $userId]);
 
-                if (!empty($userProfileStatus['nama'])) {
-                    $stmtUser = $this->conn->prepare("SELECT email FROM users WHERE id = :uid");
-                    $stmtUser->execute([':uid' => $userId]);
-                    $userEmail = $stmtUser->fetchColumn();
-                    if ($userEmail && !empty($event['title'])) {
-                        Mailer::sendEventPaymentProofUploaded($userEmail, $userProfileStatus['nama'], $event['title']);
-                    }
+                $stmtUser = $this->conn->prepare("SELECT u.email, COALESCE(p.nama, 'Peserta') as nama FROM users u LEFT JOIN profiles p ON u.id = p.id WHERE u.id = :uid");
+                $stmtUser->execute([':uid' => $userId]);
+                $userData = $stmtUser->fetch(PDO::FETCH_ASSOC);
+                if ($userData && !empty($event['title'])) {
+                    Mailer::sendEventPaymentProofUploaded($userData['email'], $userData['nama'], $event['title']);
                 }
 
                 Helper::log($this->conn, $userId, 'Member', 'UPLOAD_PAYMENT', "Event: " . ($event['title'] ?? $eventId));
@@ -488,7 +486,7 @@ class ContentController
             $eventTitle = $stmtTitle->fetchColumn();
             
             // Get user email
-            $stmtUser = $this->conn->prepare("SELECT u.email, p.nama FROM users u JOIN profiles p ON u.id = p.id WHERE u.id = :uid");
+            $stmtUser = $this->conn->prepare("SELECT u.email, COALESCE(p.nama, 'Peserta') as nama FROM users u LEFT JOIN profiles p ON u.id = p.id WHERE u.id = :uid");
             $stmtUser->bindParam(':uid', $userId);
             $stmtUser->execute();
             $userData = $stmtUser->fetch(PDO::FETCH_ASSOC);
@@ -533,7 +531,7 @@ class ContentController
             $stmtEvent->execute();
             $eventTitle = $stmtEvent->fetchColumn();
 
-            $stmtUser = $this->conn->prepare("SELECT u.email, p.nama FROM users u JOIN profiles p ON u.id = p.id WHERE u.id = :uid");
+            $stmtUser = $this->conn->prepare("SELECT u.email, COALESCE(p.nama, 'Peserta') as nama FROM users u LEFT JOIN profiles p ON u.id = p.id WHERE u.id = :uid");
             $stmtUser->bindParam(':uid', $userId);
             $stmtUser->execute();
             $userData = $stmtUser->fetch(PDO::FETCH_ASSOC);
@@ -597,6 +595,8 @@ class ContentController
         // Synthesize participation_status from is_hadir since 'status' column does not exist
         $query = "SELECT e.*, 
                   (SELECT COUNT(*) FROM event_participants WHERE event_id = e.id) as participants_count,
+                  ep.payment_status,
+                  ep.payment_proof_url,
                   CASE 
                     WHEN ep.is_hadir = 1 THEN 'attended'
                     WHEN ep.user_id IS NOT NULL THEN 'registered'

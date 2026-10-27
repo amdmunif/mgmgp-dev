@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useOutletContext, Link } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
-import { Calendar, MapPin, ArrowLeft, Loader2, Share2, CheckCircle, Lock, Crown, Clock, CalendarDays, ExternalLink, UploadCloud, Banknote } from 'lucide-react';
+import { Calendar, MapPin, ArrowLeft, Loader2, Share2, CheckCircle, Lock, Crown, Clock, CalendarDays, ExternalLink, UploadCloud, Banknote, RotateCcw, Eye, AlertCircle } from 'lucide-react';
 import { eventService } from '../../services/eventService';
 import { authService } from '../../services/authService';
 import { settingsService, type BankAccount } from '../../services/settingsService';
@@ -100,24 +100,38 @@ export function MemberEventDetail() {
         const file = e.target.files?.[0];
         if (!file || !eventId) return;
 
+        if (!file.type.startsWith('image/')) {
+            toast.error('File bukti harus berupa gambar (JPG, PNG, WebP)');
+            if (e.target) e.target.value = '';
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error('Ukuran file maksimal 5MB');
+            if (e.target) e.target.value = '';
+            return;
+        }
+
         setUploadingProof(true);
         try {
             const formData = new FormData();
             formData.append('file', file);
+            formData.append('folder', 'payments');
             
             const res = await api.post<{ url: string }>('/upload', formData);
             if (res.url) {
                 await eventService.uploadPaymentProof(eventId, res.url);
-                toast.success('Bukti pembayaran berhasil diunggah');
-                if (participationData) {
-                    setParticipationData({ ...participationData, payment_status: 'waiting_confirmation' });
-                }
+                toast.success('Bukti pembayaran berhasil dikirim! Menunggu verifikasi admin.');
+                await loadData();
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to upload proof', error);
-            toast.error('Gagal mengunggah bukti pembayaran');
+            toast.error('Gagal mengunggah bukti: ' + (error?.response?.data?.message || error?.message || 'Terjadi kesalahan'));
         } finally {
             setUploadingProof(false);
+            if (e.target) {
+                e.target.value = '';
+            }
         }
     };
 
@@ -159,6 +173,18 @@ export function MemberEventDetail() {
             return <div className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1"><CheckCircle className="w-4 h-4" /> Hadir</div>;
         }
         if (participationStatus === 'registered') {
+            if (Number(event?.is_paid) === 1 && participationData) {
+                if (participationData.payment_status === 'confirmed') {
+                    return <div className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1"><CheckCircle className="w-4 h-4" /> Lunas & Terdaftar</div>;
+                }
+                if (participationData.payment_status === 'waiting_confirmation') {
+                    return <div className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1"><Clock className="w-4 h-4" /> Menunggu Konfirmasi</div>;
+                }
+                if (participationData.payment_status === 'rejected') {
+                    return <div className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1"><AlertCircle className="w-4 h-4" /> Pembayaran Ditolak</div>;
+                }
+                return <div className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1"><Clock className="w-4 h-4" /> Belum Bayar</div>;
+            }
             return <div className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1"><CheckCircle className="w-4 h-4" /> Terdaftar</div>;
         }
         return null;
@@ -279,21 +305,41 @@ export function MemberEventDetail() {
 
                                 {participationStatus === 'registered' || participationStatus === 'attended' ? (
                                     <div className="space-y-4 mb-4">
-                                        <div className="text-center py-6 bg-green-50 rounded-xl border border-green-100">
-                                            <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-3">
-                                                <CheckCircle className="w-6 h-6" />
+                                        <div className="text-center py-5 bg-green-50 rounded-xl border border-green-100">
+                                            <div className="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-2">
+                                                <CheckCircle className="w-5 h-5" />
                                             </div>
-                                            <h4 className="font-bold text-green-800">Anda Sudah Terdaftar!</h4>
+                                            <h4 className="font-bold text-green-800 text-sm">
+                                                {Number(event.is_paid) === 1 && participationData?.payment_status === 'confirmed' ? 'Anda Sudah Terdaftar & Lunas' :
+                                                 Number(event.is_paid) === 1 && participationData?.payment_status === 'waiting_confirmation' ? 'Pendaftaran Tercatat' :
+                                                 Number(event.is_paid) === 1 && participationData?.payment_status === 'rejected' ? 'Pendaftaran Tercatat' :
+                                                 'Anda Sudah Terdaftar!'}
+                                            </h4>
                                             <p className="text-xs text-green-600 mt-1 px-4">
-                                                Silakan hadir tepat waktu sesuai jadwal yang ditentukan.
+                                                {Number(event.is_paid) === 1 && participationData?.payment_status === 'waiting_confirmation' ? 'Menunggu verifikasi pembayaran oleh admin.' :
+                                                 Number(event.is_paid) === 1 && participationData?.payment_status === 'rejected' ? 'Bukti pembayaran perlu diperbaiki.' :
+                                                 'Silakan hadir tepat waktu sesuai jadwal yang ditentukan.'}
                                             </p>
                                         </div>
                                         
-                                        {event.is_paid == 1 && participationData && participationData.payment_status !== 'confirmed' && (
+                                        {event.is_paid == 1 && participationData && (
                                             <div className="bg-blue-50 border border-blue-100 rounded-xl p-5">
-                                                <h4 className="font-bold text-blue-900 flex items-center gap-2 mb-3 text-sm">
-                                                    <Banknote className="w-4 h-4" /> Informasi Pembayaran
-                                                </h4>
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <h4 className="font-bold text-blue-900 flex items-center gap-2 text-sm">
+                                                        <Banknote className="w-4 h-4" /> Informasi Pembayaran
+                                                    </h4>
+                                                    <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${
+                                                        participationData.payment_status === 'confirmed' ? 'bg-green-100 text-green-700' :
+                                                        participationData.payment_status === 'rejected' ? 'bg-red-100 text-red-700' :
+                                                        participationData.payment_status === 'waiting_confirmation' ? 'bg-amber-100 text-amber-800' :
+                                                        'bg-yellow-100 text-yellow-800'
+                                                    }`}>
+                                                        {participationData.payment_status === 'confirmed' ? 'Lunas' :
+                                                         participationData.payment_status === 'rejected' ? 'Ditolak' :
+                                                         participationData.payment_status === 'waiting_confirmation' ? 'Menunggu Konfirmasi' : 'Belum Bayar'}
+                                                    </span>
+                                                </div>
+
                                                 <div className="space-y-3 mb-4 text-sm text-blue-800">
                                                     <div className="flex justify-between border-b border-blue-100 pb-2">
                                                         <span>Biaya</span>
@@ -333,43 +379,143 @@ export function MemberEventDetail() {
                                                     )}
                                                 </div>
 
-                                                {participationData.payment_status === 'pending' || participationData.payment_status === 'rejected' || participationData.payment_status === 'free' || participationData.payment_status === 'waiting_confirmation' ? (
-                                                    <div>
-                                                        {participationData.payment_status === 'rejected' && (
-                                                            <div className="bg-red-50 text-red-600 p-2 rounded text-xs mb-3 text-center border border-red-100">
-                                                                Bukti pembayaran ditolak. Silakan unggah ulang.
-                                                            </div>
-                                                        )}
-                                                        {participationData.payment_status !== 'waiting_confirmation' ? (
-                                                            <>
-                                                                <input 
-                                                                    type="file" 
-                                                                    className="hidden" 
-                                                                    ref={fileInputRef} 
-                                                                    accept="image/*"
-                                                                    onChange={handleUploadProof}
-                                                                />
-                                                                <Button 
-                                                                    onClick={() => fileInputRef.current?.click()} 
-                                                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                                                                    disabled={uploadingProof}
+                                                {/* Hidden File Input */}
+                                                <input 
+                                                    type="file" 
+                                                    className="hidden" 
+                                                    ref={fileInputRef} 
+                                                    accept="image/*"
+                                                    onChange={handleUploadProof}
+                                                />
+
+                                                {/* Confirmed State */}
+                                                {participationData.payment_status === 'confirmed' && (
+                                                    <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center space-y-2">
+                                                        <div className="flex items-center justify-center gap-1.5 text-green-800 font-semibold text-xs">
+                                                            <CheckCircle className="w-4 h-4 text-green-600" />
+                                                            <span>Pembayaran Berhasil Dikonfirmasi</span>
+                                                        </div>
+                                                        <p className="text-xs text-green-700">
+                                                            Terima kasih, pendaftaran dan pembayaran Anda telah resmi disetujui.
+                                                        </p>
+                                                        {participationData.payment_proof_url && (
+                                                            <div className="pt-1">
+                                                                <a
+                                                                    href={participationData.payment_proof_url}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="inline-flex items-center gap-1.5 text-xs text-green-700 hover:text-green-900 font-medium hover:underline bg-white px-3 py-1.5 rounded-lg border border-green-200 shadow-sm"
                                                                 >
-                                                                    {uploadingProof ? (
-                                                                        <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Mengunggah...</>
-                                                                    ) : (
-                                                                        <><UploadCloud className="w-4 h-4 mr-2" /> Unggah Bukti Bayar</>
-                                                                    )}
-                                                                </Button>
-                                                            </>
-                                                        ) : (
-                                                            <div className="text-center mt-3 text-amber-700 text-sm font-medium bg-amber-50 p-3 rounded-lg border border-amber-200">
-                                                                <Clock className="w-5 h-5 mx-auto mb-1 text-amber-600" /> 
-                                                                <div>Bukti Sedang Diverifikasi</div>
-                                                                <div className="text-xs font-normal mt-1 opacity-80">Harap tunggu Admin mengonfirmasi pembayaran Anda.</div>
+                                                                    <Eye className="w-3.5 h-3.5" /> Lihat Bukti Pembayaran
+                                                                </a>
                                                             </div>
                                                         )}
                                                     </div>
-                                                ) : null}
+                                                )}
+
+                                                {/* Waiting Confirmation State with "Ulangi Konfirmasi" */}
+                                                {participationData.payment_status === 'waiting_confirmation' && (
+                                                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center space-y-3">
+                                                        <div className="flex items-center justify-center gap-2 text-amber-800 font-semibold text-sm">
+                                                            <Clock className="w-4 h-4 text-amber-600 animate-pulse" />
+                                                            <span>Menunggu Konfirmasi Admin</span>
+                                                        </div>
+                                                        <p className="text-xs text-amber-700 leading-relaxed">
+                                                            Bukti transfer Anda telah diterima dan sedang dalam proses verifikasi oleh panitia.
+                                                        </p>
+
+                                                        {participationData.payment_proof_url && (
+                                                            <div className="pt-1">
+                                                                <a
+                                                                    href={participationData.payment_proof_url}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="inline-flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-800 font-medium hover:underline bg-white px-3 py-1.5 rounded-lg border border-blue-100 shadow-sm"
+                                                                >
+                                                                    <Eye className="w-3.5 h-3.5" /> Lihat Bukti yang Terkirim
+                                                                </a>
+                                                            </div>
+                                                        )}
+
+                                                        <div className="pt-2 border-t border-amber-200/60">
+                                                            <Button 
+                                                                onClick={() => fileInputRef.current?.click()} 
+                                                                variant="outline"
+                                                                className="w-full bg-white hover:bg-amber-100 text-amber-900 border-amber-300 font-medium text-xs py-2 shadow-sm flex items-center justify-center gap-2"
+                                                                disabled={uploadingProof}
+                                                            >
+                                                                {uploadingProof ? (
+                                                                    <><Loader2 className="w-4 h-4 animate-spin text-amber-600" /> Mengirim Ulang Bukti...</>
+                                                                ) : (
+                                                                    <><RotateCcw className="w-3.5 h-3.5 text-amber-700" /> Ulangi Konfirmasi / Kirim Ulang Bukti</>
+                                                                )}
+                                                            </Button>
+                                                            <p className="text-[11px] text-amber-600/90 mt-1.5 text-center">
+                                                                Ada kesalahan transfer atau bukti gagal dibaca? Klik tombol di atas untuk mengirim ulang bukti pembayaran.
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Rejected State */}
+                                                {participationData.payment_status === 'rejected' && (
+                                                    <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center space-y-3">
+                                                        <div className="flex items-center justify-center gap-2 text-red-800 font-semibold text-sm">
+                                                            <AlertCircle className="w-4 h-4 text-red-600" />
+                                                            <span>Konfirmasi Pembayaran Ditolak</span>
+                                                        </div>
+                                                        <p className="text-xs text-red-700 leading-relaxed">
+                                                            Bukti pembayaran sebelumnya ditolak oleh admin. Silakan periksa kembali dan kirim ulang bukti yang valid.
+                                                        </p>
+
+                                                        {participationData.payment_proof_url && (
+                                                            <div className="pt-1">
+                                                                <a
+                                                                    href={participationData.payment_proof_url}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="inline-flex items-center gap-1.5 text-xs text-red-600 hover:text-red-800 font-medium hover:underline bg-white px-3 py-1.5 rounded-lg border border-red-100 shadow-sm"
+                                                                >
+                                                                    <Eye className="w-3.5 h-3.5" /> Lihat Bukti Sebelumnya
+                                                                </a>
+                                                            </div>
+                                                        )}
+
+                                                        <div className="pt-2 border-t border-red-200/60">
+                                                            <Button 
+                                                                onClick={() => fileInputRef.current?.click()} 
+                                                                className="w-full bg-red-600 hover:bg-red-700 text-white font-medium text-xs py-2 shadow-sm flex items-center justify-center gap-2"
+                                                                disabled={uploadingProof}
+                                                            >
+                                                                {uploadingProof ? (
+                                                                    <><Loader2 className="w-4 h-4 animate-spin" /> Mengunggah...</>
+                                                                ) : (
+                                                                    <><RotateCcw className="w-3.5 h-3.5" /> Ulangi Konfirmasi / Unggah Ulang Bukti</>
+                                                                )}
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Pending State */}
+                                                {(participationData.payment_status === 'pending' || !participationData.payment_status || participationData.payment_status === 'free') && (
+                                                    <div className="space-y-2">
+                                                        <p className="text-xs text-blue-900 font-medium">
+                                                            Silakan lakukan transfer dan unggah bukti pembayaran:
+                                                        </p>
+                                                        <Button 
+                                                            onClick={() => fileInputRef.current?.click()} 
+                                                            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs py-2 shadow-sm flex items-center justify-center gap-2"
+                                                            disabled={uploadingProof}
+                                                        >
+                                                            {uploadingProof ? (
+                                                                <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Mengunggah...</>
+                                                            ) : (
+                                                                <><UploadCloud className="w-4 h-4 mr-2" /> Unggah Bukti Bayar</>
+                                                            )}
+                                                        </Button>
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
                                     </div>

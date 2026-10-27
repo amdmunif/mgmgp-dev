@@ -15,6 +15,9 @@ type EventWithStatus = {
     date: string;
     location: string;
     is_premium: boolean | number;
+    is_paid?: boolean | number;
+    payment_status?: string | null;
+    payment_proof_url?: string | null;
     is_registration_open: boolean | number;
     registration_deadline?: string;
     participation_status?: string | null;
@@ -127,9 +130,23 @@ export function MemberEvents() {
                                                 </div>
                                             )}
                                             {event.participation_status === 'registered' || event.participation_status === 'attended' ? (
-                                                <div className="bg-green-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-bl-xl shadow-sm tracking-wider">
-                                                    TERDAFTAR
-                                                </div>
+                                                Number(event.is_paid) === 1 && event.payment_status === 'waiting_confirmation' ? (
+                                                    <div className="bg-amber-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-bl-xl shadow-sm tracking-wider">
+                                                        MENUNGGU KONFIRMASI
+                                                    </div>
+                                                ) : Number(event.is_paid) === 1 && event.payment_status === 'rejected' ? (
+                                                    <div className="bg-red-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-bl-xl shadow-sm tracking-wider">
+                                                        BAYAR DITOLAK
+                                                    </div>
+                                                ) : Number(event.is_paid) === 1 && (event.payment_status === 'pending' || !event.payment_status) ? (
+                                                    <div className="bg-yellow-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-bl-xl shadow-sm tracking-wider">
+                                                        BELUM BAYAR
+                                                    </div>
+                                                ) : (
+                                                    <div className="bg-green-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-bl-xl shadow-sm tracking-wider">
+                                                        TERDAFTAR
+                                                    </div>
+                                                )
                                             ) : (!isRegistrationOpen || isDeadlinePassed || isQuotaFull) ? (
                                                 <div className="bg-red-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-bl-xl shadow-sm tracking-wider">
                                                     DITUTUP
@@ -211,16 +228,31 @@ export function MemberEvents() {
                                     </div>
 
                                     <div className="flex flex-col items-end gap-2 w-full md:w-auto">
-                                        {/* Attendance Status */}
-                                        <span className={cn(
-                                            "px-3 py-1 rounded-full text-xs font-bold uppercase flex items-center gap-1",
-                                            item.status === 'registered' ? "bg-amber-100 text-amber-800" :
-                                                item.status === 'attended' ? "bg-green-100 text-green-800" :
-                                                    "bg-red-100 text-red-800"
-                                        )}>
-                                            {item.status === 'registered' ? 'Terdaftar' :
-                                                item.status === 'attended' ? 'Hadir' : 'Tidak Hadir'}
-                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            {item.payment_status && item.payment_status !== 'free' && (
+                                                <span className={cn(
+                                                    "px-2.5 py-0.5 rounded-full text-xs font-semibold",
+                                                    item.payment_status === 'confirmed' ? "bg-green-100 text-green-700" :
+                                                    item.payment_status === 'rejected' ? "bg-red-100 text-red-700" :
+                                                    item.payment_status === 'waiting_confirmation' ? "bg-amber-100 text-amber-800" :
+                                                    "bg-yellow-100 text-yellow-800"
+                                                )}>
+                                                    {item.payment_status === 'confirmed' ? 'Lunas' :
+                                                     item.payment_status === 'rejected' ? 'Ditolak' :
+                                                     item.payment_status === 'waiting_confirmation' ? 'Menunggu Konfirmasi' : 'Belum Bayar'}
+                                                </span>
+                                            )}
+                                            {/* Attendance Status */}
+                                            <span className={cn(
+                                                "px-3 py-1 rounded-full text-xs font-bold uppercase flex items-center gap-1",
+                                                item.status === 'registered' ? "bg-amber-100 text-amber-800" :
+                                                    item.status === 'attended' ? "bg-green-100 text-green-800" :
+                                                        "bg-red-100 text-red-800"
+                                            )}>
+                                                {item.status === 'registered' ? 'Terdaftar' :
+                                                    item.status === 'attended' ? 'Hadir' : 'Tidak Hadir'}
+                                            </span>
+                                        </div>
 
                                         {/* Certificate Download */}
                                         {Number(item.is_passed) === 1 && item.events?.certificate_url && (
