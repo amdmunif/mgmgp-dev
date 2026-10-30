@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, type ReactNode } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { Code2, Play, Download, ExternalLink, X, Maximize2, Minimize2 } from 'lucide-react';
+import { Code2, Play, ExternalLink, X, Maximize2, Minimize2 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { DataTable } from '../../components/ui/DataTable';
 import { interactiveMediaService, type InteractiveMediaItem } from '../../services/interactiveMediaService';
@@ -136,9 +136,9 @@ export function InteractiveMedia() {
         },
         {
             header: 'Aksi',
-            className: 'w-44 text-right',
+            className: 'w-32 text-right',
             cell: (item: InteractiveMediaItem) => (
-                <div className="flex items-center justify-end gap-2 pr-1">
+                <div className="flex items-center justify-end pr-1">
                     <Button
                         size="sm"
                         className="bg-blue-600 hover:bg-blue-700 text-white h-8 px-3 text-xs"
@@ -149,21 +149,6 @@ export function InteractiveMedia() {
                     >
                         <Play className="w-3.5 h-3.5 mr-1.5" /> Jalankan
                     </Button>
-                    <a
-                        href={getFileUrl(item.file_url)}
-                        download={item.file_name || `${item.title}.html`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            className="bg-white border-gray-200 text-gray-700 hover:bg-gray-50 h-8 px-2.5"
-                            title="Unduh File HTML"
-                        >
-                            <Download className="w-3.5 h-3.5" />
-                        </Button>
-                    </a>
                 </div>
             )
         }
@@ -254,16 +239,6 @@ export function InteractiveMedia() {
                                 >
                                     <Button size="sm" variant="outline" className="h-8 text-xs bg-white">
                                         <ExternalLink className="w-3.5 h-3.5 mr-1.5" /> Buka Tab Baru
-                                    </Button>
-                                </a>
-                                <a
-                                    href={getFileUrl(activeItem.file_url)}
-                                    download={activeItem.file_name || `${activeItem.title}.html`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                >
-                                    <Button size="sm" variant="outline" className="h-8 text-xs bg-white hidden sm:inline-flex">
-                                        <Download className="w-3.5 h-3.5 mr-1.5" /> Unduh HTML
                                     </Button>
                                 </a>
                                 <button
