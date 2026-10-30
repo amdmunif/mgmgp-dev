@@ -24,7 +24,9 @@ import {
     Wand2,
     Camera,
     CreditCard,
-    MonitorPlay
+    MonitorPlay,
+    Code2,
+    FolderOpen
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { cn } from '../../lib/utils';
@@ -111,8 +113,10 @@ export function MemberLayout() {
         { icon: Calendar, label: 'Acara (Event)', path: '/member/events' },
         { icon: MonitorPlay, label: 'LMS (Kelas Saya)', path: '/member/lms' },
         { icon: FileText, label: 'Referensi CP/TP', path: '/member/cptp' },
+        { icon: FolderOpen, label: 'Berbagi File', path: '/member/shared-files' },
         { icon: FileQuestion, label: 'Bank Soal', path: '/member/questions', premium: true },
         { icon: Gamepad2, label: 'Bank Games', path: '/member/games', premium: true },
+        { icon: Code2, label: 'Media Interaktif', path: '/member/interactive-media', premium: true },
         { icon: Book, label: 'Modul Ajar', path: '/member/modules', premium: true },
         { icon: Terminal, label: 'Prompt Library', path: '/member/prompts', premium: true },
         { icon: Wand2, label: 'Prompt Generator', path: '/member/prompt-generator', premium: true },

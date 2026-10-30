@@ -28,13 +28,21 @@ if (isset($uri_parts[0]) && $uri_parts[0] === 'api') {
 
 // Serve Static Files from 'uploads'
 if (isset($uri_parts[0]) && $uri_parts[0] === 'uploads') {
-    $filename = $uri_parts[1] ?? '';
-    $filename = basename($filename); // Sanitize
-    $filePath = __DIR__ . '/../uploads/' . $filename;
+    $segments = array_slice($uri_parts, 1);
+    $cleanSegments = array_map('basename', array_filter($segments));
+    $relativePath = implode('/', $cleanSegments);
+    $filePath = __DIR__ . '/../uploads/' . $relativePath;
 
-    if (file_exists($filePath)) {
-        $mime = mime_content_type($filePath);
-        header("Content-Type: $mime");
+    if (!empty($relativePath) && file_exists($filePath) && is_file($filePath)) {
+        $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+        if (in_array($ext, ['html', 'htm'])) {
+            header("Content-Type: text/html; charset=UTF-8");
+        } elseif ($ext === 'pdf') {
+            header("Content-Type: application/pdf");
+        } else {
+            $mime = mime_content_type($filePath);
+            header("Content-Type: $mime");
+        }
         readfile($filePath);
         exit();
     } else {
@@ -1071,6 +1079,77 @@ if ($resource === 'news') {
         } else {
             http_response_code(401);
             echo json_encode(["message" => "Unauthorized"]);
+        }
+    }
+} elseif ($resource === 'interactive-media') {
+    include_once './controllers/InteractiveMediaController.php';
+    $controller = new InteractiveMediaController();
+
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        if (!$userId) {
+            http_response_code(401);
+            echo json_encode(["message" => "Unauthorized"]);
+        } elseif ($action) {
+            echo $controller->getById($action);
+        } else {
+            echo $controller->getAll();
+        }
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (in_array($userRole, ['Admin', 'Super Admin', 'Pengurus'])) {
+            echo $controller->create($input, $userId, $userName);
+        } else {
+            http_response_code(403);
+            echo json_encode(["message" => "Hanya Admin atau Pengurus yang dapat mengunggah media interaktif"]);
+        }
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'PUT' && $action) {
+        if (in_array($userRole, ['Admin', 'Super Admin', 'Pengurus'])) {
+            echo $controller->update($action, $input, $userId, $userName);
+        } else {
+            http_response_code(403);
+            echo json_encode(["message" => "Forbidden"]);
+        }
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action) {
+        if (in_array($userRole, ['Admin', 'Super Admin', 'Pengurus'])) {
+            echo $controller->delete($action, $userId, $userName);
+        } else {
+            http_response_code(403);
+            echo json_encode(["message" => "Forbidden"]);
+        }
+    }
+} elseif ($resource === 'shared-files') {
+    include_once './controllers/SharedFileController.php';
+    $controller = new SharedFileController();
+    $subAction = isset($uri_parts[2]) ? $uri_parts[2] : null;
+
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        if (!$userId) {
+            http_response_code(401);
+            echo json_encode(["message" => "Silakan login untuk mengakses file anggota"]);
+        } else {
+            echo $controller->getAll();
+        }
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (!$userId) {
+            http_response_code(401);
+            echo json_encode(["message" => "Unauthorized"]);
+        } elseif ($action && $subAction === 'download') {
+            echo $controller->incrementDownload($action);
+        } else {
+            echo $controller->create($input, $userId, $userName);
+        }
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'PUT' && $action) {
+        if (!$userId) {
+            http_response_code(401);
+            echo json_encode(["message" => "Unauthorized"]);
+        } else {
+            echo $controller->update($action, $input, $userId, $userName, $userRole);
+        }
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action) {
+        if (!$userId) {
+            http_response_code(401);
+            echo json_encode(["message" => "Unauthorized"]);
+        } else {
+            echo $controller->delete($action, $userId, $userName, $userRole);
         }
     }
 } else {

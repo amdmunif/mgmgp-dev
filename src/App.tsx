@@ -89,6 +89,9 @@ import { QuizPlayer } from './pages/member/lms/QuizPlayer';
 import { ContributorRegistration } from './pages/member/ContributorRegistration';
 import { PromptGenerator } from './pages/member/PromptGenerator';
 import { MemberProjects } from './pages/member/MemberProjects';
+import { InteractiveMedia } from './pages/member/InteractiveMedia';
+import { SharedFiles } from './pages/member/SharedFiles';
+import { AdminInteractiveMedia } from './pages/admin/interactive/AdminInteractiveMedia';
 import { MemberProjectsGallery } from './pages/public/MemberProjectsGallery';
 import { AdminBoardMeetings } from './pages/admin/board-meetings/AdminBoardMeetings';
 import { CreateBoardMeeting } from './pages/admin/board-meetings/CreateBoardMeeting';
@@ -185,10 +188,18 @@ function App() {
           <Route path="questions/create" element={<QuestionBuilder basePath="/member/contributor" />} />
           <Route path="questions/edit/:id" element={<QuestionBuilder basePath="/member/contributor" />} />
           <Route path="projects" element={<MemberProjects />} />
+          <Route path="shared-files" element={<SharedFiles />} />
           <Route path="board-meetings" element={<MemberBoardMeetings />} />
           <Route path="board-meetings/attend/:id" element={<BoardMeetingAttend />} />
 
           {/* Protected Premium Routes */}
+          <Route path="interactive-media" element={
+            <MaintenanceGuard type="premium">
+              <PremiumGuard>
+                <InteractiveMedia />
+              </PremiumGuard>
+            </MaintenanceGuard>
+          } />
           <Route path="questions" element={
             <MaintenanceGuard type="premium">
               <PremiumGuard>
@@ -248,6 +259,8 @@ function App() {
           <Route path="learning" element={<AdminMaterials />} />
           <Route path="learning/create" element={<CreateMaterial />} />
           <Route path="learning/edit/:id" element={<CreateMaterial />} />
+          <Route path="interactive-media" element={<AdminInteractiveMedia />} />
+          <Route path="shared-files" element={<SharedFiles />} />
           <Route path="questions" element={<AdminQuestions />} />
           <Route path="questions/create" element={<QuestionBuilder />} />
           <Route path="questions/edit/:id" element={<QuestionBuilder />} />

@@ -549,3 +549,47 @@ CREATE TABLE IF NOT EXISTS `email_logs` (
   `error_message` TEXT,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- 12. Interactive Media (HTML) & Shared Files
+--
+
+CREATE TABLE IF NOT EXISTS `interactive_media` (
+  `id` char(36) NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `description` text DEFAULT NULL,
+  `mapel` varchar(50) DEFAULT 'Informatika',
+  `kelas` varchar(20) DEFAULT 'Semua',
+  `semester` varchar(20) DEFAULT 'Semua',
+  `category` varchar(100) DEFAULT 'Simulasi',
+  `file_url` text NOT NULL,
+  `file_name` varchar(255) DEFAULT NULL,
+  `file_size` int(11) DEFAULT 0,
+  `author_id` char(36) DEFAULT NULL,
+  `author_name` varchar(255) DEFAULT NULL,
+  `views_count` int(11) DEFAULT 0,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS `shared_files` (
+  `id` char(36) NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `description` text DEFAULT NULL,
+  `category` varchar(100) NOT NULL DEFAULT 'Modul/Bahan Ajar',
+  `mapel` varchar(50) DEFAULT 'Informatika',
+  `kelas` varchar(20) DEFAULT 'Semua',
+  `file_url` text NOT NULL,
+  `file_name` varchar(255) DEFAULT NULL,
+  `file_type` varchar(50) DEFAULT 'other',
+  `file_ext` varchar(20) DEFAULT NULL,
+  `file_size` int(11) DEFAULT 0,
+  `user_id` char(36) NOT NULL,
+  `uploader_name` varchar(255) DEFAULT NULL,
+  `downloads_count` int(11) DEFAULT 0,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_shared_user` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

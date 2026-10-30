@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Loader2, AlertCircle, Download, ExternalLink } from 'lucide-react';
 import { Button } from './button';
+import { getFileUrl } from '../../lib/api';
 
 interface FileViewerProps {
     url: string;
@@ -13,20 +14,23 @@ export function FileViewer({ url, title, type, className = "" }: FileViewerProps
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
 
+    const resolvedUrl = getFileUrl(url);
+
     // Determine type from extension if not provided
-    const getFileType = (url: string) => {
+    const getFileType = (urlStr: string) => {
         if (type) return type;
-        const ext = url.split('.').pop()?.toLowerCase();
-        if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext || '')) return 'image';
+        const ext = urlStr.split('?')[0].split('.').pop()?.toLowerCase();
+        if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext || '')) return 'image';
         if (ext === 'pdf') return 'pdf';
+        if (['html', 'htm'].includes(ext || '')) return 'html';
         if (['doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx'].includes(ext || '')) return 'office';
         return 'unknown';
     };
 
-    const fileType = getFileType(url);
+    const fileType = getFileType(resolvedUrl);
 
     // Google Docs Viewer URL for Office files
-    const googleDocsViewerUrl = `https://docs.google.com/gview?url=${encodeURIComponent(url)}&embedded=true`;
+    const googleDocsViewerUrl = `https://docs.google.com/gview?url=${encodeURIComponent(resolvedUrl)}&embedded=true`;
 
     const handleLoad = () => setLoading(false);
     const handleError = () => {
@@ -48,7 +52,7 @@ export function FileViewer({ url, title, type, className = "" }: FileViewerProps
                     <AlertCircle className="w-10 h-10 text-red-500 mb-2" />
                     <p className="text-gray-900 font-medium mb-1">Gagal memuat pratinjau</p>
                     <p className="text-sm text-gray-500 mb-4">Dokumen ini tidak dapat ditampilkan di sini. Silakan unduh untuk melihatnya.</p>
-                    <a href={url} target="_blank" rel="noopener noreferrer">
+                    <a href={resolvedUrl} target="_blank" rel="noopener noreferrer">
                         <Button>
                             <Download className="w-4 h-4 mr-2" /> Unduh Dokumen
                         </Button>
@@ -58,11 +62,23 @@ export function FileViewer({ url, title, type, className = "" }: FileViewerProps
                 <>
                     {fileType === 'pdf' && (
                         <iframe
-                            src={url}
+                            src={resolvedUrl}
                             className="w-full h-full"
                             onLoad={handleLoad}
                             onError={handleError}
                             title={title || "PDF Viewer"}
+                        />
+                    )}
+
+                    {fileType === 'html' && (
+                        <iframe
+                            src={resolvedUrl}
+                            className="w-full h-full bg-white"
+                            onLoad={handleLoad}
+                            onError={handleError}
+                            title={title || "HTML Interactive Viewer"}
+                            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+                            allowFullScreen
                         />
                     )}
 
@@ -79,7 +95,7 @@ export function FileViewer({ url, title, type, className = "" }: FileViewerProps
                     {fileType === 'image' && (
                         <div className="flex items-center justify-center h-full overflow-auto bg-black/5 p-4">
                             <img
-                                src={url}
+                                src={resolvedUrl}
                                 alt={title || "Preview"}
                                 className="max-w-full max-h-full object-contain shadow-md"
                                 onLoad={handleLoad}
@@ -97,7 +113,7 @@ export function FileViewer({ url, title, type, className = "" }: FileViewerProps
                             <p className="text-gray-500 mb-6 max-w-sm">
                                 Pratinjau tidak tersedia untuk jenis file ini. Silakan unduh file untuk membukanya.
                             </p>
-                            <a href={url} target="_blank" rel="noopener noreferrer">
+                            <a href={resolvedUrl} target="_blank" rel="noopener noreferrer">
                                 <Button className="bg-blue-600 hover:bg-blue-700">
                                     <Download className="w-4 h-4 mr-2" /> Unduh File
                                 </Button>

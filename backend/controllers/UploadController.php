@@ -55,7 +55,10 @@ class UploadController
             if (move_uploaded_file($_FILES['file']['tmp_name'], $targetDir . $filename)) {
                 return json_encode([
                     "message" => "Upload successful",
-                    "url" => '/uploads/' . $folderParam . $filename // Accessed directly from root
+                    "url" => '/uploads/' . $folderParam . $filename, // Accessed directly from root
+                    "original_name" => $_FILES['file']['name'],
+                    "size" => (int)$_FILES['file']['size'],
+                    "ext" => strtolower($ext)
                 ]);
             }
         }

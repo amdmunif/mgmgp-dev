@@ -26,7 +26,9 @@ import {
     Wallet,
     ListChecks,
     Mail,
-    School
+    School,
+    Code2,
+    FolderOpen
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { getFileUrl } from '../../lib/api';
@@ -54,6 +56,8 @@ const menuGroups = [
         title: "Edukasi",
         items: [
             { icon: BookOpen, label: 'Materi Pembelajaran', path: '/admin/learning' },
+            { icon: Code2, label: 'Media Interaktif', path: '/admin/interactive-media' },
+            { icon: FolderOpen, label: 'Berbagi File Anggota', path: '/admin/shared-files' },
             { icon: Target, label: 'Capaian Pembelajaran', path: '/admin/cp' },
             { icon: ListChecks, label: 'Tujuan Pembelajaran', path: '/admin/tp' },
             { icon: FileText, label: 'Bank Soal (CBT)', path: '/admin/questions' },
