@@ -17,6 +17,7 @@ class SharedFileController
 
     private function ensureTable()
     {
+        if (!$this->conn) return;
         $sql = "CREATE TABLE IF NOT EXISTS `shared_files` (
             `id` char(36) NOT NULL,
             `title` varchar(255) NOT NULL,
@@ -36,7 +37,7 @@ class SharedFileController
             `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
             PRIMARY KEY (`id`),
             KEY `idx_shared_user` (`user_id`)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;";
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
 
         try {
             $this->conn->exec($sql);
@@ -58,16 +59,33 @@ class SharedFileController
 
     public function getAll()
     {
-        $query = "SELECT sf.*, 
-                         COALESCE(p.nama, sf.uploader_name, 'Anggota') as uploader_name,
-                         p.asal_sekolah as uploader_school,
-                         p.role as uploader_role
-                  FROM shared_files sf
-                  LEFT JOIN profiles p ON sf.user_id = p.id
-                  ORDER BY sf.created_at DESC";
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
-        return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+        if (!$this->conn) {
+            http_response_code(500);
+            return json_encode(["message" => "Database connection error"]);
+        }
+
+        try {
+            $query = "SELECT sf.*, 
+                             COALESCE(p.nama, sf.uploader_name, 'Anggota') as uploader_name,
+                             p.asal_sekolah as uploader_school,
+                             p.role as uploader_role
+                      FROM shared_files sf
+                      LEFT JOIN profiles p ON CONVERT(sf.user_id USING utf8mb4) = CONVERT(p.id USING utf8mb4)
+                      ORDER BY sf.created_at DESC";
+            $stmt = $this->conn->prepare($query);
+            $stmt->execute();
+            return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+        } catch (Exception $e) {
+            try {
+                $query = "SELECT * FROM shared_files ORDER BY created_at DESC";
+                $stmt = $this->conn->prepare($query);
+                $stmt->execute();
+                return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+            } catch (Exception $ex) {
+                http_response_code(500);
+                return json_encode(["message" => "Gagal mengambil data file: " . $ex->getMessage()]);
+            }
+        }
     }
 
     public function create($data, $userId, $userName)

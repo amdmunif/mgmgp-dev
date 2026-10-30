@@ -119,7 +119,8 @@ export function SharedFiles() {
             setFiles(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error(error);
-            toast.error('Gagal memuat daftar file');
+            const msg = error instanceof Error ? error.message : 'Gagal memuat daftar file';
+            toast.error(msg);
         } finally {
             setLoading(false);
         }

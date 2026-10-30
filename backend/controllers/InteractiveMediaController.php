@@ -17,6 +17,7 @@ class InteractiveMediaController
 
     private function ensureTable()
     {
+        if (!$this->conn) return;
         $sql = "CREATE TABLE IF NOT EXISTS `interactive_media` (
             `id` char(36) NOT NULL,
             `title` varchar(255) NOT NULL,
@@ -34,7 +35,7 @@ class InteractiveMediaController
             `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
             `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
             PRIMARY KEY (`id`)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;";
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
 
         try {
             $this->conn->exec($sql);
@@ -45,28 +46,66 @@ class InteractiveMediaController
 
     public function getAll()
     {
-        $query = "SELECT im.*, COALESCE(p.nama, im.author_name, 'Admin') as creator_name
-                  FROM interactive_media im
-                  LEFT JOIN profiles p ON im.author_id = p.id
-                  ORDER BY im.created_at DESC";
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
-        return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+        if (!$this->conn) {
+            http_response_code(500);
+            return json_encode(["message" => "Database connection error"]);
+        }
+
+        try {
+            $query = "SELECT im.*, COALESCE(p.nama, im.author_name, 'Admin') as creator_name
+                      FROM interactive_media im
+                      LEFT JOIN profiles p ON CONVERT(im.author_id USING utf8mb4) = CONVERT(p.id USING utf8mb4)
+                      ORDER BY im.created_at DESC";
+            $stmt = $this->conn->prepare($query);
+            $stmt->execute();
+            return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+        } catch (Exception $e) {
+            try {
+                $query = "SELECT *, author_name as creator_name FROM interactive_media ORDER BY created_at DESC";
+                $stmt = $this->conn->prepare($query);
+                $stmt->execute();
+                return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+            } catch (Exception $ex) {
+                http_response_code(500);
+                return json_encode(["message" => "Gagal mengambil data: " . $ex->getMessage()]);
+            }
+        }
     }
 
     public function getById($id)
     {
-        $query = "SELECT im.*, COALESCE(p.nama, im.author_name, 'Admin') as creator_name
-                  FROM interactive_media im
-                  LEFT JOIN profiles p ON im.author_id = p.id
-                  WHERE im.id = :id";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':id', $id);
-        $stmt->execute();
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$this->conn) {
+            http_response_code(500);
+            return json_encode(["message" => "Database connection error"]);
+        }
 
-        if ($row) {
-            return json_encode($row);
+        try {
+            $query = "SELECT im.*, COALESCE(p.nama, im.author_name, 'Admin') as creator_name
+                      FROM interactive_media im
+                      LEFT JOIN profiles p ON CONVERT(im.author_id USING utf8mb4) = CONVERT(p.id USING utf8mb4)
+                      WHERE im.id = :id";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':id', $id);
+            $stmt->execute();
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($row) {
+                return json_encode($row);
+            }
+        } catch (Exception $e) {
+            try {
+                $query = "SELECT *, author_name as creator_name FROM interactive_media WHERE id = :id";
+                $stmt = $this->conn->prepare($query);
+                $stmt->bindParam(':id', $id);
+                $stmt->execute();
+                $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($row) {
+                    return json_encode($row);
+                }
+            } catch (Exception $ex) {
+                // fall through to 404
+            }
         }
 
         http_response_code(404);

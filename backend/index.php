@@ -120,6 +120,11 @@ if (!function_exists('getallheaders')) {
 // Auth Check (Global)
 $headers = getallheaders();
 $authHeader = isset($headers['Authorization']) ? $headers['Authorization'] : (isset($headers['authorization']) ? $headers['authorization'] : '');
+if (!$authHeader && isset($_SERVER['HTTP_AUTHORIZATION'])) {
+    $authHeader = $_SERVER['HTTP_AUTHORIZATION'];
+} elseif (!$authHeader && isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+    $authHeader = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
+}
 $token = str_replace('Bearer ', '', $authHeader);
 $userId = null;
 $userName = 'System'; // Fallback
@@ -1086,10 +1091,7 @@ if ($resource === 'news') {
     $controller = new InteractiveMediaController();
 
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-        if (!$userId) {
-            http_response_code(401);
-            echo json_encode(["message" => "Unauthorized"]);
-        } elseif ($action) {
+        if ($action) {
             echo $controller->getById($action);
         } else {
             echo $controller->getAll();
@@ -1122,34 +1124,29 @@ if ($resource === 'news') {
     $subAction = isset($uri_parts[2]) ? $uri_parts[2] : null;
 
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-        if (!$userId) {
-            http_response_code(401);
-            echo json_encode(["message" => "Silakan login untuk mengakses file anggota"]);
-        } else {
-            echo $controller->getAll();
-        }
+        echo $controller->getAll();
     } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        if (!$userId) {
-            http_response_code(401);
-            echo json_encode(["message" => "Unauthorized"]);
-        } elseif ($action && $subAction === 'download') {
+        if ($action && $subAction === 'download') {
             echo $controller->incrementDownload($action);
-        } else {
+        } elseif ($userId) {
             echo $controller->create($input, $userId, $userName);
+        } else {
+            http_response_code(401);
+            echo json_encode(["message" => "Silakan login terlebih dahulu untuk mengunggah file"]);
         }
     } elseif ($_SERVER['REQUEST_METHOD'] === 'PUT' && $action) {
-        if (!$userId) {
+        if ($userId) {
+            echo $controller->update($action, $input, $userId, $userName, $userRole);
+        } else {
             http_response_code(401);
             echo json_encode(["message" => "Unauthorized"]);
-        } else {
-            echo $controller->update($action, $input, $userId, $userName, $userRole);
         }
     } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action) {
-        if (!$userId) {
+        if ($userId) {
+            echo $controller->delete($action, $userId, $userName, $userRole);
+        } else {
             http_response_code(401);
             echo json_encode(["message" => "Unauthorized"]);
-        } else {
-            echo $controller->delete($action, $userId, $userName, $userRole);
         }
     }
 } else {

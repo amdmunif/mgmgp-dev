@@ -77,7 +77,8 @@ export function AdminInteractiveMedia() {
             setItems(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error(error);
-            toast.error('Gagal memuat daftar media interaktif');
+            const msg = error instanceof Error ? error.message : 'Gagal memuat daftar media interaktif';
+            toast.error(msg);
         } finally {
             setLoading(false);
         }
