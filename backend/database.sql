@@ -128,7 +128,7 @@ INSERT INTO `master_schools` (`npsn`, `nama`, `kecamatan`, `is_verified`) VALUES
 ('20341086', 'SMP Negeri 3 Satu Atap Sapuran', 'Sapuran', 1),
 ('20341505', 'SMP Negeri 4 Sapuran', 'Sapuran', 1),
 ('20360249', 'SMP Negeri 5 Satu Atap Sapuran', 'Sapuran', 1),
-('20341319', 'SMP RIfaiyah 01 Sapuran', 'Sapuran', 1),
+('20341319', 'SMP Rifaiyah 01 Sapuran', 'Sapuran', 1),
 ('70041244', 'SMP Entreprenuer Ar-Ridwan', 'Selomerto', 1),
 ('20306799', 'SMP Kristen Bendungan', 'Selomerto', 1),
 ('20306854', 'SMP Negeri 1 Selomerto', 'Selomerto', 1),

@@ -25,6 +25,7 @@ class SchoolController
                 // Check if table exists
                 $check = $this->conn->query("SHOW TABLES LIKE 'master_schools'")->fetch();
                 if ($check) {
+                    $this->conn->exec("UPDATE master_schools SET nama = 'SMP Rifaiyah 01 Sapuran' WHERE BINARY nama = 'SMP RIfaiyah 01 Sapuran'");
                     $stmt = $this->conn->query("SELECT id, npsn, nama, kecamatan, is_verified FROM master_schools ORDER BY kecamatan ASC, nama ASC");
                     $schools = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     if (!empty($schools)) {

@@ -84,7 +84,7 @@ export const SCHOOLS_DATA: SchoolItem[] = [
     { no: 65, npsn: "20341086", nama: "SMP Negeri 3 Satu Atap Sapuran", kecamatan: "Sapuran" },
     { no: 66, npsn: "20341505", nama: "SMP Negeri 4 Sapuran", kecamatan: "Sapuran" },
     { no: 67, npsn: "20360249", nama: "SMP Negeri 5 Satu Atap Sapuran", kecamatan: "Sapuran" },
-    { no: 68, npsn: "20341319", nama: "SMP RIfaiyah 01 Sapuran", kecamatan: "Sapuran" },
+    { no: 68, npsn: "20341319", nama: "SMP Rifaiyah 01 Sapuran", kecamatan: "Sapuran" },
 
     { no: 69, npsn: "70041244", nama: "SMP Entreprenuer Ar-Ridwan", kecamatan: "Selomerto" },
     { no: 70, npsn: "20306799", nama: "SMP Kristen Bendungan", kecamatan: "Selomerto" },

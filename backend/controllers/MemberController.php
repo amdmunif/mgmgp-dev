@@ -17,6 +17,13 @@ class MemberController
 
     public function getAll()
     {
+        try {
+            $this->conn->exec("UPDATE master_schools SET nama = 'SMP Rifaiyah 01 Sapuran' WHERE BINARY nama = 'SMP RIfaiyah 01 Sapuran'");
+            $this->conn->exec("UPDATE profiles SET asal_sekolah = 'SMP Rifaiyah 01 Sapuran' WHERE BINARY asal_sekolah = 'SMP RIfaiyah 01 Sapuran'");
+        } catch (Exception $e) {
+            // Ignore
+        }
+
         // Join profiles with users to get email
         $query = "SELECT p.*, u.email, 
                   (SELECT COUNT(*) FROM event_participants ep WHERE ep.user_id = p.id AND ep.is_hadir = 1) as attendance_count,
